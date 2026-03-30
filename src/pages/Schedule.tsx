@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useScheduleByRange, scheduleHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
-import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, isBefore, isAfter } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { DayColumn } from "@/components/schedule/DayColumn";
 import { MonthView } from "@/components/schedule/MonthView";
@@ -24,7 +25,8 @@ export default function SchedulePage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({
     title: "", start_date: "", start_time: "09:00", end_date: "", end_time: "10:00",
-    importance: "普通", status: "未开始", color: "", notes: ""
+    importance: "普通", status: "未开始", color: "", notes: "",
+    recurrence_type: "none" as string, recurrence_end_date: "", recurrence_days: [] as number[],
   });
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -53,14 +55,62 @@ export default function SchedulePage() {
   const updateMutation = scheduleHooks.useUpdate();
   const deleteMutation = scheduleHooks.useDelete();
 
+  // Expand recurring events into virtual instances for display
+  const expandedEvents = useMemo(() => {
+    const result: any[] = [];
+    events.forEach((event: any) => {
+      result.push(event);
+      const rec = event.recurrence as any;
+      if (!rec || rec.type === "none") return;
+      const eventStart = new Date(event.start_time);
+      const eventEnd = new Date(event.end_time);
+      const duration = eventEnd.getTime() - eventStart.getTime();
+      const recEndDate = rec.end_date ? new Date(rec.end_date) : rangeEnd;
+      const maxEnd = new Date(Math.min(recEndDate.getTime(), rangeEnd.getTime()));
+
+      let current = new Date(eventStart);
+      for (let i = 0; i < 200; i++) {
+        if (rec.type === "daily") current = addDays(current, rec.interval || 1);
+        else if (rec.type === "weekly") current = addDays(current, 7 * (rec.interval || 1));
+        else if (rec.type === "monthly") {
+          current = new Date(current);
+          current.setMonth(current.getMonth() + (rec.interval || 1));
+        } else break;
+
+        if (isAfter(current, maxEnd)) break;
+        if (isBefore(current, rangeStart)) continue;
+
+        // For weekly with specific days
+        if (rec.type === "weekly" && rec.days_of_week?.length > 0) {
+          const dayOfWeek = current.getDay() === 0 ? 7 : current.getDay();
+          if (!rec.days_of_week.includes(dayOfWeek)) continue;
+        }
+
+        const virtualStart = new Date(current);
+        virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
+        const virtualEnd = new Date(virtualStart.getTime() + duration);
+
+        result.push({
+          ...event,
+          id: `${event.id}_rec_${i}`,
+          start_time: virtualStart.toISOString(),
+          end_time: virtualEnd.toISOString(),
+          _isRecurrenceInstance: true,
+          _parentId: event.id,
+        });
+      }
+    });
+    return result;
+  }, [events, rangeStart, rangeEnd]);
+
   const getEventsForDay = useCallback((day: Date) => {
     const dayStr = format(day, "yyyy-MM-dd");
-    return events.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
-  }, [events]);
+    return expandedEvents.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
+  }, [expandedEvents]);
 
   const resetForm = useCallback(() => {
     const today = format(new Date(), "yyyy-MM-dd");
-    setForm({ title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00", importance: "普通", status: "未开始", color: "", notes: "" });
+    setForm({ title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00", importance: "普通", status: "未开始", color: "", notes: "", recurrence_type: "none", recurrence_end_date: "", recurrence_days: [] });
   }, []);
 
   const handleSave = async () => {
@@ -70,9 +120,16 @@ export default function SchedulePage() {
     try {
       const startTime = new Date(`${form.start_date}T${form.start_time}:00`);
       const endTime = new Date(`${form.end_date}T${form.end_time}:00`);
+      const recurrence = form.recurrence_type !== "none" ? {
+        type: form.recurrence_type,
+        interval: 1,
+        days_of_week: form.recurrence_days.length > 0 ? form.recurrence_days : undefined,
+        end_date: form.recurrence_end_date || null,
+      } : null;
       const payload = {
         title: form.title, start_time: startTime.toISOString(), end_time: endTime.toISOString(),
-        importance: form.importance, status: form.status, color: form.color || null, notes: form.notes || null
+        importance: form.importance, status: form.status, color: form.color || null, notes: form.notes || null,
+        recurrence,
       };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
@@ -87,7 +144,10 @@ export default function SchedulePage() {
     setForm({
       title: event.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
-      importance: event.importance || "普通", status: event.status, color: event.color || "", notes: event.notes || ""
+      importance: event.importance || "普通", status: event.status, color: event.color || "", notes: event.notes || "",
+      recurrence_type: (event.recurrence as any)?.type || "none",
+      recurrence_end_date: (event.recurrence as any)?.end_date || "",
+      recurrence_days: (event.recurrence as any)?.days_of_week || [],
     });
     setDialogOpen(true);
   }, []);
@@ -101,7 +161,8 @@ export default function SchedulePage() {
     setForm({
       title: "", start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
-      importance: "普通", status: "未开始", color: "", notes: ""
+      importance: "普通", status: "未开始", color: "", notes: "",
+      recurrence_type: "none", recurrence_end_date: "", recurrence_days: [],
     });
     setDialogOpen(true);
   }, []);
@@ -186,6 +247,47 @@ export default function SchedulePage() {
                   </div>
                 </div>
                 <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div>
+                  <Label>自定义颜色（可选）</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input type="color" value={form.color || "#0ea5e9"} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-8 p-0.5 cursor-pointer" />
+                    <span className="text-xs text-muted-foreground">{form.color || "使用默认颜色"}</span>
+                    {form.color && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setForm({ ...form, color: "" })}>清除</Button>}
+                  </div>
+                </div>
+                {/* Recurrence */}
+                <div>
+                  <Label>重复</Label>
+                  <Select value={form.recurrence_type} onValueChange={(v) => setForm({ ...form, recurrence_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">不重复</SelectItem>
+                      <SelectItem value="daily">每天</SelectItem>
+                      <SelectItem value="weekly">每周</SelectItem>
+                      <SelectItem value="monthly">每月</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.recurrence_type === "weekly" && (
+                    <div className="flex gap-1 mt-2">
+                      {["一","二","三","四","五","六","日"].map((d, i) => {
+                        const dayNum = i + 1;
+                        const selected = form.recurrence_days.includes(dayNum);
+                        return (
+                          <Button key={d} type="button" variant={selected ? "default" : "secondary"} size="sm" className="h-7 w-7 p-0 text-xs"
+                            onClick={() => setForm(f => ({ ...f, recurrence_days: selected ? f.recurrence_days.filter(x => x !== dayNum) : [...f.recurrence_days, dayNum] }))}>
+                            {d}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {form.recurrence_type !== "none" && (
+                    <div className="mt-2">
+                      <Label className="text-xs">结束日期（可选）</Label>
+                      <Input type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={handleSave} className="flex-1">保存</Button>
                   {editingItem && (

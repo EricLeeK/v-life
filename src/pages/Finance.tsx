@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, Edit2, ChevronDown } from "lucide-react";
 import { useFinanceByMonth, financeHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfWeek, endOfWeek, getDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -37,6 +37,14 @@ function getWeekKey(date: string) {
   return ws.toISOString().split("T")[0];
 }
 
+// 周三归属月：该周的周三落在哪个月，整周归属该月
+function getWeekMonth(date: string): string {
+  const d = new Date(date);
+  const ws = startOfWeek(d, { weekStartsOn: 1 });
+  const wednesday = addDays(ws, 2); // Monday + 2 = Wednesday
+  return `${wednesday.getFullYear()}-${String(wednesday.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function FinancePage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -52,26 +60,35 @@ export default function FinancePage() {
   const updateMutation = financeHooks.useUpdate();
   const deleteMutation = financeHooks.useDelete();
 
+  const targetMonth = `${year}-${String(month).padStart(2, "0")}`;
+  const monthRecords = useMemo(() => 
+    records.filter((r: any) => getWeekMonth(r.date) === targetMonth),
+    [records, targetMonth]
+  );
+
   const budget = settings?.monthly_budget || 5000;
   const exchangeRate = settings?.exchange_rate_jpy_to_cny || 0.048;
-  const totalCny = records.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
+  const totalCny = monthRecords.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
   const budgetProgress = Math.min(100, (totalCny / budget) * 100);
 
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
-    records.forEach((r: any) => { map[r.category] = (map[r.category] || 0) + Number(r.amount_cny); });
+    monthRecords.forEach((r: any) => { map[r.category] = (map[r.category] || 0) + Number(r.amount_cny); });
     return Object.entries(map).map(([name, value]) => ({ name, value: Number(value.toFixed(2)) })).sort((a, b) => b.value - a.value);
-  }, [records]);
+  }, [monthRecords]);
 
   const weeklyGroups = useMemo(() => {
+    const targetMonth = `${year}-${String(month).padStart(2, "0")}`;
     const groups: Record<string, { label: string; items: any[] }> = {};
     records.forEach((r: any) => {
+      // Only include records whose week's Wednesday falls in the selected month
+      if (getWeekMonth(r.date) !== targetMonth) return;
       const key = getWeekKey(r.date);
       if (!groups[key]) groups[key] = { label: getWeekLabel(r.date), items: [] };
       groups[key].items.push(r);
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  }, [records]);
+  }, [records, year, month]);
 
   const handleSave = async () => {
     if (!form.name || !form.amount || !form.date) { toast({ title: "请填写必填字段", variant: "destructive" }); return; }
@@ -144,7 +161,7 @@ export default function FinancePage() {
                 <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
               </div>
               <Progress value={budgetProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{records.length} 笔记录</p>
+              <p className="text-xs text-muted-foreground mt-1">{monthRecords.length} 笔记录</p>
             </CardContent>
           </Card>
 
