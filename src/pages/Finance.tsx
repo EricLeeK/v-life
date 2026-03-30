@@ -72,14 +72,17 @@ export default function FinancePage() {
   }, [records]);
 
   const weeklyGroups = useMemo(() => {
+    const targetMonth = `${year}-${String(month).padStart(2, "0")}`;
     const groups: Record<string, { label: string; items: any[] }> = {};
     records.forEach((r: any) => {
+      // Only include records whose week's Wednesday falls in the selected month
+      if (getWeekMonth(r.date) !== targetMonth) return;
       const key = getWeekKey(r.date);
       if (!groups[key]) groups[key] = { label: getWeekLabel(r.date), items: [] };
       groups[key].items.push(r);
     });
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  }, [records]);
+  }, [records, year, month]);
 
   const handleSave = async () => {
     if (!form.name || !form.amount || !form.date) { toast({ title: "请填写必填字段", variant: "destructive" }); return; }
