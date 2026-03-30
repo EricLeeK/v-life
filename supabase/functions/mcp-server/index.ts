@@ -290,8 +290,7 @@ mcpServer.tool("data_import", {
 
 // ─── Resources ───
 
-mcpServer.resource({
-  uri: "dashboard://summary",
+mcpServer.resource("dashboard://summary", {
   name: "Dashboard Summary",
   description: "首页概览数据",
   mimeType: "application/json",
@@ -314,8 +313,7 @@ mcpServer.resource({
   },
 });
 
-mcpServer.resource({
-  uri: "finance://monthly/{year}/{month}",
+mcpServer.resource("finance://monthly/{year}/{month}", {
   name: "Monthly Finance",
   description: "指定月份财务汇总",
   mimeType: "application/json",
@@ -332,8 +330,7 @@ mcpServer.resource({
   },
 });
 
-mcpServer.resource({
-  uri: "calories://daily/{date}",
+mcpServer.resource("calories://daily/{date}", {
   name: "Daily Calories",
   description: "指定日期热量汇总",
   mimeType: "application/json",
