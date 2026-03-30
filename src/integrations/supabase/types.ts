@@ -14,7 +14,436 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_messages: {
+        Row: {
+          actions: Json | null
+          content: string
+          created_at: string
+          id: string
+          images: string[] | null
+          role: string
+          session_id: string
+        }
+        Insert: {
+          actions?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          role: string
+          session_id: string
+        }
+        Update: {
+          actions?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          images?: string[] | null
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      belongings_daily: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      belongings_durable: {
+        Row: {
+          category: string
+          created_at: string
+          expected_lifespan_days: number
+          id: string
+          name: string
+          notes: string | null
+          purchase_date: string
+          purchase_price: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          expected_lifespan_days: number
+          id?: string
+          name: string
+          notes?: string | null
+          purchase_date: string
+          purchase_price: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expected_lifespan_days?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          purchase_date?: string
+          purchase_price?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      calorie_records: {
+        Row: {
+          calories: number
+          created_at: string
+          date: string
+          food_name: string
+          id: string
+          meal_type: string
+          notes: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          calories: number
+          created_at?: string
+          date: string
+          food_name: string
+          id?: string
+          meal_type: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          calories?: number
+          created_at?: string
+          date?: string
+          food_name?: string
+          id?: string
+          meal_type?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      finance_records: {
+        Row: {
+          amount: number
+          amount_cny: number
+          category: string
+          created_at: string
+          currency: string
+          date: string
+          exchange_rate: number
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          amount_cny: number
+          category: string
+          created_at?: string
+          currency?: string
+          date: string
+          exchange_rate?: number
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          amount_cny?: number
+          category?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          exchange_rate?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      pantry_items: {
+        Row: {
+          category: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          quantity: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          quantity?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      schedule_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          end_time: string
+          id: string
+          importance: string | null
+          notes: string | null
+          parent_event_id: string | null
+          recurrence: Json | null
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          importance?: string | null
+          notes?: string | null
+          parent_event_id?: string | null
+          recurrence?: Json | null
+          start_time: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          importance?: string | null
+          notes?: string | null
+          parent_event_id?: string | null
+          recurrence?: Json | null
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_events_parent_event_id_fkey"
+            columns: ["parent_event_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      settings: {
+        Row: {
+          ai_api_key: string | null
+          ai_base_url: string | null
+          ai_mode: string | null
+          ai_model: string | null
+          ai_platform: string | null
+          calorie_target: number | null
+          created_at: string
+          custom_thought_tags: Json | null
+          exchange_rate_jpy_to_cny: number | null
+          exchange_rate_updated_at: string | null
+          id: string
+          monthly_budget: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          ai_api_key?: string | null
+          ai_base_url?: string | null
+          ai_mode?: string | null
+          ai_model?: string | null
+          ai_platform?: string | null
+          calorie_target?: number | null
+          created_at?: string
+          custom_thought_tags?: Json | null
+          exchange_rate_jpy_to_cny?: number | null
+          exchange_rate_updated_at?: string | null
+          id?: string
+          monthly_budget?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          ai_api_key?: string | null
+          ai_base_url?: string | null
+          ai_mode?: string | null
+          ai_model?: string | null
+          ai_platform?: string | null
+          calorie_target?: number | null
+          created_at?: string
+          custom_thought_tags?: Json | null
+          exchange_rate_jpy_to_cny?: number | null
+          exchange_rate_updated_at?: string | null
+          id?: string
+          monthly_budget?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      thoughts: {
+        Row: {
+          content: string
+          created_at: string
+          icon: string | null
+          id: string
+          tags: string[] | null
+          title: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      todos: {
+        Row: {
+          category: string
+          created_at: string
+          detail: string | null
+          id: string
+          importance: string
+          is_completed: boolean
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          importance?: string
+          is_completed?: boolean
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          importance?: string
+          is_completed?: boolean
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
