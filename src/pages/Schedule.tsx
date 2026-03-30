@@ -255,6 +255,39 @@ export default function SchedulePage() {
                     {form.color && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setForm({ ...form, color: "" })}>清除</Button>}
                   </div>
                 </div>
+                {/* Recurrence */}
+                <div>
+                  <Label>重复</Label>
+                  <Select value={form.recurrence_type} onValueChange={(v) => setForm({ ...form, recurrence_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">不重复</SelectItem>
+                      <SelectItem value="daily">每天</SelectItem>
+                      <SelectItem value="weekly">每周</SelectItem>
+                      <SelectItem value="monthly">每月</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {form.recurrence_type === "weekly" && (
+                    <div className="flex gap-1 mt-2">
+                      {["一","二","三","四","五","六","日"].map((d, i) => {
+                        const dayNum = i + 1;
+                        const selected = form.recurrence_days.includes(dayNum);
+                        return (
+                          <Button key={d} type="button" variant={selected ? "default" : "secondary"} size="sm" className="h-7 w-7 p-0 text-xs"
+                            onClick={() => setForm(f => ({ ...f, recurrence_days: selected ? f.recurrence_days.filter(x => x !== dayNum) : [...f.recurrence_days, dayNum] }))}>
+                            {d}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {form.recurrence_type !== "none" && (
+                    <div className="mt-2">
+                      <Label className="text-xs">结束日期（可选）</Label>
+                      <Input type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
+                    </div>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={handleSave} className="flex-1">保存</Button>
                   {editingItem && (
