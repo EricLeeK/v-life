@@ -44,8 +44,9 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 // Map AI operation data to actual table columns
-function mapOperationToRow(module: string, data: Record<string, any>): Record<string, any> {
+function mapOperationToRow(module: string, data: Record<string, any>, exchangeRate?: number): Record<string, any> {
   const today = format(new Date(), "yyyy-MM-dd");
+  const jpyRate = exchangeRate || 0.048;
 
   switch (module) {
     case "finance":
@@ -55,8 +56,8 @@ function mapOperationToRow(module: string, data: Record<string, any>): Record<st
         currency: data.currency || "CNY",
         category: data.category || "其他",
         date: data.date || today,
-        amount_cny: data.currency === "JPY" ? Number(data.amount) * 0.048 : Number(data.amount),
-        exchange_rate: data.currency === "JPY" ? 0.048 : 1,
+        amount_cny: data.currency === "JPY" ? Number(data.amount) * jpyRate : Number(data.amount),
+        exchange_rate: data.currency === "JPY" ? jpyRate : 1,
         notes: data.notes || null,
       };
     case "calories":
@@ -144,6 +145,16 @@ export function AIChatPanel() {
 
   const executeOperations = useCallback(
     async (operations: Operation[]) => {
+      // Fetch current exchange rate from settings
+      let exchangeRate = 0.048;
+      const hasFinanceJpy = operations.some(op => op.module === "finance" && op.data?.currency === "JPY");
+      if (hasFinanceJpy) {
+        const { data: settings } = await supabase.from("settings").select("exchange_rate_jpy_to_cny").limit(1).single();
+        if (settings?.exchange_rate_jpy_to_cny) {
+          exchangeRate = Number(settings.exchange_rate_jpy_to_cny);
+        }
+      }
+
       const results: string[] = [];
       for (const op of operations) {
         const table = MODULE_TABLE_MAP[op.module];
@@ -155,7 +166,7 @@ export function AIChatPanel() {
         const itemName = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
-            const row = mapOperationToRow(op.module, op.data);
+            const row = mapOperationToRow(op.module, op.data, exchangeRate);
             const { error } = await (supabase.from as any)(table).insert(row);
             if (error) throw error;
             results.push(`✅ ${label}: 已添加「${itemName}」`);
