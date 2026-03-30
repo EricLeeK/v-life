@@ -1,0 +1,44 @@
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
+import { MobileNav } from "@/components/MobileNav";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+interface AppLayoutProps {
+  children: React.ReactNode;
+  title?: string;
+}
+
+export function AppLayout({ children, title }: AppLayoutProps) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-background pb-16">
+        {title && (
+          <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border px-4 h-12 flex items-center">
+            <h1 className="text-base font-semibold text-foreground">{title}</h1>
+          </header>
+        )}
+        <main className="p-4">{children}</main>
+        <MobileNav />
+      </div>
+    );
+  }
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <header className="h-12 flex items-center border-b border-border px-4 gap-3 shrink-0">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+            {title && (
+              <h1 className="text-base font-semibold text-foreground">{title}</h1>
+            )}
+          </header>
+          <main className="flex-1 p-6 overflow-auto">{children}</main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}

@@ -3,8 +3,16 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+import PantryPage from "./pages/Pantry";
+import BelongingsPage from "./pages/Belongings";
+import SchedulePage from "./pages/Schedule";
+import CaloriesPage from "./pages/Calories";
+import FinancePage from "./pages/Finance";
+import TodosPage from "./pages/Todos";
+import ThoughtsPage from "./pages/Thoughts";
+import SettingsPage from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +24,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/pantry" element={<PantryPage />} />
+          <Route path="/belongings" element={<BelongingsPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/calories" element={<CaloriesPage />} />
+          <Route path="/finance" element={<FinancePage />} />
+          <Route path="/todos" element={<TodosPage />} />
+          <Route path="/thoughts" element={<ThoughtsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
