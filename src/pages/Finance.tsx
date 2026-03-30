@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, Edit2, ChevronDown } from "lucide-react";
 import { useFinanceByMonth, financeHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfWeek, endOfWeek, getDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
