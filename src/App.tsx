@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AIChatPanel } from "@/components/AIChatPanel";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PantryPage from "./pages/Pantry";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <AIChatPanel />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
