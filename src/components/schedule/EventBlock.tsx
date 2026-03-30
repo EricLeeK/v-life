@@ -41,17 +41,18 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
   const bottom = timeToY(endDate);
   const height = Math.max(bottom - top, HOUR_HEIGHT / 4);
 
-  const dragState = useRef<{ mode: "move" | "resize"; startY: number; origTop: number; origHeight: number } | null>(null);
+  const dragState = useRef<{ mode: "move" | "resize"; startY: number; origTop: number; origHeight: number; dragged: boolean } | null>(null);
   const blockRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, mode: "move" | "resize") => {
     e.stopPropagation();
     e.preventDefault();
-    dragState.current = { mode, startY: e.clientY, origTop: top, origHeight: height };
+    dragState.current = { mode, startY: e.clientY, origTop: top, origHeight: height, dragged: false };
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragState.current || !blockRef.current) return;
       const dy = ev.clientY - dragState.current.startY;
+      if (Math.abs(dy) > 3) dragState.current.dragged = true;
       if (dragState.current.mode === "move") {
         const newTop = Math.max(0, Math.min(TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origHeight, dragState.current.origTop + dy));
         blockRef.current.style.top = `${newTop}px`;
@@ -65,26 +66,31 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
       if (!dragState.current) return;
+      const wasDragged = dragState.current.dragged;
       const dy = ev.clientY - dragState.current.startY;
       const dayDate = new Date(startDate);
       dayDate.setHours(0, 0, 0, 0);
-      if (dragState.current.mode === "move") {
-        const newTop = Math.max(0, dragState.current.origTop + dy);
-        const duration = endDate.getTime() - startDate.getTime();
-        const newStart = yToTime(newTop, dayDate);
-        const newEnd = new Date(newStart.getTime() + duration);
-        onDragEnd(event.id, newStart, newEnd);
-      } else {
-        const newHeight = Math.max(HOUR_HEIGHT / 4, dragState.current.origHeight + dy);
-        const newEnd = yToTime(dragState.current.origTop + newHeight, dayDate);
-        onDragEnd(event.id, startDate, newEnd);
+      if (wasDragged) {
+        if (dragState.current.mode === "move") {
+          const newTop = Math.max(0, dragState.current.origTop + dy);
+          const duration = endDate.getTime() - startDate.getTime();
+          const newStart = yToTime(newTop, dayDate);
+          const newEnd = new Date(newStart.getTime() + duration);
+          onDragEnd(event.id, newStart, newEnd);
+        } else {
+          const newHeight = Math.max(HOUR_HEIGHT / 4, dragState.current.origHeight + dy);
+          const newEnd = yToTime(dragState.current.origTop + newHeight, dayDate);
+          onDragEnd(event.id, startDate, newEnd);
+        }
+      } else if (mode === "move") {
+        onEdit(event);
       }
       dragState.current = null;
     };
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-  }, [top, height, startDate, endDate, event.id, onDragEnd]);
+  }, [top, height, startDate, endDate, event.id, onDragEnd, onEdit]);
 
   return (
     <div
@@ -95,7 +101,6 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
         background: color + "25", borderLeft: `3px solid ${color}`, zIndex: 10,
       }}
       onMouseDown={(e) => handleMouseDown(e, "move")}
-      onClick={(e) => { e.stopPropagation(); onEdit(event); }}
     >
       <div className="px-1.5 py-0.5 overflow-hidden h-full flex flex-col">
         <span className="text-xs font-medium truncate" style={{ color }}>{event.title}</span>
