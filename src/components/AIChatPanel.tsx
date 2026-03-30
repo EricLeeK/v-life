@@ -665,7 +665,8 @@ export function AIChatPanel() {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="描述你要记录的内容..."
+                onPaste={handlePaste}
+                placeholder="描述你要记录的内容...（可粘贴图片）"
                 className="flex-1 text-sm"
                 disabled={loading}
               />
