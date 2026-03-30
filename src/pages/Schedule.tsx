@@ -55,10 +55,58 @@ export default function SchedulePage() {
   const updateMutation = scheduleHooks.useUpdate();
   const deleteMutation = scheduleHooks.useDelete();
 
+  // Expand recurring events into virtual instances for display
+  const expandedEvents = useMemo(() => {
+    const result: any[] = [];
+    events.forEach((event: any) => {
+      result.push(event);
+      const rec = event.recurrence as any;
+      if (!rec || rec.type === "none") return;
+      const eventStart = new Date(event.start_time);
+      const eventEnd = new Date(event.end_time);
+      const duration = eventEnd.getTime() - eventStart.getTime();
+      const recEndDate = rec.end_date ? new Date(rec.end_date) : rangeEnd;
+      const maxEnd = new Date(Math.min(recEndDate.getTime(), rangeEnd.getTime()));
+
+      let current = new Date(eventStart);
+      for (let i = 0; i < 200; i++) {
+        if (rec.type === "daily") current = addDays(current, rec.interval || 1);
+        else if (rec.type === "weekly") current = addDays(current, 7 * (rec.interval || 1));
+        else if (rec.type === "monthly") {
+          current = new Date(current);
+          current.setMonth(current.getMonth() + (rec.interval || 1));
+        } else break;
+
+        if (isAfter(current, maxEnd)) break;
+        if (isBefore(current, rangeStart)) continue;
+
+        // For weekly with specific days
+        if (rec.type === "weekly" && rec.days_of_week?.length > 0) {
+          const dayOfWeek = current.getDay() === 0 ? 7 : current.getDay();
+          if (!rec.days_of_week.includes(dayOfWeek)) continue;
+        }
+
+        const virtualStart = new Date(current);
+        virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
+        const virtualEnd = new Date(virtualStart.getTime() + duration);
+
+        result.push({
+          ...event,
+          id: `${event.id}_rec_${i}`,
+          start_time: virtualStart.toISOString(),
+          end_time: virtualEnd.toISOString(),
+          _isRecurrenceInstance: true,
+          _parentId: event.id,
+        });
+      }
+    });
+    return result;
+  }, [events, rangeStart, rangeEnd]);
+
   const getEventsForDay = useCallback((day: Date) => {
     const dayStr = format(day, "yyyy-MM-dd");
-    return events.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
-  }, [events]);
+    return expandedEvents.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
+  }, [expandedEvents]);
 
   const resetForm = useCallback(() => {
     const today = format(new Date(), "yyyy-MM-dd");
