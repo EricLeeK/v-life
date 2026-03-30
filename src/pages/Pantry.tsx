@@ -19,7 +19,7 @@ function getStatus(expiryDate: string | null): { label: string; color: string } 
   if (!expiryDate) return { label: "充足", color: "bg-success/20 text-success" };
   const days = differenceInDays(new Date(expiryDate), new Date());
   if (days < 0) return { label: "已过期", color: "bg-destructive/20 text-destructive" };
-  if (days <= 3) return { label: "即将耗尽", color: "bg-warning/20 text-warning" };
+  if (days <= 3) return { label: "即将过期", color: "bg-warning/20 text-warning" };
   return { label: "充足", color: "bg-success/20 text-success" };
 }
 
