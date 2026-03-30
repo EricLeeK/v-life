@@ -89,7 +89,10 @@ export default function SchedulePage() {
     setForm({
       title: event.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
-      importance: event.importance || "普通", status: event.status, color: event.color || "", notes: event.notes || ""
+      importance: event.importance || "普通", status: event.status, color: event.color || "", notes: event.notes || "",
+      recurrence_type: (event.recurrence as any)?.type || "none",
+      recurrence_end_date: (event.recurrence as any)?.end_date || "",
+      recurrence_days: (event.recurrence as any)?.days_of_week || [],
     });
     setDialogOpen(true);
   }, []);
