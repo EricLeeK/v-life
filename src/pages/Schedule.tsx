@@ -106,7 +106,8 @@ export default function SchedulePage() {
     setForm({
       title: "", start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
-      importance: "普通", status: "未开始", color: "", notes: ""
+      importance: "普通", status: "未开始", color: "", notes: "",
+      recurrence_type: "none", recurrence_end_date: "", recurrence_days: [],
     });
     setDialogOpen(true);
   }, []);
