@@ -326,13 +326,13 @@ export default function SchedulePage() {
 
             {/* Scrollable time grid */}
             <div ref={scrollRef} className="max-h-[calc(100vh-220px)] overflow-y-auto relative">
-              <div className={`grid ${gridCols}`} style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }}>
+              <div className={`grid ${gridCols} pt-2 pb-2`} style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT + 16}px` }}>
                 {/* Time gutter */}
                 <div className="relative">
-                  {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
-                    <div key={i} className="absolute right-1 text-[10px] text-muted-foreground leading-none"
-                      style={{ top: `${i * HOUR_HEIGHT - 5}px` }}>
-                      {i + VISIBLE_START > 0 ? `${String(i + VISIBLE_START).padStart(2, "0")}:00` : ""}
+                  {Array.from({ length: TOTAL_HOURS + 1 }).map((_, i) => (
+                    <div key={i} className="absolute right-1 text-[10px] text-muted-foreground"
+                      style={{ top: `${i * HOUR_HEIGHT + 8 - 5}px`, lineHeight: "1" }}>
+                      {`${String(i + VISIBLE_START).padStart(2, "0")}:00`}
                     </div>
                   ))}
                 </div>
