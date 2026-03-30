@@ -44,8 +44,9 @@ const MODULE_LABELS: Record<string, string> = {
 };
 
 // Map AI operation data to actual table columns
-function mapOperationToRow(module: string, data: Record<string, any>): Record<string, any> {
+function mapOperationToRow(module: string, data: Record<string, any>, exchangeRate?: number): Record<string, any> {
   const today = format(new Date(), "yyyy-MM-dd");
+  const jpyRate = exchangeRate || 0.048;
 
   switch (module) {
     case "finance":
@@ -55,8 +56,8 @@ function mapOperationToRow(module: string, data: Record<string, any>): Record<st
         currency: data.currency || "CNY",
         category: data.category || "其他",
         date: data.date || today,
-        amount_cny: data.currency === "JPY" ? Number(data.amount) * 0.048 : Number(data.amount),
-        exchange_rate: data.currency === "JPY" ? 0.048 : 1,
+        amount_cny: data.currency === "JPY" ? Number(data.amount) * jpyRate : Number(data.amount),
+        exchange_rate: data.currency === "JPY" ? jpyRate : 1,
         notes: data.notes || null,
       };
     case "calories":
