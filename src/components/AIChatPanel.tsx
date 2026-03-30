@@ -237,19 +237,33 @@ export function AIChatPanel() {
     return data.id;
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    setImageFiles((prev) => [...prev, ...files]);
-    files.forEach((file) => {
+  const addImageFiles = useCallback((files: File[]) => {
+    const imageFiles = files.filter(f => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+    setImageFiles((prev) => [...prev, ...imageFiles]);
+    imageFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         setImagePreviews((prev) => [...prev, ev.target?.result as string]);
       };
       reader.readAsDataURL(file);
     });
+  }, []);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    addImageFiles(files);
     e.target.value = "";
   };
+
+  const handlePaste = useCallback((e: React.ClipboardEvent) => {
+    const items = Array.from(e.clipboardData.items);
+    const imageItems = items.filter(item => item.type.startsWith("image/"));
+    if (imageItems.length === 0) return;
+    e.preventDefault();
+    const files = imageItems.map(item => item.getAsFile()).filter(Boolean) as File[];
+    addImageFiles(files);
+  }, [addImageFiles]);
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
