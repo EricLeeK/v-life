@@ -25,7 +25,8 @@ export default function SchedulePage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({
     title: "", start_date: "", start_time: "09:00", end_date: "", end_time: "10:00",
-    importance: "普通", status: "未开始", color: "", notes: ""
+    importance: "普通", status: "未开始", color: "", notes: "",
+    recurrence_type: "none" as string, recurrence_end_date: "", recurrence_days: [] as number[],
   });
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
