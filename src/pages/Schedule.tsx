@@ -72,9 +72,16 @@ export default function SchedulePage() {
     try {
       const startTime = new Date(`${form.start_date}T${form.start_time}:00`);
       const endTime = new Date(`${form.end_date}T${form.end_time}:00`);
+      const recurrence = form.recurrence_type !== "none" ? {
+        type: form.recurrence_type,
+        interval: 1,
+        days_of_week: form.recurrence_days.length > 0 ? form.recurrence_days : undefined,
+        end_date: form.recurrence_end_date || null,
+      } : null;
       const payload = {
         title: form.title, start_time: startTime.toISOString(), end_time: endTime.toISOString(),
-        importance: form.importance, status: form.status, color: form.color || null, notes: form.notes || null
+        importance: form.importance, status: form.status, color: form.color || null, notes: form.notes || null,
+        recurrence,
       };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
