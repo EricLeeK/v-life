@@ -46,16 +46,12 @@ export function useUpdateSettings() {
 }
 
 // ============ Generic CRUD hooks ============
-function useCrudHooks<T extends keyof Tables<never>>(
-  table: string,
-  queryKey: string,
-  defaultOrder: string = "created_at"
-) {
+function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "created_at") {
   const useList = (filters?: Record<string, any>) => {
     return useQuery({
       queryKey: [queryKey, filters],
       queryFn: async () => {
-        let query = supabase.from(table).select("*").order(defaultOrder, { ascending: false });
+        let query = (supabase.from as any)(table).select("*").order(defaultOrder, { ascending: false });
         if (filters) {
           Object.entries(filters).forEach(([key, value]) => {
             if (value !== undefined && value !== null && value !== "") {
@@ -65,7 +61,7 @@ function useCrudHooks<T extends keyof Tables<never>>(
         }
         const { data, error } = await query;
         if (error) throw error;
-        return data;
+        return data as any[];
       },
     });
   };
@@ -74,7 +70,7 @@ function useCrudHooks<T extends keyof Tables<never>>(
     const qc = useQueryClient();
     return useMutation({
       mutationFn: async (item: any) => {
-        const { data, error } = await supabase.from(table).insert(item).select().single();
+        const { data, error } = await (supabase.from as any)(table).insert(item).select().single();
         if (error) throw error;
         return data;
       },
@@ -86,7 +82,7 @@ function useCrudHooks<T extends keyof Tables<never>>(
     const qc = useQueryClient();
     return useMutation({
       mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
-        const { data, error } = await supabase.from(table).update(updates).eq("id", id).select().single();
+        const { data, error } = await (supabase.from as any)(table).update(updates).eq("id", id).select().single();
         if (error) throw error;
         return data;
       },
@@ -98,7 +94,7 @@ function useCrudHooks<T extends keyof Tables<never>>(
     const qc = useQueryClient();
     return useMutation({
       mutationFn: async (id: string) => {
-        const { error } = await supabase.from(table).delete().eq("id", id);
+        const { error } = await (supabase.from as any)(table).delete().eq("id", id);
         if (error) throw error;
       },
       onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
