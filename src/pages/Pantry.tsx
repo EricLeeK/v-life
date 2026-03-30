@@ -40,7 +40,7 @@ export default function PantryPage() {
     if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (filter === "即将过期") {
       const status = getStatus(item.expiry_date);
-      return status.label === "即将耗尽";
+      return status.label === "即将过期";
     }
     if (filter === "已过期") {
       const status = getStatus(item.expiry_date);
