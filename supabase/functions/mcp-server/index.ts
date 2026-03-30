@@ -347,6 +347,7 @@ mcpServer.resource("calories://daily/{date}", {
 // ─── Transport ───
 
 const transport = new StreamableHttpTransport();
+transport.bind(mcpServer);
 
 app.all("/*", async (c) => {
   return await transport.handleRequest(c.req.raw, mcpServer);
