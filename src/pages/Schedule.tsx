@@ -62,7 +62,7 @@ export default function SchedulePage() {
 
   const resetForm = useCallback(() => {
     const today = format(new Date(), "yyyy-MM-dd");
-    setForm({ title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00", importance: "普通", status: "未开始", color: "", notes: "" });
+    setForm({ title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00", importance: "普通", status: "未开始", color: "", notes: "", recurrence_type: "none", recurrence_end_date: "", recurrence_days: [] });
   }, []);
 
   const handleSave = async () => {
