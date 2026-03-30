@@ -108,12 +108,12 @@ export default function SchedulePage() {
 
   // Navigation
   const goBack = () => {
-    if (viewMode === "3day") setBaseDate(subDays(baseDate, 3));
+    if (viewMode === "3day") setBaseDate(subDays(baseDate, 1));
     else if (viewMode === "week") setBaseDate(subWeeks(baseDate, 1));
     else setBaseDate(subMonths(baseDate, 1));
   };
   const goForward = () => {
-    if (viewMode === "3day") setBaseDate(addDays(baseDate, 3));
+    if (viewMode === "3day") setBaseDate(addDays(baseDate, 1));
     else if (viewMode === "week") setBaseDate(addWeeks(baseDate, 1));
     else setBaseDate(addMonths(baseDate, 1));
   };
