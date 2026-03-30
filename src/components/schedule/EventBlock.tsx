@@ -80,7 +80,8 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
           const newEnd = new Date(newStart.getTime() + duration);
           onDragEnd(event.id, newStart, newEnd);
         } else {
-          const newHeight = Math.max(HOUR_HEIGHT / 4, dragState.current.origHeight + dy);
+          const maxHeight = TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origTop;
+          const newHeight = Math.max(HOUR_HEIGHT / 4, Math.min(maxHeight, dragState.current.origHeight + dy));
           const newEnd = yToTime(dragState.current.origTop + newHeight, dayDate);
           onDragEnd(event.id, startDate, newEnd);
         }
