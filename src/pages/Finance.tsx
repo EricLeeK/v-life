@@ -161,7 +161,7 @@ export default function FinancePage() {
                 <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
               </div>
               <Progress value={budgetProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{records.length} 笔记录</p>
+              <p className="text-xs text-muted-foreground mt-1">{monthRecords.length} 笔记录</p>
             </CardContent>
           </Card>
 
