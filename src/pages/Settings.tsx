@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +10,16 @@ import { Separator } from "@/components/ui/separator";
 import { useSettings, useUpdateSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Upload, Download } from "lucide-react";
+
+const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
   const [newTag, setNewTag] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (isLoading || !settings) return <AppLayout title="设置"><p className="text-muted-foreground text-sm">加载中...</p></AppLayout>;
 
@@ -53,10 +57,9 @@ export default function SettingsPage() {
 
   const handleExport = async () => {
     try {
-      const tables = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
       const exportData: Record<string, any> = {};
-      for (const table of tables) {
-        const { data } = await supabase.from(table).select("*");
+      for (const table of TABLES) {
+        const { data } = await (supabase.from as any)(table).select("*");
         exportData[table] = data;
       }
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
@@ -66,6 +69,34 @@ export default function SettingsPage() {
       a.click(); URL.revokeObjectURL(url);
       toast({ title: "导出成功" });
     } catch (e: any) { toast({ title: "导出失败", description: e.message, variant: "destructive" }); }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const importData = JSON.parse(text);
+
+      // Store in IndexedDB for offline access
+      await saveToIndexedDB(importData);
+
+      // Optionally import to Supabase (upsert)
+      let importedCount = 0;
+      for (const table of TABLES) {
+        if (!importData[table] || !Array.isArray(importData[table])) continue;
+        if (table === "settings") continue; // Don't overwrite settings
+        for (const row of importData[table]) {
+          const { error } = await (supabase.from as any)(table).upsert(row, { onConflict: "id" });
+          if (!error) importedCount++;
+        }
+      }
+
+      toast({ title: "导入成功", description: `已导入 ${importedCount} 条记录` });
+    } catch (e: any) {
+      toast({ title: "导入失败", description: e.message, variant: "destructive" });
+    }
+    e.target.value = "";
   };
 
   return (
@@ -151,10 +182,47 @@ export default function SettingsPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">数据管理</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="secondary" onClick={handleExport} className="w-full">📦 导出全量数据 (JSON)</Button>
+            <Button variant="secondary" onClick={handleExport} className="w-full">
+              <Download className="h-4 w-4 mr-2" />导出全量数据 (JSON)
+            </Button>
+            <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+            <Button variant="secondary" onClick={() => fileInputRef.current?.click()} className="w-full">
+              <Upload className="h-4 w-4 mr-2" />导入数据 (JSON)
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              导入会将数据写入数据库（按 ID 合并），同时存入本地缓存供离线查看。
+            </p>
           </CardContent>
         </Card>
       </div>
     </AppLayout>
   );
+}
+
+// ===== IndexedDB helper =====
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("vlife-cache", 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains("data")) {
+        db.createObjectStore("data");
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveToIndexedDB(data: Record<string, any>) {
+  const db = await openDB();
+  const tx = db.transaction("data", "readwrite");
+  const store = tx.objectStore("data");
+  for (const [key, value] of Object.entries(data)) {
+    store.put(value, key);
+  }
+  return new Promise<void>((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
