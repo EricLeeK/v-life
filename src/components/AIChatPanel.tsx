@@ -1,18 +1,23 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { Bot, X, Send, Loader2, Check, AlertCircle } from "lucide-react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2, Undo2 } from "lucide-react";
 import { format } from "date-fns";
+import { useSettings } from "@/hooks/useData";
+
+type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
 type Message = {
   role: "user" | "assistant";
   content: string;
+  contentRaw?: MessageContent;
+  imageUrls?: string[];
   operations?: Operation[];
-  status?: "pending" | "executed" | "error";
+  status?: "pending" | "executed" | "error" | "preview";
 };
 
 type Operation = {
@@ -43,7 +48,8 @@ const MODULE_LABELS: Record<string, string> = {
   belongings_durable: "耐用品",
 };
 
-// Map AI operation data to actual table columns
+const MAX_SESSIONS = 30;
+
 function mapOperationToRow(module: string, data: Record<string, any>, exchangeRate?: number): Record<string, any> {
   const today = format(new Date(), "yyyy-MM-dd");
   const jpyRate = exchangeRate || 0.048;
@@ -126,10 +132,34 @@ export function AIChatPanel() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [recentlyCreatedIds, setRecentlyCreatedIds] = useState<Array<{ table: string; id: string }>>([]);
+  const [undoTimer, setUndoTimer] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { data: settings } = useSettings();
+  const aiMode = settings?.ai_mode || "confirm";
+
+  // Fetch sessions
+  const { data: sessions = [], refetch: refetchSessions } = useQuery({
+    queryKey: ["ai_sessions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ai_sessions")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(MAX_SESSIONS);
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen,
+  });
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -143,19 +173,103 @@ export function AIChatPanel() {
     }
   }, [messages]);
 
+  // Cleanup old sessions beyond limit
+  useEffect(() => {
+    if (sessions.length > MAX_SESSIONS) {
+      const toDelete = sessions.slice(MAX_SESSIONS).map((s: any) => s.id);
+      toDelete.forEach((id: string) => {
+        supabase.from("ai_messages").delete().eq("session_id", id).then(() => {
+          supabase.from("ai_sessions").delete().eq("id", id);
+        });
+      });
+    }
+  }, [sessions]);
+
+  const loadSession = async (sessionId: string) => {
+    const { data: msgs } = await supabase
+      .from("ai_messages")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: true });
+
+    setMessages(
+      (msgs || []).map((m: any) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+        imageUrls: m.images || undefined,
+        operations: m.actions ? (m.actions as any).operations : undefined,
+        status: m.actions ? "executed" : undefined,
+      }))
+    );
+    setCurrentSessionId(sessionId);
+    setShowHistory(false);
+  };
+
+  const startNewSession = () => {
+    setMessages([]);
+    setCurrentSessionId(null);
+    setShowHistory(false);
+  };
+
+  const saveMessage = async (sessionId: string, role: string, content: string, images?: string[], actions?: any) => {
+    await supabase.from("ai_messages").insert({
+      session_id: sessionId,
+      role,
+      content,
+      images: images || null,
+      actions: actions || null,
+    });
+    // Update session timestamp
+    await supabase.from("ai_sessions").update({ updated_at: new Date().toISOString() }).eq("id", sessionId);
+  };
+
+  const ensureSession = async (firstMessage: string): Promise<string> => {
+    if (currentSessionId) return currentSessionId;
+    const title = firstMessage.slice(0, 50);
+    const { data, error } = await supabase
+      .from("ai_sessions")
+      .insert({ title })
+      .select()
+      .single();
+    if (error) throw error;
+    setCurrentSessionId(data.id);
+    refetchSessions();
+    return data.id;
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setImageFiles((prev) => [...prev, ...files]);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setImagePreviews((prev) => [...prev, ev.target?.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const executeOperations = useCallback(
     async (operations: Operation[]) => {
-      // Fetch current exchange rate from settings
       let exchangeRate = 0.048;
       const hasFinanceJpy = operations.some(op => op.module === "finance" && op.data?.currency === "JPY");
       if (hasFinanceJpy) {
-        const { data: settings } = await supabase.from("settings").select("exchange_rate_jpy_to_cny").limit(1).single();
-        if (settings?.exchange_rate_jpy_to_cny) {
-          exchangeRate = Number(settings.exchange_rate_jpy_to_cny);
+        const { data: settingsData } = await supabase.from("settings").select("exchange_rate_jpy_to_cny").limit(1).single();
+        if (settingsData?.exchange_rate_jpy_to_cny) {
+          exchangeRate = Number(settingsData.exchange_rate_jpy_to_cny);
         }
       }
 
       const results: string[] = [];
+      const createdIds: Array<{ table: string; id: string }> = [];
+
       for (const op of operations) {
         const table = MODULE_TABLE_MAP[op.module];
         if (!table) {
@@ -167,15 +281,16 @@ export function AIChatPanel() {
         try {
           if (op.action === "create") {
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
-            const { error } = await (supabase.from as any)(table).insert(row);
+            const { data: inserted, error } = await (supabase.from as any)(table).insert(row).select().single();
             if (error) throw error;
+            if (inserted?.id) createdIds.push({ table, id: inserted.id });
             results.push(`✅ ${label}: 已添加「${itemName}」`);
           } else if (op.action === "delete" && op.data.match) {
             let query = (supabase.from as any)(table).delete();
             for (const [key, val] of Object.entries(op.data.match)) {
               query = query.eq(key, val);
             }
-            const { error, count } = await query;
+            const { error } = await query;
             if (error) throw error;
             results.push(`✅ ${label}: 已删除「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
@@ -193,31 +308,78 @@ export function AIChatPanel() {
           results.push(`❌ ${label}: ${e.message}`);
         }
       }
-      // Invalidate all relevant queries
+
       for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
-      return results;
+      // Also invalidate dashboard queries
+      qc.invalidateQueries({ queryKey: ["schedule", "today"] });
+      qc.invalidateQueries({ queryKey: ["calories", "today_summary"] });
+      qc.invalidateQueries({ queryKey: ["finance", "summary"] });
+      qc.invalidateQueries({ queryKey: ["todos", "pending"] });
+
+      return { results, createdIds };
     },
     [qc]
   );
 
+  const handleUndo = async () => {
+    if (recentlyCreatedIds.length === 0) return;
+    for (const { table, id } of recentlyCreatedIds) {
+      await (supabase.from as any)(table).delete().eq("id", id);
+    }
+    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
+      qc.invalidateQueries({ queryKey: [key] });
+    }
+    setRecentlyCreatedIds([]);
+    if (undoTimer) clearTimeout(undoTimer);
+    setUndoTimer(null);
+    toast({ title: "已撤销操作" });
+  };
+
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || loading) return;
+    if ((!text && imageFiles.length === 0) || loading) return;
     setInput("");
 
-    const userMsg: Message = { role: "user", content: text };
+    // Build message content
+    const currentImages = [...imagePreviews];
+    let contentRaw: MessageContent;
+    if (currentImages.length > 0) {
+      const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [];
+      if (text) parts.push({ type: "text", text });
+      currentImages.forEach((url) => {
+        parts.push({ type: "image_url", image_url: { url } });
+      });
+      contentRaw = parts;
+    } else {
+      contentRaw = text;
+    }
+
+    const userMsg: Message = {
+      role: "user",
+      content: text || "(图片)",
+      contentRaw,
+      imageUrls: currentImages.length > 0 ? currentImages : undefined,
+    };
     setMessages((prev) => [...prev, userMsg]);
+    setImageFiles([]);
+    setImagePreviews([]);
     setLoading(true);
 
     try {
+      const sessionId = await ensureSession(text || "图片输入");
+
+      // Save user message
+      await saveMessage(sessionId, "user", text || "(图片)", currentImages.length > 0 ? currentImages : undefined);
+
       const { data, error } = await supabase.functions.invoke("ai-chat", {
         body: {
           messages: [...messages, userMsg].map((m) => ({
             role: m.role,
-            content: m.content,
+            content: m.contentRaw || m.content,
           })),
+          session_id: sessionId,
         },
       });
 
@@ -229,22 +391,53 @@ export function AIChatPanel() {
       const summary: string = result?.summary || data?.raw || "无法理解请求";
 
       if (operations.length > 0) {
-        // Execute operations
-        const execResults = await executeOperations(operations);
-        const assistantMsg: Message = {
-          role: "assistant",
-          content: `${summary}\n\n${execResults.join("\n")}`,
-          operations,
-          status: execResults.every((r) => r.startsWith("✅")) ? "executed" : "error",
-        };
-        setMessages((prev) => [...prev, assistantMsg]);
-        toast({ title: "AI 操作完成", description: summary });
+        if (aiMode === "direct") {
+          // Direct mode: execute immediately, show undo button
+          const { results: execResults, createdIds } = await executeOperations(operations);
+          const assistantMsg: Message = {
+            role: "assistant",
+            content: `${summary}\n\n${execResults.join("\n")}`,
+            operations,
+            status: execResults.every((r) => r.startsWith("✅")) ? "executed" : "error",
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+          await saveMessage(sessionId, "assistant", assistantMsg.content, undefined, { operations });
+
+          // Set undo timer for created items
+          if (createdIds.length > 0) {
+            setRecentlyCreatedIds(createdIds);
+            const timer = window.setTimeout(() => {
+              setRecentlyCreatedIds([]);
+              setUndoTimer(null);
+            }, 8000);
+            setUndoTimer(timer);
+          }
+
+          toast({ title: "AI 操作完成", description: summary });
+        } else {
+          // Confirm mode: show preview first
+          const previewLines = operations.map((op) => {
+            const label = MODULE_LABELS[op.module] || op.module;
+            const action = { create: "新增", update: "更新", delete: "删除" }[op.action] || op.action;
+            const name = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
+            return `• ${action} ${label}「${name}」`;
+          });
+          const assistantMsg: Message = {
+            role: "assistant",
+            content: `${summary}\n\n将执行以下操作：\n${previewLines.join("\n")}`,
+            operations,
+            status: "preview",
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+          await saveMessage(sessionId, "assistant", assistantMsg.content, undefined, { operations, preview: true });
+        }
       } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: summary },
-        ]);
+        const assistantMsg: Message = { role: "assistant", content: summary };
+        setMessages((prev) => [...prev, assistantMsg]);
+        await saveMessage(sessionId, "assistant", summary);
       }
+
+      refetchSessions();
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
@@ -254,6 +447,35 @@ export function AIChatPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleConfirmExecute = async (msgIndex: number) => {
+    const msg = messages[msgIndex];
+    if (!msg?.operations) return;
+    setLoading(true);
+    try {
+      const { results: execResults } = await executeOperations(msg.operations);
+      const updatedMsg: Message = {
+        ...msg,
+        content: `${msg.content.split("\n\n将执行以下操作")[0]}\n\n${execResults.join("\n")}`,
+        status: execResults.every((r) => r.startsWith("✅")) ? "executed" : "error",
+      };
+      setMessages((prev) => prev.map((m, i) => (i === msgIndex ? updatedMsg : m)));
+      toast({ title: "操作已执行" });
+    } catch (e: any) {
+      toast({ title: "执行失败", description: e.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteSession = async (sessionId: string) => {
+    await supabase.from("ai_messages").delete().eq("session_id", sessionId);
+    await supabase.from("ai_sessions").delete().eq("id", sessionId);
+    if (currentSessionId === sessionId) {
+      startNewSession();
+    }
+    refetchSessions();
   };
 
   if (!isOpen) {
@@ -269,85 +491,177 @@ export function AIChatPanel() {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-[360px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-6rem)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-6rem)] bg-card border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
           <span className="font-medium text-sm">AI 助手</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+            {aiMode === "direct" ? "直接" : "确认"}模式
+          </span>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
-        {messages.length === 0 && (
-          <div className="text-center text-muted-foreground text-sm py-8 space-y-2">
-            <Bot className="h-10 w-10 mx-auto opacity-30" />
-            <p>试试说：</p>
-            <div className="space-y-1 text-xs">
-              <p className="bg-muted/50 rounded px-2 py-1">"午饭吃了拉面，花了30元，大概600卡"</p>
-              <p className="bg-muted/50 rounded px-2 py-1">"明天下午3点开会，大概1小时"</p>
-              <p className="bg-muted/50 rounded px-2 py-1">"买了洗发水和牙膏"</p>
-            </div>
-          </div>
-        )}
-        {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground"
-              }`}
-            >
-              {msg.content}
-              {msg.status === "executed" && (
-                <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
-                  <Check className="h-3 w-3" /> 已执行
-                </div>
-              )}
-              {msg.status === "error" && (
-                <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
-                  <AlertCircle className="h-3 w-3" /> 部分失败
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="bg-muted rounded-lg px-3 py-2">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Input */}
-      <div className="p-3 border-t border-border">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSend();
-          }}
-          className="flex gap-2"
-        >
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="描述你要记录的内容..."
-            className="flex-1 text-sm"
-            disabled={loading}
-          />
-          <Button type="submit" size="icon" disabled={loading || !input.trim()} className="shrink-0">
-            <Send className="h-4 w-4" />
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowHistory(!showHistory)} title="历史会话">
+            <History className="h-4 w-4" />
           </Button>
-        </form>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startNewSession} title="新对话">
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
+
+      {showHistory ? (
+        /* Session history list */
+        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+          <p className="text-xs text-muted-foreground mb-2">最近 {sessions.length} 个会话</p>
+          {sessions.map((s: any) => (
+            <div
+              key={s.id}
+              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
+                currentSessionId === s.id ? "bg-muted" : ""
+              }`}
+              onClick={() => loadSession(s.id)}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="text-sm truncate">{s.title || "无标题"}</p>
+                <p className="text-[10px] text-muted-foreground">{format(new Date(s.updated_at), "MM/dd HH:mm")}</p>
+              </div>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}>
+                <Trash2 className="h-3 w-3 text-destructive" />
+              </Button>
+            </div>
+          ))}
+          {sessions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">暂无历史会话</p>}
+        </div>
+      ) : (
+        <>
+          {/* Messages */}
+          <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
+            {messages.length === 0 && (
+              <div className="text-center text-muted-foreground text-sm py-8 space-y-2">
+                <Bot className="h-10 w-10 mx-auto opacity-30" />
+                <p>试试说：</p>
+                <div className="space-y-1 text-xs">
+                  <p className="bg-muted/50 rounded px-2 py-1">"午饭吃了拉面，花了30元，大概600卡"</p>
+                  <p className="bg-muted/50 rounded px-2 py-1">"明天下午3点开会，大概1小时"</p>
+                  <p className="bg-muted/50 rounded px-2 py-1">📷 拍小票自动识别记账</p>
+                </div>
+              </div>
+            )}
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground"
+                  }`}
+                >
+                  {/* Show images if any */}
+                  {msg.imageUrls && msg.imageUrls.length > 0 && (
+                    <div className="flex gap-1 mb-1 flex-wrap">
+                      {msg.imageUrls.map((url, idx) => (
+                        <img key={idx} src={url} alt="上传图片" className="h-16 w-16 object-cover rounded" />
+                      ))}
+                    </div>
+                  )}
+                  {msg.content}
+                  {msg.status === "executed" && (
+                    <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
+                      <Check className="h-3 w-3" /> 已执行
+                    </div>
+                  )}
+                  {msg.status === "error" && (
+                    <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
+                      <AlertCircle className="h-3 w-3" /> 部分失败
+                    </div>
+                  )}
+                  {msg.status === "preview" && (
+                    <div className="mt-2 flex gap-2">
+                      <Button size="sm" className="h-7 text-xs" onClick={() => handleConfirmExecute(i)} disabled={loading}>
+                        <Check className="h-3 w-3 mr-1" /> 确认执行
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => {
+                        setMessages(prev => prev.map((m, idx) => idx === i ? { ...m, status: undefined, content: m.content + "\n\n❌ 已取消" } : m));
+                      }}>
+                        取消
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-muted rounded-lg px-3 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Undo bar */}
+          {recentlyCreatedIds.length > 0 && (
+            <div className="px-3 py-2 border-t border-border bg-muted/50 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">刚刚执行了操作</span>
+              <Button size="sm" variant="secondary" className="h-7 text-xs" onClick={handleUndo}>
+                <Undo2 className="h-3 w-3 mr-1" /> 撤销
+              </Button>
+            </div>
+          )}
+
+          {/* Image previews */}
+          {imagePreviews.length > 0 && (
+            <div className="px-3 py-1 border-t border-border flex gap-1 flex-wrap">
+              {imagePreviews.map((url, i) => (
+                <div key={i} className="relative">
+                  <img src={url} alt="" className="h-12 w-12 object-cover rounded" />
+                  <button className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]"
+                    onClick={() => removeImage(i)}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="p-3 border-t border-border shrink-0">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSend();
+              }}
+              className="flex gap-2"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+              <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={() => fileInputRef.current?.click()}>
+                <Image className="h-4 w-4" />
+              </Button>
+              <Input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="描述你要记录的内容..."
+                className="flex-1 text-sm"
+                disabled={loading}
+              />
+              <Button type="submit" size="icon" disabled={loading || (!input.trim() && imageFiles.length === 0)} className="shrink-0">
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        </>
+      )}
     </div>
   );
 }
