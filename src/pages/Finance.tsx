@@ -37,6 +37,14 @@ function getWeekKey(date: string) {
   return ws.toISOString().split("T")[0];
 }
 
+// 周三归属月：该周的周三落在哪个月，整周归属该月
+function getWeekMonth(date: string): string {
+  const d = new Date(date);
+  const ws = startOfWeek(d, { weekStartsOn: 1 });
+  const wednesday = addDays(ws, 2); // Monday + 2 = Wednesday
+  return `${wednesday.getFullYear()}-${String(wednesday.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function FinancePage() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
