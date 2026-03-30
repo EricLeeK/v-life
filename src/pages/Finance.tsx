@@ -60,16 +60,22 @@ export default function FinancePage() {
   const updateMutation = financeHooks.useUpdate();
   const deleteMutation = financeHooks.useDelete();
 
+  const targetMonth = `${year}-${String(month).padStart(2, "0")}`;
+  const monthRecords = useMemo(() => 
+    records.filter((r: any) => getWeekMonth(r.date) === targetMonth),
+    [records, targetMonth]
+  );
+
   const budget = settings?.monthly_budget || 5000;
   const exchangeRate = settings?.exchange_rate_jpy_to_cny || 0.048;
-  const totalCny = records.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
+  const totalCny = monthRecords.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
   const budgetProgress = Math.min(100, (totalCny / budget) * 100);
 
   const categoryData = useMemo(() => {
     const map: Record<string, number> = {};
-    records.forEach((r: any) => { map[r.category] = (map[r.category] || 0) + Number(r.amount_cny); });
+    monthRecords.forEach((r: any) => { map[r.category] = (map[r.category] || 0) + Number(r.amount_cny); });
     return Object.entries(map).map(([name, value]) => ({ name, value: Number(value.toFixed(2)) })).sort((a, b) => b.value - a.value);
-  }, [records]);
+  }, [monthRecords]);
 
   const weeklyGroups = useMemo(() => {
     const targetMonth = `${year}-${String(month).padStart(2, "0")}`;
