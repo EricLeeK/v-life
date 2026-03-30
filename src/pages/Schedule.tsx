@@ -186,6 +186,14 @@ export default function SchedulePage() {
                   </div>
                 </div>
                 <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div>
+                  <Label>自定义颜色（可选）</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input type="color" value={form.color || "#0ea5e9"} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-8 p-0.5 cursor-pointer" />
+                    <span className="text-xs text-muted-foreground">{form.color || "使用默认颜色"}</span>
+                    {form.color && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setForm({ ...form, color: "" })}>清除</Button>}
+                  </div>
+                </div>
                 <div className="flex gap-2">
                   <Button onClick={handleSave} className="flex-1">保存</Button>
                   {editingItem && (
