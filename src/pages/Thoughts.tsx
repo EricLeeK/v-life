@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export default function ThoughtsPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
-  const [form, setForm] = useState({ title: "", content: "", tags: [] as string[], icon: "" });
+  const [form, setForm] = useState({ title: "", content: "", tags: [] as string[], icon: "", newTag: "" });
   const { toast } = useToast();
 
   const { data: thoughts = [] } = thoughtHooks.useList();
@@ -33,7 +33,21 @@ export default function ThoughtsPage() {
   const deleteMutation = thoughtHooks.useDelete();
 
   const customTags = (settings?.custom_thought_tags as string[] | null) || [];
-  const allTags = [...PRESET_TAGS, ...customTags.map((t: string) => ({ tag: t, emoji: "🏷️" }))];
+
+  // Collect all unique tags from actual thought data + presets + custom settings tags
+  const allTags = useMemo(() => {
+    const presetTagNames = PRESET_TAGS.map(p => p.tag);
+    const dataTagSet = new Set<string>();
+    thoughts.forEach((t: any) => t.tags?.forEach((tag: string) => dataTagSet.add(tag)));
+    customTags.forEach(t => dataTagSet.add(t));
+
+    // Preset tags always first, then additional tags from data/settings (not in presets)
+    const extraTags = Array.from(dataTagSet).filter(t => !presetTagNames.includes(t));
+    return [
+      ...PRESET_TAGS,
+      ...extraTags.map(tag => ({ tag, emoji: "🏷️" })),
+    ];
+  }, [thoughts, customTags]);
 
   const filtered = selectedTag
     ? thoughts.filter((t: any) => t.tags?.includes(selectedTag))
@@ -46,25 +60,31 @@ export default function ThoughtsPage() {
     }));
   };
 
+  const addCustomTag = () => {
+    const tag = form.newTag.trim();
+    if (!tag || form.tags.includes(tag)) return;
+    setForm(f => ({ ...f, tags: [...f.tags, tag], newTag: "" }));
+  };
+
   const handleSave = async () => {
     if (!form.content) { toast({ title: "请填写内容", variant: "destructive" }); return; }
     try {
       const payload = { title: form.title || null, content: form.content, tags: form.tags, icon: form.icon || null };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
-      setDialogOpen(false); setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "" });
+      setDialogOpen(false); setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" });
     } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
   };
 
   const openEdit = (item: any) => {
     setEditingItem(item);
-    setForm({ title: item.title || "", content: item.content, tags: item.tags || [], icon: item.icon || "" });
+    setForm({ title: item.title || "", content: item.content, tags: item.tags || [], icon: item.icon || "", newTag: "" });
     setDialogOpen(true);
   };
 
   return (
     <AppLayout title="随想">
-      <div className="max-w-4xl space-y-4">
+      <div className="max-w-5xl space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>全部</Button>
           {allTags.map(({ tag, emoji }) => (
@@ -73,7 +93,7 @@ export default function ThoughtsPage() {
             </Button>
           ))}
           <div className="flex-1" />
-          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "" }); } }}>
+          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" }); } }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" />新随想</Button>
             </DialogTrigger>
@@ -93,6 +113,18 @@ export default function ThoughtsPage() {
                         {emoji} {tag}
                       </Button>
                     ))}
+                    {/* Show any form tags not in allTags (newly added) */}
+                    {form.tags.filter(t => !allTags.some(at => at.tag === t)).map(tag => (
+                      <Button key={tag} variant="default" size="sm" className="h-7 text-xs" onClick={() => toggleTag(tag)}>
+                        🏷️ {tag}
+                      </Button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <Input value={form.newTag} onChange={(e) => setForm({ ...form, newTag: e.target.value })}
+                      placeholder="添加新标签" className="flex-1 h-8 text-xs"
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomTag())} />
+                    <Button size="sm" className="h-8 text-xs" onClick={addCustomTag}>+</Button>
                   </div>
                 </div>
                 <Button onClick={handleSave} className="w-full">保存</Button>
@@ -104,9 +136,10 @@ export default function ThoughtsPage() {
         {filtered.length === 0 ? (
           <p className="text-muted-foreground text-sm py-8 text-center">暂无随想</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          /* Masonry layout using CSS columns */
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
             {filtered.map((thought: any) => (
-              <Card key={thought.id} className="hover:border-primary/20 transition-colors overflow-hidden">
+              <Card key={thought.id} className="break-inside-avoid hover:border-primary/20 transition-colors overflow-hidden">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2 min-w-0">
@@ -118,13 +151,13 @@ export default function ThoughtsPage() {
                       <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteMutation.mutate(thought.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   </div>
-                  <div className="prose prose-sm prose-invert max-w-none text-sm text-muted-foreground max-h-[200px] overflow-hidden">
+                  <div className="prose prose-sm prose-invert max-w-none text-sm text-muted-foreground">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{thought.content}</ReactMarkdown>
                   </div>
-                  <div className="flex items-center gap-2 mt-3">
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
                     {thought.tags?.map((tag: string) => {
                       const preset = allTags.find((t) => t.tag === tag);
-                      return <Badge key={tag} variant="secondary" className="text-xs">{preset?.emoji} {tag}</Badge>;
+                      return <Badge key={tag} variant="secondary" className="text-xs">{preset?.emoji || "🏷️"} {tag}</Badge>;
                     })}
                     <span className="text-xs text-muted-foreground ml-auto">{format(new Date(thought.created_at), "MM/dd HH:mm")}</span>
                   </div>
