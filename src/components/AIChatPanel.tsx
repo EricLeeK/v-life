@@ -151,24 +151,41 @@ export function AIChatPanel() {
           results.push(`❌ 未知模块: ${op.module}`);
           continue;
         }
+        const label = MODULE_LABELS[op.module] || op.module;
+        const itemName = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
         try {
-          const row = mapOperationToRow(op.module, op.data);
-          const { error } = await (supabase.from as any)(table).insert(row);
-          if (error) throw error;
-          results.push(`✅ ${MODULE_LABELS[op.module] || op.module}: ${op.data.name || op.data.title || op.data.food_name || "已添加"}`);
-          // Invalidate relevant queries
-          qc.invalidateQueries({ queryKey: [op.module === "finance" ? "finance" : op.module === "calories" ? "calories" : op.module === "schedule" ? "schedule" : op.module === "todo" ? "todos" : op.module === "pantry" ? "pantry" : op.module === "thought" ? "thoughts" : op.module] });
+          if (op.action === "create") {
+            const row = mapOperationToRow(op.module, op.data);
+            const { error } = await (supabase.from as any)(table).insert(row);
+            if (error) throw error;
+            results.push(`✅ ${label}: 已添加「${itemName}」`);
+          } else if (op.action === "delete" && op.data.match) {
+            let query = (supabase.from as any)(table).delete();
+            for (const [key, val] of Object.entries(op.data.match)) {
+              query = query.eq(key, val);
+            }
+            const { error, count } = await query;
+            if (error) throw error;
+            results.push(`✅ ${label}: 已删除「${itemName}」`);
+          } else if (op.action === "update" && op.data.match && op.data.update) {
+            let query = (supabase.from as any)(table).update(op.data.update);
+            for (const [key, val] of Object.entries(op.data.match)) {
+              query = query.eq(key, val);
+            }
+            const { error } = await query;
+            if (error) throw error;
+            results.push(`✅ ${label}: 已更新「${itemName}」`);
+          } else {
+            results.push(`⚠️ ${label}: 不支持的操作 ${op.action}`);
+          }
         } catch (e: any) {
-          results.push(`❌ ${MODULE_LABELS[op.module] || op.module}: ${e.message}`);
+          results.push(`❌ ${label}: ${e.message}`);
         }
       }
-      // Invalidate dashboard queries too
-      qc.invalidateQueries({ queryKey: ["calories"] });
-      qc.invalidateQueries({ queryKey: ["finance"] });
-      qc.invalidateQueries({ queryKey: ["todos"] });
-      qc.invalidateQueries({ queryKey: ["schedule"] });
-      qc.invalidateQueries({ queryKey: ["pantry"] });
-      qc.invalidateQueries({ queryKey: ["thoughts"] });
+      // Invalidate all relevant queries
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
+        qc.invalidateQueries({ queryKey: [key] });
+      }
       return results;
     },
     [qc]
