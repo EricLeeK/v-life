@@ -145,6 +145,16 @@ export function AIChatPanel() {
 
   const executeOperations = useCallback(
     async (operations: Operation[]) => {
+      // Fetch current exchange rate from settings
+      let exchangeRate = 0.048;
+      const hasFinanceJpy = operations.some(op => op.module === "finance" && op.data?.currency === "JPY");
+      if (hasFinanceJpy) {
+        const { data: settings } = await supabase.from("settings").select("exchange_rate_jpy_to_cny").limit(1).single();
+        if (settings?.exchange_rate_jpy_to_cny) {
+          exchangeRate = Number(settings.exchange_rate_jpy_to_cny);
+        }
+      }
+
       const results: string[] = [];
       for (const op of operations) {
         const table = MODULE_TABLE_MAP[op.module];
@@ -156,7 +166,7 @@ export function AIChatPanel() {
         const itemName = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
-            const row = mapOperationToRow(op.module, op.data);
+            const row = mapOperationToRow(op.module, op.data, exchangeRate);
             const { error } = await (supabase.from as any)(table).insert(row);
             if (error) throw error;
             results.push(`✅ ${label}: 已添加「${itemName}」`);
