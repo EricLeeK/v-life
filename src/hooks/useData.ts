@@ -118,15 +118,16 @@ export function useFinanceByMonth(year: number, month: number) {
   return useQuery({
     queryKey: ["finance", "month", year, month],
     queryFn: async () => {
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-      const endMonth = month === 12 ? 1 : month + 1;
-      const endYear = month === 12 ? year + 1 : year;
-      const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
+      // Fetch a wider range to capture weeks that span month boundaries (Wednesday rule)
+      const startDate = new Date(year, month - 1, 1);
+      startDate.setDate(startDate.getDate() - 7); // 1 week before month start
+      const endDate = new Date(year, month, 1);
+      endDate.setDate(endDate.getDate() + 7); // 1 week after month end
       const { data, error } = await supabase
         .from("finance_records")
         .select("*")
-        .gte("date", startDate)
-        .lt("date", endDate)
+        .gte("date", startDate.toISOString().split("T")[0])
+        .lt("date", endDate.toISOString().split("T")[0])
         .order("date", { ascending: true });
       if (error) throw error;
       return data;
