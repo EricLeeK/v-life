@@ -54,10 +54,12 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
       const dy = ev.clientY - dragState.current.startY;
       if (Math.abs(dy) > 3) dragState.current.dragged = true;
       if (dragState.current.mode === "move") {
-        const newTop = Math.max(0, Math.min(TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origHeight, dragState.current.origTop + dy));
+        const maxTop = TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origHeight;
+        const newTop = Math.max(0, Math.min(maxTop, dragState.current.origTop + dy));
         blockRef.current.style.top = `${newTop}px`;
       } else {
-        const newHeight = Math.max(HOUR_HEIGHT / 4, dragState.current.origHeight + dy);
+        const maxHeight = TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origTop;
+        const newHeight = Math.max(HOUR_HEIGHT / 4, Math.min(maxHeight, dragState.current.origHeight + dy));
         blockRef.current.style.height = `${newHeight}px`;
       }
     };
@@ -78,7 +80,8 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
           const newEnd = new Date(newStart.getTime() + duration);
           onDragEnd(event.id, newStart, newEnd);
         } else {
-          const newHeight = Math.max(HOUR_HEIGHT / 4, dragState.current.origHeight + dy);
+          const maxHeight = TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origTop;
+          const newHeight = Math.max(HOUR_HEIGHT / 4, Math.min(maxHeight, dragState.current.origHeight + dy));
           const newEnd = yToTime(dragState.current.origTop + newHeight, dayDate);
           onDragEnd(event.id, startDate, newEnd);
         }
