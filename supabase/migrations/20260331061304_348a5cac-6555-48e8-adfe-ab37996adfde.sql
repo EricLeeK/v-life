@@ -1,0 +1,2 @@
+ALTER TABLE public.calorie_records DROP CONSTRAINT IF EXISTS calorie_records_meal_type_check;
+ALTER TABLE public.calorie_records ADD CONSTRAINT calorie_records_meal_type_check CHECK (meal_type IN ('breakfast','lunch','dinner','snack','exercise'));
