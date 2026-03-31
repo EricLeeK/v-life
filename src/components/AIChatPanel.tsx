@@ -80,15 +80,28 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         date: data.date || today,
         notes: data.notes || null,
       };
-    case "schedule":
+    case "schedule": {
+      // AI outputs times like "2026-03-31T14:00:00" meaning local time
+      // We must convert to proper ISO with timezone so DB stores correctly
+      const parseLocalTime = (t: string) => {
+        if (!t) return new Date().toISOString();
+        // If already has timezone info (Z or +/-), use as-is
+        if (/[Zz]$/.test(t) || /[+-]\d{2}:\d{2}$/.test(t)) return t;
+        // Parse as local time: "2026-03-31T14:00:00" → new Date(2026, 2, 31, 14, 0, 0)
+        const [datePart, timePart] = t.split("T");
+        const [y, m, d] = datePart.split("-").map(Number);
+        const [h, min, s] = (timePart || "00:00:00").split(":").map(Number);
+        return new Date(y, m - 1, d, h || 0, min || 0, s || 0).toISOString();
+      };
       return {
         title: data.title || "未命名事件",
-        start_time: data.start_time || new Date().toISOString(),
-        end_time: data.end_time || new Date(Date.now() + 3600000).toISOString(),
+        start_time: parseLocalTime(data.start_time),
+        end_time: parseLocalTime(data.end_time),
         importance: data.importance || "普通",
         status: "未开始",
         notes: data.notes || null,
       };
+    }
     case "todo":
       return {
         title: data.title || "未命名待办",
