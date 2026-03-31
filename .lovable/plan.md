@@ -1,80 +1,56 @@
 
 
-## V-Life Manager — Implementation Plan
+## 目标模块实现计划
 
-### Foundation
-- **Dark theme design system** inspired by Perplexity: deep backgrounds (#0D0D0D, #1A1A1A), blue/cyan accents (no purple), medium rounded corners, subtle borders
-- **Responsive sidebar navigation** (desktop: full sidebar, tablet: collapsible, mobile: bottom nav) with icons for all 8 modules + settings
-- **Supabase database setup**: All tables (pantry_items, belongings_daily, belongings_durable, schedule_events, calorie_records, finance_records, todos, thoughts, ai_sessions, ai_messages, settings, backups) with `user_id` reserved field
-- **Chinese UI** throughout
+### 概述
+在待办事项和随想之间新增「目标」模块，支持周/月/年目标管理，并可选在日程页面显示目标悬浮球。同时修复 WeightLoss.tsx 中 Checkbox 未导入的运行时错误。
 
-### Module 1: Dashboard (首页概览)
-- Responsive card grid showing: today's schedule, calorie progress bar, monthly spending vs budget, pending todos count, expiring pantry items, overdue durable goods savings, recent thoughts
-- Each card clickable → navigates to its module
+### 1. 数据库
+新建 `goals` 表：
+- `id` uuid PK
+- `user_id` uuid (default 00000000...)
+- `type` text (`week` / `month` / `year`)
+- `period_start` date (该周/月/年的起始日期，用于定位)
+- `title` text
+- `is_completed` boolean default false
+- `created_at`, `updated_at` timestamps
+- RLS: public ALL
 
-### Module 2: Finance (记账)
-- Monthly overview with total spending, budget progress bar, category pie chart (Recharts)
-- 12 expense categories with emoji icons
-- Weekly collapsible sections (week assigned to month by Wednesday rule)
-- Dual currency: JPY entries auto-convert to CNY using stored exchange rate
-- Each record stores exchange rate snapshot
-- Settings: exchange rate fetch button, monthly budget config
+在 `settings` 表新增 `show_goals_in_schedule` boolean default true。
 
-### Module 3: Calories (热量记录)
-- Shared 7-day navigation bar with expandable 4-week month view
-- Daily view with 4 meal slots (breakfast/lunch/dinner/snack)
-- Per-meal subtotal + daily total + progress bar vs target (default 2000 kcal)
-- Manual add/edit/delete per entry
+### 2. 目标页面 (`src/pages/Goals.tsx`)
+- 三栏布局：左=周目标，中=月目标，右=年目标
+- 默认显示当前周/月/年的目标
+- 每栏顶部有独立开关"查看全部"，开启后展示该类型所有历史目标（按时间倒序分组）
+- 支持添加、完成（checkbox）、删除目标
+- 使用 `startOfWeek`/`startOfMonth`/`startOfYear` 计算当前周期
 
-### Module 4: Todos (待办事项)
-- 3 view modes: by category, by importance, flat list
-- 4 importance levels (紧急/重要/普通/低优先) with color coding
-- Custom user categories, completion checkbox, expandable detail text
-- Completed items gray out and sink to bottom
+### 3. 路由与导航
+- `App.tsx`：添加 `/goals` 路由，放在 `/todos` 和 `/thoughts` 之间
+- `AppSidebar.tsx`：在待办事项和随想之间加入「目标」（Target 图标）
+- `MobileNav.tsx`：在 moreItems 中添加目标入口
 
-### Module 5: Schedule (日程计划)
-- 3-day calendar view with vertical 0-24h time axis
-- 7-day quick nav bar + expandable 4-week view
-- Drag to create events, drag to resize/move (@dnd-kit)
-- Event detail panel: title, time, color, importance, status toggle, notes
-- Recurrence support (daily/weekly/monthly/custom) with "edit this one" vs "edit all future"
-- Importance-based default colors (red/orange/blue/gray), overridable
+### 4. 日程页面目标悬浮球
+- 在 `Schedule.tsx` 中，若 `settings.show_goals_in_schedule` 为 true，右下角显示一个小悬浮球（类似 AI 按钮）
+- 点击展开一个紧凑的弹出面板，显示当前周/月/年目标（三段，每段标题+条目列表）
+- 关闭时只显示小球图标
 
-### Module 6: Pantry (食材管理)
-- Grouped by 6 categories, filterable by status (all/expiring/expired)
-- Auto status calculation from expiry_date
-- Search, expandable detail/edit per item
+### 5. 设置页面
+- 在 `Settings.tsx` 中添加"在日程中显示目标球"开关（Switch）
 
-### Module 7: Belongings (用品管理)
-- Two tabs: daily consumables (simple list) + durable goods (with cost tracking)
-- Durable goods: real-time calculated daily cost, "超值" badge when past expected lifespan, savings amount display
-- Design encourages longevity over replacement
+### 6. Bug 修复
+- `WeightLoss.tsx` 已导入 Checkbox，但运行时报未定义——检查并确认 import 正确存在。
 
-### Module 8: Thoughts (随想)
-- Markdown card layout (masonry/grid) with react-markdown rendering
-- Tag filtering (preset: 科研🔬, 生活🏠, AI🤖, 杂念💭 + custom)
-- Optional title, emoji icon, sorted newest first
-
-### AI Entry System (全局 AI 录入)
-- Floating button (bottom-right desktop, bottom nav mobile) → opens side drawer
-- Text + image input, sends to Supabase Edge Function
-- Edge function calls user-configured LLM (Gemini/DeepSeek/SiliconFlow via OpenAI-compatible API)
-- AI returns structured JSON actions → preview before execute (Mode A) or auto-execute with undo (Mode B)
-- Cross-module operations (e.g., lunch → finance + calories simultaneously)
-- Session management: 30 session history, continuable conversations
-- Settings page: API platform selector, API key, model name, base URL, operation mode toggle
-
-### Settings (设置)
-- AI API configuration (platform, key, model, base URL, mode)
-- Exchange rate management (fetch latest + display current)
-- Monthly budget setting
-- Calorie target setting
-- Custom tags for thoughts
-- Data export (full JSON download) / import (JSON upload → IndexedDB for offline)
-- Backup list viewer (from Supabase Storage)
-
-### Data Management
-- IndexedDB local cache for offline reading
-- One-click export/import for flight mode workflow
-- Auto weekly backup via edge function (cron) → Supabase Storage, rolling 3 backups
+### 文件变更清单
+| 文件 | 操作 |
+|------|------|
+| SQL migration | 新建 `goals` 表 + settings 加列 |
+| `src/pages/Goals.tsx` | 新建 |
+| `src/hooks/useData.ts` | 添加 goals CRUD hooks |
+| `src/App.tsx` | 添加路由 |
+| `src/components/AppSidebar.tsx` | 添加导航项 |
+| `src/components/MobileNav.tsx` | 添加导航项 |
+| `src/pages/Schedule.tsx` | 添加目标悬浮球 |
+| `src/pages/Settings.tsx` | 添加开关 |
+| `src/pages/WeightLoss.tsx` | 修复 Checkbox 引用 |
 
