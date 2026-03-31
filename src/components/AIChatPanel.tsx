@@ -343,7 +343,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       // Also invalidate dashboard queries
