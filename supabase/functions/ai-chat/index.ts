@@ -41,9 +41,11 @@ update: { module: "finance", action: "update", data: { match: { name?: string, d
 delete: { module: "finance", action: "delete", data: { match: { name?: string, date?: string, amount?: number } } }
 
 ### 2. calories（热量记录）
-create: { module: "calories", action: "create", data: { food_name: string, calories: number, meal_type: "breakfast"|"lunch"|"dinner"|"snack", date: "YYYY-MM-DD", notes?: string } }
+create: { module: "calories", action: "create", data: { food_name: string, calories: number, meal_type: "breakfast"|"lunch"|"dinner"|"snack"|"exercise", date: "YYYY-MM-DD", notes?: string } }
 update: { module: "calories", action: "update", data: { match: { food_name?: string, date?: string, meal_type?: string }, update: { food_name?: string, calories?: number, meal_type?: string, notes?: string } } }
 delete: { module: "calories", action: "delete", data: { match: { food_name?: string, date?: string, meal_type?: string } } }
+
+**运动类（meal_type="exercise"）**：当用户提到运动/锻炼时，使用 meal_type="exercise"，calories 填写消耗的热量。food_name 填运动名称（如"跑步30分钟"）。你需要根据运动类型和时长自行估算消耗的大卡数。
 
 ### 3. schedule（日程）
 create: { module: "schedule", action: "create", data: { title: string, start_time: "ISO8601", end_time: "ISO8601", importance?: "紧急"|"重要"|"普通"|"低", notes?: string } }
