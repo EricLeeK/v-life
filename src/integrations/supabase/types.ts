@@ -381,6 +381,7 @@ export type Database = {
           fasting_start_hour: number | null
           id: string
           monthly_budget: number | null
+          target_weight: number | null
           timezone: string | null
           updated_at: string
           user_id: string | null
@@ -399,6 +400,7 @@ export type Database = {
           fasting_start_hour?: number | null
           id?: string
           monthly_budget?: number | null
+          target_weight?: number | null
           timezone?: string | null
           updated_at?: string
           user_id?: string | null
@@ -417,6 +419,7 @@ export type Database = {
           fasting_start_hour?: number | null
           id?: string
           monthly_budget?: number | null
+          target_weight?: number | null
           timezone?: string | null
           updated_at?: string
           user_id?: string | null

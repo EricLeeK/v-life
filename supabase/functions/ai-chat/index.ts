@@ -76,6 +76,16 @@ create: { module: "belongings_durable", action: "create", data: { name: string, 
 update: { module: "belongings_durable", action: "update", data: { match: { name?: string }, update: { purchase_price?: number, expected_lifespan_days?: number, notes?: string } } }
 delete: { module: "belongings_durable", action: "delete", data: { match: { name?: string } } }
 
+### 9. weight（体重记录）
+create: { module: "weight", action: "create", data: { weight: number, date?: "YYYY-MM-DD", notes?: string } }
+delete: { module: "weight", action: "delete", data: { match: { date?: string } } }
+
+### 10. measurement（围度记录）
+create: { module: "measurement", action: "create", data: { waist?: number, hip?: number, chest?: number, arm?: number, thigh?: number, date?: "YYYY-MM-DD", notes?: string } }
+delete: { module: "measurement", action: "delete", data: { match: { date?: string } } }
+
+**围度单位为 cm，体重单位为 kg。同一天重复记录会覆盖（upsert）。**
+
 ## 默认值规则
 - 日期缺失 → 使用今天（当前日期会附加在用户消息中）
 - 币种缺失 → 默认 CNY

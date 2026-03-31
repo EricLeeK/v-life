@@ -35,6 +35,8 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   thought: "thoughts",
   belongings_daily: "belongings_daily",
   belongings_durable: "belongings_durable",
+  weight: "weight_records",
+  measurement: "measurement_records",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -46,6 +48,8 @@ const MODULE_LABELS: Record<string, string> = {
   thought: "随想",
   belongings_daily: "日用品",
   belongings_durable: "耐用品",
+  weight: "体重",
+  measurement: "围度",
 };
 
 const MAX_SESSIONS = 30;
@@ -120,6 +124,22 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         purchase_price: Number(data.purchase_price) || 0,
         purchase_date: data.purchase_date || today,
         expected_lifespan_days: Number(data.expected_lifespan_days) || 365,
+        notes: data.notes || null,
+      };
+    case "weight":
+      return {
+        date: data.date || today,
+        weight: Number(data.weight) || 0,
+        notes: data.notes || null,
+      };
+    case "measurement":
+      return {
+        date: data.date || today,
+        waist: data.waist ? Number(data.waist) : null,
+        hip: data.hip ? Number(data.hip) : null,
+        chest: data.chest ? Number(data.chest) : null,
+        arm: data.arm ? Number(data.arm) : null,
+        thigh: data.thigh ? Number(data.thigh) : null,
         notes: data.notes || null,
       };
     default:
@@ -291,11 +311,15 @@ export function AIChatPanel() {
           continue;
         }
         const label = MODULE_LABELS[op.module] || op.module;
-        const itemName = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
+        const itemName = op.data.name || op.data.title || op.data.food_name || op.data.weight || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
-            const { data: inserted, error } = await (supabase.from as any)(table).insert(row).select().single();
+            // Use upsert for weight and measurement (unique per user+date)
+            const useUpsert = op.module === "weight" || op.module === "measurement";
+            const { data: inserted, error } = useUpsert
+              ? await (supabase.from as any)(table).upsert(row, { onConflict: "user_id,date" }).select().single()
+              : await (supabase.from as any)(table).insert(row).select().single();
             if (error) throw error;
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
             results.push(`✅ ${label}: 已添加「${itemName}」`);
@@ -323,7 +347,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       // Also invalidate dashboard queries
