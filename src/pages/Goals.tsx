@@ -150,7 +150,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
             {showAll ? <><ChevronUp className="h-3 w-3" />当前</> : <><ChevronDown className="h-3 w-3" />全部</>}
           </Button>
         </div>
-        <p className="text-xs font-semibold text-primary">{formatPeriod(currentPeriodStart)}</p>
+        {!showAll && <p className="text-xs font-semibold text-primary">{formatPeriod(currentPeriodStart)}</p>}
       </CardHeader>
       <CardContent className="flex-1 space-y-2">
         {!showAll ? (
