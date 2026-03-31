@@ -7,6 +7,7 @@ import {
   Wallet,
   CheckSquare,
   Lightbulb,
+  Target,
   Settings,
   MoreHorizontal,
   Scale,
