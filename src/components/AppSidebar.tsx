@@ -100,6 +100,12 @@ export function AppSidebar() {
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="退出登录" onClick={signOut}>
+              <LogOut className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>退出登录</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

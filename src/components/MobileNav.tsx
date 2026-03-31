@@ -11,10 +11,12 @@ import {
   Settings,
   MoreHorizontal,
   Scale,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const primaryItems = [
   { title: "首页", url: "/", icon: LayoutDashboard },
