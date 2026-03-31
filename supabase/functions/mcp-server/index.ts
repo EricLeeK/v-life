@@ -22,11 +22,15 @@ type TableDef = {
   label: string;
   listFilters?: FieldDef[];
   createFields: FieldDef[];
+  listColumns: string[];   // columns to show in list (compact)
+  searchColumns: string[]; // columns searchable by name
 };
 
 const TABLES: Record<string, TableDef> = {
   pantry: {
     table: "pantry_items", label: "食材",
+    listColumns: ["name", "category", "quantity", "expiry_date"],
+    searchColumns: ["name", "category", "quantity", "expiry_date", "purchase_date", "notes"],
     listFilters: [
       { name: "category", type: "string", description: "分类筛选" },
     ],
@@ -41,6 +45,8 @@ const TABLES: Record<string, TableDef> = {
   },
   belongings_daily: {
     table: "belongings_daily", label: "日用品",
+    listColumns: ["name", "category"],
+    searchColumns: ["name", "category", "purchase_date", "notes"],
     createFields: [
       { name: "name", type: "string", required: true, description: "名称" },
       { name: "category", type: "string", required: true, description: "分类" },
@@ -50,6 +56,8 @@ const TABLES: Record<string, TableDef> = {
   },
   belongings_durable: {
     table: "belongings_durable", label: "耐用品",
+    listColumns: ["name", "category", "purchase_price", "purchase_date"],
+    searchColumns: ["name", "category", "purchase_price", "purchase_date", "expected_lifespan_days", "notes"],
     createFields: [
       { name: "name", type: "string", required: true, description: "名称" },
       { name: "category", type: "string", required: true, description: "分类" },
@@ -61,6 +69,8 @@ const TABLES: Record<string, TableDef> = {
   },
   schedule: {
     table: "schedule_events", label: "日程",
+    listColumns: ["title", "start_time", "end_time", "importance", "status"],
+    searchColumns: ["title", "start_time", "end_time", "importance", "status", "color", "notes"],
     listFilters: [
       { name: "start_date", type: "string", description: "开始日期 YYYY-MM-DD" },
       { name: "end_date", type: "string", description: "结束日期 YYYY-MM-DD" },
@@ -77,6 +87,8 @@ const TABLES: Record<string, TableDef> = {
   },
   calories: {
     table: "calorie_records", label: "热量",
+    listColumns: ["food_name", "calories", "meal_type", "date"],
+    searchColumns: ["food_name", "calories", "meal_type", "date", "notes"],
     listFilters: [
       { name: "date", type: "string", description: "日期 YYYY-MM-DD" },
       { name: "meal_type", type: "string", description: "breakfast/lunch/dinner/snack" },
@@ -91,6 +103,8 @@ const TABLES: Record<string, TableDef> = {
   },
   finance: {
     table: "finance_records", label: "记账",
+    listColumns: ["name", "amount", "currency", "category", "date"],
+    searchColumns: ["name", "amount", "currency", "category", "date", "amount_cny", "exchange_rate", "notes"],
     listFilters: [
       { name: "date", type: "string", description: "日期 YYYY-MM-DD" },
       { name: "category", type: "string", description: "分类" },
@@ -109,6 +123,8 @@ const TABLES: Record<string, TableDef> = {
   },
   todos: {
     table: "todos", label: "待办",
+    listColumns: ["title", "category", "importance", "is_completed"],
+    searchColumns: ["title", "category", "importance", "is_completed", "detail"],
     listFilters: [
       { name: "category", type: "string", description: "分类" },
       { name: "importance", type: "string", description: "重要性" },
@@ -124,6 +140,8 @@ const TABLES: Record<string, TableDef> = {
   },
   thoughts: {
     table: "thoughts", label: "随想",
+    listColumns: ["title", "tags", "icon"],
+    searchColumns: ["title", "content", "tags", "icon"],
     listFilters: [
       { name: "tag", type: "string", description: "标签筛选" },
     ],
@@ -135,6 +153,15 @@ const TABLES: Record<string, TableDef> = {
     ],
   },
 };
+
+// Pick only specified keys from an object
+function pick(obj: Record<string, any>, keys: string[]): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null) result[k] = obj[k];
+  }
+  return result;
+}
 
 function fieldsToJsonSchema(fields: FieldDef[]) {
   const properties: Record<string, any> = {};
@@ -169,7 +196,23 @@ for (const [mod, def] of Object.entries(TABLES)) {
       if (params.tag) q = q.contains("tags", [params.tag]);
       const { data, error } = await q;
       if (error) return { content: [{ type: "text" as const, text: `Error: ${error.message}` }] };
-      return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+      const compact = (data || []).map((row: any) => pick(row, def.listColumns));
+      return { content: [{ type: "text" as const, text: JSON.stringify(compact, null, 2) }] };
+    },
+  });
+
+  // SEARCH (by name, max 3 results with full useful fields)
+  const nameField = mod === "calories" ? "food_name" : "title" in (def.createFields.find(f => f.name === "title") || {}) ? "title" : "name";
+  mcpServer.tool(`${mod}_search`, {
+    description: `按名称搜索${def.label}条目，返回完整信息（最多3条）`,
+    inputSchema: { type: "object" as const, properties: { keyword: { type: "string", description: "搜索关键词" } }, required: ["keyword"] },
+    handler: async (params: any) => {
+      const searchField = def.createFields.find(f => f.name === "food_name") ? "food_name" : def.createFields.find(f => f.name === "title") ? "title" : "name";
+      const { data, error } = await sb.from(def.table).select("*").ilike(searchField, `%${params.keyword}%`).limit(3);
+      if (error) return { content: [{ type: "text" as const, text: `Error: ${error.message}` }] };
+      if (!data || data.length === 0) return { content: [{ type: "text" as const, text: "未找到匹配条目" }] };
+      const detailed = data.map((row: any) => ({ id: row.id, ...pick(row, def.searchColumns) }));
+      return { content: [{ type: "text" as const, text: JSON.stringify(detailed, null, 2) }] };
     },
   });
 
