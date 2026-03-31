@@ -35,6 +35,8 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   thought: "thoughts",
   belongings_daily: "belongings_daily",
   belongings_durable: "belongings_durable",
+  weight: "weight_records",
+  measurement: "measurement_records",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -46,6 +48,8 @@ const MODULE_LABELS: Record<string, string> = {
   thought: "随想",
   belongings_daily: "日用品",
   belongings_durable: "耐用品",
+  weight: "体重",
+  measurement: "围度",
 };
 
 const MAX_SESSIONS = 30;
