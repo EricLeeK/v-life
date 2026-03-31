@@ -177,8 +177,8 @@ export function useScheduleByRange(start: Date, end: Date) {
       const { data, error } = await supabase
         .from("schedule_events")
         .select("*")
-        .gte("start_time", start.toISOString())
-        .lte("end_time", end.toISOString())
+        .lt("start_time", end.toISOString())
+        .gt("end_time", start.toISOString())
         .order("start_time", { ascending: true });
       if (error) throw error;
       return data;
