@@ -13,6 +13,7 @@ import CaloriesPage from "./pages/Calories";
 import FinancePage from "./pages/Finance";
 import TodosPage from "./pages/Todos";
 import ThoughtsPage from "./pages/Thoughts";
+import GoalsPage from "./pages/Goals";
 import WeightLossPage from "./pages/WeightLoss";
 import SettingsPage from "./pages/Settings";
 
