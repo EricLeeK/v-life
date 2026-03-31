@@ -10,9 +10,11 @@ import {
   Lightbulb,
   Settings,
   Scale,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -43,6 +45,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { signOut } = useAuth();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -95,6 +98,12 @@ export function AppSidebar() {
                 <Settings className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>设置</span>}
               </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="退出登录" onClick={signOut}>
+              <LogOut className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>退出登录</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

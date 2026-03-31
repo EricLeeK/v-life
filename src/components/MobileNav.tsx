@@ -11,10 +11,12 @@ import {
   Settings,
   MoreHorizontal,
   Scale,
+  LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const primaryItems = [
   { title: "首页", url: "/", icon: LayoutDashboard },
@@ -35,6 +37,7 @@ const moreItems = [
 
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
+  const { signOut } = useAuth();
 
   return (
     <>
@@ -55,6 +58,13 @@ export function MobileNav() {
                   <span className="text-[10px]">{item.title}</span>
                 </NavLink>
               ))}
+              <button
+                onClick={signOut}
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="text-[10px]">退出</span>
+              </button>
             </div>
           </div>
         </div>
