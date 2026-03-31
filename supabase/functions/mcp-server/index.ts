@@ -196,7 +196,23 @@ for (const [mod, def] of Object.entries(TABLES)) {
       if (params.tag) q = q.contains("tags", [params.tag]);
       const { data, error } = await q;
       if (error) return { content: [{ type: "text" as const, text: `Error: ${error.message}` }] };
-      return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+      const compact = (data || []).map((row: any) => pick(row, def.listColumns));
+      return { content: [{ type: "text" as const, text: JSON.stringify(compact, null, 2) }] };
+    },
+  });
+
+  // SEARCH (by name, max 3 results with full useful fields)
+  const nameField = mod === "calories" ? "food_name" : "title" in (def.createFields.find(f => f.name === "title") || {}) ? "title" : "name";
+  mcpServer.tool(`${mod}_search`, {
+    description: `按名称搜索${def.label}条目，返回完整信息（最多3条）`,
+    inputSchema: { type: "object" as const, properties: { keyword: { type: "string", description: "搜索关键词" } }, required: ["keyword"] },
+    handler: async (params: any) => {
+      const searchField = def.createFields.find(f => f.name === "food_name") ? "food_name" : def.createFields.find(f => f.name === "title") ? "title" : "name";
+      const { data, error } = await sb.from(def.table).select("*").ilike(searchField, `%${params.keyword}%`).limit(3);
+      if (error) return { content: [{ type: "text" as const, text: `Error: ${error.message}` }] };
+      if (!data || data.length === 0) return { content: [{ type: "text" as const, text: "未找到匹配条目" }] };
+      const detailed = data.map((row: any) => ({ id: row.id, ...pick(row, def.searchColumns) }));
+      return { content: [{ type: "text" as const, text: JSON.stringify(detailed, null, 2) }] };
     },
   });
 
