@@ -311,11 +311,15 @@ export function AIChatPanel() {
           continue;
         }
         const label = MODULE_LABELS[op.module] || op.module;
-        const itemName = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
+        const itemName = op.data.name || op.data.title || op.data.food_name || op.data.weight || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
-            const { data: inserted, error } = await (supabase.from as any)(table).insert(row).select().single();
+            // Use upsert for weight and measurement (unique per user+date)
+            const useUpsert = op.module === "weight" || op.module === "measurement";
+            const { data: inserted, error } = useUpsert
+              ? await (supabase.from as any)(table).upsert(row, { onConflict: "user_id,date" }).select().single()
+              : await (supabase.from as any)(table).insert(row).select().single();
             if (error) throw error;
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
             results.push(`✅ ${label}: 已添加「${itemName}」`);
