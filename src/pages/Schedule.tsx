@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { GoalsBall } from "@/components/schedule/GoalsBall";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { useScheduleByRange, scheduleHooks } from "@/hooks/useData";
+import { useScheduleByRange, scheduleHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, isBefore, isAfter } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -51,6 +52,7 @@ export default function SchedulePage() {
   }, [days, viewMode, baseDate]);
 
   const { data: events = [] } = useScheduleByRange(rangeStart, rangeEnd);
+  const { data: settings } = useSettings();
   const createMutation = scheduleHooks.useCreate();
   const updateMutation = scheduleHooks.useUpdate();
   const deleteMutation = scheduleHooks.useDelete();
@@ -362,6 +364,7 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
+      {settings?.show_goals_in_schedule !== false && <GoalsBall />}
     </AppLayout>
   );
 }

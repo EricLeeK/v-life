@@ -13,6 +13,7 @@ import CaloriesPage from "./pages/Calories";
 import FinancePage from "./pages/Finance";
 import TodosPage from "./pages/Todos";
 import ThoughtsPage from "./pages/Thoughts";
+import GoalsPage from "./pages/Goals";
 import WeightLossPage from "./pages/WeightLoss";
 import SettingsPage from "./pages/Settings";
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/calories" element={<CaloriesPage />} />
           <Route path="/finance" element={<FinancePage />} />
           <Route path="/todos" element={<TodosPage />} />
+          <Route path="/goals" element={<GoalsPage />} />
           <Route path="/thoughts" element={<ThoughtsPage />} />
           <Route path="/weight-loss" element={<WeightLossPage />} />
           <Route path="/settings" element={<SettingsPage />} />
