@@ -34,6 +34,7 @@ const mainItems = [
   { title: "记账", url: "/finance", icon: Wallet },
   { title: "待办事项", url: "/todos", icon: CheckSquare },
   { title: "随想", url: "/thoughts", icon: Lightbulb },
+  { title: "减肥专项", url: "/weight-loss", icon: Scale },
 ];
 
 export function AppSidebar() {
