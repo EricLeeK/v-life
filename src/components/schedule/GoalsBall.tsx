@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Target, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfWeek, startOfMonth, startOfYear, endOfWeek, format } from "date-fns";
+import { startOfWeek, startOfMonth, startOfYear, format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 
 function useCurrentGoals() {
   const now = new Date();
@@ -29,29 +31,30 @@ function useCurrentGoals() {
 }
 
 export function GoalsBall() {
-  const [open, setOpen] = useState(false);
   const { data } = useCurrentGoals();
-
   const totalCount = (data?.week?.length || 0) + (data?.month?.length || 0) + (data?.year?.length || 0);
 
-  if (totalCount === 0 && !open) return null;
-
   return (
-    <div className="fixed top-16 right-4 z-40">
-      {open && (
-        <div className="absolute top-12 right-0 w-64 bg-card border border-border rounded-lg shadow-lg p-3 space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-foreground">当前目标</span>
-            <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
-              <X className="h-3 w-3" />
-            </button>
-          </div>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full relative">
+          <Target className="h-4 w-4" />
+          {totalCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
+              {totalCount}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-3" align="end">
+        <div className="space-y-2">
+          <span className="text-xs font-semibold text-foreground">当前目标</span>
           {(["week", "month", "year"] as const).map(type => {
             const goals = data?.[type] || [];
             if (goals.length === 0) return null;
             return (
               <div key={type}>
-                <div className="text-[10px] font-medium text-muted-foreground uppercase mb-0.5">
+                <div className="text-[10px] font-medium text-muted-foreground mb-0.5">
                   {{ week: "📅 周", month: "📆 月", year: "🎯 年" }[type]}
                 </div>
                 {goals.map((g: any) => (
@@ -64,13 +67,7 @@ export function GoalsBall() {
           })}
           {totalCount === 0 && <p className="text-xs text-muted-foreground">暂无目标</p>}
         </div>
-      )}
-      <button
-        onClick={() => setOpen(!open)}
-        className="h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:opacity-90 transition-opacity"
-      >
-        <Target className="h-5 w-5" />
-      </button>
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }

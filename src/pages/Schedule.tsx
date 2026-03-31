@@ -209,6 +209,7 @@ export default function SchedulePage() {
           <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goForward}><ChevronRight className="h-4 w-4" /></Button>
           <span className="text-sm font-medium text-foreground min-w-[100px]">{headerLabel}</span>
           <div className="flex-1" />
+          <GoalsBall />
           <div className="flex gap-1 bg-muted rounded-lg p-0.5">
             {(["3day", "week", "month"] as ViewMode[]).map((mode) => (
               <Button key={mode} variant={viewMode === mode ? "default" : "ghost"} size="sm"
