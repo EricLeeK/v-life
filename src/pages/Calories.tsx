@@ -18,6 +18,7 @@ const MEAL_TYPES = [
   { key: "lunch", label: "☀️ 午餐" },
   { key: "dinner", label: "🌙 晚餐" },
   { key: "snack", label: "🍿 加餐" },
+  { key: "exercise", label: "🏃 运动" },
 ] as const;
 
 export default function CaloriesPage() {
