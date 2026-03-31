@@ -345,13 +345,35 @@ export function AIChatPanel() {
             if (error) throw error;
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
             results.push(`✅ ${label}: 已添加「${itemName}」`);
-          } else if (op.action === "delete" && op.data.match) {
-            let query = (supabase.from as any)(table).delete();
-            for (const [key, val] of Object.entries(op.data.match)) {
-              query = query.eq(key, val);
+          } else if (op.action === "delete") {
+            const match = op.data.match || {};
+            const matchEntries = Object.entries(match).filter(([_, v]) => v !== undefined && v !== null && v !== "");
+            if (matchEntries.length === 0) {
+              // Try to find by name/title from op.data
+              const searchName = op.data.name || op.data.title || op.data.food_name || "";
+              if (!searchName) throw new Error("删除操作缺少匹配条件");
+              const nameField = ["calorie_records"].includes(table) ? "food_name" : 
+                               ["finance_records", "pantry_items", "belongings_daily", "belongings_durable"].includes(table) ? "name" : "title";
+              const { data: found } = await (supabase.from as any)(table).select("id").ilike(nameField, `%${searchName}%`).limit(1).single();
+              if (!found) throw new Error(`未找到匹配「${searchName}」的记录`);
+              const { error } = await (supabase.from as any)(table).delete().eq("id", found.id);
+              if (error) throw error;
+            } else {
+              // If match has an id, use it directly; otherwise search first then delete by id
+              if (match.id) {
+                const { error } = await (supabase.from as any)(table).delete().eq("id", match.id);
+                if (error) throw error;
+              } else {
+                let searchQuery = (supabase.from as any)(table).select("id");
+                for (const [key, val] of matchEntries) {
+                  searchQuery = searchQuery.ilike(key, `%${val}%`);
+                }
+                const { data: found } = await searchQuery.limit(1).single();
+                if (!found) throw new Error(`未找到匹配的记录`);
+                const { error } = await (supabase.from as any)(table).delete().eq("id", found.id);
+                if (error) throw error;
+              }
             }
-            const { error } = await query;
-            if (error) throw error;
             results.push(`✅ ${label}: 已删除「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
             let query = (supabase.from as any)(table).update(op.data.update);
