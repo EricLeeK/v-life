@@ -177,15 +177,33 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Use user's JWT to respect RLS
+    // Authenticate the user via their JWT
     const authHeader = req.headers.get("authorization") || "";
     const userJwt = authHeader.replace("Bearer ", "");
-    const sb = createClient(supabaseUrl, supabaseAnonKey, {
+    const userSb = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${userJwt}` } },
     });
 
-    const { data: settings } = await sb.from("settings").select("*").limit(1).single();
+    // Verify the user is authenticated
+    const { data: { user }, error: authError } = await userSb.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "未授权，请先登录" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Use service role to read settings (so API key never needs to go to client)
+    const adminSb = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: settings } = await adminSb
+      .from("settings")
+      .select("*")
+      .eq("user_id", user.id)
+      .limit(1)
+      .single();
+
     if (!settings?.ai_api_key) {
       return new Response(
         JSON.stringify({ error: "请先在设置页面配置 AI API Key" }),

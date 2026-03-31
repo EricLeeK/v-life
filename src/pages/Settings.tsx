@@ -117,7 +117,7 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>API Key</Label><Input type="password" value={settings.ai_api_key || ""} onChange={(e) => save({ ai_api_key: e.target.value })} placeholder="输入 API Key" /></div>
+            <div><Label>API Key</Label><Input type="password" value={settings.ai_api_key || ""} onChange={(e) => save({ ai_api_key: e.target.value })} placeholder="输入 API Key" autoComplete="new-password" /><p className="text-xs text-muted-foreground mt-1">API Key 仅在服务端使用，不会暴露到浏览器</p></div>
             <div><Label>模型名称</Label><Input value={settings.ai_model || ""} onChange={(e) => save({ ai_model: e.target.value })} placeholder="如 gemini-2.5-flash" /></div>
             <div><Label>API Base URL（高级）</Label><Input value={settings.ai_base_url || ""} onChange={(e) => save({ ai_base_url: e.target.value })} placeholder="默认使用官方端点" /></div>
             <div className="flex items-center justify-between">
