@@ -52,6 +52,7 @@ export default function SchedulePage() {
   }, [days, viewMode, baseDate]);
 
   const { data: events = [] } = useScheduleByRange(rangeStart, rangeEnd);
+  const { data: settings } = useSettings();
   const createMutation = scheduleHooks.useCreate();
   const updateMutation = scheduleHooks.useUpdate();
   const deleteMutation = scheduleHooks.useDelete();
