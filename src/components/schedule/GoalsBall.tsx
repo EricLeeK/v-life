@@ -37,9 +37,9 @@ export function GoalsBall() {
   if (totalCount === 0 && !open) return null;
 
   return (
-    <div className="fixed bottom-20 right-4 z-40 md:bottom-6">
+    <div className="fixed top-16 right-4 z-40">
       {open && (
-        <div className="absolute bottom-12 right-0 w-64 bg-card border border-border rounded-lg shadow-lg p-3 space-y-2">
+        <div className="absolute top-12 right-0 w-64 bg-card border border-border rounded-lg shadow-lg p-3 space-y-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-semibold text-foreground">当前目标</span>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">

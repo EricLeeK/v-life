@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { startOfWeek, startOfMonth, startOfYear, format, endOfWeek, endOfMonth, endOfYear } from "date-fns";
+import { startOfWeek, startOfMonth, startOfYear, format, endOfWeek, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
@@ -27,6 +27,37 @@ function useGoals(type?: string) {
 
 type GoalType = "week" | "month" | "year";
 
+function generatePeriodOptions(type: GoalType): { value: string; label: string }[] {
+  const now = new Date();
+  const options: { value: string; label: string }[] = [];
+
+  if (type === "week") {
+    // 前4周 + 当前周 + 后4周
+    for (let i = -4; i <= 4; i++) {
+      const d = addWeeks(startOfWeek(now, { weekStartsOn: 1 }), i);
+      const end = endOfWeek(d, { weekStartsOn: 1 });
+      const value = format(d, "yyyy-MM-dd");
+      const label = `${format(d, "MM/dd")} - ${format(end, "MM/dd")}${i === 0 ? " (本周)" : ""}`;
+      options.push({ value, label });
+    }
+  } else if (type === "month") {
+    for (let i = -3; i <= 6; i++) {
+      const d = addMonths(startOfMonth(now), i);
+      const value = format(d, "yyyy-MM-dd");
+      const label = `${format(d, "yyyy年M月")}${i === 0 ? " (本月)" : ""}`;
+      options.push({ value, label });
+    }
+  } else {
+    for (let i = -1; i <= 2; i++) {
+      const y = now.getFullYear() + i;
+      const value = `${y}-01-01`;
+      const label = `${y}年${i === 0 ? " (今年)" : ""}`;
+      options.push({ value, label });
+    }
+  }
+  return options;
+}
+
 function GoalColumn({ type, label }: { type: GoalType; label: string }) {
   const { data: allGoals = [] } = useGoals(type);
   const qc = useQueryClient();
@@ -40,6 +71,9 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
     if (type === "month") return format(startOfMonth(now), "yyyy-MM-dd");
     return format(startOfYear(now), "yyyy-MM-dd");
   }, [type]);
+
+  const [selectedPeriod, setSelectedPeriod] = useState(currentPeriodStart);
+  const periodOptions = useMemo(() => generatePeriodOptions(type), [type]);
 
   const currentGoals = useMemo(() => allGoals.filter(g => g.period_start === currentPeriodStart), [allGoals, currentPeriodStart]);
 
@@ -55,8 +89,8 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
   }, [showAll, allGoals]);
 
   const createMutation = useMutation({
-    mutationFn: async (title: string) => {
-      const { error } = await (supabase.from as any)("goals").insert({ type, period_start: currentPeriodStart, title });
+    mutationFn: async ({ title, period }: { title: string; period: string }) => {
+      const { error } = await (supabase.from as any)("goals").insert({ type, period_start: period, title });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["goals"] }); setNewTitle(""); },
@@ -88,6 +122,8 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
     return format(d, "yyyy年");
   };
 
+  const isCurrent = (dateStr: string) => dateStr === currentPeriodStart;
+
   const renderGoalItem = (goal: any) => (
     <div key={goal.id} className="flex items-center gap-2 group py-1">
       <Checkbox
@@ -114,7 +150,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
             {showAll ? <><ChevronUp className="h-3 w-3" />当前</> : <><ChevronDown className="h-3 w-3" />全部</>}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">{formatPeriod(currentPeriodStart)}</p>
+        <p className="text-xs font-semibold text-primary">{formatPeriod(currentPeriodStart)}</p>
       </CardHeader>
       <CardContent className="flex-1 space-y-2">
         {!showAll ? (
@@ -126,7 +162,9 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
           <div className="space-y-3 max-h-[50vh] overflow-y-auto">
             {groupedGoals?.map(([period, goals]) => (
               <div key={period}>
-                <div className="text-xs font-medium text-muted-foreground mb-1">{formatPeriod(period)}</div>
+                <div className={`text-xs font-medium mb-1 ${isCurrent(period) ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                  {formatPeriod(period)}{isCurrent(period) ? " ← 当前" : ""}
+                </div>
                 {goals.map(renderGoalItem)}
               </div>
             ))}
@@ -134,13 +172,28 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
           </div>
         )}
 
-        <div className="flex gap-1 pt-2">
-          <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="添加目标..."
-            className="h-7 text-xs" onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && createMutation.mutate(newTitle.trim())} />
-          <Button size="icon" className="h-7 w-7 shrink-0" disabled={!newTitle.trim()}
-            onClick={() => newTitle.trim() && createMutation.mutate(newTitle.trim())}>
-            <Plus className="h-3 w-3" />
-          </Button>
+        {/* Add with period selector */}
+        <div className="pt-2 space-y-1">
+          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map(opt => (
+                <SelectItem key={opt.value} value={opt.value} className={opt.value === currentPeriodStart ? "font-bold text-primary" : ""}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-1">
+            <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="添加目标..."
+              className="h-7 text-xs" onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })} />
+            <Button size="icon" className="h-7 w-7 shrink-0" disabled={!newTitle.trim()}
+              onClick={() => newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })}>
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
