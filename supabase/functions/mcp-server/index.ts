@@ -347,7 +347,7 @@ mcpServer.tool("finance_summary", {
 
 // ─── Data Export / Import ───
 
-const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"];
+const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings", "goals", "weight_records", "measurement_records"];
 
 mcpServer.tool("data_export", {
   description: "导出全量数据为JSON",
