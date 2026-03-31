@@ -1,56 +1,65 @@
 
 
-## 目标模块实现计划
+## 账号密码系统实现计划
 
 ### 概述
-在待办事项和随想之间新增「目标」模块，支持周/月/年目标管理，并可选在日程页面显示目标悬浮球。同时修复 WeightLoss.tsx 中 Checkbox 未导入的运行时错误。
+添加邮箱+密码认证，注册后免邮箱验证直接登录。每个用户数据独立隔离。
 
-### 1. 数据库
-新建 `goals` 表：
-- `id` uuid PK
-- `user_id` uuid (default 00000000...)
-- `type` text (`week` / `month` / `year`)
-- `period_start` date (该周/月/年的起始日期，用于定位)
-- `title` text
-- `is_completed` boolean default false
-- `created_at`, `updated_at` timestamps
-- RLS: public ALL
+### 1. 启用免验证注册
+使用 `cloud--configure_auth` 开启 auto-confirm email signups。
 
-在 `settings` 表新增 `show_goals_in_schedule` boolean default true。
+### 2. 创建认证页面
+新建 `src/pages/Auth.tsx`：
+- 包含登录和注册两个 tab
+- 邮箱 + 密码表单
+- 忘记密码功能（发送重置邮件）
 
-### 2. 目标页面 (`src/pages/Goals.tsx`)
-- 三栏布局：左=周目标，中=月目标，右=年目标
-- 默认显示当前周/月/年的目标
-- 每栏顶部有独立开关"查看全部"，开启后展示该类型所有历史目标（按时间倒序分组）
-- 支持添加、完成（checkbox）、删除目标
-- 使用 `startOfWeek`/`startOfMonth`/`startOfYear` 计算当前周期
+新建 `src/pages/ResetPassword.tsx`：
+- 检测 URL 中的 recovery token
+- 允许用户设置新密码
 
-### 3. 路由与导航
-- `App.tsx`：添加 `/goals` 路由，放在 `/todos` 和 `/thoughts` 之间
-- `AppSidebar.tsx`：在待办事项和随想之间加入「目标」（Target 图标）
-- `MobileNav.tsx`：在 moreItems 中添加目标入口
+### 3. 认证上下文
+新建 `src/contexts/AuthContext.tsx`：
+- 使用 `onAuthStateChange` 监听登录状态
+- 提供 `user`, `loading`, `signOut` 等
+- 包裹整个 App
 
-### 4. 日程页面目标悬浮球
-- 在 `Schedule.tsx` 中，若 `settings.show_goals_in_schedule` 为 true，右下角显示一个小悬浮球（类似 AI 按钮）
-- 点击展开一个紧凑的弹出面板，显示当前周/月/年目标（三段，每段标题+条目列表）
-- 关闭时只显示小球图标
+### 4. 路由保护
+修改 `src/App.tsx`：
+- 未登录用户重定向到 `/auth`
+- `/auth` 和 `/reset-password` 为公开路由
+- 已登录用户访问 `/auth` 重定向到 `/`
 
-### 5. 设置页面
-- 在 `Settings.tsx` 中添加"在日程中显示目标球"开关（Switch）
+### 5. 更新 RLS 策略（数据库迁移）
+所有业务表的 RLS 策略从 `true` 改为 `auth.uid() = user_id`：
+- `pantry_items`, `belongings_daily`, `belongings_durable`
+- `schedule_events`, `calorie_records`, `finance_records`
+- `todos`, `thoughts`, `goals`
+- `weight_records`, `measurement_records`
+- `ai_sessions`, `ai_messages`
+- `settings`
 
-### 6. Bug 修复
-- `WeightLoss.tsx` 已导入 Checkbox，但运行时报未定义——检查并确认 import 正确存在。
+同时将各表 `user_id` 的默认值从固定 UUID 改为 `auth.uid()`。
+
+### 6. 更新数据写入逻辑
+修改 `src/hooks/useData.ts`：
+- `useCrudHooks` 的 `useCreate` 不再需要手动传 user_id（数据库默认值 `auth.uid()` 自动处理）
+- `useSettings` 的创建逻辑添加 user_id
+- 各 query 不需要手动过滤 user_id（RLS 自动过滤）
+
+### 7. 导航添加登出
+在 `AppSidebar.tsx` 底部添加登出按钮。
 
 ### 文件变更清单
 | 文件 | 操作 |
 |------|------|
-| SQL migration | 新建 `goals` 表 + settings 加列 |
-| `src/pages/Goals.tsx` | 新建 |
-| `src/hooks/useData.ts` | 添加 goals CRUD hooks |
-| `src/App.tsx` | 添加路由 |
-| `src/components/AppSidebar.tsx` | 添加导航项 |
-| `src/components/MobileNav.tsx` | 添加导航项 |
-| `src/pages/Schedule.tsx` | 添加目标悬浮球 |
-| `src/pages/Settings.tsx` | 添加开关 |
-| `src/pages/WeightLoss.tsx` | 修复 Checkbox 引用 |
+| SQL migration | 更新所有表 RLS + user_id 默认值 |
+| `src/pages/Auth.tsx` | 新建 |
+| `src/pages/ResetPassword.tsx` | 新建 |
+| `src/contexts/AuthContext.tsx` | 新建 |
+| `src/App.tsx` | 添加路由保护 + 新路由 |
+| `src/hooks/useData.ts` | 适配 auth.uid() |
+| `src/components/AppSidebar.tsx` | 添加登出 |
+| `src/components/MobileNav.tsx` | 添加登出 |
+| `src/pages/Settings.tsx` | 移除 user_id 硬编码 |
 
