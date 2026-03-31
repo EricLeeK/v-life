@@ -34,6 +34,7 @@ const mainItems = [
   { title: "热量记录", url: "/calories", icon: Flame },
   { title: "记账", url: "/finance", icon: Wallet },
   { title: "待办事项", url: "/todos", icon: CheckSquare },
+  { title: "目标", url: "/goals", icon: Target },
   { title: "随想", url: "/thoughts", icon: Lightbulb },
   { title: "减肥专项", url: "/weight-loss", icon: Scale },
 ];
