@@ -9,6 +9,7 @@ import {
   Lightbulb,
   Settings,
   MoreHorizontal,
+  Scale,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
