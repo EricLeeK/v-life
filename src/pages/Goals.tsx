@@ -85,7 +85,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
       if (!groups[key]) groups[key] = [];
       groups[key].push(g);
     });
-    return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [showAll, allGoals]);
 
   const createMutation = useMutation({
