@@ -35,7 +35,9 @@ export default function CaloriesPage() {
   const deleteMutation = calorieHooks.useDelete();
 
   const target = settings?.calorie_target || 2000;
-  const totalCalories = records.reduce((sum: number, r: any) => sum + r.calories, 0);
+  const foodCalories = records.filter((r: any) => r.meal_type !== "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
+  const exerciseCalories = records.filter((r: any) => r.meal_type === "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
+  const totalCalories = foodCalories - exerciseCalories;
   const progress = Math.min(100, (totalCalories / target) * 100);
 
   // Generate 7-day nav (yesterday + today + 5 days)
