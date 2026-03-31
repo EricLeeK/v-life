@@ -229,6 +229,48 @@ export type Database = {
         }
         Relationships: []
       }
+      measurement_records: {
+        Row: {
+          arm: number | null
+          chest: number | null
+          created_at: string
+          date: string
+          hip: number | null
+          id: string
+          notes: string | null
+          thigh: number | null
+          updated_at: string
+          user_id: string | null
+          waist: number | null
+        }
+        Insert: {
+          arm?: number | null
+          chest?: number | null
+          created_at?: string
+          date: string
+          hip?: number | null
+          id?: string
+          notes?: string | null
+          thigh?: number | null
+          updated_at?: string
+          user_id?: string | null
+          waist?: number | null
+        }
+        Update: {
+          arm?: number | null
+          chest?: number | null
+          created_at?: string
+          date?: string
+          hip?: number | null
+          id?: string
+          notes?: string | null
+          thigh?: number | null
+          updated_at?: string
+          user_id?: string | null
+          waist?: number | null
+        }
+        Relationships: []
+      }
       pantry_items: {
         Row: {
           category: string
@@ -447,6 +489,36 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      weight_records: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          updated_at: string
+          user_id: string | null
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+          weight: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          user_id?: string | null
+          weight?: number
         }
         Relationships: []
       }
