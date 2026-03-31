@@ -229,6 +229,39 @@ export type Database = {
         }
         Relationships: []
       }
+      goals: {
+        Row: {
+          created_at: string
+          id: string
+          is_completed: boolean
+          period_start: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          period_start: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          period_start?: string
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       measurement_records: {
         Row: {
           arm: number | null
@@ -381,6 +414,7 @@ export type Database = {
           fasting_start_hour: number | null
           id: string
           monthly_budget: number | null
+          show_goals_in_schedule: boolean | null
           target_weight: number | null
           timezone: string | null
           updated_at: string
@@ -400,6 +434,7 @@ export type Database = {
           fasting_start_hour?: number | null
           id?: string
           monthly_budget?: number | null
+          show_goals_in_schedule?: boolean | null
           target_weight?: number | null
           timezone?: string | null
           updated_at?: string
@@ -419,6 +454,7 @@ export type Database = {
           fasting_start_hour?: number | null
           id?: string
           monthly_budget?: number | null
+          show_goals_in_schedule?: boolean | null
           target_weight?: number | null
           timezone?: string | null
           updated_at?: string
