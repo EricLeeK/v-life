@@ -51,6 +51,7 @@ const MODULE_LABELS: Record<string, string> = {
   belongings_durable: "耐用品",
   weight: "体重",
   measurement: "围度",
+  goal: "目标",
 };
 
 const MAX_SESSIONS = 30;
