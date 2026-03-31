@@ -130,7 +130,19 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Finance */}
+        {/* Goals in Schedule */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">目标设置</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>在日程中显示目标悬浮球</Label>
+                <p className="text-xs text-muted-foreground">开启后在日程页面右下角显示当前目标</p>
+              </div>
+              <Switch checked={settings.show_goals_in_schedule !== false} onCheckedChange={(v) => save({ show_goals_in_schedule: v })} />
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader><CardTitle className="text-base">财务设置</CardTitle></CardHeader>
           <CardContent className="space-y-4">

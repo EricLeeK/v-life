@@ -364,6 +364,7 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
+      {settings?.show_goals_in_schedule !== false && <GoalsBall />}
     </AppLayout>
   );
 }
