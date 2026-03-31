@@ -144,6 +144,13 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         thigh: data.thigh ? Number(data.thigh) : null,
         notes: data.notes || null,
       };
+    case "goal":
+      return {
+        title: data.title || "未命名目标",
+        type: data.type || "week",
+        period_start: data.period_start || today,
+        is_completed: data.is_completed || false,
+      };
     default:
       return data;
   }
