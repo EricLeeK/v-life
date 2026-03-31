@@ -176,8 +176,14 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Use user's JWT to respect RLS
+    const authHeader = req.headers.get("authorization") || "";
+    const userJwt = authHeader.replace("Bearer ", "");
+    const sb = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${userJwt}` } },
+    });
 
     const { data: settings } = await sb.from("settings").select("*").limit(1).single();
     if (!settings?.ai_api_key) {
