@@ -1,45 +1,61 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings, useUpdateSettings, useCaloriesByDate } from "@/hooks/useData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2 } from "lucide-react";
-import { format, subDays } from "date-fns";
+import { format, subDays, subMonths, subYears } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 
 // ========== Hooks ==========
-function useWeightRecords(days = 90) {
-  const since = subDays(new Date(), days).toISOString().split("T")[0];
+function useWeightRecords() {
   return useQuery({
-    queryKey: ["weight_records", days],
+    queryKey: ["weight_records"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("weight_records")
-        .select("*").gte("date", since).order("date", { ascending: true });
+        .select("*").order("date", { ascending: true });
       if (error) throw error;
       return data as any[];
     },
   });
 }
 
-function useMeasurementRecords(days = 90) {
-  const since = subDays(new Date(), days).toISOString().split("T")[0];
+function useMeasurementRecords() {
   return useQuery({
-    queryKey: ["measurement_records", days],
+    queryKey: ["measurement_records"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("measurement_records")
-        .select("*").gte("date", since).order("date", { ascending: true });
+        .select("*").order("date", { ascending: true });
       if (error) throw error;
       return data as any[];
     },
   });
+}
+
+type TimeRange = "week" | "month" | "year";
+
+function filterByRange(records: any[], range: TimeRange): any[] {
+  if (records.length === 0) return [];
+  const now = new Date();
+  let cutoff: Date;
+  switch (range) {
+    case "week": cutoff = subDays(now, 7); break;
+    case "month": cutoff = subMonths(now, 1); break;
+    case "year": cutoff = subYears(now, 1); break;
+  }
+  // Always include from first record date if it's before cutoff
+  const firstDate = new Date(records[0].date);
+  if (firstDate < cutoff) cutoff = firstDate;
+  return records.filter(r => new Date(r.date) >= cutoff);
 }
 
 // ========== Fasting Timer ==========
@@ -60,13 +76,9 @@ function FastingTimer({ startHour }: { startHour: number }) {
 
   if (eatingEnd > eatingStart) {
     isEating = currentTotalMinutes >= eatingStart * 60 && currentTotalMinutes < eatingEnd * 60;
-    if (isEating) {
-      minutesUntilSwitch = eatingEnd * 60 - currentTotalMinutes;
-    } else if (currentTotalMinutes < eatingStart * 60) {
-      minutesUntilSwitch = eatingStart * 60 - currentTotalMinutes;
-    } else {
-      minutesUntilSwitch = (24 * 60 - currentTotalMinutes) + eatingStart * 60;
-    }
+    if (isEating) minutesUntilSwitch = eatingEnd * 60 - currentTotalMinutes;
+    else if (currentTotalMinutes < eatingStart * 60) minutesUntilSwitch = eatingStart * 60 - currentTotalMinutes;
+    else minutesUntilSwitch = (24 * 60 - currentTotalMinutes) + eatingStart * 60;
   } else {
     isEating = currentTotalMinutes >= eatingStart * 60 || currentTotalMinutes < eatingEnd * 60;
     if (isEating) {
@@ -81,16 +93,10 @@ function FastingTimer({ startHour }: { startHour: number }) {
 
   const hoursLeft = Math.floor(minutesUntilSwitch / 60);
   const minsLeft = minutesUntilSwitch % 60;
-
-  let colorClass: string;
-  if (minutesUntilSwitch <= 60) colorClass = "text-yellow-500";
-  else if (isEating) colorClass = "text-green-500";
-  else colorClass = "text-red-500";
-
+  let colorClass = minutesUntilSwitch <= 60 ? "text-yellow-500" : isEating ? "text-green-500" : "text-red-500";
   const formatHour = (h: number) => `${String(h).padStart(2, "0")}:00`;
   const totalPhaseMinutes = isEating ? 8 * 60 : 16 * 60;
-  const elapsedMinutes = totalPhaseMinutes - minutesUntilSwitch;
-  const progressPercent = Math.max(0, Math.min(100, (elapsedMinutes / totalPhaseMinutes) * 100));
+  const progressPercent = Math.max(0, Math.min(100, ((totalPhaseMinutes - minutesUntilSwitch) / totalPhaseMinutes) * 100));
 
   return (
     <Card>
@@ -121,10 +127,8 @@ function FastingTimer({ startHour }: { startHour: number }) {
 function TodayCalorieSummary() {
   const today = new Date().toISOString().split("T")[0];
   const { data: records = [] } = useCaloriesByDate(today);
-  const foodRecords = records.filter((r: any) => r.meal_type !== "exercise");
-  const exerciseRecords = records.filter((r: any) => r.meal_type === "exercise");
-  const totalIntake = foodRecords.reduce((sum: number, r: any) => sum + r.calories, 0);
-  const totalBurned = exerciseRecords.reduce((sum: number, r: any) => sum + r.calories, 0);
+  const totalIntake = records.filter((r: any) => r.meal_type !== "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
+  const totalBurned = records.filter((r: any) => r.meal_type === "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
   const netCalories = totalIntake - totalBurned;
 
   return (
@@ -132,18 +136,9 @@ function TodayCalorieSummary() {
       <CardHeader><CardTitle className="text-base">今日热量概览</CardTitle></CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div>
-            <div className="text-2xl font-bold text-foreground">{totalIntake}</div>
-            <div className="text-xs text-muted-foreground">摄入 kcal</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-orange-500">{totalBurned}</div>
-            <div className="text-xs text-muted-foreground">消耗 kcal</div>
-          </div>
-          <div>
-            <div className={`text-2xl font-bold ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div>
-            <div className="text-xs text-muted-foreground">净摄入 kcal</div>
-          </div>
+          <div><div className="text-2xl font-bold text-foreground">{totalIntake}</div><div className="text-xs text-muted-foreground">摄入 kcal</div></div>
+          <div><div className="text-2xl font-bold text-orange-500">{totalBurned}</div><div className="text-xs text-muted-foreground">消耗 kcal</div></div>
+          <div><div className={`text-2xl font-bold ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div><div className="text-xs text-muted-foreground">净摄入 kcal</div></div>
         </div>
       </CardContent>
     </Card>
@@ -151,11 +146,12 @@ function TodayCalorieSummary() {
 }
 
 // ========== Weight Tracker ==========
-function WeightTracker() {
-  const { data: records = [], refetch } = useWeightRecords();
+function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
+  const { data: records = [] } = useWeightRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const [form, setForm] = useState({ date: new Date().toISOString().split("T")[0], weight: "", notes: "" });
 
   const saveMutation = useMutation({
@@ -176,9 +172,12 @@ function WeightTracker() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["weight_records"] }),
   });
 
-  const chartData = records.map((r: any) => ({
-    date: format(new Date(r.date), "MM/dd"),
+  const filteredRecords = useMemo(() => filterByRange(records, timeRange), [records, timeRange]);
+
+  const chartData = filteredRecords.map((r: any) => ({
+    date: format(new Date(r.date), timeRange === "year" ? "MM/dd" : "MM/dd"),
     体重: Number(r.weight),
+    ...(targetWeight ? { 目标: targetWeight } : {}),
   }));
 
   const latestWeight = records.length > 0 ? Number(records[records.length - 1].weight) : null;
@@ -216,22 +215,40 @@ function WeightTracker() {
                 {Number(diff) > 0 ? "+" : ""}{diff} kg
               </span>
             )}
+            {targetWeight && (
+              <span className="text-xs text-muted-foreground">目标: {targetWeight} kg</span>
+            )}
           </div>
         )}
-        {chartData.length >= 2 && (
-          <ResponsiveContainer width="100%" height={200}>
+
+        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="week">周</TabsTrigger>
+            <TabsTrigger value="month">月</TabsTrigger>
+            <TabsTrigger value="year">年</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {chartData.length >= 2 ? (
+          <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
               <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
               <Tooltip />
-              <Line type="monotone" dataKey="体重" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="体重" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} />
+              {targetWeight && (
+                <ReferenceLine y={targetWeight} stroke="#10b981" strokeDasharray="5 5" label={{ value: `目标 ${targetWeight}kg`, fontSize: 11, fill: "#10b981" }} />
+              )}
             </LineChart>
           </ResponsiveContainer>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center py-8">需要至少2条记录才能显示曲线图</p>
         )}
+
         {records.length > 0 && (
           <div className="space-y-1 max-h-40 overflow-y-auto">
-            {[...records].reverse().slice(0, 10).map((r: any) => (
+            {[...records].reverse().slice(0, 20).map((r: any) => (
               <div key={r.id} className="flex items-center justify-between text-sm py-1">
                 <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: zhCN })}</span>
                 <div className="flex items-center gap-2">
@@ -264,6 +281,7 @@ function MeasurementTracker() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const [form, setForm] = useState<Record<string, string>>({ date: new Date().toISOString().split("T")[0] });
 
   const saveMutation = useMutation({
@@ -284,7 +302,9 @@ function MeasurementTracker() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["measurement_records"] }),
   });
 
-  const chartData = records.map((r: any) => {
+  const filteredRecords = useMemo(() => filterByRange(records, timeRange), [records, timeRange]);
+
+  const chartData = filteredRecords.map((r: any) => {
     const point: any = { date: format(new Date(r.date), "MM/dd") };
     MEASUREMENT_FIELDS.forEach(({ key, label }) => {
       if (r[key] != null) point[label] = Number(r[key]);
@@ -314,9 +334,7 @@ function MeasurementTracker() {
               ))}
               <Button className="w-full" onClick={() => {
                 const payload: any = { date: form.date };
-                MEASUREMENT_FIELDS.forEach(({ key }) => {
-                  if (form[key]) payload[key] = Number(form[key]);
-                });
+                MEASUREMENT_FIELDS.forEach(({ key }) => { if (form[key]) payload[key] = Number(form[key]); });
                 saveMutation.mutate(payload);
               }}>保存</Button>
             </div>
@@ -334,11 +352,20 @@ function MeasurementTracker() {
             ))}
           </div>
         )}
-        {chartData.length >= 2 && (
+
+        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="week">周</TabsTrigger>
+            <TabsTrigger value="month">月</TabsTrigger>
+            <TabsTrigger value="year">年</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {chartData.length >= 2 ? (
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+              <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
               <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -347,10 +374,13 @@ function MeasurementTracker() {
               ))}
             </LineChart>
           </ResponsiveContainer>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center py-8">需要至少2条记录才能显示曲线图</p>
         )}
+
         {records.length > 0 && (
           <div className="space-y-1 max-h-40 overflow-y-auto">
-            {[...records].reverse().slice(0, 10).map((r: any) => (
+            {[...records].reverse().slice(0, 20).map((r: any) => (
               <div key={r.id} className="flex items-center justify-between text-sm py-1">
                 <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: zhCN })}</span>
                 <div className="flex items-center gap-2">
@@ -375,22 +405,28 @@ function MeasurementTracker() {
 export default function WeightLossPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
+  const { toast } = useToast();
   const [editStart, setEditStart] = useState<string>("");
+  const [editTarget, setEditTarget] = useState<string>("");
 
   useEffect(() => {
     if (settings) {
       setEditStart(String((settings as any).fasting_start_hour ?? 12));
+      setEditTarget(String((settings as any).target_weight ?? ""));
     }
   }, [settings]);
 
   if (isLoading || !settings) return <AppLayout title="减肥专项"><p className="text-sm text-muted-foreground">加载中...</p></AppLayout>;
 
   const startHour = (settings as any).fasting_start_hour ?? 12;
+  const targetWeight = (settings as any).target_weight ? Number((settings as any).target_weight) : null;
 
-  const handleSaveStart = async () => {
+  const handleSaveSettings = async () => {
     const h = parseInt(editStart);
     if (isNaN(h) || h < 0 || h > 23) return;
-    await updateSettings.mutateAsync({ fasting_start_hour: h } as any);
+    const tw = editTarget ? Number(editTarget) : null;
+    await updateSettings.mutateAsync({ fasting_start_hour: h, target_weight: tw } as any);
+    toast({ title: "设置已保存" });
   };
 
   return (
@@ -398,18 +434,23 @@ export default function WeightLossPage() {
       <div className="max-w-2xl space-y-4">
         <FastingTimer startHour={startHour} />
         <TodayCalorieSummary />
-        <WeightTracker />
+        <WeightTracker targetWeight={targetWeight} />
         <MeasurementTracker />
 
         <Card>
           <CardHeader><CardTitle className="text-base">设置</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-3">
-              <Label className="shrink-0">可进食开始时间</Label>
+              <Label className="shrink-0">进食开始</Label>
               <Input type="number" min={0} max={23} value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-20" />
               <span className="text-sm text-muted-foreground">:00</span>
-              <Button size="sm" onClick={handleSaveStart}>保存</Button>
             </div>
+            <div className="flex items-center gap-3">
+              <Label className="shrink-0">目标体重</Label>
+              <Input type="number" step="0.1" value={editTarget} onChange={(e) => setEditTarget(e.target.value)} className="w-24" placeholder="kg" />
+              <span className="text-sm text-muted-foreground">kg</span>
+            </div>
+            <Button size="sm" onClick={handleSaveSettings}>保存设置</Button>
             <p className="text-xs text-muted-foreground">
               进食时段：{startHour}:00 - {(startHour + 8) % 24}:00 | 时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>

@@ -126,6 +126,22 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         expected_lifespan_days: Number(data.expected_lifespan_days) || 365,
         notes: data.notes || null,
       };
+    case "weight":
+      return {
+        date: data.date || today,
+        weight: Number(data.weight) || 0,
+        notes: data.notes || null,
+      };
+    case "measurement":
+      return {
+        date: data.date || today,
+        waist: data.waist ? Number(data.waist) : null,
+        hip: data.hip ? Number(data.hip) : null,
+        chest: data.chest ? Number(data.chest) : null,
+        arm: data.arm ? Number(data.arm) : null,
+        thigh: data.thigh ? Number(data.thigh) : null,
+        notes: data.notes || null,
+      };
     default:
       return data;
   }
