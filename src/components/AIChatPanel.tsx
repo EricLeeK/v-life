@@ -37,6 +37,7 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   belongings_durable: "belongings_durable",
   weight: "weight_records",
   measurement: "measurement_records",
+  goal: "goals",
 };
 
 const MODULE_LABELS: Record<string, string> = {
