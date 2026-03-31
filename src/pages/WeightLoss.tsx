@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format, subDays, subMonths, subYears } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from "recharts";
@@ -152,6 +153,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
+  const [showTarget, setShowTarget] = useState(true);
   const [form, setForm] = useState({ date: new Date().toISOString().split("T")[0], weight: "", notes: "" });
 
   const saveMutation = useMutation({
@@ -175,14 +177,24 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   const filteredRecords = useMemo(() => filterByRange(records, timeRange), [records, timeRange]);
 
   const chartData = filteredRecords.map((r: any) => ({
-    date: format(new Date(r.date), timeRange === "year" ? "MM/dd" : "MM/dd"),
+    date: format(new Date(r.date), "MM/dd"),
     体重: Number(r.weight),
-    ...(targetWeight ? { 目标: targetWeight } : {}),
+    ...(targetWeight && showTarget ? { 目标: targetWeight } : {}),
   }));
 
   const latestWeight = records.length > 0 ? Number(records[records.length - 1].weight) : null;
   const firstWeight = records.length > 0 ? Number(records[0].weight) : null;
   const diff = latestWeight && firstWeight ? (latestWeight - firstWeight).toFixed(1) : null;
+
+  // Calculate Y-axis domain to include target weight when showTarget is on
+  const yDomain = useMemo(() => {
+    if (!showTarget || !targetWeight || chartData.length === 0) return ["auto", "auto"] as const;
+    const weights = filteredRecords.map((r: any) => Number(r.weight));
+    const minW = Math.min(...weights, targetWeight);
+    const maxW = Math.max(...weights, targetWeight);
+    const padding = (maxW - minW) * 0.1 || 1;
+    return [Math.floor((minW - padding) * 10) / 10, Math.ceil((maxW + padding) * 10) / 10];
+  }, [showTarget, targetWeight, filteredRecords, chartData.length]);
 
   return (
     <Card>
@@ -221,6 +233,13 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
           </div>
         )}
 
+        {targetWeight && (
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <Checkbox checked={showTarget} onCheckedChange={(v) => setShowTarget(!!v)} />
+            <span className="text-muted-foreground">显示目标线</span>
+          </label>
+        )}
+
         <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="week">周</TabsTrigger>
@@ -234,10 +253,10 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-              <YAxis domain={["auto", "auto"]} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+              <YAxis domain={yDomain as any} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
               <Tooltip />
               <Line type="monotone" dataKey="体重" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} />
-              {targetWeight && (
+              {targetWeight && showTarget && (
                 <ReferenceLine y={targetWeight} stroke="#10b981" strokeDasharray="5 5" label={{ value: `目标 ${targetWeight}kg`, fontSize: 11, fill: "#10b981" }} />
               )}
             </LineChart>
