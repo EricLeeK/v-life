@@ -6,6 +6,7 @@ import {
   Flame,
   Wallet,
   CheckSquare,
+  Target,
   Lightbulb,
   Settings,
   Scale,
