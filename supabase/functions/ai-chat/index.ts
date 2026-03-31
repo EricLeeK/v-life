@@ -86,6 +86,13 @@ delete: { module: "measurement", action: "delete", data: { match: { date?: strin
 
 **围度单位为 cm，体重单位为 kg。同一天重复记录会覆盖（upsert）。**
 
+### 11. goal（目标管理）
+create: { module: "goal", action: "create", data: { title: string, type: "week"|"month"|"year", period_start: "YYYY-MM-DD" } }
+update: { module: "goal", action: "update", data: { match: { title?: string, type?: string }, update: { title?: string, is_completed?: boolean } } }
+delete: { module: "goal", action: "delete", data: { match: { title?: string, type?: string } } }
+
+**目标分为周目标、月目标、年目标。period_start 为该目标周期的起始日期（周目标用周一日期，月目标用当月1号，年目标用当年1月1日）。**
+
 ## 默认值规则
 - 日期缺失 → 使用今天（当前日期会附加在用户消息中）
 - 币种缺失 → 默认 CNY
@@ -169,8 +176,14 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const sb = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    // Use user's JWT to respect RLS
+    const authHeader = req.headers.get("authorization") || "";
+    const userJwt = authHeader.replace("Bearer ", "");
+    const sb = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${userJwt}` } },
+    });
 
     const { data: settings } = await sb.from("settings").select("*").limit(1).single();
     if (!settings?.ai_api_key) {

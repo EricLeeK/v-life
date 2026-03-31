@@ -152,6 +152,50 @@ const TABLES: Record<string, TableDef> = {
       { name: "icon", type: "string", description: "装饰emoji" },
     ],
   },
+  weight: {
+    table: "weight_records", label: "体重",
+    listColumns: ["date", "weight"],
+    searchColumns: ["date", "weight", "notes"],
+    listFilters: [
+      { name: "date", type: "string", description: "日期 YYYY-MM-DD" },
+    ],
+    createFields: [
+      { name: "date", type: "string", required: true, description: "日期 YYYY-MM-DD" },
+      { name: "weight", type: "number", required: true, description: "体重(kg)" },
+      { name: "notes", type: "string", description: "备注" },
+    ],
+  },
+  measurement: {
+    table: "measurement_records", label: "围度",
+    listColumns: ["date", "waist", "hip", "chest", "arm", "thigh"],
+    searchColumns: ["date", "waist", "hip", "chest", "arm", "thigh", "notes"],
+    listFilters: [
+      { name: "date", type: "string", description: "日期 YYYY-MM-DD" },
+    ],
+    createFields: [
+      { name: "date", type: "string", required: true, description: "日期 YYYY-MM-DD" },
+      { name: "waist", type: "number", description: "腰围(cm)" },
+      { name: "hip", type: "number", description: "臀围(cm)" },
+      { name: "chest", type: "number", description: "胸围(cm)" },
+      { name: "arm", type: "number", description: "臂围(cm)" },
+      { name: "thigh", type: "number", description: "大腿围(cm)" },
+      { name: "notes", type: "string", description: "备注" },
+    ],
+  },
+  goals: {
+    table: "goals", label: "目标",
+    listColumns: ["title", "type", "period_start", "is_completed"],
+    searchColumns: ["title", "type", "period_start", "is_completed"],
+    listFilters: [
+      { name: "type", type: "string", description: "week/month/year" },
+      { name: "is_completed", type: "boolean", description: "是否完成" },
+    ],
+    createFields: [
+      { name: "title", type: "string", required: true, description: "目标内容" },
+      { name: "type", type: "string", required: true, description: "week/month/year" },
+      { name: "period_start", type: "string", required: true, description: "周期起始日期 YYYY-MM-DD" },
+    ],
+  },
 };
 
 // Pick only specified keys from an object
@@ -303,7 +347,7 @@ mcpServer.tool("finance_summary", {
 
 // ─── Data Export / Import ───
 
-const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"];
+const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings", "goals", "weight_records", "measurement_records"];
 
 mcpServer.tool("data_export", {
   description: "导出全量数据为JSON",

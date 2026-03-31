@@ -37,6 +37,7 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   belongings_durable: "belongings_durable",
   weight: "weight_records",
   measurement: "measurement_records",
+  goal: "goals",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -50,6 +51,7 @@ const MODULE_LABELS: Record<string, string> = {
   belongings_durable: "耐用品",
   weight: "体重",
   measurement: "围度",
+  goal: "目标",
 };
 
 const MAX_SESSIONS = 30;
@@ -141,6 +143,13 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         arm: data.arm ? Number(data.arm) : null,
         thigh: data.thigh ? Number(data.thigh) : null,
         notes: data.notes || null,
+      };
+    case "goal":
+      return {
+        title: data.title || "未命名目标",
+        type: data.type || "week",
+        period_start: data.period_start || today,
+        is_completed: data.is_completed || false,
       };
     default:
       return data;
@@ -347,7 +356,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       // Also invalidate dashboard queries
