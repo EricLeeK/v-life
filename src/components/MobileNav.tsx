@@ -9,6 +9,7 @@ import {
   Lightbulb,
   Settings,
   MoreHorizontal,
+  Scale,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
@@ -26,6 +27,7 @@ const moreItems = [
   { title: "用品管理", url: "/belongings", icon: Package },
   { title: "热量记录", url: "/calories", icon: Flame },
   { title: "随想", url: "/thoughts", icon: Lightbulb },
+  { title: "减肥", url: "/weight-loss", icon: Scale },
   { title: "设置", url: "/settings", icon: Settings },
 ];
 

@@ -18,6 +18,7 @@ const MEAL_TYPES = [
   { key: "lunch", label: "☀️ 午餐" },
   { key: "dinner", label: "🌙 晚餐" },
   { key: "snack", label: "🍿 加餐" },
+  { key: "exercise", label: "🏃 运动" },
 ] as const;
 
 export default function CaloriesPage() {
@@ -34,7 +35,9 @@ export default function CaloriesPage() {
   const deleteMutation = calorieHooks.useDelete();
 
   const target = settings?.calorie_target || 2000;
-  const totalCalories = records.reduce((sum: number, r: any) => sum + r.calories, 0);
+  const foodCalories = records.filter((r: any) => r.meal_type !== "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
+  const exerciseCalories = records.filter((r: any) => r.meal_type === "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
+  const totalCalories = foodCalories - exerciseCalories;
   const progress = Math.min(100, (totalCalories / target) * 100);
 
   // Generate 7-day nav (yesterday + today + 5 days)
@@ -73,7 +76,7 @@ export default function CaloriesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-foreground font-medium">{totalCalories} kcal</span>
+              <span className="text-foreground font-medium">{foodCalories} - {exerciseCalories} = {totalCalories} kcal</span>
               <span className="text-muted-foreground">/ {target} kcal</span>
             </div>
             <Progress value={progress} className="h-2" />

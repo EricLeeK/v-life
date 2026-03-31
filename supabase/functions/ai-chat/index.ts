@@ -41,9 +41,11 @@ update: { module: "finance", action: "update", data: { match: { name?: string, d
 delete: { module: "finance", action: "delete", data: { match: { name?: string, date?: string, amount?: number } } }
 
 ### 2. calories（热量记录）
-create: { module: "calories", action: "create", data: { food_name: string, calories: number, meal_type: "breakfast"|"lunch"|"dinner"|"snack", date: "YYYY-MM-DD", notes?: string } }
+create: { module: "calories", action: "create", data: { food_name: string, calories: number, meal_type: "breakfast"|"lunch"|"dinner"|"snack"|"exercise", date: "YYYY-MM-DD", notes?: string } }
 update: { module: "calories", action: "update", data: { match: { food_name?: string, date?: string, meal_type?: string }, update: { food_name?: string, calories?: number, meal_type?: string, notes?: string } } }
 delete: { module: "calories", action: "delete", data: { match: { food_name?: string, date?: string, meal_type?: string } } }
+
+**运动类（meal_type="exercise"）**：当用户提到运动/锻炼时，使用 meal_type="exercise"，calories 填写消耗的热量。food_name 填运动名称（如"跑步30分钟"）。你需要根据运动类型和时长自行估算消耗的大卡数。
 
 ### 3. schedule（日程）
 create: { module: "schedule", action: "create", data: { title: string, start_time: "ISO8601", end_time: "ISO8601", importance?: "紧急"|"重要"|"普通"|"低", notes?: string } }
@@ -80,7 +82,8 @@ delete: { module: "belongings_durable", action: "delete", data: { match: { name?
 - 日程缺少结束时间 → 默认开始时间 +1 小时
 - importance 缺失 → 默认 "普通"
 - todo 的 category 缺失 → 默认 "未分类"
-- 热量：如果用户没有明确说几大卡，根据食物名称合理估算
+- 热量：如果用户没有明确说几大卡，根据食物名称和份量合理估算热量（kcal）
+- 运动：如果用户提到了运动但没说消耗多少，根据运动类型和时长自行估算消耗热量
 
 ## 跨模块识别
 一条消息可能涉及多个模块，你必须拆分为多条操作。例如「吃拉面花了30元600大卡」→ finance + calories 两条操作。
