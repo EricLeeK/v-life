@@ -336,8 +336,10 @@ export type Database = {
           custom_thought_tags: Json | null
           exchange_rate_jpy_to_cny: number | null
           exchange_rate_updated_at: string | null
+          fasting_start_hour: number | null
           id: string
           monthly_budget: number | null
+          timezone: string | null
           updated_at: string
           user_id: string | null
         }
@@ -352,8 +354,10 @@ export type Database = {
           custom_thought_tags?: Json | null
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
+          fasting_start_hour?: number | null
           id?: string
           monthly_budget?: number | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -368,8 +372,10 @@ export type Database = {
           custom_thought_tags?: Json | null
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
+          fasting_start_hour?: number | null
           id?: string
           monthly_budget?: number | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string | null
         }
