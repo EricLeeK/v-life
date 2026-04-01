@@ -92,7 +92,48 @@ export default function DashboardPage() {
           </p>
         </DashboardCard>
 
-        <DashboardCard title="食材库存" icon={Carrot} onClick={() => navigate("/pantry")}>
+        <DashboardCard title="本周目标" icon={Target} onClick={() => navigate("/goals")}>
+          {weekGoals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无本周目标</p>
+          ) : (
+            <div className="space-y-1">
+              {weekGoals.slice(0, 3).map((g: any) => (
+                <p key={g.id} className={`text-xs ${g.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                  {g.is_completed ? "✓ " : "○ "}{g.title}
+                </p>
+              ))}
+              {weekGoals.length > 3 && <p className="text-[10px] text-muted-foreground">+{weekGoals.length - 3} 个目标</p>}
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard title="体重趋势" icon={TrendingDown} onClick={() => navigate("/weight-loss")}>
+          {weightTrend.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无记录</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-2xl font-semibold">{Number(weightTrend[weightTrend.length - 1]?.weight).toFixed(1)} kg</p>
+              {weightTrend.length >= 2 && (() => {
+                const diff = Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight);
+                return <p className={`text-xs ${diff <= 0 ? "text-success" : "text-destructive"}`}>
+                  近{weightTrend.length}次 {diff > 0 ? "+" : ""}{diff.toFixed(1)} kg
+                </p>;
+              })()}
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard title="16+8 断食" icon={Timer} onClick={() => navigate("/weight-loss")}>
+          <div className="space-y-1">
+            <p className={`text-lg font-semibold ${isEatingWindow ? "text-success" : "text-destructive"}`}>
+              {isEatingWindow ? "🟢 进食窗口" : "🔴 断食中"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              进食: {String(fastingStartHour).padStart(2, "0")}:00 - {String(fastingEndHour).padStart(2, "0")}:00
+            </p>
+          </div>
+        </DashboardCard>
+
           <div className="flex justify-between">
             <div>
               <p className="text-xs text-muted-foreground">即将过期</p>
