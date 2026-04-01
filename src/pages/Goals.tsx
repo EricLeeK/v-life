@@ -101,7 +101,21 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
       const { error } = await (supabase.from as any)("goals").update({ is_completed }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["goals"] }),
+    onMutate: async ({ id, is_completed }) => {
+      await qc.cancelQueries({ queryKey: ["goals"] });
+      const queries = qc.getQueriesData<any[]>({ queryKey: ["goals"] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          qc.setQueryData(key, data.map((g: any) => g.id === id ? { ...g, is_completed } : g));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["goals"] }),
   });
 
   const deleteMutation = useMutation({
@@ -109,7 +123,21 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
       const { error } = await (supabase.from as any)("goals").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["goals"] }),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: ["goals"] });
+      const queries = qc.getQueriesData<any[]>({ queryKey: ["goals"] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          qc.setQueryData(key, data.filter((g: any) => g.id !== id));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["goals"] }),
   });
 
   const formatPeriod = (dateStr: string) => {
