@@ -86,7 +86,21 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
         if (error) throw error;
         return data;
       },
-      onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+      onMutate: async ({ id, ...updates }) => {
+        await qc.cancelQueries({ queryKey: [queryKey] });
+        const queries = qc.getQueriesData<any[]>({ queryKey: [queryKey] });
+        const snapshots = queries.map(([key, data]) => [key, data] as const);
+        queries.forEach(([key, data]) => {
+          if (Array.isArray(data)) {
+            qc.setQueryData(key, data.map((item: any) => item.id === id ? { ...item, ...updates } : item));
+          }
+        });
+        return { snapshots };
+      },
+      onError: (_err, _vars, context) => {
+        context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+      },
+      onSettled: () => qc.invalidateQueries({ queryKey: [queryKey] }),
     });
   };
 
@@ -97,7 +111,21 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
         const { error } = await (supabase.from as any)(table).delete().eq("id", id);
         if (error) throw error;
       },
-      onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+      onMutate: async (id) => {
+        await qc.cancelQueries({ queryKey: [queryKey] });
+        const queries = qc.getQueriesData<any[]>({ queryKey: [queryKey] });
+        const snapshots = queries.map(([key, data]) => [key, data] as const);
+        queries.forEach(([key, data]) => {
+          if (Array.isArray(data)) {
+            qc.setQueryData(key, data.filter((item: any) => item.id !== id));
+          }
+        });
+        return { snapshots };
+      },
+      onError: (_err, _vars, context) => {
+        context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+      },
+      onSettled: () => qc.invalidateQueries({ queryKey: [queryKey] }),
     });
   };
 
