@@ -1,11 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb } from "lucide-react";
+import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   useTodaySchedule, useTodayCalorieSummary, useMonthFinanceSummary,
-  usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings
+  usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
+  useCurrentWeekGoals, useRecentWeightTrend
 } from "@/hooks/useData";
 import { format } from "date-fns";
 

@@ -280,10 +280,47 @@ export function useTodayCalorieSummary() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("calorie_records")
-        .select("calories")
+        .select("calories, meal_type")
         .eq("date", today);
       if (error) throw error;
-      return (data || []).reduce((sum, r) => sum + r.calories, 0);
+      return (data || []).reduce((sum, r) => {
+        return r.meal_type === "exercise" ? sum - r.calories : sum + r.calories;
+      }, 0);
+    },
+  });
+}
+
+export function useRecentWeightTrend() {
+  return useQuery({
+    queryKey: ["weight_records", "recent_trend"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("weight_records")
+        .select("date, weight")
+        .order("date", { ascending: false })
+        .limit(7);
+      if (error) throw error;
+      return (data || []).reverse();
+    },
+  });
+}
+
+export function useCurrentWeekGoals() {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  const weekStart = monday.toISOString().split("T")[0];
+  return useQuery({
+    queryKey: ["goals", "current_week", weekStart],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from as any)("goals")
+        .select("*")
+        .eq("type", "week")
+        .eq("period_start", weekStart)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as any[];
     },
   });
 }
