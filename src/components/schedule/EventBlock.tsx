@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import { format } from "date-fns";
 
 const HOUR_HEIGHT = 60;
-const VISIBLE_START = 6;
+const VISIBLE_START = 0;
 const VISIBLE_END = 24;
 const TOTAL_HOURS = VISIBLE_END - VISIBLE_START;
 const SNAP_MINUTES = 15;
