@@ -35,11 +35,21 @@ export default function DashboardPage() {
   const { data: expiringPantry = [] } = useExpiringPantry();
   const { data: overdueDurables = [] } = useOverdueDurables();
   const { data: recentThoughts = [] } = useRecentThoughts();
+  const { data: weekGoals = [] } = useCurrentWeekGoals();
+  const { data: weightTrend = [] } = useRecentWeightTrend();
 
   const calorieTarget = settings?.calorie_target || 2000;
   const budget = settings?.monthly_budget || 5000;
   const totalSpending = financeSummary?.total || 0;
   const urgentTodos = pendingTodos.filter((t: any) => t.importance === "紧急");
+
+  // Fasting calculation
+  const fastingStartHour = settings?.fasting_start_hour ?? 12;
+  const fastingEndHour = (fastingStartHour + 8) % 24;
+  const currentHour = now.getHours();
+  const isEatingWindow = fastingStartHour < fastingEndHour
+    ? currentHour >= fastingStartHour && currentHour < fastingEndHour
+    : currentHour >= fastingStartHour || currentHour < fastingEndHour;
 
   const nextEvent = todayEvents.length > 0
     ? todayEvents.find((e: any) => new Date(e.start_time) > now) || todayEvents[0]
