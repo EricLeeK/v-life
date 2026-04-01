@@ -1,11 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb } from "lucide-react";
+import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   useTodaySchedule, useTodayCalorieSummary, useMonthFinanceSummary,
-  usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings
+  usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
+  useCurrentWeekGoals, useRecentWeightTrend
 } from "@/hooks/useData";
 import { format } from "date-fns";
 
@@ -34,11 +35,21 @@ export default function DashboardPage() {
   const { data: expiringPantry = [] } = useExpiringPantry();
   const { data: overdueDurables = [] } = useOverdueDurables();
   const { data: recentThoughts = [] } = useRecentThoughts();
+  const { data: weekGoals = [] } = useCurrentWeekGoals();
+  const { data: weightTrend = [] } = useRecentWeightTrend();
 
   const calorieTarget = settings?.calorie_target || 2000;
   const budget = settings?.monthly_budget || 5000;
   const totalSpending = financeSummary?.total || 0;
   const urgentTodos = pendingTodos.filter((t: any) => t.importance === "紧急");
+
+  // Fasting calculation
+  const fastingStartHour = settings?.fasting_start_hour ?? 12;
+  const fastingEndHour = (fastingStartHour + 8) % 24;
+  const currentHour = now.getHours();
+  const isEatingWindow = fastingStartHour < fastingEndHour
+    ? currentHour >= fastingStartHour && currentHour < fastingEndHour
+    : currentHour >= fastingStartHour || currentHour < fastingEndHour;
 
   const nextEvent = todayEvents.length > 0
     ? todayEvents.find((e: any) => new Date(e.start_time) > now) || todayEvents[0]
@@ -79,6 +90,48 @@ export default function DashboardPage() {
           <p className="text-xs text-muted-foreground mt-1">
             {urgentTodos.length > 0 ? <span className="text-destructive">{urgentTodos.length} 个紧急</span> : "无紧急事项"}
           </p>
+        </DashboardCard>
+
+        <DashboardCard title="本周目标" icon={Target} onClick={() => navigate("/goals")}>
+          {weekGoals.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无本周目标</p>
+          ) : (
+            <div className="space-y-1">
+              {weekGoals.slice(0, 3).map((g: any) => (
+                <p key={g.id} className={`text-xs ${g.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                  {g.is_completed ? "✓ " : "○ "}{g.title}
+                </p>
+              ))}
+              {weekGoals.length > 3 && <p className="text-[10px] text-muted-foreground">+{weekGoals.length - 3} 个目标</p>}
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard title="体重趋势" icon={TrendingDown} onClick={() => navigate("/weight-loss")}>
+          {weightTrend.length === 0 ? (
+            <p className="text-sm text-muted-foreground">暂无记录</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-2xl font-semibold">{Number(weightTrend[weightTrend.length - 1]?.weight).toFixed(1)} kg</p>
+              {weightTrend.length >= 2 && (() => {
+                const diff = Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight);
+                return <p className={`text-xs ${diff <= 0 ? "text-success" : "text-destructive"}`}>
+                  近{weightTrend.length}次 {diff > 0 ? "+" : ""}{diff.toFixed(1)} kg
+                </p>;
+              })()}
+            </div>
+          )}
+        </DashboardCard>
+
+        <DashboardCard title="16+8 断食" icon={Timer} onClick={() => navigate("/weight-loss")}>
+          <div className="space-y-1">
+            <p className={`text-lg font-semibold ${isEatingWindow ? "text-success" : "text-destructive"}`}>
+              {isEatingWindow ? "🟢 进食窗口" : "🔴 断食中"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              进食: {String(fastingStartHour).padStart(2, "0")}:00 - {String(fastingEndHour).padStart(2, "0")}:00
+            </p>
+          </div>
         </DashboardCard>
 
         <DashboardCard title="食材库存" icon={Carrot} onClick={() => navigate("/pantry")}>
