@@ -134,6 +134,7 @@ export default function DashboardPage() {
           </div>
         </DashboardCard>
 
+        <DashboardCard title="食材库存" icon={Carrot} onClick={() => navigate("/pantry")}>
           <div className="flex justify-between">
             <div>
               <p className="text-xs text-muted-foreground">即将过期</p>
