@@ -61,17 +61,20 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
   const jpyRate = exchangeRate || 0.048;
 
   switch (module) {
-    case "finance":
+    case "finance": {
+      const VALID_FINANCE_CATS = ["餐饮","日用","交通","住房","通讯/订阅","医疗","服饰","娱乐","学习","电子","大额","其他"];
+      const cat = VALID_FINANCE_CATS.includes(data.category) ? data.category : "其他";
       return {
         name: data.name || data.title || "未命名",
         amount: Number(data.amount) || 0,
         currency: data.currency || "CNY",
-        category: data.category || "其他",
+        category: cat,
         date: data.date || today,
         amount_cny: data.currency === "JPY" ? Number(data.amount) * jpyRate : Number(data.amount),
         exchange_rate: data.currency === "JPY" ? jpyRate : 1,
         notes: data.notes || null,
       };
+    }
     case "calories":
       return {
         food_name: data.food_name || data.name || "未命名",
