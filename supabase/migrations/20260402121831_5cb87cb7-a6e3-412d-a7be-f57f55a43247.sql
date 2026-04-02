@@ -1,0 +1,2 @@
+ALTER TABLE public.finance_records DROP CONSTRAINT IF EXISTS finance_records_category_check;
+ALTER TABLE public.finance_records ADD CONSTRAINT finance_records_category_check CHECK (category IN ('餐饮','日用','交通','住房','通讯/订阅','医疗','服饰','娱乐','学习','电子','大额','税费','其他'));

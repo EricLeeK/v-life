@@ -36,7 +36,8 @@ const SYSTEM_PROMPT = `你是 V-Life Manager 的数据操作助手。你的唯�
 ## 模块定义与字段规范
 
 ### 1. finance（记账）
-create: { module: "finance", action: "create", data: { name: string, amount: number, currency: "CNY"|"JPY", category: "餐饮"|"日用"|"交通"|"住房"|"通讯/订阅"|"医疗"|"服饰"|"娱乐"|"学习"|"电子"|"大额"|"其他", date: "YYYY-MM-DD", notes?: string } }
+create: { module: "finance", action: "create", data: { name: string, amount: number, currency: "CNY"|"JPY", category: "餐饮"|"日用"|"交通"|"住房"|"通讯/订阅"|"医疗"|"服饰"|"娱乐"|"学习"|"电子"|"大额"|"税费"|"其他", date: "YYYY-MM-DD", notes?: string } }
+**【严格约束】category 必须且只能是上述枚举值之一，禁止使用任何同义词、近义词或自创分类（如"购物"、"食品"、"超市"等均不合法）。如果无法确定分类，使用"其他"。税费/消費税/tax 统一归入"税费"。**
 update: { module: "finance", action: "update", data: { match: { name?: string, date?: string, amount?: number }, update: { name?: string, amount?: number, currency?: string, category?: string, notes?: string } } }
 delete: { module: "finance", action: "delete", data: { match: { name?: string, date?: string, amount?: number } } }
 
