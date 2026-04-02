@@ -19,7 +19,7 @@ const CATEGORIES = [
   { key: "餐饮", emoji: "🍜" }, { key: "日用", emoji: "🧴" }, { key: "交通", emoji: "🚃" },
   { key: "住房", emoji: "🏠" }, { key: "通讯/订阅", emoji: "📱" }, { key: "医疗", emoji: "🏥" },
   { key: "服饰", emoji: "👔" }, { key: "娱乐", emoji: "🎮" }, { key: "学习", emoji: "📚" },
-  { key: "电子", emoji: "💻" }, { key: "大额", emoji: "🏷️" }, { key: "其他", emoji: "❓" },
+  { key: "电子", emoji: "💻" }, { key: "大额", emoji: "🏷️" }, { key: "税费", emoji: "🧾" }, { key: "其他", emoji: "❓" },
 ] as const;
 
 const PIE_COLORS = ["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16", "#06b6d4", "#a855f7"];

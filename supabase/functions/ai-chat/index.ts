@@ -36,7 +36,8 @@ const SYSTEM_PROMPT = `你是 V-Life Manager 的数据操作助手。你的唯�
 ## 模块定义与字段规范
 
 ### 1. finance（记账）
-create: { module: "finance", action: "create", data: { name: string, amount: number, currency: "CNY"|"JPY", category: "餐饮"|"日用"|"交通"|"住房"|"通讯/订阅"|"医疗"|"服饰"|"娱乐"|"学习"|"电子"|"大额"|"其他", date: "YYYY-MM-DD", notes?: string } }
+create: { module: "finance", action: "create", data: { name: string, amount: number, currency: "CNY"|"JPY", category: "餐饮"|"日用"|"交通"|"住房"|"通讯/订阅"|"医疗"|"服饰"|"娱乐"|"学习"|"电子"|"大额"|"税费"|"其他", date: "YYYY-MM-DD", notes?: string } }
+**【严格约束】category 必须且只能是上述枚举值之一，禁止使用任何同义词、近义词或自创分类（如"购物"、"食品"、"超市"等均不合法）。如果无法确定分类，使用"其他"。税费/消費税/tax 统一归入"税费"。**
 update: { module: "finance", action: "update", data: { match: { name?: string, date?: string, amount?: number }, update: { name?: string, amount?: number, currency?: string, category?: string, notes?: string } } }
 delete: { module: "finance", action: "delete", data: { match: { name?: string, date?: string, amount?: number } } }
 
@@ -110,7 +111,7 @@ delete: { module: "goal", action: "delete", data: { match: { title?: string, typ
 
 ### 购物小票特别规则
 1. 小票上的每一个商品必须分别生成独立的 finance 记账条目，不要合并
-2. 税费（消費税/tax）必须单独一条记账条目，分类使用"其他"
+2. 税费（消費税/tax）必须单独一条记账条目，分类使用"税费"
 3. 如果商品属于食材类（蔬菜、水果、肉类、蛋奶、调料、主食等），除了生成 finance 记账条目外，还要同时生成 pantry 食材管理条目
 4. 如果商品原名是日文，翻译为中文后，条目名称格式为「中文名（原日文名）」，例如「牛奶（牛乳）」「鸡胸肉（鶏むね肉）」
 5. 小票上的折扣/优惠如有，可作为负数金额的独立条目或在 notes 中备注

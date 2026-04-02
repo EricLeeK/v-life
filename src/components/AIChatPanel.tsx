@@ -62,7 +62,7 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
 
   switch (module) {
     case "finance": {
-      const VALID_FINANCE_CATS = ["餐饮","日用","交通","住房","通讯/订阅","医疗","服饰","娱乐","学习","电子","大额","其他"];
+      const VALID_FINANCE_CATS = ["餐饮","日用","交通","住房","通讯/订阅","医疗","服饰","娱乐","学习","电子","大额","税费","其他"];
       const cat = VALID_FINANCE_CATS.includes(data.category) ? data.category : "其他";
       return {
         name: data.name || data.title || "未命名",
