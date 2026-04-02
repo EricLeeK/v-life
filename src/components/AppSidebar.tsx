@@ -92,6 +92,9 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
+            <ThemeToggle collapsed={collapsed} />
+          </SidebarMenuItem>
+          <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="设置">
               <NavLink
                 to="/settings"

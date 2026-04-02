@@ -63,6 +63,13 @@ export function MobileNav() {
                 </NavLink>
               ))}
               <button
+                onClick={toggleTheme}
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                <span className="text-[10px]">{theme === "dark" ? "樱花" : "暗色"}</span>
+              </button>
+              <button
                 onClick={signOut}
                 className="flex flex-col items-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
               >
