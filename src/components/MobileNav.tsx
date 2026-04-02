@@ -12,11 +12,14 @@ import {
   MoreHorizontal,
   Scale,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const primaryItems = [
   { title: "首页", url: "/", icon: LayoutDashboard },
@@ -38,6 +41,7 @@ const moreItems = [
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <>
@@ -58,6 +62,13 @@ export function MobileNav() {
                   <span className="text-[10px]">{item.title}</span>
                 </NavLink>
               ))}
+              <button
+                onClick={toggleTheme}
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                <span className="text-[10px]">{theme === "dark" ? "樱花" : "暗色"}</span>
+              </button>
               <button
                 onClick={signOut}
                 className="flex flex-col items-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
