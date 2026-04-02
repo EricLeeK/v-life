@@ -41,6 +41,7 @@ const moreItems = [
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
   const { signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <>
