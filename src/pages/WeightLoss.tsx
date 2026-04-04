@@ -464,10 +464,12 @@ export default function WeightLossPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">设置</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Label className="shrink-0">进食开始</Label>
               <Input type="number" min={0} max={23} value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-20" />
-              <span className="text-sm text-muted-foreground">:00</span>
+              <span className="text-sm text-muted-foreground">时</span>
+              <Input type="number" min={0} max={59} step={5} value={editStartMin} onChange={(e) => setEditStartMin(e.target.value)} className="w-20" />
+              <span className="text-sm text-muted-foreground">分</span>
             </div>
             <div className="flex items-center gap-3">
               <Label className="shrink-0">目标体重</Label>
@@ -476,7 +478,7 @@ export default function WeightLossPage() {
             </div>
             <Button size="sm" onClick={handleSaveSettings}>保存设置</Button>
             <p className="text-xs text-muted-foreground">
-              进食时段：{startHour}:00 - {(startHour + 8) % 24}:00 | 时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}
+              进食时段：{startHour}:{String(startMinute).padStart(2, "0")} - {Math.floor(((startHour * 60 + startMinute) + 8 * 60) / 60) % 24}:{String(((startHour * 60 + startMinute) + 8 * 60) % 60).padStart(2, "0")} | 时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>
           </CardContent>
         </Card>
