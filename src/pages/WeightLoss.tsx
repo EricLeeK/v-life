@@ -60,7 +60,7 @@ function filterByRange(records: any[], range: TimeRange): any[] {
 }
 
 // ========== Fasting Timer ==========
-function FastingTimer({ startHour }: { startHour: number }) {
+function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; startMinute?: number }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
