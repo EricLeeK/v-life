@@ -111,8 +111,8 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
         </div>
         <Progress value={progressPercent} className="h-3" />
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>进食: {formatHour(eatingStart)}-{formatHour(eatingEnd)}</span>
-          <span>禁食: {formatHour(eatingEnd)}-{formatHour(eatingStart)}</span>
+          <span>进食: {formatTime(eatingStartMin)}-{formatTime(eatingEndMin)}</span>
+          <span>禁食: {formatTime(eatingEndMin)}-{formatTime(eatingStartMin)}</span>
         </div>
         <div className="flex gap-2 text-xs text-muted-foreground justify-center">
           <span className="text-green-500">● 可进食</span>
