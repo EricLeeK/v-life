@@ -60,7 +60,7 @@ function filterByRange(records: any[], range: TimeRange): any[] {
 }
 
 // ========== Fasting Timer ==========
-function FastingTimer({ startHour }: { startHour: number }) {
+function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; startMinute?: number }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -68,26 +68,26 @@ function FastingTimer({ startHour }: { startHour: number }) {
     return () => clearInterval(interval);
   }, []);
 
-  const eatingStart = startHour;
-  const eatingEnd = (startHour + 8) % 24;
+  const eatingStartMin = startHour * 60 + startMinute;
+  const eatingEndMin = (eatingStartMin + 8 * 60) % (24 * 60);
   const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
   let isEating: boolean;
   let minutesUntilSwitch: number;
 
-  if (eatingEnd > eatingStart) {
-    isEating = currentTotalMinutes >= eatingStart * 60 && currentTotalMinutes < eatingEnd * 60;
-    if (isEating) minutesUntilSwitch = eatingEnd * 60 - currentTotalMinutes;
-    else if (currentTotalMinutes < eatingStart * 60) minutesUntilSwitch = eatingStart * 60 - currentTotalMinutes;
-    else minutesUntilSwitch = (24 * 60 - currentTotalMinutes) + eatingStart * 60;
+  if (eatingEndMin > eatingStartMin) {
+    isEating = currentTotalMinutes >= eatingStartMin && currentTotalMinutes < eatingEndMin;
+    if (isEating) minutesUntilSwitch = eatingEndMin - currentTotalMinutes;
+    else if (currentTotalMinutes < eatingStartMin) minutesUntilSwitch = eatingStartMin - currentTotalMinutes;
+    else minutesUntilSwitch = (24 * 60 - currentTotalMinutes) + eatingStartMin;
   } else {
-    isEating = currentTotalMinutes >= eatingStart * 60 || currentTotalMinutes < eatingEnd * 60;
+    isEating = currentTotalMinutes >= eatingStartMin || currentTotalMinutes < eatingEndMin;
     if (isEating) {
-      minutesUntilSwitch = currentTotalMinutes >= eatingStart * 60
-        ? (24 * 60 - currentTotalMinutes) + eatingEnd * 60
-        : eatingEnd * 60 - currentTotalMinutes;
+      minutesUntilSwitch = currentTotalMinutes >= eatingStartMin
+        ? (24 * 60 - currentTotalMinutes) + eatingEndMin
+        : eatingEndMin - currentTotalMinutes;
     } else {
-      minutesUntilSwitch = eatingStart * 60 - currentTotalMinutes;
+      minutesUntilSwitch = eatingStartMin - currentTotalMinutes;
       if (minutesUntilSwitch < 0) minutesUntilSwitch += 24 * 60;
     }
   }
@@ -95,7 +95,7 @@ function FastingTimer({ startHour }: { startHour: number }) {
   const hoursLeft = Math.floor(minutesUntilSwitch / 60);
   const minsLeft = minutesUntilSwitch % 60;
   let colorClass = minutesUntilSwitch <= 60 ? "text-yellow-500" : isEating ? "text-green-500" : "text-red-500";
-  const formatHour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+  const formatTime = (totalMin: number) => `${String(Math.floor(totalMin / 60) % 24).padStart(2, "0")}:${String(totalMin % 60).padStart(2, "0")}`;
   const totalPhaseMinutes = isEating ? 8 * 60 : 16 * 60;
   const progressPercent = Math.max(0, Math.min(100, ((totalPhaseMinutes - minutesUntilSwitch) / totalPhaseMinutes) * 100));
 
@@ -111,8 +111,8 @@ function FastingTimer({ startHour }: { startHour: number }) {
         </div>
         <Progress value={progressPercent} className="h-3" />
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>进食: {formatHour(eatingStart)}-{formatHour(eatingEnd)}</span>
-          <span>禁食: {formatHour(eatingEnd)}-{formatHour(eatingStart)}</span>
+          <span>进食: {formatTime(eatingStartMin)}-{formatTime(eatingEndMin)}</span>
+          <span>禁食: {formatTime(eatingEndMin)}-{formatTime(eatingStartMin)}</span>
         </div>
         <div className="flex gap-2 text-xs text-muted-foreground justify-center">
           <span className="text-green-500">● 可进食</span>
@@ -426,11 +426,13 @@ export default function WeightLossPage() {
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
   const [editStart, setEditStart] = useState<string>("");
+  const [editStartMin, setEditStartMin] = useState<string>("0");
   const [editTarget, setEditTarget] = useState<string>("");
 
   useEffect(() => {
     if (settings) {
       setEditStart(String((settings as any).fasting_start_hour ?? 12));
+      setEditStartMin(String((settings as any).fasting_start_minute ?? 0));
       setEditTarget(String((settings as any).target_weight ?? ""));
     }
   }, [settings]);
@@ -438,20 +440,23 @@ export default function WeightLossPage() {
   if (isLoading || !settings) return <AppLayout title="减肥专项"><p className="text-sm text-muted-foreground">加载中...</p></AppLayout>;
 
   const startHour = (settings as any).fasting_start_hour ?? 12;
+  const startMinute = (settings as any).fasting_start_minute ?? 0;
   const targetWeight = (settings as any).target_weight ? Number((settings as any).target_weight) : null;
 
   const handleSaveSettings = async () => {
     const h = parseInt(editStart);
+    const m = parseInt(editStartMin) || 0;
     if (isNaN(h) || h < 0 || h > 23) return;
+    if (m < 0 || m > 59) return;
     const tw = editTarget ? Number(editTarget) : null;
-    await updateSettings.mutateAsync({ fasting_start_hour: h, target_weight: tw } as any);
+    await updateSettings.mutateAsync({ fasting_start_hour: h, fasting_start_minute: m, target_weight: tw } as any);
     toast({ title: "设置已保存" });
   };
 
   return (
     <AppLayout title="减肥专项">
       <div className="max-w-2xl space-y-4">
-        <FastingTimer startHour={startHour} />
+        <FastingTimer startHour={startHour} startMinute={startMinute} />
         <TodayCalorieSummary />
         <WeightTracker targetWeight={targetWeight} />
         <MeasurementTracker />
@@ -459,10 +464,12 @@ export default function WeightLossPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">设置</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Label className="shrink-0">进食开始</Label>
               <Input type="number" min={0} max={23} value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-20" />
-              <span className="text-sm text-muted-foreground">:00</span>
+              <span className="text-sm text-muted-foreground">时</span>
+              <Input type="number" min={0} max={59} step={5} value={editStartMin} onChange={(e) => setEditStartMin(e.target.value)} className="w-20" />
+              <span className="text-sm text-muted-foreground">分</span>
             </div>
             <div className="flex items-center gap-3">
               <Label className="shrink-0">目标体重</Label>
@@ -471,7 +478,7 @@ export default function WeightLossPage() {
             </div>
             <Button size="sm" onClick={handleSaveSettings}>保存设置</Button>
             <p className="text-xs text-muted-foreground">
-              进食时段：{startHour}:00 - {(startHour + 8) % 24}:00 | 时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}
+              进食时段：{startHour}:{String(startMinute).padStart(2, "0")} - {Math.floor(((startHour * 60 + startMinute) + 8 * 60) / 60) % 24}:{String(((startHour * 60 + startMinute) + 8 * 60) % 60).padStart(2, "0")} | 时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>
           </CardContent>
         </Card>

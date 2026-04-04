@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download } from "lucide-react";
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
+
+// Debounced text input that only saves after user stops typing
+function DebouncedInput({ value: serverValue, onSave, delay = 800, ...props }: { value: string; onSave: (val: string) => void; delay?: number } & Omit<React.ComponentProps<typeof Input>, "value" | "onChange">) {
+  const [localValue, setLocalValue] = useState(serverValue);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => { setLocalValue(serverValue); }, [serverValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setLocalValue(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onSave(v), delay);
+  };
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  return <Input value={localValue} onChange={handleChange} {...props} />;
+}
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
@@ -117,9 +136,9 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>API Key</Label><Input type="password" value={settings.ai_api_key || ""} onChange={(e) => save({ ai_api_key: e.target.value })} placeholder="输入 API Key" autoComplete="new-password" /><p className="text-xs text-muted-foreground mt-1">API Key 仅在服务端使用，不会暴露到浏览器</p></div>
-            <div><Label>模型名称</Label><Input value={settings.ai_model || ""} onChange={(e) => save({ ai_model: e.target.value })} placeholder="如 gemini-2.5-flash" /></div>
-            <div><Label>API Base URL（高级）</Label><Input value={settings.ai_base_url || ""} onChange={(e) => save({ ai_base_url: e.target.value })} placeholder="默认使用官方端点" /></div>
+            <div><Label>API Key</Label><DebouncedInput type="password" value={settings.ai_api_key || ""} onSave={(v) => save({ ai_api_key: v })} placeholder="输入 API Key" autoComplete="new-password" /><p className="text-xs text-muted-foreground mt-1">API Key 仅在服务端使用，不会暴露到浏览器</p></div>
+            <div><Label>模型名称</Label><DebouncedInput value={settings.ai_model || ""} onSave={(v) => save({ ai_model: v })} placeholder="如 gemini-2.5-flash" /></div>
+            <div><Label>API Base URL（高级）</Label><DebouncedInput value={settings.ai_base_url || ""} onSave={(v) => save({ ai_base_url: v })} placeholder="默认使用官方端点" /></div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>AI 操作模式</Label>

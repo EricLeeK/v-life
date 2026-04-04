@@ -412,6 +412,7 @@ export type Database = {
           exchange_rate_jpy_to_cny: number | null
           exchange_rate_updated_at: string | null
           fasting_start_hour: number | null
+          fasting_start_minute: number | null
           id: string
           monthly_budget: number | null
           show_goals_in_schedule: boolean | null
@@ -432,6 +433,7 @@ export type Database = {
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
           fasting_start_hour?: number | null
+          fasting_start_minute?: number | null
           id?: string
           monthly_budget?: number | null
           show_goals_in_schedule?: boolean | null
@@ -452,6 +454,7 @@ export type Database = {
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
           fasting_start_hour?: number | null
+          fasting_start_minute?: number | null
           id?: string
           monthly_budget?: number | null
           show_goals_in_schedule?: boolean | null
