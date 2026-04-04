@@ -131,7 +131,7 @@ export default function DashboardPage() {
               {isEatingWindow ? "🟢 进食窗口" : "🔴 断食中"}
             </p>
             <p className="text-xs text-muted-foreground">
-              进食: {String(fastingStartHour).padStart(2, "0")}:00 - {String(fastingEndHour).padStart(2, "0")}:00
+              进食: {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
             </p>
           </div>
         </DashboardCard>
