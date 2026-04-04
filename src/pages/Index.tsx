@@ -45,11 +45,13 @@ export default function DashboardPage() {
 
   // Fasting calculation
   const fastingStartHour = settings?.fasting_start_hour ?? 12;
-  const fastingEndHour = (fastingStartHour + 8) % 24;
-  const currentHour = now.getHours();
-  const isEatingWindow = fastingStartHour < fastingEndHour
-    ? currentHour >= fastingStartHour && currentHour < fastingEndHour
-    : currentHour >= fastingStartHour || currentHour < fastingEndHour;
+  const fastingStartMinute = (settings as any)?.fasting_start_minute ?? 0;
+  const eatingStartMin = fastingStartHour * 60 + fastingStartMinute;
+  const eatingEndMin = (eatingStartMin + 8 * 60) % (24 * 60);
+  const currentTotalMin = now.getHours() * 60 + now.getMinutes();
+  const isEatingWindow = eatingEndMin > eatingStartMin
+    ? currentTotalMin >= eatingStartMin && currentTotalMin < eatingEndMin
+    : currentTotalMin >= eatingStartMin || currentTotalMin < eatingEndMin;
 
   const nextEvent = todayEvents.length > 0
     ? todayEvents.find((e: any) => new Date(e.start_time) > now) || todayEvents[0]
