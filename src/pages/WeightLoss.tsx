@@ -68,26 +68,26 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
     return () => clearInterval(interval);
   }, []);
 
-  const eatingStart = startHour;
-  const eatingEnd = (startHour + 8) % 24;
+  const eatingStartMin = startHour * 60 + startMinute;
+  const eatingEndMin = (eatingStartMin + 8 * 60) % (24 * 60);
   const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
   let isEating: boolean;
   let minutesUntilSwitch: number;
 
-  if (eatingEnd > eatingStart) {
-    isEating = currentTotalMinutes >= eatingStart * 60 && currentTotalMinutes < eatingEnd * 60;
-    if (isEating) minutesUntilSwitch = eatingEnd * 60 - currentTotalMinutes;
-    else if (currentTotalMinutes < eatingStart * 60) minutesUntilSwitch = eatingStart * 60 - currentTotalMinutes;
-    else minutesUntilSwitch = (24 * 60 - currentTotalMinutes) + eatingStart * 60;
+  if (eatingEndMin > eatingStartMin) {
+    isEating = currentTotalMinutes >= eatingStartMin && currentTotalMinutes < eatingEndMin;
+    if (isEating) minutesUntilSwitch = eatingEndMin - currentTotalMinutes;
+    else if (currentTotalMinutes < eatingStartMin) minutesUntilSwitch = eatingStartMin - currentTotalMinutes;
+    else minutesUntilSwitch = (24 * 60 - currentTotalMinutes) + eatingStartMin;
   } else {
-    isEating = currentTotalMinutes >= eatingStart * 60 || currentTotalMinutes < eatingEnd * 60;
+    isEating = currentTotalMinutes >= eatingStartMin || currentTotalMinutes < eatingEndMin;
     if (isEating) {
-      minutesUntilSwitch = currentTotalMinutes >= eatingStart * 60
-        ? (24 * 60 - currentTotalMinutes) + eatingEnd * 60
-        : eatingEnd * 60 - currentTotalMinutes;
+      minutesUntilSwitch = currentTotalMinutes >= eatingStartMin
+        ? (24 * 60 - currentTotalMinutes) + eatingEndMin
+        : eatingEndMin - currentTotalMinutes;
     } else {
-      minutesUntilSwitch = eatingStart * 60 - currentTotalMinutes;
+      minutesUntilSwitch = eatingStartMin - currentTotalMinutes;
       if (minutesUntilSwitch < 0) minutesUntilSwitch += 24 * 60;
     }
   }
