@@ -456,7 +456,7 @@ export default function WeightLossPage() {
   return (
     <AppLayout title="减肥专项">
       <div className="max-w-2xl space-y-4">
-        <FastingTimer startHour={startHour} />
+        <FastingTimer startHour={startHour} startMinute={startMinute} />
         <TodayCalorieSummary />
         <WeightTracker targetWeight={targetWeight} />
         <MeasurementTracker />
