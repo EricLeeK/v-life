@@ -426,11 +426,13 @@ export default function WeightLossPage() {
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
   const [editStart, setEditStart] = useState<string>("");
+  const [editStartMin, setEditStartMin] = useState<string>("0");
   const [editTarget, setEditTarget] = useState<string>("");
 
   useEffect(() => {
     if (settings) {
       setEditStart(String((settings as any).fasting_start_hour ?? 12));
+      setEditStartMin(String((settings as any).fasting_start_minute ?? 0));
       setEditTarget(String((settings as any).target_weight ?? ""));
     }
   }, [settings]);
@@ -438,13 +440,16 @@ export default function WeightLossPage() {
   if (isLoading || !settings) return <AppLayout title="减肥专项"><p className="text-sm text-muted-foreground">加载中...</p></AppLayout>;
 
   const startHour = (settings as any).fasting_start_hour ?? 12;
+  const startMinute = (settings as any).fasting_start_minute ?? 0;
   const targetWeight = (settings as any).target_weight ? Number((settings as any).target_weight) : null;
 
   const handleSaveSettings = async () => {
     const h = parseInt(editStart);
+    const m = parseInt(editStartMin) || 0;
     if (isNaN(h) || h < 0 || h > 23) return;
+    if (m < 0 || m > 59) return;
     const tw = editTarget ? Number(editTarget) : null;
-    await updateSettings.mutateAsync({ fasting_start_hour: h, target_weight: tw } as any);
+    await updateSettings.mutateAsync({ fasting_start_hour: h, fasting_start_minute: m, target_weight: tw } as any);
     toast({ title: "设置已保存" });
   };
 
