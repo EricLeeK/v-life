@@ -95,7 +95,7 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
   const hoursLeft = Math.floor(minutesUntilSwitch / 60);
   const minsLeft = minutesUntilSwitch % 60;
   let colorClass = minutesUntilSwitch <= 60 ? "text-yellow-500" : isEating ? "text-green-500" : "text-red-500";
-  const formatHour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+  const formatTime = (totalMin: number) => `${String(Math.floor(totalMin / 60) % 24).padStart(2, "0")}:${String(totalMin % 60).padStart(2, "0")}`;
   const totalPhaseMinutes = isEating ? 8 * 60 : 16 * 60;
   const progressPercent = Math.max(0, Math.min(100, ((totalPhaseMinutes - minutesUntilSwitch) / totalPhaseMinutes) * 100));
 
