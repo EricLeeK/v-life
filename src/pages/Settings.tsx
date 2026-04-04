@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download } from "lucide-react";
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
+
+// Debounced text input that only saves after user stops typing
+function DebouncedInput({ value: serverValue, onSave, delay = 800, ...props }: { value: string; onSave: (val: string) => void; delay?: number } & Omit<React.ComponentProps<typeof Input>, "value" | "onChange">) {
+  const [localValue, setLocalValue] = useState(serverValue);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => { setLocalValue(serverValue); }, [serverValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setLocalValue(v);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onSave(v), delay);
+  };
+
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  return <Input value={localValue} onChange={handleChange} {...props} />;
+}
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
