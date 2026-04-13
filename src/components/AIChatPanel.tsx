@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -184,7 +184,7 @@ export function AIChatPanel() {
   const [recentlyCreatedIds, setRecentlyCreatedIds] = useState<Array<{ table: string; id: string }>>([]);
   const [undoTimer, setUndoTimer] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -714,13 +714,7 @@ export function AIChatPanel() {
 
           {/* Input */}
           <div className="p-3 border-t border-border shrink-0">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex gap-2"
-            >
+            <div className="flex gap-2 items-end">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -732,19 +726,27 @@ export function AIChatPanel() {
               <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={() => fileInputRef.current?.click()}>
                 <Image className="h-4 w-4" />
               </Button>
-              <Input
+              <Textarea
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onPaste={handlePaste}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
                 placeholder="描述你要记录的内容...（可粘贴图片）"
-                className="flex-1 text-sm"
+                className="flex-1 text-sm min-h-[36px] max-h-[200px] resize-y py-2"
+                style={{ fieldSizing: "content" } as React.CSSProperties}
+                rows={1}
                 disabled={loading}
               />
-              <Button type="submit" size="icon" disabled={loading || (!input.trim() && imageFiles.length === 0)} className="shrink-0">
+              <Button type="button" size="icon" disabled={loading || (!input.trim() && imageFiles.length === 0)} className="shrink-0" onClick={handleSend}>
                 <Send className="h-4 w-4" />
               </Button>
-            </form>
+            </div>
           </div>
         </>
       )}
