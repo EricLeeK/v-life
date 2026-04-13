@@ -729,7 +729,13 @@ export function AIChatPanel() {
               <Textarea
                 ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  // Auto-resize
+                  const el = e.target;
+                  el.style.height = "auto";
+                  el.style.height = Math.min(el.scrollHeight, 200) + "px";
+                }}
                 onPaste={handlePaste}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -738,8 +744,7 @@ export function AIChatPanel() {
                   }
                 }}
                 placeholder="描述你要记录的内容...（可粘贴图片）"
-                className="flex-1 text-sm min-h-[36px] max-h-[200px] resize-y py-2"
-                style={{ fieldSizing: "content" } as React.CSSProperties}
+                className="flex-1 text-sm min-h-[36px] max-h-[200px] resize-y py-2 overflow-y-auto"
                 rows={1}
                 disabled={loading}
               />
