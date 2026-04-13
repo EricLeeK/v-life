@@ -212,6 +212,14 @@ export function AIChatPanel() {
     }
   }, [isOpen]);
 
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = Math.min(inputRef.current.scrollHeight, 200) + "px";
+    }
+  }, [input]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
