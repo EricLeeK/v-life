@@ -426,6 +426,8 @@ export function AIChatPanel() {
     const text = input.trim();
     if ((!text && imageFiles.length === 0) || loading) return;
     setInput("");
+    // Reset textarea height
+    if (inputRef.current) inputRef.current.style.height = "auto";
 
     // Build message content
     const currentImages = [...imagePreviews];
