@@ -106,97 +106,100 @@ export default function FinancePage() {
 
   return (
     <AppLayout title="记账">
-      <div className="max-w-4xl space-y-4">
-        {/* Month selector + Add button */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => { if (month === 1) { setMonth(12); setYear(year - 1); } else setMonth(month - 1); }}>←</Button>
-            <span className="text-sm font-medium w-24 text-center">{year}年{month}月</span>
-            <Button variant="secondary" size="sm" onClick={() => { if (month === 12) { setMonth(1); setYear(year + 1); } else setMonth(month + 1); }}>→</Button>
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
-            <DialogTrigger asChild>
-              <Button size="sm"><Plus className="h-4 w-4 mr-1" />记一笔</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader><DialogTitle>{editingItem ? "编辑" : "新增"}记录</DialogTitle></DialogHeader>
-              <div className="space-y-3">
-                <div><Label>名称 *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                <div><Label>分类 *</Label>
-                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {c.key}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>金额 *</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-                  <div><Label>货币</Label>
-                    <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+      <div className="max-w-4xl flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
+        {/* Sticky top section: month selector + overview + pie chart */}
+        <div className="shrink-0 space-y-4 pb-4">
+          {/* Month selector + Add button */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={() => { if (month === 1) { setMonth(12); setYear(year - 1); } else setMonth(month - 1); }}>←</Button>
+              <span className="text-sm font-medium w-24 text-center">{year}年{month}月</span>
+              <Button variant="secondary" size="sm" onClick={() => { if (month === 12) { setMonth(1); setYear(year + 1); } else setMonth(month + 1); }}>→</Button>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Plus className="h-4 w-4 mr-1" />记一笔</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>{editingItem ? "编辑" : "新增"}记录</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>名称 *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                  <div><Label>分类 *</Label>
+                    <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="CNY">CNY ¥</SelectItem>
-                        <SelectItem value="JPY">JPY ¥</SelectItem>
-                      </SelectContent>
+                      <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {c.key}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                </div>
-                {form.currency === "JPY" && form.amount && (
-                  <p className="text-xs text-muted-foreground">≈ ¥{(Number(form.amount) * exchangeRate).toFixed(2)} CNY (汇率: {exchangeRate})</p>
-                )}
-                <div><Label>日期 *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-                <Button onClick={handleSave} className="w-full">保存</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Overview cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-1">本月支出</p>
-              <div className="flex justify-between items-baseline mb-2">
-                <span className="text-2xl font-semibold">¥{totalCny.toFixed(2)}</span>
-                <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
-              </div>
-              <Progress value={budgetProgress} className="h-2" />
-              <p className="text-xs text-muted-foreground mt-1">{monthRecords.length} 笔记录</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-2">分类占比</p>
-              {categoryData.length === 0 ? <p className="text-xs text-muted-foreground">暂无数据</p> : (
-                <div className="flex items-center gap-4">
-                  <ResponsiveContainer width={100} height={100}>
-                    <PieChart>
-                      <Pie data={categoryData} cx="50%" cy="50%" innerRadius={25} outerRadius={45} dataKey="value" stroke="none">
-                        {categoryData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip formatter={(v: number) => `¥${v.toFixed(2)}`} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="flex-1 space-y-1">
-                    {categoryData.slice(0, 4).map((item, i) => {
-                      const cat = CATEGORIES.find((c) => c.key === item.name);
-                      return (
-                        <div key={item.name} className="flex justify-between text-xs">
-                          <span><span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background: PIE_COLORS[i] }} />{cat?.emoji} {item.name}</span>
-                          <span className="text-muted-foreground">¥{item.value.toFixed(0)}</span>
-                        </div>
-                      );
-                    })}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>金额 *</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+                    <div><Label>货币</Label>
+                      <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CNY">CNY ¥</SelectItem>
+                          <SelectItem value="JPY">JPY ¥</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+                  {form.currency === "JPY" && form.amount && (
+                    <p className="text-xs text-muted-foreground">≈ ¥{(Number(form.amount) * exchangeRate).toFixed(2)} CNY (汇率: {exchangeRate})</p>
+                  )}
+                  <div><Label>日期 *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                  <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                  <Button onClick={handleSave} className="w-full">保存</Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Overview cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground mb-1">本月支出</p>
+                <div className="flex justify-between items-baseline mb-2">
+                  <span className="text-2xl font-semibold">¥{totalCny.toFixed(2)}</span>
+                  <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
+                </div>
+                <Progress value={budgetProgress} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-1">{monthRecords.length} 笔记录</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground mb-2">分类占比</p>
+                {categoryData.length === 0 ? <p className="text-xs text-muted-foreground">暂无数据</p> : (
+                  <div className="flex items-center gap-4">
+                    <ResponsiveContainer width={100} height={100}>
+                      <PieChart>
+                        <Pie data={categoryData} cx="50%" cy="50%" innerRadius={25} outerRadius={45} dataKey="value" stroke="none">
+                          {categoryData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip formatter={(v: number) => `¥${v.toFixed(2)}`} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="flex-1 space-y-1">
+                      {categoryData.slice(0, 4).map((item, i) => {
+                        const cat = CATEGORIES.find((c) => c.key === item.name);
+                        return (
+                          <div key={item.name} className="flex justify-between text-xs">
+                            <span><span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background: PIE_COLORS[i] }} />{cat?.emoji} {item.name}</span>
+                            <span className="text-muted-foreground">¥{item.value.toFixed(0)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        {/* Weekly breakdown */}
-        <div className="space-y-2">
+        {/* Scrollable weekly breakdown */}
+        <div className="flex-1 overflow-y-auto space-y-2 pb-4">
           {weeklyGroups.length === 0 ? <p className="text-muted-foreground text-sm py-4 text-center">本月暂无记录</p> :
             weeklyGroups.map(([key, group]) => {
               const weekTotal = group.items.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
