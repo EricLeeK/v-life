@@ -1,65 +1,140 @@
 
+目标：把“重复日程”从“前端显示时临时展开”改成“数据库里真实存在每一条实例”，这样无论是页面查询还是你自己的外部 API 直接查后端，下一周、下个月的重复事件都能真实返回，不会出现“这一周有、下一周空”的问题。
 
-## 账号密码系统实现计划
+一、我先确认了现在的问题根源
+- 当前 `src/pages/Schedule.tsx` 里是把一条带 `recurrence` 的事件，前端用 `expandedEvents` 临时算出后续实例。
+- 数据库 `schedule_events` 表里并没有真的插入这些未来实例。
+- `useScheduleByRange` 也是直接查 `schedule_events` 表，所以别的 API 查未来周时，只会看到原始那一条，查不到“虚拟展开”的那些。
+- 所以你说的问题本质上是对的：现在这是显示层方案，不是存储层方案。
 
-### 概述
-添加邮箱+密码认证，注册后免邮箱验证直接登录。每个用户数据独立隔离。
+二、改造方向
+我建议改成“主系列 + 实例行”的数据库方案：
 
-### 1. 启用免验证注册
-使用 `cloud--configure_auth` 开启 auto-confirm email signups。
+```text
+schedule_events
+├─ 系列主事件（parent_event_id = null，带 recurrence）
+└─ 实例事件（parent_event_id = 系列主事件 id，不带 recurrence）
+```
 
-### 2. 创建认证页面
-新建 `src/pages/Auth.tsx`：
-- 包含登录和注册两个 tab
-- 邮箱 + 密码表单
-- 忘记密码功能（发送重置邮件）
+这样会得到：
+- 系列主事件：保存规则，代表“这个重复规则是什么”
+- 实例事件：真实存在于数据库中的每一次事件，供页面和外部 API 直接查询
+- 页面展示不再依赖虚拟展开
+- 批量新增、批量删除、整组修改都可以直接做数据库操作
 
-新建 `src/pages/ResetPassword.tsx`：
-- 检测 URL 中的 recovery token
-- 允许用户设置新密码
+三、计划实施内容
 
-### 3. 认证上下文
-新建 `src/contexts/AuthContext.tsx`：
-- 使用 `onAuthStateChange` 监听登录状态
-- 提供 `user`, `loading`, `signOut` 等
-- 包裹整个 App
+1. 数据结构调整
+- 保留现有 `schedule_events` 表，不新建第二张表，避免把现有代码打散太多。
+- 明确约定：
+  - 系列主事件：`parent_event_id = null`，`recurrence != null`
+  - 普通单次事件：`parent_event_id = null`，`recurrence = null`
+  - 重复实例：`parent_event_id = parent series id`，`recurrence = null`
+- 增加必要索引，提升按时间范围和按系列批量查删的性能：
+  - `parent_event_id`
+  - `(user_id, start_time)`
+- 可选增加一个标识字段（如 `series_id`/`is_generated`）但优先不加，先基于现有字段完成，减少迁移成本。
 
-### 4. 路由保护
-修改 `src/App.tsx`：
-- 未登录用户重定向到 `/auth`
-- `/auth` 和 `/reset-password` 为公开路由
-- 已登录用户访问 `/auth` 重定向到 `/`
+2. 数据库写入逻辑改造
+- 新建重复事件时：
+  - 先插入 1 条系列主事件
+  - 再根据规则批量生成未来实例行，写入 `schedule_events`
+- 支持的规则继续沿用现有 UI：
+  - 每天
+  - 每周
+  - 每周指定星期几
+  - 每月
+- 生成范围需要明确一个“批量落库窗口”，建议：
+  - 若用户填写了重复结束日期：生成到结束日期
+  - 若未填写结束日期：默认先生成未来 6 个月或 12 个月
+- 这样外部 API 查询未来日期时一定能查到。
 
-### 5. 更新 RLS 策略（数据库迁移）
-所有业务表的 RLS 策略从 `true` 改为 `auth.uid() = user_id`：
-- `pantry_items`, `belongings_daily`, `belongings_durable`
-- `schedule_events`, `calorie_records`, `finance_records`
-- `todos`, `thoughts`, `goals`
-- `weight_records`, `measurement_records`
-- `ai_sessions`, `ai_messages`
-- `settings`
+3. 批量删除与批量更新
+- 删除重复任务时改成给用户明确选项：
+  - 只删当前这一条实例
+  - 删除这一整个系列（主事件 + 所有实例）
+- 编辑重复任务时也提供系列级操作：
+  - 修改整个系列：先更新主事件，再删除旧实例，重新批量生成新实例
+  - 如果后续你要，我也可以再加“只修改本次”的例外实例能力
+- 这一步会把你要的“批量删除/批量增加”真正落到数据库层。
 
-同时将各表 `user_id` 的默认值从固定 UUID 改为 `auth.uid()`。
+4. 查询逻辑改造
+- `useScheduleByRange` 改为直接查数据库中的真实实例和普通事件，不再依赖前端 `expandedEvents`。
+- Schedule 页面中的：
+  - 3天视图
+  - 周视图
+  - 月视图
+  都改成直接用数据库结果渲染。
+- 当前 `expandedEvents` 那套前端虚拟展开逻辑会移除，避免重复显示。
 
-### 6. 更新数据写入逻辑
-修改 `src/hooks/useData.ts`：
-- `useCrudHooks` 的 `useCreate` 不再需要手动传 user_id（数据库默认值 `auth.uid()` 自动处理）
-- `useSettings` 的创建逻辑添加 user_id
-- 各 query 不需要手动过滤 user_id（RLS 自动过滤）
+5. 兼容旧数据
+- 你数据库里已经可能有一些“只有主事件、没有实例”的旧重复数据。
+- 我会补一段迁移/修复逻辑，把已有带 `recurrence` 的历史系列批量补生成实例。
+- 这样不用你手动重建旧重复日程。
 
-### 7. 导航添加登出
-在 `AppSidebar.tsx` 底部添加登出按钮。
+六、技术实现方式
+会分成两层：
 
-### 文件变更清单
-| 文件 | 操作 |
-|------|------|
-| SQL migration | 更新所有表 RLS + user_id 默认值 |
-| `src/pages/Auth.tsx` | 新建 |
-| `src/pages/ResetPassword.tsx` | 新建 |
-| `src/contexts/AuthContext.tsx` | 新建 |
-| `src/App.tsx` | 添加路由保护 + 新路由 |
-| `src/hooks/useData.ts` | 适配 auth.uid() |
-| `src/components/AppSidebar.tsx` | 添加登出 |
-| `src/components/MobileNav.tsx` | 添加登出 |
-| `src/pages/Settings.tsx` | 移除 user_id 硬编码 |
+A. 数据库层
+- 新增 SQL 迁移：
+  - 加索引
+  - 视情况补约束/注释
+- 补数据脚本或迁移逻辑：
+  - 找出旧的重复主事件
+  - 为它们批量创建缺失实例
 
+B. 前端层
+- `src/pages/Schedule.tsx`
+  - 保存逻辑改成“创建系列 + 批量实例”
+  - 编辑逻辑改成“系列重建”
+  - 删除逻辑改成“整组删除”
+  - 去掉 `expandedEvents`
+- `src/hooks/useData.ts`
+  - 增加更适合批量创建/批量删除/按 parent_event_id 查询的日程 hooks
+- 日程编辑弹窗
+  - 增加“删除整个系列 / 仅删除本次”的交互
+  - 增加“编辑整个系列”的处理文案
+
+七、需要你确认的一个关键产品决策
+为了避免“无结束日期就无限写库”，我建议默认规则是：
+
+```text
+如果没填重复结束日期：
+- 系统自动生成未来 12 个月的实例
+- 后续可再做“自动补未来实例”的机制
+```
+
+这是目前最稳的折中方案，原因：
+- 满足你外部 API 直接查数据库的需求
+- 不会因为“无限重复”把数据库撑爆
+- 前端和后端都容易维护
+
+如果你同意，我就按“默认预生成未来 12 个月”来实现。
+
+八、这次改完后会达到的效果
+- 你创建“每周一重复”的日程后，数据库里未来每个周一都会真实有一条记录
+- 你外部 API 查下周一、下下周一，会直接拿到数据
+- 删除一个重复系列时，可以数据库层一次性删掉整组
+- 新增一个重复系列时，可以数据库层一次性生成整组
+- 页面显示和 API 返回保持一致，不再有“页面看得到、API 查不到”的情况
+
+九、风险与注意点
+- 如果直接把“无限重复”全量落库，会产生大量数据，所以必须限制生成窗口
+- 修改系列规则时要先删旧实例再重建，否则容易重复
+- 如果未来要支持“只改单次，不改整组”，需要再做“例外实例”机制；这次先优先解决你最核心的数据库层真实存储问题
+
+十、我准备按这个顺序落地
+1. 调整 `schedule_events` 的数据库使用约定与索引
+2. 补齐历史重复事件实例
+3. 改造保存逻辑：创建系列时真实批量写入实例
+4. 改造编辑逻辑：更新系列时重建实例
+5. 改造删除逻辑：支持整组删除
+6. 移除前端虚拟展开逻辑
+7. 校验 3天/周/月视图与 API 查询结果一致
+
+技术细节
+- 当前问题文件：`src/pages/Schedule.tsx`
+- 当前问题查询：`useScheduleByRange()` 直接读 `schedule_events`
+- 当前错误模式：`expandedEvents` 仅在前端内存中生成，不会写库
+- 现有表字段已足够支撑第一版方案：`id`、`parent_event_id`、`recurrence`、`start_time`、`end_time`
+- 不需要新增后端服务，直接用现有数据库和前端写入逻辑即可完成
