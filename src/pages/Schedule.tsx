@@ -67,39 +67,54 @@ export default function SchedulePage() {
       const eventStart = new Date(event.start_time);
       const eventEnd = new Date(event.end_time);
       const duration = eventEnd.getTime() - eventStart.getTime();
-      const recEndDate = rec.end_date ? new Date(rec.end_date) : rangeEnd;
+      const recEndDate = rec.end_date ? new Date(rec.end_date + "T23:59:59") : rangeEnd;
       const maxEnd = new Date(Math.min(recEndDate.getTime(), rangeEnd.getTime()));
 
-      let current = new Date(eventStart);
-      for (let i = 0; i < 200; i++) {
-        if (rec.type === "daily") current = addDays(current, rec.interval || 1);
-        else if (rec.type === "weekly") current = addDays(current, 7 * (rec.interval || 1));
-        else if (rec.type === "monthly") {
-          current = new Date(current);
-          current.setMonth(current.getMonth() + (rec.interval || 1));
-        } else break;
-
-        if (isAfter(current, maxEnd)) break;
-        if (isBefore(current, rangeStart)) continue;
-
-        // For weekly with specific days
-        if (rec.type === "weekly" && rec.days_of_week?.length > 0) {
-          const dayOfWeek = current.getDay() === 0 ? 7 : current.getDay();
-          if (!rec.days_of_week.includes(dayOfWeek)) continue;
+      if (rec.type === "weekly" && rec.days_of_week?.length > 0) {
+        // For weekly with specific days: iterate day by day from event start
+        let current = addDays(eventStart, 1);
+        let count = 0;
+        while (!isAfter(current, maxEnd) && count < 500) {
+          count++;
+          const dow = current.getDay() === 0 ? 7 : current.getDay();
+          if (rec.days_of_week.includes(dow) && !isBefore(current, rangeStart)) {
+            const virtualStart = new Date(current);
+            virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
+            result.push({
+              ...event,
+              id: `${event.id}_rec_${count}`,
+              start_time: virtualStart.toISOString(),
+              end_time: new Date(virtualStart.getTime() + duration).toISOString(),
+              _isRecurrenceInstance: true,
+              _parentId: event.id,
+            });
+          }
+          current = addDays(current, 1);
         }
+      } else {
+        let current = new Date(eventStart);
+        for (let i = 0; i < 500; i++) {
+          if (rec.type === "daily") current = addDays(current, rec.interval || 1);
+          else if (rec.type === "weekly") current = addDays(current, 7);
+          else if (rec.type === "monthly") {
+            current = new Date(current);
+            current.setMonth(current.getMonth() + (rec.interval || 1));
+          } else break;
 
-        const virtualStart = new Date(current);
-        virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
-        const virtualEnd = new Date(virtualStart.getTime() + duration);
+          if (isAfter(current, maxEnd)) break;
+          if (isBefore(current, rangeStart)) continue;
 
-        result.push({
-          ...event,
-          id: `${event.id}_rec_${i}`,
-          start_time: virtualStart.toISOString(),
-          end_time: virtualEnd.toISOString(),
-          _isRecurrenceInstance: true,
-          _parentId: event.id,
-        });
+          const virtualStart = new Date(current);
+          virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
+          result.push({
+            ...event,
+            id: `${event.id}_rec_${i}`,
+            start_time: virtualStart.toISOString(),
+            end_time: new Date(virtualStart.getTime() + duration).toISOString(),
+            _isRecurrenceInstance: true,
+            _parentId: event.id,
+          });
+        }
       }
     });
     return result;
@@ -140,9 +155,13 @@ export default function SchedulePage() {
   };
 
   const openEdit = useCallback((event: any) => {
-    const start = new Date(event.start_time);
-    const end = new Date(event.end_time);
-    setEditingItem(event);
+    // If editing a recurrence instance, edit the parent event
+    const actualEvent = event._isRecurrenceInstance
+      ? events.find((e: any) => e.id === event._parentId) || event
+      : event;
+    const start = new Date(actualEvent.start_time);
+    const end = new Date(actualEvent.end_time);
+    setEditingItem(actualEvent);
     setForm({
       title: event.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
@@ -307,7 +326,7 @@ export default function SchedulePage() {
 
         {/* Month View */}
         {viewMode === "month" ? (
-          <MonthView baseDate={baseDate} events={events} onEdit={openEdit} onCreateAt={handleCreateAt} />
+          <MonthView baseDate={baseDate} events={expandedEvents} onEdit={openEdit} onCreateAt={handleCreateAt} />
         ) : (
           /* Day/Week Grid View */
           <div className="border border-border rounded-lg overflow-hidden">
