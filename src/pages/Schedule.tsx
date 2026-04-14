@@ -8,9 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { useScheduleByRange, scheduleHooks, useSettings } from "@/hooks/useData";
+import {
+  useScheduleByRange, scheduleHooks, useSettings,
+  useCreateSeriesWithInstances, useUpdateSeriesWithInstances, useDeleteSeries,
+} from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
-import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInDays, differenceInWeeks, differenceInMonths, isBefore, isAfter } from "date-fns";
+import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { DayColumn } from "@/components/schedule/DayColumn";
 import { MonthView } from "@/components/schedule/MonthView";
@@ -18,6 +21,70 @@ import { HOUR_HEIGHT, VISIBLE_START, TOTAL_HOURS, IMPORTANCE_COLORS, timeToY } f
 
 const STATUS_OPTIONS = ["未开始", "进行中", "已完成", "已取消"];
 type ViewMode = "3day" | "week" | "month";
+
+// Generate recurring instances from a master event's recurrence rule
+function generateInstances(
+  master: { title: string; importance: string; status: string; color: string | null; notes: string | null },
+  startTime: Date, endTime: Date,
+  recurrence: { type: string; interval?: number; days_of_week?: number[]; end_date?: string | null },
+) {
+  const duration = endTime.getTime() - startTime.getTime();
+  const maxDate = recurrence.end_date
+    ? new Date(recurrence.end_date + "T23:59:59")
+    : new Date(startTime.getTime() + 365 * 24 * 60 * 60 * 1000); // 12 months
+
+  const instances: any[] = [];
+
+  if (recurrence.type === "weekly" && recurrence.days_of_week?.length) {
+    // For weekly with specific days, iterate day by day
+    let current = new Date(startTime);
+    current.setHours(0, 0, 0, 0);
+    // Start from the day after the master's start date
+    current = addDays(current, 1);
+    for (let safety = 0; safety < 5000 && current <= maxDate; safety++) {
+      const dow = current.getDay() === 0 ? 7 : current.getDay();
+      if (recurrence.days_of_week.includes(dow)) {
+        const instStart = new Date(current);
+        instStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+        instances.push({
+          title: master.title,
+          importance: master.importance,
+          status: master.status,
+          color: master.color,
+          notes: master.notes,
+          start_time: instStart.toISOString(),
+          end_time: new Date(instStart.getTime() + duration).toISOString(),
+        });
+      }
+      current = addDays(current, 1);
+    }
+  } else {
+    let current = new Date(startTime);
+    for (let i = 0; i < 5000; i++) {
+      if (recurrence.type === "daily") current = addDays(current, recurrence.interval || 1);
+      else if (recurrence.type === "weekly") current = addDays(current, 7);
+      else if (recurrence.type === "monthly") {
+        current = new Date(current);
+        current.setMonth(current.getMonth() + (recurrence.interval || 1));
+      } else break;
+
+      if (current > maxDate) break;
+
+      const instStart = new Date(current);
+      instStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+      instances.push({
+        title: master.title,
+        importance: master.importance,
+        status: master.status,
+        color: master.color,
+        notes: master.notes,
+        start_time: instStart.toISOString(),
+        end_time: new Date(instStart.getTime() + duration).toISOString(),
+      });
+    }
+  }
+  return instances;
+}
 
 export default function SchedulePage() {
   const [baseDate, setBaseDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
@@ -38,7 +105,7 @@ export default function SchedulePage() {
       const start = startOfWeek(baseDate, { weekStartsOn: 1 });
       return Array.from({ length: 7 }, (_, i) => addDays(start, i));
     }
-    return []; // month view doesn't use days columns
+    return [];
   }, [baseDate, viewMode]);
 
   const rangeStart = useMemo(() => {
@@ -51,79 +118,34 @@ export default function SchedulePage() {
     const d = new Date(days[days.length - 1]); d.setHours(23, 59, 59, 999); return d;
   }, [days, viewMode, baseDate]);
 
-  const { data: events = [] } = useScheduleByRange(rangeStart, rangeEnd);
+  const { data: rawEvents = [] } = useScheduleByRange(rangeStart, rangeEnd);
   const { data: settings } = useSettings();
   const createMutation = scheduleHooks.useCreate();
   const updateMutation = scheduleHooks.useUpdate();
   const deleteMutation = scheduleHooks.useDelete();
+  const createSeriesMutation = useCreateSeriesWithInstances();
+  const updateSeriesMutation = useUpdateSeriesWithInstances();
+  const deleteSeriesMutation = useDeleteSeries();
 
-  // Expand recurring events into virtual instances for display
-  const expandedEvents = useMemo(() => {
-    const result: any[] = [];
-    events.forEach((event: any) => {
-      result.push(event);
-      const rec = event.recurrence as any;
-      if (!rec || rec.type === "none") return;
-      const eventStart = new Date(event.start_time);
-      const eventEnd = new Date(event.end_time);
-      const duration = eventEnd.getTime() - eventStart.getTime();
-      const recEndDate = rec.end_date ? new Date(rec.end_date + "T23:59:59") : rangeEnd;
-      const maxEnd = new Date(Math.min(recEndDate.getTime(), rangeEnd.getTime()));
-
-      if (rec.type === "weekly" && rec.days_of_week?.length > 0) {
-        // For weekly with specific days: iterate day by day from event start
-        let current = addDays(eventStart, 1);
-        let count = 0;
-        while (!isAfter(current, maxEnd) && count < 500) {
-          count++;
-          const dow = current.getDay() === 0 ? 7 : current.getDay();
-          if (rec.days_of_week.includes(dow) && !isBefore(current, rangeStart)) {
-            const virtualStart = new Date(current);
-            virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
-            result.push({
-              ...event,
-              id: `${event.id}_rec_${count}`,
-              start_time: virtualStart.toISOString(),
-              end_time: new Date(virtualStart.getTime() + duration).toISOString(),
-              _isRecurrenceInstance: true,
-              _parentId: event.id,
-            });
-          }
-          current = addDays(current, 1);
-        }
-      } else {
-        let current = new Date(eventStart);
-        for (let i = 0; i < 500; i++) {
-          if (rec.type === "daily") current = addDays(current, rec.interval || 1);
-          else if (rec.type === "weekly") current = addDays(current, 7);
-          else if (rec.type === "monthly") {
-            current = new Date(current);
-            current.setMonth(current.getMonth() + (rec.interval || 1));
-          } else break;
-
-          if (isAfter(current, maxEnd)) break;
-          if (isBefore(current, rangeStart)) continue;
-
-          const virtualStart = new Date(current);
-          virtualStart.setHours(eventStart.getHours(), eventStart.getMinutes(), 0, 0);
-          result.push({
-            ...event,
-            id: `${event.id}_rec_${i}`,
-            start_time: virtualStart.toISOString(),
-            end_time: new Date(virtualStart.getTime() + duration).toISOString(),
-            _isRecurrenceInstance: true,
-            _parentId: event.id,
-          });
-        }
-      }
+  // Filter out master events (they have recurrence but are parents) - show only instances and normal events
+  const displayEvents = useMemo(() => {
+    return rawEvents.filter((e: any) => {
+      // Normal event (no recurrence, no parent) → show
+      if (!e.recurrence && !e.parent_event_id) return true;
+      // Instance of a series → show
+      if (e.parent_event_id) return true;
+      // Master event with recurrence → hide (instances represent it)
+      // But only hide if it actually has instances in DB (check if any instance exists)
+      // For safety, hide masters that have recurrence set
+      if (e.recurrence && (e.recurrence as any).type !== "none") return false;
+      return true;
     });
-    return result;
-  }, [events, rangeStart, rangeEnd]);
+  }, [rawEvents]);
 
   const getEventsForDay = useCallback((day: Date) => {
     const dayStr = format(day, "yyyy-MM-dd");
-    return expandedEvents.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
-  }, [expandedEvents]);
+    return displayEvents.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
+  }, [displayEvents]);
 
   const resetForm = useCallback(() => {
     const today = format(new Date(), "yyyy-MM-dd");
@@ -137,27 +159,95 @@ export default function SchedulePage() {
     try {
       const startTime = new Date(`${form.start_date}T${form.start_time}:00`);
       const endTime = new Date(`${form.end_date}T${form.end_time}:00`);
-      const recurrence = form.recurrence_type !== "none" ? {
+      const isRecurring = form.recurrence_type !== "none";
+
+      const recurrence = isRecurring ? {
         type: form.recurrence_type,
         interval: 1,
         days_of_week: form.recurrence_days.length > 0 ? form.recurrence_days : undefined,
         end_date: form.recurrence_end_date || null,
       } : null;
-      const payload = {
-        title: form.title, start_time: startTime.toISOString(), end_time: endTime.toISOString(),
-        importance: form.importance, status: form.status, color: form.color || null, notes: form.notes || null,
-        recurrence,
+
+      const basePayload = {
+        title: form.title,
+        importance: form.importance,
+        status: form.status,
+        color: form.color || null,
+        notes: form.notes || null,
       };
-      if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
-      else await createMutation.mutateAsync(payload);
+
+      if (editingItem) {
+        const editingMasterId = editingItem.parent_event_id || editingItem.id;
+        const editingMaster = rawEvents.find((e: any) => e.id === editingMasterId) || editingItem;
+        const wasSeries = editingMaster.recurrence && (editingMaster.recurrence as any).type !== "none";
+
+        if (isRecurring) {
+          // Update as series: update master + regenerate instances
+          const instances = generateInstances(basePayload, startTime, endTime, recurrence!);
+          await updateSeriesMutation.mutateAsync({
+            masterId: editingMasterId,
+            masterUpdates: {
+              ...basePayload,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              recurrence,
+            },
+            instances,
+          });
+        } else if (wasSeries) {
+          // Was a series, now converting to single: delete all instances, update master to remove recurrence
+          await updateSeriesMutation.mutateAsync({
+            masterId: editingMasterId,
+            masterUpdates: {
+              ...basePayload,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              recurrence: null,
+            },
+            instances: [],
+          });
+        } else {
+          // Simple single event update
+          await updateMutation.mutateAsync({
+            id: editingItem.id,
+            ...basePayload,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            recurrence: null,
+          });
+        }
+      } else {
+        // Creating new
+        if (isRecurring) {
+          const instances = generateInstances(basePayload, startTime, endTime, recurrence!);
+          await createSeriesMutation.mutateAsync({
+            master: {
+              ...basePayload,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              recurrence,
+            },
+            instances,
+          });
+          toast({ title: `已创建重复事件，共 ${instances.length + 1} 条` });
+        } else {
+          await createMutation.mutateAsync({
+            ...basePayload,
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            recurrence: null,
+          });
+        }
+      }
       setDialogOpen(false); setEditingItem(null); resetForm();
     } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
   };
 
   const openEdit = useCallback((event: any) => {
-    // If editing a recurrence instance, edit the parent event
-    const actualEvent = event._isRecurrenceInstance
-      ? events.find((e: any) => e.id === event._parentId) || event
+    // If clicking an instance, find and edit the master
+    const masterId = event.parent_event_id;
+    const actualEvent = masterId
+      ? rawEvents.find((e: any) => e.id === masterId) || event
       : event;
     const start = new Date(actualEvent.start_time);
     const end = new Date(actualEvent.end_time);
@@ -171,7 +261,23 @@ export default function SchedulePage() {
       recurrence_days: (actualEvent.recurrence as any)?.days_of_week || [],
     });
     setDialogOpen(true);
-  }, [events]);
+  }, [rawEvents]);
+
+  const handleDelete = async () => {
+    if (!editingItem) return;
+    const masterId = editingItem.parent_event_id || editingItem.id;
+    const master = rawEvents.find((e: any) => e.id === masterId);
+    const isSeries = master?.recurrence && (master.recurrence as any).type !== "none";
+
+    if (isSeries) {
+      // Delete entire series
+      await deleteSeriesMutation.mutateAsync(masterId);
+      toast({ title: "已删除整个重复系列" });
+    } else {
+      await deleteMutation.mutateAsync(editingItem.id);
+    }
+    setDialogOpen(false); setEditingItem(null); resetForm();
+  };
 
   const handleDragEnd = useCallback((id: string, newStart: Date, newEnd: Date) => {
     updateMutation.mutate({ id, start_time: newStart.toISOString(), end_time: newEnd.toISOString() });
@@ -217,6 +323,13 @@ export default function SchedulePage() {
     : `${format(days[0], "M/d")} – ${format(days[days.length - 1], "M/d")}`;
 
   const gridCols = viewMode === "week" ? "grid-cols-[40px_repeat(7,1fr)]" : "grid-cols-[50px_1fr_1fr_1fr]";
+
+  // Check if editing item is part of a series
+  const editingIsSeries = editingItem && (() => {
+    const masterId = editingItem.parent_event_id || editingItem.id;
+    const master = rawEvents.find((e: any) => e.id === masterId);
+    return master?.recurrence && (master.recurrence as any).type !== "none";
+  })();
 
   return (
     <AppLayout title="日程计划">
@@ -305,20 +418,22 @@ export default function SchedulePage() {
                   )}
                   {form.recurrence_type !== "none" && (
                     <div className="mt-2">
-                      <Label className="text-xs">结束日期（可选）</Label>
+                      <Label className="text-xs">结束日期（可选，不填则生成未来12个月）</Label>
                       <Input type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleSave} className="flex-1">保存</Button>
+                  <Button onClick={handleSave} className="flex-1">保存{editingIsSeries ? "（整个系列）" : ""}</Button>
                   {editingItem && (
-                    <Button variant="destructive" size="icon" onClick={async () => {
-                      await deleteMutation.mutateAsync(editingItem.id);
-                      setDialogOpen(false); setEditingItem(null); resetForm();
-                    }}><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="destructive" size="icon" onClick={handleDelete}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
+                {editingIsSeries && (
+                  <p className="text-xs text-muted-foreground text-center">编辑或删除将影响整个重复系列</p>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -326,7 +441,7 @@ export default function SchedulePage() {
 
         {/* Month View */}
         {viewMode === "month" ? (
-          <MonthView baseDate={baseDate} events={expandedEvents} onEdit={openEdit} onCreateAt={handleCreateAt} />
+          <MonthView baseDate={baseDate} events={displayEvents} onEdit={openEdit} onCreateAt={handleCreateAt} />
         ) : (
           /* Day/Week Grid View */
           <div className="border border-border rounded-lg overflow-hidden">
