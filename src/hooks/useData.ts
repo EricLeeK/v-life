@@ -333,6 +333,100 @@ export function useRecentWeightTrend() {
   });
 }
 
+// ============ Schedule Series Helpers ============
+export function useCreateSeriesWithInstances() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      master: any;
+      instances: any[];
+    }) => {
+      // Insert master event
+      const { data: masterData, error: masterError } = await supabase
+        .from("schedule_events")
+        .insert(params.master)
+        .select()
+        .single();
+      if (masterError) throw masterError;
+
+      // Insert instances with parent_event_id
+      if (params.instances.length > 0) {
+        const rows = params.instances.map((inst) => ({
+          ...inst,
+          parent_event_id: masterData.id,
+          recurrence: null,
+        }));
+        const { error: instError } = await supabase
+          .from("schedule_events")
+          .insert(rows);
+        if (instError) throw instError;
+      }
+      return masterData;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedule"] }),
+  });
+}
+
+export function useUpdateSeriesWithInstances() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      masterId: string;
+      masterUpdates: any;
+      instances: any[];
+    }) => {
+      // Update master
+      const { error: updateErr } = await supabase
+        .from("schedule_events")
+        .update(params.masterUpdates)
+        .eq("id", params.masterId);
+      if (updateErr) throw updateErr;
+
+      // Delete old instances
+      const { error: delErr } = await supabase
+        .from("schedule_events")
+        .delete()
+        .eq("parent_event_id", params.masterId);
+      if (delErr) throw delErr;
+
+      // Insert new instances
+      if (params.instances.length > 0) {
+        const rows = params.instances.map((inst) => ({
+          ...inst,
+          parent_event_id: params.masterId,
+          recurrence: null,
+        }));
+        const { error: instError } = await supabase
+          .from("schedule_events")
+          .insert(rows);
+        if (instError) throw instError;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedule"] }),
+  });
+}
+
+export function useDeleteSeries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (masterId: string) => {
+      // Delete instances first
+      const { error: instErr } = await supabase
+        .from("schedule_events")
+        .delete()
+        .eq("parent_event_id", masterId);
+      if (instErr) throw instErr;
+      // Delete master
+      const { error: masterErr } = await supabase
+        .from("schedule_events")
+        .delete()
+        .eq("id", masterId);
+      if (masterErr) throw masterErr;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["schedule"] }),
+  });
+}
+
 export function useCurrentWeekGoals() {
   const now = new Date();
   const day = now.getDay();
