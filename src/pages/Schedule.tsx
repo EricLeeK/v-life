@@ -163,15 +163,15 @@ export default function SchedulePage() {
     const end = new Date(actualEvent.end_time);
     setEditingItem(actualEvent);
     setForm({
-      title: event.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
+      title: actualEvent.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
-      importance: event.importance || "普通", status: event.status, color: event.color || "", notes: event.notes || "",
-      recurrence_type: (event.recurrence as any)?.type || "none",
-      recurrence_end_date: (event.recurrence as any)?.end_date || "",
-      recurrence_days: (event.recurrence as any)?.days_of_week || [],
+      importance: actualEvent.importance || "普通", status: actualEvent.status, color: actualEvent.color || "", notes: actualEvent.notes || "",
+      recurrence_type: (actualEvent.recurrence as any)?.type || "none",
+      recurrence_end_date: (actualEvent.recurrence as any)?.end_date || "",
+      recurrence_days: (actualEvent.recurrence as any)?.days_of_week || [],
     });
     setDialogOpen(true);
-  }, []);
+  }, [events]);
 
   const handleDragEnd = useCallback((id: string, newStart: Date, newEnd: Date) => {
     updateMutation.mutate({ id, start_time: newStart.toISOString(), end_time: newEnd.toISOString() });
