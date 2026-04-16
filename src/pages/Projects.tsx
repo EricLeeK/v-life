@@ -1,0 +1,88 @@
+import { useState, useEffect } from "react";
+import { AppLayout } from "@/components/AppLayout";
+import { ProjectSidebar } from "@/components/ProjectSidebar";
+import { ProjectBoard } from "@/components/ProjectBoard";
+import { ProjectModal } from "@/components/ProjectModal";
+import {
+  useProjects,
+  useCreateProject,
+  useUpdateProject,
+} from "@/hooks/useData";
+import { useToast } from "@/hooks/use-toast";
+
+export default function ProjectsPage() {
+  const { data: projects = [] } = useProjects();
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+  const { toast } = useToast();
+
+  const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
+
+  useEffect(() => {
+    if (projects.length > 0 && !selectedId) {
+      const active = projects.find((p) => p.status === "active");
+      setSelectedId(active?.id || projects[0].id);
+    }
+  }, [projects, selectedId]);
+
+  const selectedProject = projects.find((p) => p.id === selectedId);
+
+  const handleSaveProject = async (values: any) => {
+    try {
+      if (editingProject) {
+        await updateProject.mutateAsync({ id: editingProject.id, ...values });
+      } else {
+        const data = await createProject.mutateAsync(values);
+        if (data?.id) setSelectedId(data.id);
+      }
+      setProjectModalOpen(false);
+      setEditingProject(null);
+    } catch (e: any) {
+      toast({ title: "保存失败", description: e.message, variant: "destructive" });
+    }
+  };
+
+  const handleEditProject = (project: any) => {
+    setEditingProject(project);
+    setProjectModalOpen(true);
+  };
+
+  return (
+    <AppLayout title="项目管理">
+      <div className="flex h-[calc(100vh-3rem)]">
+        <div className="w-80 shrink-0">
+          <ProjectSidebar
+            projects={projects}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onAdd={() => {
+              setEditingProject(null);
+              setProjectModalOpen(true);
+            }}
+            onEdit={handleEditProject}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          {selectedProject ? (
+            <ProjectBoard
+              project={selectedProject}
+              onEditProject={() => handleEditProject(selectedProject)}
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              请新建或选择一个项目
+            </div>
+          )}
+        </div>
+      </div>
+      <ProjectModal
+        open={projectModalOpen}
+        onOpenChange={setProjectModalOpen}
+        onSave={handleSaveProject}
+        initial={editingProject}
+      />
+    </AppLayout>
+  );
+}

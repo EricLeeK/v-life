@@ -446,3 +446,191 @@ export function useCurrentWeekGoals() {
     },
   });
 }
+
+// ============ Project Management Hooks ============
+
+export function useProjects() {
+  return useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}
+
+export function useCreateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: any) => {
+      const { data, error } = await supabase.from("projects").insert(item).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+  });
+}
+
+export function useUpdateProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
+      const { data, error } = await supabase.from("projects").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+  });
+}
+
+export function useDeleteProject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("projects").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["projects"] }),
+  });
+}
+
+export function useProjectTasks(projectId?: string) {
+  return useQuery({
+    queryKey: ["project_tasks", projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_tasks")
+        .select("*")
+        .eq("project_id", projectId)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateProjectTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: any) => {
+      const { data, error } = await supabase.from("project_tasks").insert(item).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["project_tasks", variables.project_id] });
+      qc.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useUpdateProjectTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, project_id, ...updates }: { id: string; project_id: string } & Record<string, any>) => {
+      const { data, error } = await supabase.from("project_tasks").update(updates).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ id, project_id, ...updates }) => {
+      await qc.cancelQueries({ queryKey: ["project_tasks", project_id] });
+      const queries = qc.getQueriesData<any[]>({ queryKey: ["project_tasks", project_id] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          qc.setQueryData(key, data.map((item: any) => item.id === id ? { ...item, ...updates } : item));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, { project_id }, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    onSettled: (_data, _err, { project_id }) => {
+      qc.invalidateQueries({ queryKey: ["project_tasks", project_id] });
+      qc.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useDeleteProjectTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, project_id }: { id: string; project_id: string }) => {
+      const { error } = await supabase.from("project_tasks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, project_id }) => {
+      await qc.cancelQueries({ queryKey: ["project_tasks", project_id] });
+      const queries = qc.getQueriesData<any[]>({ queryKey: ["project_tasks", project_id] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          qc.setQueryData(key, data.filter((item: any) => item.id !== id));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, { project_id }, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    onSettled: (_data, _err, { project_id }) => {
+      qc.invalidateQueries({ queryKey: ["project_tasks", project_id] });
+      qc.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+}
+
+export function useHabitLogs(taskId?: string) {
+  return useQuery({
+    queryKey: ["habit_logs", taskId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("habit_logs").select("*").eq("task_id", taskId);
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!taskId,
+  });
+}
+
+export function useToggleHabitLog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ taskId, projectId, logDate }: { taskId: string; projectId: string; logDate: string }) => {
+      const { data: existing } = await supabase
+        .from("habit_logs")
+        .select("id")
+        .eq("task_id", taskId)
+        .eq("log_date", logDate)
+        .single();
+      if (existing) {
+        const { error } = await supabase.from("habit_logs").delete().eq("id", existing.id);
+        if (error) throw error;
+        return { completed: false };
+      } else {
+        const { error } = await supabase.from("habit_logs").insert({ task_id: taskId, log_date: logDate });
+        if (error) throw error;
+        return { completed: true };
+      }
+    },
+    onSuccess: (_data, { taskId, projectId }) => {
+      qc.invalidateQueries({ queryKey: ["habit_logs", taskId] });
+      qc.invalidateQueries({ queryKey: ["project_tasks", projectId] });
+    },
+  });
+}
+
+export function useTaskTags(projectId?: string) {
+  return useQuery({
+    queryKey: ["task_tags", projectId],
+    queryFn: async () => {
+      let query = supabase.from("task_tags").select("*");
+      if (projectId) query = query.eq("project_id", projectId);
+      const { data, error } = await query.order("name", { ascending: true });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+}

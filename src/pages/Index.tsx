@@ -1,12 +1,12 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer } from "lucide-react";
+import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   useTodaySchedule, useTodayCalorieSummary, useMonthFinanceSummary,
   usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
-  useCurrentWeekGoals, useRecentWeightTrend
+  useCurrentWeekGoals, useRecentWeightTrend, useProjects
 } from "@/hooks/useData";
 import { format } from "date-fns";
 
@@ -37,6 +37,11 @@ export default function DashboardPage() {
   const { data: recentThoughts = [] } = useRecentThoughts();
   const { data: weekGoals = [] } = useCurrentWeekGoals();
   const { data: weightTrend = [] } = useRecentWeightTrend();
+  const { data: allProjects = [] } = useProjects();
+  const activeProjects = allProjects.filter((p: any) => p.status === "active" || p.status === "planning");
+  const avgProgress = activeProjects.length > 0
+    ? Math.round(activeProjects.reduce((s: number, p: any) => s + p.progress, 0) / activeProjects.length)
+    : 0;
 
   const calorieTarget = settings?.calorie_target || 2000;
   const budget = settings?.monthly_budget || 5000;
@@ -92,6 +97,16 @@ export default function DashboardPage() {
           <p className="text-xs text-muted-foreground mt-1">
             {urgentTodos.length > 0 ? <span className="text-destructive">{urgentTodos.length} 个紧急</span> : "无紧急事项"}
           </p>
+        </DashboardCard>
+
+        <DashboardCard title="项目管理" icon={Kanban} onClick={() => navigate("/projects")}>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">{activeProjects.length} 个活跃项目</span>
+              <span className="text-muted-foreground">{avgProgress}%</span>
+            </div>
+            <Progress value={avgProgress} className="h-2" />
+          </div>
         </DashboardCard>
 
         <DashboardCard title="本周目标" icon={Target} onClick={() => navigate("/goals")}>
