@@ -38,6 +38,8 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   weight: "weight_records",
   measurement: "measurement_records",
   goal: "goals",
+  project: "projects",
+  project_task: "project_tasks",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -52,6 +54,8 @@ const MODULE_LABELS: Record<string, string> = {
   weight: "体重",
   measurement: "围度",
   goal: "目标",
+  project: "项目",
+  project_task: "项目任务",
 };
 
 const MAX_SESSIONS = 30;
