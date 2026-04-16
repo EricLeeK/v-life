@@ -38,6 +38,8 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   weight: "weight_records",
   measurement: "measurement_records",
   goal: "goals",
+  project: "projects",
+  project_task: "project_tasks",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -52,6 +54,8 @@ const MODULE_LABELS: Record<string, string> = {
   weight: "体重",
   measurement: "围度",
   goal: "目标",
+  project: "项目",
+  project_task: "项目任务",
 };
 
 const MAX_SESSIONS = 30;
@@ -166,6 +170,24 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         type: data.type || "week",
         period_start: data.period_start || today,
         is_completed: data.is_completed || false,
+      };
+    case "project":
+      return {
+        name: data.name || "未命名项目",
+        description: data.description || null,
+        status: data.status || "planning",
+        priority: data.priority || "medium",
+        target_date: data.target_date || null,
+      };
+    case "project_task":
+      return {
+        title: data.title || "未命名任务",
+        type: data.type || "task",
+        status: data.status || "todo",
+        description: data.description || null,
+        due_date: data.due_date || null,
+        weight: data.weight || 1,
+        // project_id will be resolved dynamically in executeOperations
       };
     default:
       return data;
@@ -348,6 +370,27 @@ export function AIChatPanel() {
         try {
           if (op.action === "create") {
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
+
+            // Special handling for project: needs user_id
+            if (op.module === "project") {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user) throw new Error("未登录");
+              row.user_id = user.id;
+            }
+
+            // Special handling for project_task: resolve project_name → project_id
+            if (op.module === "project_task") {
+              const projectName = op.data.project_name;
+              if (!projectName) throw new Error("缺少项目名称 project_name");
+              const { data: proj } = await (supabase.from as any)("projects")
+                .select("id")
+                .ilike("name", `%${projectName}%`)
+                .limit(1)
+                .single();
+              if (!proj) throw new Error(`未找到项目「${projectName}」`);
+              row.project_id = proj.id;
+            }
+
             // Use upsert for weight and measurement (unique per user+date)
             const useUpsert = op.module === "weight" || op.module === "measurement";
             const { data: inserted, error } = useUpsert
@@ -359,6 +402,20 @@ export function AIChatPanel() {
           } else if (op.action === "delete") {
             const match = op.data.match || {};
             const matchEntries = Object.entries(match).filter(([_, v]) => v !== undefined && v !== null && v !== "");
+
+            // For project_task, resolve project_name to project_id for matching
+            if (op.module === "project_task" && match.project_name) {
+              const { data: proj } = await (supabase.from as any)("projects")
+                .select("id")
+                .ilike("name", `%${match.project_name}%`)
+                .limit(1)
+                .single();
+              if (proj) {
+                match.project_id = proj.id;
+              }
+              delete match.project_name;
+            }
+
             if (matchEntries.length === 0) {
               // Try to find by name/title from op.data
               const searchName = op.data.name || op.data.title || op.data.food_name || "";
@@ -376,8 +433,12 @@ export function AIChatPanel() {
                 if (error) throw error;
               } else {
                 let searchQuery = (supabase.from as any)(table).select("id");
-                for (const [key, val] of matchEntries) {
-                  searchQuery = searchQuery.ilike(key, `%${val}%`);
+                for (const [key, val] of Object.entries(match).filter(([k]) => k !== "project_name")) {
+                  if (key === "project_id") {
+                    searchQuery = searchQuery.eq(key, val);
+                  } else {
+                    searchQuery = searchQuery.ilike(key, `%${val}%`);
+                  }
                 }
                 const { data: found } = await searchQuery.limit(1).single();
                 if (!found) throw new Error(`未找到匹配的记录`);
@@ -387,11 +448,33 @@ export function AIChatPanel() {
             }
             results.push(`✅ ${label}: 已删除「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
-            let query = (supabase.from as any)(table).update(op.data.update);
-            for (const [key, val] of Object.entries(op.data.match)) {
-              query = query.eq(key, val);
+            const match = { ...op.data.match };
+
+            // For project_task, resolve project_name to project_id
+            if (op.module === "project_task" && match.project_name) {
+              const { data: proj } = await (supabase.from as any)("projects")
+                .select("id")
+                .ilike("name", `%${match.project_name}%`)
+                .limit(1)
+                .single();
+              if (proj) {
+                match.project_id = proj.id;
+              }
+              delete match.project_name;
             }
-            const { error } = await query;
+
+            // Search for the record first, then update by id
+            let searchQuery = (supabase.from as any)(table).select("id");
+            for (const [key, val] of Object.entries(match)) {
+              if (key === "project_id") {
+                searchQuery = searchQuery.eq(key, val);
+              } else {
+                searchQuery = searchQuery.ilike(key, `%${val}%`);
+              }
+            }
+            const { data: found } = await searchQuery.limit(1).single();
+            if (!found) throw new Error(`未找到匹配的记录`);
+            const { error } = await (supabase.from as any)(table).update(op.data.update).eq("id", found.id);
             if (error) throw error;
             results.push(`✅ ${label}: 已更新「${itemName}」`);
           } else {
@@ -402,7 +485,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       // Also invalidate dashboard queries
@@ -421,7 +504,7 @@ export function AIChatPanel() {
     for (const { table, id } of recentlyCreatedIds) {
       await (supabase.from as any)(table).delete().eq("id", id);
     }
-    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
+    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks"]) {
       qc.invalidateQueries({ queryKey: [key] });
     }
     setRecentlyCreatedIds([]);
