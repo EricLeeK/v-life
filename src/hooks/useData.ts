@@ -531,8 +531,8 @@ export function useCreateProjectTask() {
 export function useUpdateProjectTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, project_id, ...updates }: { id: string; project_id: string } & Record<string, any>) => {
-      const { data, error } = await supabase.from("project_tasks").update(updates).eq("id", id).select().single();
+    mutationFn: async ({ id, project_id, ...updates }: { id: string; project_id: string;[key: string]: any }) => {
+      const { data, error } = await supabase.from("project_tasks").update(updates as any).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
