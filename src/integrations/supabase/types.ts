@@ -262,6 +262,35 @@ export type Database = {
         }
         Relationships: []
       }
+      habit_logs: {
+        Row: {
+          completed_at: string | null
+          id: string
+          log_date: string
+          task_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          log_date?: string
+          task_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          log_date?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measurement_records: {
         Row: {
           arm: number | null
@@ -303,35 +332,6 @@ export type Database = {
           waist?: number | null
         }
         Relationships: []
-      }
-      habit_logs: {
-        Row: {
-          completed_at: string | null
-          id: string
-          log_date: string
-          task_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          id?: string
-          log_date?: string
-          task_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          id?: string
-          log_date?: string
-          task_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "habit_logs_task_id_fkey"
-            columns: ["task_id"]
-            isOneToOne: false
-            referencedRelation: "project_tasks"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       pantry_items: {
         Row: {
@@ -402,48 +402,9 @@ export type Database = {
           },
         ]
       }
-      projects: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          priority: string
-          progress: number
-          status: string
-          target_date: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          priority?: string
-          progress?: number
-          status?: string
-          target_date?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          priority?: string
-          progress?: number
-          status?: string
-          target_date?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       project_tasks: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
           due_date: string | null
           id: string
@@ -452,11 +413,11 @@ export type Database = {
           status: string
           title: string
           type: string
-          updated_at: string
+          updated_at: string | null
           weight: number
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -465,11 +426,11 @@ export type Database = {
           status?: string
           title: string
           type?: string
-          updated_at?: string
+          updated_at?: string | null
           weight?: number
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -478,7 +439,7 @@ export type Database = {
           status?: string
           title?: string
           type?: string
-          updated_at?: string
+          updated_at?: string | null
           weight?: number
         }
         Relationships: [
@@ -490,6 +451,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          priority: string
+          progress: number
+          status: string
+          target_date: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          priority?: string
+          progress?: number
+          status?: string
+          target_date?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          priority?: string
+          progress?: number
+          status?: string
+          target_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       schedule_events: {
         Row: {
@@ -616,21 +616,18 @@ export type Database = {
       task_tags: {
         Row: {
           color: string
-          created_at: string | null
           id: string
           name: string
           project_id: string
         }
         Insert: {
           color?: string
-          created_at?: string | null
           id?: string
           name: string
           project_id: string
         }
         Update: {
           color?: string
-          created_at?: string | null
           id?: string
           name?: string
           project_id?: string
