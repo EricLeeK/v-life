@@ -464,7 +464,9 @@ export function useCreateProject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (item: any) => {
-      const { data, error } = await supabase.from("projects").insert(item).select().single();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("未登录");
+      const { data, error } = await supabase.from("projects").insert({ ...item, user_id: user.id }).select().single();
       if (error) throw error;
       return data;
     },
@@ -475,8 +477,8 @@ export function useCreateProject() {
 export function useUpdateProject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
-      const { data, error } = await supabase.from("projects").update(updates).eq("id", id).select().single();
+    mutationFn: async ({ id, ...updates }: { id: string;[key: string]: any }) => {
+      const { data, error } = await supabase.from("projects").update(updates as any).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
@@ -529,8 +531,8 @@ export function useCreateProjectTask() {
 export function useUpdateProjectTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, project_id, ...updates }: { id: string; project_id: string } & Record<string, any>) => {
-      const { data, error } = await supabase.from("project_tasks").update(updates).eq("id", id).select().single();
+    mutationFn: async ({ id, project_id, ...updates }: { id: string; project_id: string;[key: string]: any }) => {
+      const { data, error } = await supabase.from("project_tasks").update(updates as any).eq("id", id).select().single();
       if (error) throw error;
       return data;
     },
