@@ -485,7 +485,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       // Also invalidate dashboard queries
@@ -504,7 +504,7 @@ export function AIChatPanel() {
     for (const { table, id } of recentlyCreatedIds) {
       await (supabase.from as any)(table).delete().eq("id", id);
     }
-    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings"]) {
+    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks"]) {
       qc.invalidateQueries({ queryKey: [key] });
     }
     setRecentlyCreatedIds([]);
