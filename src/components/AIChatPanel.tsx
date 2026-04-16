@@ -171,6 +171,24 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         period_start: data.period_start || today,
         is_completed: data.is_completed || false,
       };
+    case "project":
+      return {
+        name: data.name || "未命名项目",
+        description: data.description || null,
+        status: data.status || "planning",
+        priority: data.priority || "medium",
+        target_date: data.target_date || null,
+      };
+    case "project_task":
+      return {
+        title: data.title || "未命名任务",
+        type: data.type || "task",
+        status: data.status || "todo",
+        description: data.description || null,
+        due_date: data.due_date || null,
+        weight: data.weight || 1,
+        // project_id will be resolved dynamically in executeOperations
+      };
     default:
       return data;
   }
