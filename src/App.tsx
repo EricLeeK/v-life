@@ -16,6 +16,7 @@ import TodosPage from "./pages/Todos";
 import ThoughtsPage from "./pages/Thoughts";
 import GoalsPage from "./pages/Goals";
 import WeightLossPage from "./pages/WeightLoss";
+import ProjectsPage from "./pages/Projects";
 import SettingsPage from "./pages/Settings";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
@@ -41,6 +42,7 @@ function AppRoutes() {
       <Route path="/calories" element={<ProtectedRoute><CaloriesPage /></ProtectedRoute>} />
       <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
       <Route path="/todos" element={<ProtectedRoute><TodosPage /></ProtectedRoute>} />
+      <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
       <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
       <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
       <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
