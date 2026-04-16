@@ -94,6 +94,20 @@ delete: { module: "goal", action: "delete", data: { match: { title?: string, typ
 
 **目标分为周目标、月目标、年目标。period_start 为该目标周期的起始日期（周目标用周一日期，月目标用当月1号，年目标用当年1月1日）。**
 
+### 12. project（项目管理）
+create: { module: "project", action: "create", data: { name: string, description?: string, status?: "planning"|"active"|"paused"|"completed"|"archived", priority?: "high"|"medium"|"low", target_date?: "YYYY-MM-DD" } }
+update: { module: "project", action: "update", data: { match: { name?: string }, update: { name?: string, description?: string, status?: string, priority?: string, target_date?: string } } }
+delete: { module: "project", action: "delete", data: { match: { name?: string } } }
+
+**项目状态：planning=规划中, active=进行中, paused=暂停中, completed=已完成, archived=已归档。默认 status="planning", priority="medium"。**
+
+### 13. project_task（项目子任务/习惯/里程碑）
+create: { module: "project_task", action: "create", data: { project_name: string, title: string, type?: "task"|"habit"|"milestone", status?: "todo"|"this_week"|"in_progress"|"waiting"|"done", description?: string, due_date?: "YYYY-MM-DD", weight?: number } }
+update: { module: "project_task", action: "update", data: { match: { title?: string, project_name?: string }, update: { title?: string, status?: string, description?: string, due_date?: string, weight?: number } } }
+delete: { module: "project_task", action: "delete", data: { match: { title?: string, project_name?: string } } }
+
+**project_task 必须通过 project_name 关联到一个已存在的项目。type 可以是 task(任务)、habit(习惯)、milestone(里程碑)，默认 task。status 可以是 todo(待办)、this_week(本周)、in_progress(进行中)、waiting(等待中)、done(已完成)，默认 todo。weight 是权重(影响项目进度计算)，默认 1。**
+
 ## 默认值规则
 - 日期缺失 → 使用今天（当前日期会附加在用户消息中）
 - 币种缺失 → 默认 CNY
@@ -102,6 +116,8 @@ delete: { module: "goal", action: "delete", data: { match: { title?: string, typ
 - todo 的 category 缺失 → 默认 "未分类"
 - 热量：如果用户没有明确说几大卡，根据食物名称和份量合理估算热量（kcal）
 - 运动：如果用户提到了运动但没说消耗多少，根据运动类型和时长自行估算消耗热量
+- 项目 status 缺失 → 默认 "planning"，priority 缺失 → 默认 "medium"
+- 项目子任务 type 缺失 → 默认 "task"，status 缺失 → 默认 "todo"
 
 ## 跨模块识别
 一条消息可能涉及多个模块，你必须拆分为多条操作。例如「吃拉面花了30元600大卡」→ finance + calories 两条操作。
@@ -154,9 +170,21 @@ delete: { module: "goal", action: "delete", data: { match: { title?: string, typ
 输出:
 {"operations":[{"module":"finance","action":"create","data":{"name":"键盘","amount":800,"currency":"CNY","category":"电子","date":"2026-03-30"}},{"module":"belongings_durable","action":"create","data":{"name":"键盘","category":"电子产品","purchase_price":800,"purchase_date":"2026-03-30","expected_lifespan_days":1095}}],"summary":"记录了购买键盘800元，并添加为耐用品（预期使用3年）"}
 
+用户: "创建一个项目叫'毕业论文'，优先级高，目标5月底完成"
+输出:
+{"operations":[{"module":"project","action":"create","data":{"name":"毕业论文","status":"active","priority":"high","target_date":"2026-05-31"}}],"summary":"创建了项目'毕业论文'，优先级高，目标5月31日完成"}
+
+用户: "在毕业论文项目里加一个任务'完成文献综述'，还有一个习惯'每天写500字'"
+输出:
+{"operations":[{"module":"project_task","action":"create","data":{"project_name":"毕业论文","title":"完成文献综述","type":"task","status":"todo"}},{"module":"project_task","action":"create","data":{"project_name":"毕业论文","title":"每天写500字","type":"habit","status":"todo"}}],"summary":"在'毕业论文'项目中添加了任务'完成文献综述'和习惯'每天写500字'"}
+
+用户: "把毕业论文项目里的'完成文献综述'标记为完成"
+输出:
+{"operations":[{"module":"project_task","action":"update","data":{"match":{"title":"完成文献综述","project_name":"毕业论文"},"update":{"status":"done"}}}],"summary":"将'毕业论文'项目中的'完成文献综述'标记为已完成"}
+
 用户: "你好"
 输出:
-{"operations":[],"summary":"你好！我可以帮你快速记录生活数据。试试说：'午饭花了30块吃了拉面' 或 '明天下午3点开会'"}
+{"operations":[],"summary":"你好！我可以帮你快速记录生活数据。试试说：'午饭花了30块吃了拉面' 或 '明天下午3点开会' 或 '创建一个新项目'"}
 
 如果用户的话无法对应到任何模块操作，返回空 operations 数组并在 summary 中友好回复和引导。
 
