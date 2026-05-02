@@ -1,3 +1,3 @@
-// Re-export the base fixture from the package
-// Override or extend test/expect here if needed
-export { test, expect } from "lovable-agent-playwright-config/fixture";
+// Standard Playwright fixtures. Re-export here so tests can import
+// from a single project-local entry point and we can extend later if needed.
+export { test, expect } from "@playwright/test";
