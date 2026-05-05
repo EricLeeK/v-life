@@ -10,6 +10,7 @@ import {
   useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks,
 } from "@/hooks/useData";
 import { format } from "date-fns";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 
@@ -297,25 +298,53 @@ export default function DashboardPage() {
             {weightTrend.length === 0 ? (
               <p className="text-sm text-muted-foreground">暂无记录</p>
             ) : (
-              <div className="space-y-1">
-                <p className="text-2xl font-semibold">{Number(weightTrend[weightTrend.length - 1]?.weight).toFixed(1)} kg</p>
-                {weightTrend.length >= 2 && (() => {
-                  const diff = Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight);
-                  return <p className={`text-xs ${diff <= 0 ? "text-success" : "text-destructive"}`}>
-                    近{weightTrend.length}次 {diff > 0 ? "+" : ""}{diff.toFixed(1)} kg
-                  </p>;
-                })()}
+              <div className="space-y-2">
+                <div className="flex items-baseline justify-between">
+                  <p className="text-2xl font-semibold">{Number(weightTrend[weightTrend.length - 1]?.weight).toFixed(1)} kg</p>
+                  {weightTrend.length >= 2 && (() => {
+                    const diff = Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight);
+                    return <p className={`text-xs ${diff <= 0 ? "text-success" : "text-destructive"}`}>
+                      近{weightTrend.length}次 {diff > 0 ? "+" : ""}{diff.toFixed(1)} kg
+                    </p>;
+                  })()}
+                </div>
+                {weightTrend.length >= 2 && (
+                  <div className="h-16">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={weightTrend.map((w: any) => ({ date: w.date, weight: Number(w.weight) }))}>
+                        <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
             )}
           </DashboardCard>
 
           <DashboardCard title="食材库存" icon={Carrot} onClick={() => navigate("/pantry")} className="md:col-span-3">
-            <div className="flex justify-between">
-              <div>
+            {expiringPantry.length === 0 ? (
+              <p className="text-sm text-muted-foreground">无即将过期食材</p>
+            ) : (
+              <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">即将过期</p>
-                <p className="text-2xl font-semibold text-warning">{expiringPantry.length}</p>
+                {expiringPantry.slice(0, 3).map((item: any) => {
+                  const daysLeft = item.expiry_date
+                    ? Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / 86400000)
+                    : null;
+                  return (
+                    <div key={item.id} className="flex items-center justify-between">
+                      <span className="text-sm text-foreground truncate max-w-[70%]">{item.name}</span>
+                      <span className={`text-xs ${daysLeft !== null && daysLeft <= 1 ? "text-destructive" : "text-warning"}`}>
+                        {daysLeft !== null ? `${daysLeft} 天` : "未知"}
+                      </span>
+                    </div>
+                  );
+                })}
+                {expiringPantry.length > 3 && (
+                  <p className="text-[10px] text-muted-foreground">+{expiringPantry.length - 3} 个食材</p>
+                )}
               </div>
-            </div>
+            )}
           </DashboardCard>
 
           <DashboardCard title="超值用品" icon={Package} onClick={() => navigate("/belongings")} className="md:col-span-3">
@@ -336,9 +365,22 @@ export default function DashboardPage() {
             {recentThoughts.length === 0 ? (
               <p className="text-sm text-muted-foreground">暂无随想</p>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {recentThoughts.map((t: any) => (
-                  <p key={t.id} className="text-xs text-muted-foreground truncate">{t.icon} {t.title || t.content.slice(0, 40)}</p>
+                  <div key={t.id}>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {t.icon} {t.title || t.content.slice(0, 40)}
+                    </p>
+                    {t.tags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {t.tags.map((tag: string) => (
+                          <Badge key={tag} variant="outline" className="text-[10px] px-1 py-0">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
