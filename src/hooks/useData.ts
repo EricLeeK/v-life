@@ -318,6 +318,26 @@ export function useTodayCalorieSummary() {
   });
 }
 
+export function useTodayCalorieBreakdown() {
+  const today = new Date().toISOString().split("T")[0];
+  return useQuery({
+    queryKey: ["calories", "today_breakdown"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("calorie_records")
+        .select("calories, meal_type")
+        .eq("date", today);
+      if (error) throw error;
+      const breakdown: Record<string, number> = {};
+      (data || []).forEach((r) => {
+        const key = r.meal_type || "other";
+        breakdown[key] = (breakdown[key] || 0) + Number(r.calories);
+      });
+      return breakdown;
+    },
+  });
+}
+
 export function useRecentWeightTrend() {
   return useQuery({
     queryKey: ["weight_records", "recent_trend"],

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  useTodaySchedule, useTodayCalorieSummary, useMonthFinanceSummary, useFinanceByMonth,
+  useTodaySchedule, useTodayCalorieSummary, useTodayCalorieBreakdown, useMonthFinanceSummary, useFinanceByMonth,
   usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
   useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks,
 } from "@/hooks/useData";
@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const { data: settings } = useSettings();
   const { data: todayEvents = [] } = useTodaySchedule();
   const { data: todayCalories = 0 } = useTodayCalorieSummary();
+  const { data: calorieBreakdown = {} } = useTodayCalorieBreakdown();
   const { data: financeSummary } = useMonthFinanceSummary(now.getFullYear(), now.getMonth() + 1);
   const { data: monthFinanceRecords = [] } = useFinanceByMonth(now.getFullYear(), now.getMonth() + 1);
   const { data: pendingTodos = [] } = usePendingTodos();
@@ -224,6 +225,16 @@ export default function DashboardPage() {
                 <span className="text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
               </div>
               <Progress value={Math.min(100, (totalSpending / budget) * 100)} className="h-2" />
+              {(monthFinanceRecords as any[]).length > 0 && (
+                <div className="space-y-1 pt-1">
+                  {(monthFinanceRecords as any[]).slice(0, 3).map((r) => (
+                    <div key={r.id} className="flex justify-between text-xs">
+                      <span className="text-muted-foreground truncate max-w-[60%]">{r.description || r.category}</span>
+                      <span className="text-foreground">¥{Number(r.amount_cny).toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </DashboardCard>
 
@@ -234,6 +245,15 @@ export default function DashboardPage() {
                 <span className="text-muted-foreground">{Math.round((todayCalories / calorieTarget) * 100)}%</span>
               </div>
               <Progress value={Math.min(100, (todayCalories / calorieTarget) * 100)} className="h-2" />
+              {Object.keys(calorieBreakdown).length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {Object.entries(calorieBreakdown).map(([meal, cals]) => (
+                    <Badge key={meal} variant="outline" className="text-[10px] px-1.5 py-0">
+                      {meal} {Number(cals).toFixed(0)}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </DashboardCard>
 
