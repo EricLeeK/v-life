@@ -2,7 +2,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban } from "lucide-react";
+import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   useTodaySchedule, useTodayCalorieSummary, useTodayCalorieBreakdown, useMonthFinanceSummary, useFinanceByMonth,
@@ -385,6 +385,23 @@ export default function DashboardPage() {
               </div>
             )}
           </DashboardCard>
+        </div>
+
+        {/* AI assistant promo */}
+        <div
+          className="flex items-center gap-3 p-4 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
+        >
+          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
+          >
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">AI 助手</p>
+            <p className="text-xs text-muted-foreground truncate">
+              点击打开 AI 助手，快速记录日程、记账、添加待办...
+            </p>
+          </div>
         </div>
       </div>
     </AppLayout>
