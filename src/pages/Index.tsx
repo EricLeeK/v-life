@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -169,17 +170,51 @@ export default function DashboardPage() {
         {/* 12-col card grid */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           <DashboardCard title="今日日程" icon={CalendarDays} onClick={() => navigate("/schedule")} className="md:col-span-6">
-            <p className="text-2xl font-semibold">{todayEvents.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {nextEvent ? `下一个: ${(nextEvent as any).title} ${format(new Date((nextEvent as any).start_time), "HH:mm")}` : "暂无安排"}
-            </p>
+            {todayEvents.length === 0 ? (
+              <p className="text-sm text-muted-foreground">暂无安排</p>
+            ) : (
+              <div className="space-y-2">
+                {todayEvents.slice(0, 3).map((e: any) => (
+                  <div key={e.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                      <span className="text-sm text-foreground truncate">{e.title}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground shrink-0 ml-2">
+                      {format(new Date(e.start_time), "HH:mm")}
+                    </span>
+                  </div>
+                ))}
+                {todayEvents.length > 3 && (
+                  <p className="text-[10px] text-muted-foreground">+{todayEvents.length - 3} 个日程</p>
+                )}
+              </div>
+            )}
           </DashboardCard>
 
           <DashboardCard title="待办事项" icon={CheckSquare} onClick={() => navigate("/todos")} className="md:col-span-6">
-            <p className="text-2xl font-semibold">{pendingTodos.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {urgentTodos.length > 0 ? <span className="text-destructive">{urgentTodos.length} 个紧急</span> : "无紧急事项"}
-            </p>
+            {pendingTodos.length === 0 ? (
+              <p className="text-sm text-muted-foreground">无待办</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingTodos.slice(0, 3).map((t: any) => (
+                  <div key={t.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm text-foreground truncate">{t.title}</span>
+                    </div>
+                    <Badge
+                      variant={t.importance === "紧急" ? "destructive" : "secondary"}
+                      className="text-[10px] px-1.5 py-0 shrink-0 ml-2"
+                    >
+                      {t.importance}
+                    </Badge>
+                  </div>
+                ))}
+                {pendingTodos.length > 3 && (
+                  <p className="text-[10px] text-muted-foreground">+{pendingTodos.length - 3} 个待办</p>
+                )}
+              </div>
+            )}
           </DashboardCard>
 
           <DashboardCard title="本月支出" icon={Wallet} onClick={() => navigate("/finance")} className="md:col-span-4">
