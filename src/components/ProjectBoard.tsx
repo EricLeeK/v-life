@@ -52,19 +52,35 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
-    const { draggableId, destination } = result;
+    const { draggableId, destination, source } = result;
     const newStatus = destination.droppableId as any;
     const task = tasks.find((t) => t.id === draggableId);
-    if (!task || task.status === newStatus) return;
+    if (!task) return;
+    // Same column same position → no change needed
+    if (task.status === newStatus && destination.index === source.index) return;
 
-    const updates: any = { status: newStatus };
+    const sameColumn = task.status === newStatus;
+    const updates: any = sameColumn ? { sort_order: destination.index } : { status: newStatus, sort_order: destination.index };
 
     updateTask.mutate({ id: task.id, project_id: project.id, ...updates });
 
-    const simulatedTasks = tasks.map((t) => (t.id === task.id ? { ...t, ...updates } : t));
-    const newProgress = computeProgress(simulatedTasks);
-    if (newProgress !== project.progress) {
-      updateProject.mutate({ id: project.id, progress: newProgress });
+    // Re-sort other tasks in the destination column
+    const destTasks = filteredTasks
+      .filter((t) => t.id !== draggableId && t.status === newStatus)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    destTasks.splice(destination.index, 0, { id: draggableId } as any);
+    destTasks.forEach((t, i) => {
+      if (t.id !== draggableId && t.sort_order !== i) {
+        updateTask.mutate({ id: t.id, project_id: project.id, sort_order: i });
+      }
+    });
+
+    if (!sameColumn) {
+      const simulatedTasks = tasks.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t));
+      const newProgress = computeProgress(simulatedTasks);
+      if (newProgress !== project.progress) {
+        updateProject.mutate({ id: project.id, progress: newProgress });
+      }
     }
   };
 
@@ -158,11 +174,11 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full">
             {COLUMNS_ZH.map((col) => {
-              const colTasks = filteredTasks.filter((t) => t.status === col.id);
+              const colTasks = filteredTasks.filter((t) => t.status === col.id).sort((a, b) => a.sort_order - b.sort_order);
               return (
                 <Droppable key={col.id} droppableId={col.id}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex-1 h-full">
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex-1 min-h-[120px] h-full">
                       <BoardColumn
                         title={lang === "zh" ? col.title : (COLUMN_TITLE_MAP[col.title] || col.title)}
                         count={colTasks.length}
