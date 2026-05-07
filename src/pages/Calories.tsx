@@ -60,17 +60,45 @@ export default function CaloriesPage() {
   return (
     <AppLayout title="热量记录">
       <div className="space-y-4">
-        {/* Day nav */}
-        <div className="flex gap-1 overflow-x-auto pb-1">
-          {navDays.map((d) => (
-            <Button key={d} variant={d === selectedDate ? "default" : "secondary"} size="sm" className="shrink-0 min-w-[60px]" onClick={() => setSelectedDate(d)}>
-              <div className="text-center">
-                <div className="text-[10px]">{format(new Date(d), "EEE", { locale: zhCN })}</div>
-                <div className="text-xs font-medium">{format(new Date(d), "MM/dd")}</div>
+        {/* Day nav — recessed groove with sliding indicator */}
+        {(() => {
+          const selIdx = navDays.indexOf(selectedDate);
+          const sliderWidth = `${100 / navDays.length}%`;
+          const sliderLeft = `${selIdx * (100 / navDays.length)}%`;
+          return (
+            <div className="relative bg-[#e6e3d9] rounded-[11px] p-[5px] shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.07)]">
+              {/* Sliding indicator */}
+              <div
+                className="absolute top-[5px] bottom-[5px] bg-white rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                style={{ width: sliderWidth, left: sliderLeft }}
+              />
+              {/* Day items */}
+              <div className="relative flex">
+                {navDays.map((d) => {
+                  const isToday = d === new Date().toISOString().split("T")[0];
+                  const isSelected = d === selectedDate;
+                  return (
+                    <button
+                      key={d}
+                      onClick={() => setSelectedDate(d)}
+                      className="flex-1 flex flex-col items-center py-2.5 z-10 transition-colors duration-200 cursor-pointer"
+                    >
+                      <span className={`text-[10px] font-medium leading-tight ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
+                        {format(new Date(d), "EEE", { locale: zhCN })}
+                      </span>
+                      <span className={`text-[13px] font-semibold leading-tight mt-0.5 ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
+                        {format(new Date(d), "dd")}
+                      </span>
+                      {isToday && (
+                        <span className={`text-[8px] font-medium mt-0.5 ${isSelected ? 'text-[#5b88b5]' : 'text-[#8a847a]'}`}>今天</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            </Button>
-          ))}
-        </div>
+            </div>
+          );
+        })()}
 
         {/* Summary */}
         <Card>
