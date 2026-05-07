@@ -499,6 +499,7 @@ export default function SchedulePage() {
                           width: `${100 / days.length}%`,
                         }}>
                         <div className="absolute -left-1 -top-[3px] w-2 h-2 rounded-full bg-destructive" />
+                        <div className="absolute -right-1 -top-[3px] w-2 h-2 rounded-full bg-destructive" />
                       </div>
                     </div>
                   </div>

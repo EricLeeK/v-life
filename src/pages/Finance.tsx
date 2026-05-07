@@ -175,7 +175,7 @@ export default function FinancePage() {
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">{t("本月支出", "Monthly Spending")}</p>
                 <div className="flex justify-between items-baseline mb-2">
-                  <span className="text-2xl font-semibold">¥{totalCny.toFixed(2)}</span>
+                  <span className="text-2xl font-semibold font-mono-data">¥{totalCny.toFixed(2)}</span>
                   <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
                 </div>
                 <Progress value={budgetProgress} className="h-2" />

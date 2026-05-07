@@ -123,7 +123,7 @@ export default function CaloriesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-foreground font-medium">{foodCalories} - {exerciseCalories} = {totalCalories} kcal</span>
+              <span className="text-foreground font-medium font-mono-data">{foodCalories} - {exerciseCalories} = {totalCalories} kcal</span>
               <span className="text-muted-foreground">/ {target} kcal</span>
             </div>
             <Progress value={progress} className="h-2" />
