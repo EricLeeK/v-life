@@ -16,7 +16,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
       <div className="min-h-screen bg-[#f4f3ee] pb-16">
         {title && (
           <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-[#e4e1d7] px-4 h-12 flex items-center">
-            <h1 className="text-base font-semibold text-[#1f1a14]">{title}</h1>
+            <h1 className="text-base font-semibold text-[#1f1a14] heading-font">{title}</h1>
           </header>
         )}
         <main className="p-4">{children}</main>

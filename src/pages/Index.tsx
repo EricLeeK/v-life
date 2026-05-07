@@ -211,7 +211,7 @@ export default function DashboardPage() {
         {/* ── Hero Section ── */}
         <section>
           <h1
-            className="font-bold text-[#1f1a14] leading-[1.1] tracking-tight"
+            className="font-bold text-[#1f1a14] leading-[1.1] tracking-tight heading-font"
             style={{ fontSize: "clamp(34px, 4.8vw, 64px)" }}
           >
             {greeting}
@@ -276,7 +276,7 @@ export default function DashboardPage() {
           <div className="flex items-baseline justify-between mb-4">
             <div>
               <h2
-                className="font-bold text-[#1f1a14] leading-tight"
+                className="font-bold text-[#1f1a14] leading-tight heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("今日概览", "Today's Overview")}
@@ -361,7 +361,7 @@ export default function DashboardPage() {
           <div className="flex items-baseline justify-between mb-4">
             <div>
               <h2
-                className="font-bold text-[#1f1a14] leading-tight"
+                className="font-bold text-[#1f1a14] leading-tight heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("生活模块", "Life Modules")}
@@ -455,7 +455,7 @@ export default function DashboardPage() {
           <div className="flex items-baseline justify-between mb-4">
             <div>
               <h2
-                className="font-bold text-[#1f1a14] leading-tight"
+                className="font-bold text-[#1f1a14] leading-tight heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("数据洞察", "Data Insights")}

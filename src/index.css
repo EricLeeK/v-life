@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..700,0..100&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..700,50&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -86,6 +86,15 @@
   }
 
   .font-display {
+    font-family: 'Fraunces', 'Instrument Serif', ui-serif, Georgia, serif;
+    font-variation-settings: "opsz" 144, "SOFT" 50;
+  }
+
+  /* Apply Fraunces to all headings across the app */
+  h1.font-display,
+  h2.font-display,
+  h3.font-display,
+  .heading-font {
     font-family: 'Fraunces', 'Instrument Serif', ui-serif, Georgia, serif;
     font-variation-settings: "opsz" 144, "SOFT" 50;
   }
