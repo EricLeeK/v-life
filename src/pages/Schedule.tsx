@@ -450,16 +450,18 @@ export default function SchedulePage() {
           <MonthView baseDate={baseDate} events={displayEvents} onEdit={openEdit} onCreateAt={handleCreateAt} />
         ) : (
           /* Day/Week Grid View */
-          <div className="border border-border rounded-lg overflow-hidden">
+          <div className="border border-[#e4e1d7] rounded-[9px] overflow-hidden bg-white">
             {/* Day headers */}
-            <div className={`grid ${gridCols} border-b border-border bg-card`}>
+            <div className={`grid ${gridCols} border-b border-[#e4e1d7] bg-[#faf9f4]`}>
               <div className="p-2 text-xs text-muted-foreground" />
               {days.map((d) => {
                 const isToday = format(d, "yyyy-MM-dd") === todayStr;
                 return (
-                  <div key={d.toISOString()} className="p-1.5 text-center border-l border-border">
-                    <div className="text-[10px] text-muted-foreground">{format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}</div>
-                    <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : ""}`}>
+                  <div key={d.toISOString()} className={`p-1.5 text-center border-l ${isToday ? "border-[#5b88b5]/30 bg-[#e1eaf4]/50" : "border-[#e4e1d7]"}`}>
+                    <div className={`text-[10px] ${isToday ? "text-[#5b88b5] font-semibold" : "text-[#8a847a]"}`}>
+                      {format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}
+                    </div>
+                    <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : "text-[#1f1a14]"}`}>
                       {format(d, "dd")}
                     </div>
                   </div>
@@ -482,6 +484,7 @@ export default function SchedulePage() {
 
                 {days.map((day) => (
                   <DayColumn key={day.toISOString()} day={day} events={getEventsForDay(day)}
+                    isToday={format(day, "yyyy-MM-dd") === todayStr}
                     onEdit={openEdit} onDragEnd={handleDragEnd} onCreateAt={handleCreateAt} />
                 ))}
 
