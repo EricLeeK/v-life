@@ -8,12 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLang } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 
 export default function AuthPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLang();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export default function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast({ title: "登录失败", description: error.message, variant: "destructive" });
+      toast({ title: t("登录失败", "Login failed"), description: error.message, variant: "destructive" });
     }
   };
 
@@ -39,16 +41,16 @@ export default function AuthPage() {
     const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (error) {
-      toast({ title: "注册失败", description: error.message, variant: "destructive" });
+      toast({ title: t("注册失败", "Sign up failed"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "注册成功", description: "已自动登录" });
+      toast({ title: t("注册成功", "Sign up successful"), description: t("已自动登录", "Logged in automatically") });
     }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast({ title: "请输入邮箱", variant: "destructive" });
+      toast({ title: t("请输入邮箱", "Please enter email"), variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -57,9 +59,9 @@ export default function AuthPage() {
     });
     setLoading(false);
     if (error) {
-      toast({ title: "发送失败", description: error.message, variant: "destructive" });
+      toast({ title: t("发送失败", "Send failed"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "重置邮件已发送", description: "请检查您的邮箱" });
+      toast({ title: t("重置邮件已发送", "Reset email sent"), description: t("请检查您的邮箱", "Please check your inbox") });
       setShowForgot(false);
     }
   };
@@ -69,19 +71,19 @@ export default function AuthPage() {
       <div className="min-h-screen flex items-center justify-center bg-[#f4f3ee] p-4">
         <Card className="w-full max-w-sm border-[#e4e1d7] shadow-none">
           <CardHeader>
-            <CardTitle className="text-center text-[#1f1a14]">重置密码</CardTitle>
+            <CardTitle className="text-center text-[#1f1a14]">{t("重置密码", "Reset Password")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[#8a847a]">邮箱</Label>
+                <Label className="text-[#8a847a]">{t("邮箱", "Email")}</Label>
                 <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
               </div>
               <Button type="submit" className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" disabled={loading}>
-                {loading ? "发送中..." : "发送重置邮件"}
+                {loading ? t("发送中...", "Sending...") : t("发送重置邮件", "Send Reset Email")}
               </Button>
               <Button type="button" variant="ghost" className="w-full text-[#8a847a]" onClick={() => setShowForgot(false)}>
-                返回登录
+                {t("返回登录", "Back to Login")}
               </Button>
             </form>
           </CardContent>
@@ -102,39 +104,39 @@ export default function AuthPage() {
         <CardContent>
           <Tabs defaultValue="login">
             <TabsList className="grid w-full grid-cols-2 bg-[#f4f3ee]">
-              <TabsTrigger value="login">登录</TabsTrigger>
-              <TabsTrigger value="signup">注册</TabsTrigger>
+              <TabsTrigger value="login">{t("登录", "Login")}</TabsTrigger>
+              <TabsTrigger value="signup">{t("注册", "Sign Up")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">邮箱</Label>
+                  <Label className="text-[#8a847a]">{t("邮箱", "Email")}</Label>
                   <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">密码</Label>
+                  <Label className="text-[#8a847a]">{t("密码", "Password")}</Label>
                   <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
                 </div>
                 <Button type="submit" className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" disabled={loading}>
-                  {loading ? "登录中..." : "登录"}
+                  {loading ? t("登录中...", "Logging in...") : t("登录", "Login")}
                 </Button>
                 <Button type="button" variant="link" className="w-full text-sm text-[#8a847a]" onClick={() => setShowForgot(true)}>
-                  忘记密码？
+                  {t("忘记密码？", "Forgot password?")}
                 </Button>
               </form>
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">邮箱</Label>
+                  <Label className="text-[#8a847a]">{t("邮箱", "Email")}</Label>
                   <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">密码</Label>
-                  <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="至少6位" required minLength={6} />
+                  <Label className="text-[#8a847a]">{t("密码", "Password")}</Label>
+                  <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t("至少6位", "At least 6 characters")} required minLength={6} />
                 </div>
                 <Button type="submit" className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" disabled={loading}>
-                  {loading ? "注册中..." : "注册"}
+                  {loading ? t("注册中...", "Signing up...") : t("注册", "Sign Up")}
                 </Button>
               </form>
             </TabsContent>

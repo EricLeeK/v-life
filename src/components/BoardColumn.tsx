@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useLang } from "@/contexts/LanguageContext";
 
 interface BoardColumnProps {
   title: string;
@@ -10,6 +11,7 @@ interface BoardColumnProps {
 }
 
 export function BoardColumn({ title, count, children, onAdd }: BoardColumnProps) {
+  const { t } = useLang();
   return (
     <div className="flex flex-col min-w-[260px] max-w-[260px] h-full">
       <div className="flex items-center justify-between px-1 py-2">
@@ -21,7 +23,7 @@ export function BoardColumn({ title, count, children, onAdd }: BoardColumnProps)
       </div>
       <Button variant="ghost" size="sm" className="mt-2 justify-start text-muted-foreground" onClick={onAdd}>
         <Plus className="h-4 w-4 mr-1" />
-        添加
+        {t("添加","Add")}
       </Button>
     </div>
   );

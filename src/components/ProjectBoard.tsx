@@ -10,14 +10,19 @@ import { useProjectTasks, useUpdateProjectTask, useUpdateProject, useCreateProje
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLang } from "@/contexts/LanguageContext";
 
-const COLUMNS = [
+const COLUMNS_ZH = [
   { id: "todo", title: "待办" },
   { id: "this_week", title: "本周" },
   { id: "in_progress", title: "进行中" },
   { id: "waiting", title: "等待中" },
   { id: "done", title: "已完成" },
 ] as const;
+const COLUMN_TITLE_MAP: Record<string, string> = {
+  "待办": "To Do", "本周": "This Week", "进行中": "In Progress",
+  "等待中": "Waiting", "已完成": "Done",
+};
 
 type FilterType = "all" | "task" | "habit" | "milestone";
 
@@ -27,6 +32,7 @@ interface ProjectBoardProps {
 }
 
 export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
+  const { t, lang } = useLang();
   const { data: tasks = [] } = useProjectTasks(project.id);
   const updateTask = useUpdateProjectTask();
   const updateProject = useUpdateProject();
@@ -122,10 +128,10 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
         <div className="flex items-center gap-4">
           <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
             <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-2">全部</TabsTrigger>
-              <TabsTrigger value="task" className="text-xs px-2">任务</TabsTrigger>
-              <TabsTrigger value="habit" className="text-xs px-2">习惯</TabsTrigger>
-              <TabsTrigger value="milestone" className="text-xs px-2">里程碑</TabsTrigger>
+              <TabsTrigger value="all" className="text-xs px-2">{t("全部","All")}</TabsTrigger>
+              <TabsTrigger value="task" className="text-xs px-2">{t("任务","Tasks")}</TabsTrigger>
+              <TabsTrigger value="habit" className="text-xs px-2">{t("习惯","Habits")}</TabsTrigger>
+              <TabsTrigger value="milestone" className="text-xs px-2">{t("里程碑","Milestones")}</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -139,14 +145,14 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
       <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 py-2">
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full min-w-max">
-            {COLUMNS.map((col) => {
+            {COLUMNS_ZH.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.id);
               return (
                 <Droppable key={col.id} droppableId={col.id}>
                   {(provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps} className="h-full">
                       <BoardColumn
-                        title={col.title}
+                        title={lang === "zh" ? col.title : (COLUMN_TITLE_MAP[col.title] || col.title)}
                         count={colTasks.length}
                         onAdd={() => openAddModal("task")}
                       >

@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useLang } from "@/contexts/LanguageContext";
 
 interface ProjectSidebarProps {
   projects: any[];
@@ -20,6 +21,7 @@ interface ProjectSidebarProps {
 }
 
 export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }: ProjectSidebarProps) {
+  const { t, lang } = useLang();
   const [showArchived, setShowArchived] = useState(false);
 
   const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
@@ -68,14 +70,14 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(p); }}>
-                        编辑
+                        {t("编辑","Edit")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
                 <Progress value={p.progress} className="h-1.5 mt-2" />
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {p.target_date ? `目标 ${p.target_date.slice(0, 10)}` : "无截止日期"}
+                  {p.target_date ? `${t("目标","Target")} ${p.target_date.slice(0, 10)}` : t("无截止日期","No deadline")}
                 </p>
               </CardContent>
             </Card>
@@ -89,16 +91,16 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
     <div className="w-full h-full flex flex-col p-3 border-r border-border bg-card/30">
       <Button onClick={onAdd} className="w-full mb-4">
         <Plus className="h-4 w-4 mr-1" />
-        新建项目
+        {t("新建项目","New Project")}
       </Button>
       <div className="flex-1 overflow-y-auto space-y-4">
-        {renderGroup("进行中", grouped.active)}
-        {renderGroup("规划中", grouped.planning)}
-        {renderGroup("暂停中", grouped.paused)}
+        {renderGroup(t("进行中","Active"), grouped.active)}
+        {renderGroup(t("规划中","Planning"), grouped.planning)}
+        {renderGroup(t("暂停中","Paused"), grouped.paused)}
         <Collapsible open={showArchived} onOpenChange={setShowArchived}>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground">
-              <span>已完成 / 归档 ({grouped.done.length})</span>
+              <span>{t("已完成 / 归档","Completed / Archived")} ({grouped.done.length})</span>
               {showArchived ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           </CollapsibleTrigger>

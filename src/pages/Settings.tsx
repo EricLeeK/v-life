@@ -11,6 +11,7 @@ import { useSettings, useUpdateSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download } from "lucide-react";
+import { useLang } from "@/contexts/LanguageContext";
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
 
@@ -37,16 +38,17 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
+  const { t, lang } = useLang();
   const [newTag, setNewTag] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (isLoading || !settings) return <AppLayout title="设置"><p className="text-muted-foreground text-sm">加载中...</p></AppLayout>;
+  if (isLoading || !settings) return <AppLayout title={t("设置", "Settings")}><p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p></AppLayout>;
 
   const save = async (updates: Record<string, any>) => {
     try {
       await updateSettings.mutateAsync(updates);
-      toast({ title: "已保存" });
-    } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
+      toast({ title: t("已保存", "Saved") });
+    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
   };
 
   const fetchExchangeRate = async () => {
@@ -56,9 +58,9 @@ export default function SettingsPage() {
       const rate = data.rates?.CNY;
       if (rate) {
         await save({ exchange_rate_jpy_to_cny: rate, exchange_rate_updated_at: new Date().toISOString() });
-        toast({ title: `汇率已更新: 1 JPY = ${rate} CNY` });
+        toast({ title: `${t("汇率已更新:", "Rate updated:")} 1 JPY = ${rate} CNY` });
       }
-    } catch { toast({ title: "获取汇率失败", variant: "destructive" }); }
+    } catch { toast({ title: t("获取汇率失败", "Failed to fetch rate"), variant: "destructive" }); }
   };
 
   const addTag = () => {
@@ -86,8 +88,8 @@ export default function SettingsPage() {
       const a = document.createElement("a");
       a.href = url; a.download = `vlife-export-${new Date().toISOString().split("T")[0]}.json`;
       a.click(); URL.revokeObjectURL(url);
-      toast({ title: "导出成功" });
-    } catch (e: any) { toast({ title: "导出失败", description: e.message, variant: "destructive" }); }
+      toast({ title: t("导出成功", "Export successful") });
+    } catch (e: any) { toast({ title: t("导出失败", "Export failed"), description: e.message, variant: "destructive" }); }
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,22 +113,22 @@ export default function SettingsPage() {
         }
       }
 
-      toast({ title: "导入成功", description: `已导入 ${importedCount} 条记录` });
+      toast({ title: t("导入成功", "Import successful"), description: `${t("已导入", "Imported")} ${importedCount} ${t("条记录", "records")}` });
     } catch (e: any) {
-      toast({ title: "导入失败", description: e.message, variant: "destructive" });
+      toast({ title: t("导入失败", "Import failed"), description: e.message, variant: "destructive" });
     }
     e.target.value = "";
   };
 
   return (
-    <AppLayout title="设置">
+    <AppLayout title={t("设置", "Settings")}>
       <div className="space-y-6">
         {/* AI Configuration */}
         <Card>
-          <CardHeader><CardTitle className="text-base">AI 配置</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("AI 配置", "AI Configuration")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>API 平台</Label>
+              <Label>{t("API 平台", "API Platform")}</Label>
               <Select value={settings.ai_platform || "gemini"} onValueChange={(v) => save({ ai_platform: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -136,13 +138,13 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>API Key</Label><DebouncedInput type="password" value={settings.ai_api_key || ""} onSave={(v) => save({ ai_api_key: v })} placeholder="输入 API Key" autoComplete="new-password" /><p className="text-xs text-muted-foreground mt-1">API Key 仅在服务端使用，不会暴露到浏览器</p></div>
-            <div><Label>模型名称</Label><DebouncedInput value={settings.ai_model || ""} onSave={(v) => save({ ai_model: v })} placeholder="如 gemini-2.5-flash" /></div>
-            <div><Label>API Base URL（高级）</Label><DebouncedInput value={settings.ai_base_url || ""} onSave={(v) => save({ ai_base_url: v })} placeholder="默认使用官方端点" /></div>
+            <div><Label>API Key</Label><DebouncedInput type="password" value={settings.ai_api_key || ""} onSave={(v) => save({ ai_api_key: v })} placeholder={t("输入 API Key", "Enter API Key")} autoComplete="new-password" /><p className="text-xs text-muted-foreground mt-1">{t("API Key 仅在服务端使用，不会暴露到浏览器", "API Key is only used server-side, not exposed to browser")}</p></div>
+            <div><Label>{t("模型名称", "Model Name")}</Label><DebouncedInput value={settings.ai_model || ""} onSave={(v) => save({ ai_model: v })} placeholder="gemini-2.5-flash" /></div>
+            <div><Label>API Base URL ({t("高级", "Advanced")})</Label><DebouncedInput value={settings.ai_base_url || ""} onSave={(v) => save({ ai_base_url: v })} placeholder={t("默认使用官方端点", "Default: official endpoint")} /></div>
             <div className="flex items-center justify-between">
               <div>
-                <Label>AI 操作模式</Label>
-                <p className="text-xs text-muted-foreground">确认模式：预览后执行 / 直接模式：自动执行+撤销</p>
+                <Label>{t("AI 操作模式", "AI Operation Mode")}</Label>
+                <p className="text-xs text-muted-foreground">{t("确认模式：预览后执行 / 直接模式：自动执行+撤销", "Confirm: preview then execute / Direct: auto-execute + undo")}</p>
               </div>
               <Switch checked={settings.ai_mode === "direct"} onCheckedChange={(v) => save({ ai_mode: v ? "direct" : "confirm" })} />
             </div>
@@ -151,32 +153,32 @@ export default function SettingsPage() {
 
         {/* Goals in Schedule */}
         <Card>
-          <CardHeader><CardTitle className="text-base">目标设置</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("目标设置", "Goals Settings")}</CardTitle></CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <Label>在日程中显示目标悬浮球</Label>
-                <p className="text-xs text-muted-foreground">开启后在日程页面右下角显示当前目标</p>
+                <Label>{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
+                <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
               </div>
               <Switch checked={settings.show_goals_in_schedule !== false} onCheckedChange={(v) => save({ show_goals_in_schedule: v })} />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle className="text-base">财务设置</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("财务设置", "Finance Settings")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Label>JPY → CNY 汇率</Label>
                 <p className="text-xs text-muted-foreground">
-                  当前: 1 JPY = {settings.exchange_rate_jpy_to_cny} CNY
-                  {settings.exchange_rate_updated_at && ` (更新于 ${new Date(settings.exchange_rate_updated_at).toLocaleDateString()})`}
+                  {t("当前:", "Current:")} 1 JPY = {settings.exchange_rate_jpy_to_cny} CNY
+                  {settings.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(settings.exchange_rate_updated_at).toLocaleDateString()})`}
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={fetchExchangeRate}>获取最新汇率</Button>
+              <Button variant="secondary" size="sm" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
             </div>
             <div>
-              <Label>月度预算 (CNY)</Label>
+              <Label>{t("月度预算", "Monthly Budget")} (CNY)</Label>
               <Input type="number" value={settings.monthly_budget || 5000} onChange={(e) => save({ monthly_budget: Number(e.target.value) })} />
             </div>
           </CardContent>
@@ -184,16 +186,16 @@ export default function SettingsPage() {
 
         {/* Calories */}
         <Card>
-          <CardHeader><CardTitle className="text-base">热量设置</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("热量设置", "Calorie Settings")}</CardTitle></CardHeader>
           <CardContent>
-            <Label>每日热量目标 (kcal)</Label>
+            <Label>{t("每日热量目标", "Daily Calorie Target")} (kcal)</Label>
             <Input type="number" value={settings.calorie_target || 2000} onChange={(e) => save({ calorie_target: Number(e.target.value) })} />
           </CardContent>
         </Card>
 
         {/* Thought Tags */}
         <Card>
-          <CardHeader><CardTitle className="text-base">随想标签</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("随想标签", "Thought Tags")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-1">
               {((settings.custom_thought_tags as string[] | null) || []).map((tag: string) => (
@@ -203,25 +205,25 @@ export default function SettingsPage() {
               ))}
             </div>
             <div className="flex gap-2">
-              <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="添加自定义标签" className="flex-1" onKeyDown={(e) => e.key === "Enter" && addTag()} />
-              <Button size="sm" onClick={addTag}>添加</Button>
+              <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder={t("添加自定义标签", "Add custom tag")} className="flex-1" onKeyDown={(e) => e.key === "Enter" && addTag()} />
+              <Button size="sm" onClick={addTag}>{t("添加", "Add")}</Button>
             </div>
           </CardContent>
         </Card>
 
         {/* Data Management */}
         <Card>
-          <CardHeader><CardTitle className="text-base">数据管理</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("数据管理", "Data Management")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <Button variant="secondary" onClick={handleExport} className="w-full">
-              <Download className="h-4 w-4 mr-2" />导出全量数据 (JSON)
+              <Download className="h-4 w-4 mr-2" />{t("导出全量数据", "Export All Data")} (JSON)
             </Button>
             <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
             <Button variant="secondary" onClick={() => fileInputRef.current?.click()} className="w-full">
-              <Upload className="h-4 w-4 mr-2" />导入数据 (JSON)
+              <Upload className="h-4 w-4 mr-2" />{t("导入数据", "Import Data")} (JSON)
             </Button>
             <p className="text-xs text-muted-foreground">
-              导入会将数据写入数据库（按 ID 合并），同时存入本地缓存供离线查看。
+              {t("导入会将数据写入数据库（按 ID 合并），同时存入本地缓存供离线查看。", "Import writes data to database (merged by ID) and caches locally for offline viewing.")}
             </p>
           </CardContent>
         </Card>

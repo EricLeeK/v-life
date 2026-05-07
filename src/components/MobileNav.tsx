@@ -12,36 +12,35 @@ import {
   MoreHorizontal,
   Scale,
   LogOut,
-  Sun,
-  Moon,
+  Languages,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTheme } from "@/hooks/useTheme";
-
-const primaryItems = [
-  { title: "首页", url: "/", icon: LayoutDashboard },
-  { title: "日程", url: "/schedule", icon: CalendarDays },
-  { title: "记账", url: "/finance", icon: Wallet },
-  { title: "待办", url: "/todos", icon: CheckSquare },
-];
-
-const moreItems = [
-  { title: "食材管理", url: "/pantry", icon: Carrot },
-  { title: "用品管理", url: "/belongings", icon: Package },
-  { title: "热量记录", url: "/calories", icon: Flame },
-  { title: "目标", url: "/goals", icon: Target },
-  { title: "随想", url: "/thoughts", icon: Lightbulb },
-  { title: "减肥", url: "/weight-loss", icon: Scale },
-  { title: "设置", url: "/settings", icon: Settings },
-];
+import { useLang } from "@/contexts/LanguageContext";
 
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
   const { signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { t, lang, toggleLang } = useLang();
+
+  const primaryItems = [
+    { title: t("首页", "Home"), url: "/", icon: LayoutDashboard },
+    { title: t("日程", "Schedule"), url: "/schedule", icon: CalendarDays },
+    { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
+    { title: t("待办", "To-Do"), url: "/todos", icon: CheckSquare },
+  ];
+
+  const moreItems = [
+    { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
+    { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },
+    { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },
+    { title: t("目标", "Goals"), url: "/goals", icon: Target },
+    { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
+    { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
+    { title: t("设置", "Settings"), url: "/settings", icon: Settings },
+  ];
 
   return (
     <>
@@ -63,18 +62,18 @@ export function MobileNav() {
                 </NavLink>
               ))}
               <button
-                onClick={toggleTheme}
+                onClick={toggleLang}
                 className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
               >
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                <span className="text-[10px]">{theme === "dark" ? "樱花" : "暗色"}</span>
+                <Languages className="h-5 w-5" />
+                <span className="text-[10px]">{lang === "zh" ? "EN" : "中文"}</span>
               </button>
               <button
                 onClick={signOut}
                 className="flex flex-col items-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
               >
                 <LogOut className="h-5 w-5" />
-                <span className="text-[10px]">退出</span>
+                <span className="text-[10px]">{t("退出", "Exit")}</span>
               </button>
             </div>
           </div>
@@ -104,7 +103,7 @@ export function MobileNav() {
             )}
           >
             <MoreHorizontal className="h-5 w-5" />
-            <span className="text-[10px]">更多</span>
+            <span className="text-[10px]">{t("更多", "More")}</span>
           </button>
         </div>
       </nav>

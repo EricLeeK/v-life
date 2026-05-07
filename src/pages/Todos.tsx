@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { todoHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
+import { useLang } from "@/contexts/LanguageContext";
 
 const IMPORTANCE_LEVELS = [
   { key: "紧急", color: "bg-destructive/20 text-destructive" },
@@ -19,10 +20,14 @@ const IMPORTANCE_LEVELS = [
   { key: "普通", color: "bg-primary/20 text-primary" },
   { key: "低优先", color: "bg-muted text-muted-foreground" },
 ] as const;
+const IMPORTANCE_LABELS: Record<string, string> = {
+  "紧急": "Urgent", "重要": "Important", "普通": "Normal", "低优先": "Low",
+};
 
 type ViewMode = "category" | "importance" | "all";
 
 export default function TodosPage() {
+  const { t, lang } = useLang();
   const [viewMode, setViewMode] = useState<ViewMode>("category");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: "", detail: "", importance: "普通", category: "未分类" });
@@ -50,11 +55,11 @@ export default function TodosPage() {
     : { "全部": sorted };
 
   const handleSave = async () => {
-    if (!form.title) { toast({ title: "请填写标题", variant: "destructive" }); return; }
+    if (!form.title) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
     try {
       await createMutation.mutateAsync({ title: form.title, detail: form.detail || null, importance: form.importance, category: form.category });
       setDialogOpen(false); setForm({ title: "", detail: "", importance: "普通", category: "未分类" });
-    } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
   };
 
   const toggleComplete = (item: any) => {
@@ -70,7 +75,7 @@ export default function TodosPage() {
           <div className="flex items-center gap-2">
             <Checkbox checked={item.is_completed} onCheckedChange={() => toggleComplete(item)} />
             <span className={`text-sm flex-1 ${item.is_completed ? "line-through text-muted-foreground" : ""}`}>{item.title}</span>
-            <Badge variant="secondary" className={`text-xs ${imp?.color}`}>{item.importance}</Badge>
+            <Badge variant="secondary" className={`text-xs ${imp?.color}`}>{IMPORTANCE_LABELS[item.importance] || item.importance}</Badge>
             {item.detail && (
               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
                 {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
@@ -85,47 +90,47 @@ export default function TodosPage() {
   };
 
   return (
-    <AppLayout title="待办事项">
+    <AppLayout title={t("待办事项", "To-Dos")}>
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-1">
             {(["category", "importance", "all"] as const).map((mode) => (
               <Button key={mode} variant={viewMode === mode ? "default" : "secondary"} size="sm"
                 onClick={() => setViewMode(mode)}>
-                {mode === "category" ? "按分类" : mode === "importance" ? "按重要性" : "全览"}
+                {mode === "category" ? t("按分类", "By Category") : mode === "importance" ? t("按重要性", "By Priority") : t("全览", "All")}
               </Button>
             ))}
           </div>
           <Button variant="secondary" size="sm" onClick={() => setHideCompleted(!hideCompleted)}>
-            {hideCompleted ? "显示已完成" : "隐藏已完成"}
+            {hideCompleted ? t("显示已完成", "Show completed") : t("隐藏已完成", "Hide completed")}
           </Button>
           <div className="flex-1" />
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm"><Plus className="h-4 w-4 mr-1" />添加待办</Button>
+              <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("添加待办", "Add To-Do")}</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>添加待办</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{t("添加待办", "Add To-Do")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>标题 *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div><Label>详细说明</Label><Input value={form.detail} onChange={(e) => setForm({ ...form, detail: e.target.value })} /></div>
+                <div><Label>{t("标题", "Title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                <div><Label>{t("详细说明", "Details")}</Label><Input value={form.detail} onChange={(e) => setForm({ ...form, detail: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>重要性</Label>
+                  <div><Label>{t("重要性", "Priority")}</Label>
                     <Select value={form.importance} onValueChange={(v) => setForm({ ...form, importance: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{IMPORTANCE_LEVELS.map((l) => <SelectItem key={l.key} value={l.key}>{l.key}</SelectItem>)}</SelectContent>
+                      <SelectContent>{IMPORTANCE_LEVELS.map((l) => <SelectItem key={l.key} value={l.key}>{IMPORTANCE_LABELS[l.key] || l.key}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div><Label>分类</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="未分类" /></div>
+                  <div><Label>{t("分类", "Category")}</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="未分类" /></div>
                 </div>
-                <Button onClick={handleSave} className="w-full">添加</Button>
+                <Button onClick={handleSave} className="w-full">{t("添加", "Add")}</Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
         {Object.keys(grouped).length === 0 ? (
-          <p className="text-muted-foreground text-sm py-8 text-center">暂无待办事项</p>
+          <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无待办事项", "No to-dos")}</p>
         ) : (
           Object.entries(grouped).map(([group, items]) => (
             <div key={group}>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,14 @@ const MEAL_TYPES = [
 ] as const;
 
 export default function CaloriesPage() {
+  const { t, lang } = useLang();
+  const MEAL_TYPES_DISPLAY: Record<string, string> = {
+    breakfast: t("🌅 早餐", "🌅 Breakfast"),
+    lunch: t("☀️ 午餐", "☀️ Lunch"),
+    dinner: t("🌙 晚餐", "🌙 Dinner"),
+    snack: t("🍿 加餐", "🍿 Snack"),
+    exercise: t("🏃 运动", "🏃 Exercise"),
+  };
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -48,17 +57,17 @@ export default function CaloriesPage() {
   });
 
   const handleSave = async () => {
-    if (!form.food_name || !form.calories) { toast({ title: "请填写食物名称和热量", variant: "destructive" }); return; }
+    if (!form.food_name || !form.calories) { toast({ title: t("请填写食物名称和热量", "Please fill food name and calories"), variant: "destructive" }); return; }
     try {
       const payload = { food_name: form.food_name, calories: Number(form.calories), meal_type: form.meal_type, date: selectedDate, notes: form.notes || null };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
       setDialogOpen(false); setEditingItem(null); setForm({ food_name: "", calories: "", meal_type: "lunch", notes: "" });
-    } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
   };
 
   return (
-    <AppLayout title="热量记录">
+    <AppLayout title={t("热量记录", "Calories")}>
       <div className="space-y-4">
         {/* Day nav — recessed groove with sliding indicator */}
         {(() => {
@@ -86,13 +95,13 @@ export default function CaloriesPage() {
                       className="flex-1 flex flex-col items-center justify-center py-2.5 z-10 transition-colors duration-200 cursor-pointer"
                     >
                       <span className={`text-[10px] font-medium leading-none ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
-                        {format(new Date(d), "EEE", { locale: zhCN })}
+                        {format(new Date(d), "EEE", { locale: lang === "zh" ? zhCN : undefined })}
                       </span>
                       <span className={`text-[13px] font-semibold leading-none mt-1 ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
                         {format(new Date(d), "dd")}
                       </span>
                       {isToday && (
-                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-[#5b88b5]' : 'text-[#8a847a]'}`}>今天</span>
+                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-[#5b88b5]' : 'text-[#8a847a]'}`}>{t("今天", "Today")}</span>
                       )}
                     </button>
                   );
@@ -120,30 +129,30 @@ export default function CaloriesPage() {
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium">{label} <span className="text-muted-foreground ml-1">{mealTotal} kcal</span></h3>
+                <h3 className="text-sm font-medium">{MEAL_TYPES_DISPLAY[key] || label} <span className="text-muted-foreground ml-1">{mealTotal} kcal</span></h3>
                 <Dialog open={dialogOpen && form.meal_type === key} onOpenChange={(o) => { if (o) { setForm({ ...form, meal_type: key }); setDialogOpen(true); } else { setDialogOpen(false); setEditingItem(null); } }}>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />添加</Button>
+                    <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />{t("添加", "Add")}</Button>
                   </DialogTrigger>
                   <DialogContent>
-                    <DialogHeader><DialogTitle>{editingItem ? "编辑" : "添加"}记录</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("添加", "Add")} {t("记录", "Record")}</DialogTitle></DialogHeader>
                     <div className="space-y-3">
-                      <div><Label>食物名称 *</Label><Input value={form.food_name} onChange={(e) => setForm({ ...form, food_name: e.target.value })} /></div>
-                      <div><Label>热量 (kcal) *</Label><Input type="number" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} /></div>
-                      <div><Label>餐次</Label>
+                      <div><Label>{t("食物名称", "Food Name")} *</Label><Input value={form.food_name} onChange={(e) => setForm({ ...form, food_name: e.target.value })} /></div>
+                      <div><Label>{t("热量", "Calories")} (kcal) *</Label><Input type="number" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} /></div>
+                      <div><Label>{t("餐次", "Meal Type")}</Label>
                         <Select value={form.meal_type} onValueChange={(v) => setForm({ ...form, meal_type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{MEAL_TYPES.map((m) => <SelectItem key={m.key} value={m.key}>{m.label}</SelectItem>)}</SelectContent>
+                          <SelectContent>{MEAL_TYPES.map((m) => <SelectItem key={m.key} value={m.key}>{MEAL_TYPES_DISPLAY[m.key] || m.label}</SelectItem>)}</SelectContent>
                         </Select>
                       </div>
-                      <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-                      <Button onClick={handleSave} className="w-full">保存</Button>
+                      <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                      <Button onClick={handleSave} className="w-full">{t("保存", "Save")}</Button>
                     </div>
                   </DialogContent>
                 </Dialog>
               </div>
               {mealRecords.length === 0 ? (
-                <p className="text-xs text-muted-foreground pl-2 mb-3">暂无记录</p>
+                <p className="text-xs text-muted-foreground pl-2 mb-3">{t("暂无记录", "No records")}</p>
               ) : (
                 <div className="space-y-1 mb-3">
                   {mealRecords.map((r: any) => (

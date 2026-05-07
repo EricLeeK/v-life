@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Repeat } from "lucide-react";
 import { useHabitLogs, useToggleHabitLog } from "@/hooks/useData";
+import { useLang } from "@/contexts/LanguageContext";
 
 interface HabitCardProps {
   task: any;
@@ -42,6 +43,7 @@ function CircularProgress({ value }: { value: number }) {
 }
 
 export function HabitCard({ task, projectId }: HabitCardProps) {
+  const { t, lang } = useLang();
   const { data: logs = [] } = useHabitLogs(task.id);
   const toggleMutation = useToggleHabitLog();
 
@@ -107,7 +109,7 @@ export function HabitCard({ task, projectId }: HabitCardProps) {
         </div>
         <CircularProgress value={progress} />
         <p className="text-[10px] text-muted-foreground mt-1">
-          本周 {completedThisWeek} / {weeklyGoal}
+          {lang === "zh" ? `本周 ${completedThisWeek} / ${weeklyGoal}` : `Week ${completedThisWeek} / ${weeklyGoal}`}
         </p>
         <button
           onClick={handleToggle}
@@ -118,7 +120,7 @@ export function HabitCard({ task, projectId }: HabitCardProps) {
               : "bg-muted hover:bg-muted/80 text-muted-foreground"
           }`}
         >
-          {isCompletedToday ? "已打卡" : "今日打卡"}
+          {isCompletedToday ? t("已打卡","Done") : t("今日打卡","Check In")}
         </button>
       </CardContent>
     </Card>

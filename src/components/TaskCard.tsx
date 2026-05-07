@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckSquare } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
+import { useLang } from "@/contexts/LanguageContext";
 
 interface TaskCardProps {
   task: any;
@@ -10,6 +11,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onClick }: TaskCardProps) {
+  const { t, lang } = useLang();
   const priorityColors: Record<string, string> = {
     high: "bg-destructive/20 text-destructive",
     medium: "bg-warning/20 text-warning",
@@ -36,13 +38,13 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
             <span className="text-[10px] text-muted-foreground">w={task.weight}</span>
             {task.priority && task.priority !== "medium" && (
               <Badge variant="secondary" className={`text-[10px] px-1 py-0 h-4 ${priorityColors[task.priority] || ""}`}>
-                {task.priority === "high" ? "高" : task.priority === "low" ? "低" : "中"}
+                {task.priority === "high" ? t("高","High") : task.priority === "low" ? t("低","Low") : t("中","Medium")}
               </Badge>
             )}
           </div>
           {task.due_date && (
             <span className="text-[10px] text-muted-foreground">
-              {formatDistanceToNow(parseISO(task.due_date), { addSuffix: true, locale: zhCN })}
+              {formatDistanceToNow(parseISO(task.due_date), { addSuffix: true, locale: lang === "zh" ? zhCN : undefined })}
             </span>
           )}
         </div>

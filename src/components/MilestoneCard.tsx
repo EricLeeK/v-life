@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Flag } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { useLang } from "@/contexts/LanguageContext";
 
 interface MilestoneCardProps {
   task: any;
@@ -10,6 +11,7 @@ interface MilestoneCardProps {
 }
 
 export function MilestoneCard({ task, onToggle, onClick }: MilestoneCardProps) {
+  const { t } = useLang();
   return (
     <Card
       className="border-l-4 border-l-amber-500 cursor-pointer hover:border-primary/30 transition-colors"
@@ -22,7 +24,7 @@ export function MilestoneCard({ task, onToggle, onClick }: MilestoneCardProps) {
             <p className="text-sm font-semibold leading-snug">{task.title}</p>
             {task.due_date && (
               <p className="text-[10px] text-muted-foreground mt-1">
-                截止 {format(parseISO(task.due_date), "MM/dd")}
+                {t("截止","Due")} {format(parseISO(task.due_date), "MM/dd")}
               </p>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,12 +16,18 @@ import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
-const CATEGORIES = [
+const CATEGORIES_ZH = [
   { key: "餐饮", emoji: "🍜" }, { key: "日用", emoji: "🧴" }, { key: "交通", emoji: "🚃" },
   { key: "住房", emoji: "🏠" }, { key: "通讯/订阅", emoji: "📱" }, { key: "医疗", emoji: "🏥" },
   { key: "服饰", emoji: "👔" }, { key: "娱乐", emoji: "🎮" }, { key: "学习", emoji: "📚" },
   { key: "电子", emoji: "💻" }, { key: "大额", emoji: "🏷️" }, { key: "税费", emoji: "🧾" }, { key: "其他", emoji: "❓" },
 ] as const;
+const CATEGORIES_EN: Record<string, string> = {
+  "餐饮": "Food", "日用": "Daily", "交通": "Transport", "住房": "Housing",
+  "通讯/订阅": "Subscriptions", "医疗": "Medical", "服饰": "Clothing",
+  "娱乐": "Entertainment", "学习": "Education", "电子": "Electronics",
+  "大额": "Major", "税费": "Tax", "其他": "Other",
+};
 
 const PIE_COLORS = ["#5b88b5", "#5b8c44", "#d17847", "#c96442", "#8b7bb8", "#5a9da8", "#c49840", "#a67c52", "#6a5acd", "#6a9068", "#5a9da8", "#b4452c"];
 
@@ -46,6 +53,7 @@ function getWeekMonth(date: string): string {
 }
 
 export default function FinancePage() {
+  const { t, lang } = useLang();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -75,6 +83,7 @@ export default function FinancePage() {
     const map: Record<string, number> = {};
     monthRecords.forEach((r: any) => { map[r.category] = (map[r.category] || 0) + Number(r.amount_cny); });
     return Object.entries(map).map(([name, value]) => ({ name, value: Number(value.toFixed(2)) })).sort((a, b) => b.value - a.value);
+
   }, [monthRecords]);
 
   const weeklyGroups = useMemo(() => {
@@ -91,7 +100,7 @@ export default function FinancePage() {
   }, [records, year, month]);
 
   const handleSave = async () => {
-    if (!form.name || !form.amount || !form.date) { toast({ title: "请填写必填字段", variant: "destructive" }); return; }
+    if (!form.name || !form.amount || !form.date) { toast({ title: t("请填写必填字段", "Please fill required fields"), variant: "destructive" }); return; }
     try {
       const amount = Number(form.amount);
       const rate = form.currency === "JPY" ? exchangeRate : 1;
@@ -101,11 +110,11 @@ export default function FinancePage() {
       else await createMutation.mutateAsync(payload);
       setDialogOpen(false); setEditingItem(null);
       setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" });
-    } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
   };
 
   return (
-    <AppLayout title="记账">
+    <AppLayout title={t("记账", "Finance")}>
       <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
         {/* Sticky top section: month selector + overview + pie chart */}
         <div className="shrink-0 space-y-4 pb-4">
@@ -113,26 +122,26 @@ export default function FinancePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => { if (month === 1) { setMonth(12); setYear(year - 1); } else setMonth(month - 1); }}>←</Button>
-              <span className="text-sm font-medium w-24 text-center">{year}年{month}月</span>
+              <span className="text-sm font-medium w-24 text-center">{lang === "zh" ? `${year}年${month}月` : new Date(year, month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
               <Button variant="secondary" size="sm" onClick={() => { if (month === 12) { setMonth(1); setYear(year + 1); } else setMonth(month + 1); }}>→</Button>
             </div>
             <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="h-4 w-4 mr-1" />记一笔</Button>
+                <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("记一笔", "Add Expense")}</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>{editingItem ? "编辑" : "新增"}记录</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("新增", "New")} {t("记录", "Record")}</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <div><Label>名称 *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                  <div><Label>分类 *</Label>
+                  <div><Label>{t("名称", "Name")} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                  <div><Label>{t("分类", "Category")} *</Label>
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {c.key}</SelectItem>)}</SelectContent>
+                      <SelectContent>{CATEGORIES_ZH.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {lang === "zh" ? c.key : (CATEGORIES_EN[c.key] || c.key)}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>金额 *</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-                    <div><Label>货币</Label>
+                    <div><Label>{t("金额", "Amount")} *</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+                    <div><Label>{t("货币", "Currency")}</Label>
                       <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
@@ -145,9 +154,9 @@ export default function FinancePage() {
                   {form.currency === "JPY" && form.amount && (
                     <p className="text-xs text-muted-foreground">≈ ¥{(Number(form.amount) * exchangeRate).toFixed(2)} CNY (汇率: {exchangeRate})</p>
                   )}
-                  <div><Label>日期 *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                  <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-                  <Button onClick={handleSave} className="w-full">保存</Button>
+                  <div><Label>{t("日期", "Date")} *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                  <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                  <Button onClick={handleSave} className="w-full">{t("保存", "Save")}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -157,20 +166,20 @@ export default function FinancePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-1">本月支出</p>
+                <p className="text-sm text-muted-foreground mb-1">{t("本月支出", "Monthly Spending")}</p>
                 <div className="flex justify-between items-baseline mb-2">
                   <span className="text-2xl font-semibold">¥{totalCny.toFixed(2)}</span>
                   <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
                 </div>
                 <Progress value={budgetProgress} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-1">{monthRecords.length} 笔记录</p>
+                <p className="text-xs text-muted-foreground mt-1">{monthRecords.length} {t("笔记录", "records")}</p>
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-2">分类占比</p>
-                {categoryData.length === 0 ? <p className="text-xs text-muted-foreground">暂无数据</p> : (
+                <p className="text-sm text-muted-foreground mb-2">{t("分类占比", "Category Breakdown")}</p>
+                {categoryData.length === 0 ? <p className="text-xs text-muted-foreground">{t("暂无数据", "No data")}</p> : (
                   <div className="flex items-center gap-4">
                     <ResponsiveContainer width={100} height={100}>
                       <PieChart>
@@ -182,10 +191,10 @@ export default function FinancePage() {
                     </ResponsiveContainer>
                     <div className="flex-1 space-y-1">
                       {categoryData.slice(0, 4).map((item, i) => {
-                        const cat = CATEGORIES.find((c) => c.key === item.name);
+                        const cat = CATEGORIES_ZH.find((c) => c.key === item.name);
                         return (
                           <div key={item.name} className="flex justify-between text-xs">
-                            <span><span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background: PIE_COLORS[i] }} />{cat?.emoji} {item.name}</span>
+                            <span><span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background: PIE_COLORS[i] }} />{cat?.emoji} {lang === "zh" ? item.name : (CATEGORIES_EN[item.name] || item.name)}</span>
                             <span className="text-muted-foreground">¥{item.value.toFixed(0)}</span>
                           </div>
                         );
@@ -200,7 +209,7 @@ export default function FinancePage() {
 
         {/* Scrollable weekly breakdown */}
         <div className="flex-1 overflow-y-auto space-y-2 pb-4">
-          {weeklyGroups.length === 0 ? <p className="text-muted-foreground text-sm py-4 text-center">本月暂无记录</p> :
+          {weeklyGroups.length === 0 ? <p className="text-muted-foreground text-sm py-4 text-center">{t("本月暂无记录", "No records this month")}</p> :
             weeklyGroups.map(([key, group]) => {
               const weekTotal = group.items.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
               return (
@@ -218,7 +227,7 @@ export default function FinancePage() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pl-2 space-y-1 mt-1">
                     {group.items.map((r: any) => {
-                      const cat = CATEGORIES.find((c) => c.key === r.category);
+                      const cat = CATEGORIES_ZH.find((c) => c.key === r.category);
                       return (
                         <Card key={r.id} className="hover:border-primary/20 transition-colors">
                           <CardContent className="p-2 px-3 flex items-center justify-between">

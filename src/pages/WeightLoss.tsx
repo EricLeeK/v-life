@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,6 +62,7 @@ function filterByRange(records: any[], range: TimeRange): any[] {
 
 // ========== Fasting Timer ==========
 function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; startMinute?: number }) {
+  const { t, lang } = useLang();
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -101,23 +103,23 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">16+8 轻断食</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">{t("16+8 轻断食", "16+8 Intermittent Fasting")}</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <div className="text-center space-y-2">
-          <div className={`text-3xl font-bold ${colorClass}`}>{isEating ? "🍽️ 可进食" : "⏳ 禁食中"}</div>
+          <div className={`text-3xl font-bold ${colorClass}`}>{isEating ? t("🍽️ 可进食", "🍽️ Eating") : t("⏳ 禁食中", "⏳ Fasting")}</div>
           <div className={`text-lg font-mono ${colorClass}`}>
-            距离{isEating ? "禁食" : "可进食"}还有 {hoursLeft}小时 {minsLeft}分钟
+            {lang === "zh" ? `距离${isEating ? "禁食" : "可进食"}还有 ${hoursLeft}小时 ${minsLeft}分钟` : `${hoursLeft}h ${minsLeft}m until ${isEating ? "fasting" : "eating"}`}
           </div>
         </div>
         <Progress value={progressPercent} className="h-3" />
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>进食: {formatTime(eatingStartMin)}-{formatTime(eatingEndMin)}</span>
-          <span>禁食: {formatTime(eatingEndMin)}-{formatTime(eatingStartMin)}</span>
+          <span>{t("进食:", "Eating:")} {formatTime(eatingStartMin)}-{formatTime(eatingEndMin)}</span>
+          <span>{t("禁食:", "Fasting:")} {formatTime(eatingEndMin)}-{formatTime(eatingStartMin)}</span>
         </div>
         <div className="flex gap-2 text-xs text-muted-foreground justify-center">
-          <span className="text-green-500">● 可进食</span>
-          <span className="text-yellow-500">● 即将切换</span>
-          <span className="text-red-500">● 禁食中</span>
+          <span className="text-green-500">{t("● 可进食", "● Eating")}</span>
+          <span className="text-yellow-500">{t("● 即将切换", "● Switching soon")}</span>
+          <span className="text-red-500">{t("● 禁食中", "● Fasting")}</span>
         </div>
       </CardContent>
     </Card>
@@ -126,6 +128,7 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
 
 // ========== Today Calorie Summary ==========
 function TodayCalorieSummary() {
+  const { t } = useLang();
   const today = new Date().toISOString().split("T")[0];
   const { data: records = [] } = useCaloriesByDate(today);
   const totalIntake = records.filter((r: any) => r.meal_type !== "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
@@ -134,12 +137,12 @@ function TodayCalorieSummary() {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">今日热量概览</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="text-base">{t("今日热量概览", "Today's Calorie Summary")}</CardTitle></CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div><div className="text-2xl font-bold text-foreground">{totalIntake}</div><div className="text-xs text-muted-foreground">摄入 kcal</div></div>
-          <div><div className="text-2xl font-bold text-orange-500">{totalBurned}</div><div className="text-xs text-muted-foreground">消耗 kcal</div></div>
-          <div><div className={`text-2xl font-bold ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div><div className="text-xs text-muted-foreground">净摄入 kcal</div></div>
+          <div><div className="text-2xl font-bold text-foreground">{totalIntake}</div><div className="text-xs text-muted-foreground">{t("摄入 kcal", "Intake kcal")}</div></div>
+          <div><div className="text-2xl font-bold text-orange-500">{totalBurned}</div><div className="text-xs text-muted-foreground">{t("消耗 kcal", "Burned kcal")}</div></div>
+          <div><div className={`text-2xl font-bold ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div><div className="text-xs text-muted-foreground">{t("净摄入 kcal", "Net kcal")}</div></div>
         </div>
       </CardContent>
     </Card>
@@ -148,6 +151,7 @@ function TodayCalorieSummary() {
 
 // ========== Weight Tracker ==========
 function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
+  const { t, lang } = useLang();
   const { data: records = [] } = useWeightRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -163,7 +167,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weight_records"] }); setDialogOpen(false); toast({ title: "已记录" }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["weight_records"] }); setDialogOpen(false); toast({ title: t("已记录", "Logged") }); },
   });
 
   const deleteMutation = useMutation({
@@ -178,8 +182,8 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
   const chartData = filteredRecords.map((r: any) => ({
     date: format(new Date(r.date), "MM/dd"),
-    体重: Number(r.weight),
-    ...(targetWeight && showTarget ? { 目标: targetWeight } : {}),
+    Weight: Number(r.weight),
+    ...(targetWeight && showTarget ? { Target: targetWeight } : {}),
   }));
 
   const latestWeight = records.length > 0 ? Number(records[records.length - 1].weight) : null;
@@ -199,21 +203,21 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">体重记录</CardTitle>
+        <CardTitle className="text-base">{t("体重记录", "Weight Log")}</CardTitle>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />记录</Button>
+            <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />{t("记录", "Log")}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>记录体重</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("记录体重", "Log Weight")}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>日期</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-              <div><Label>体重 (kg)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="如 65.5" /></div>
-              <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              <div><Label>{t("日期", "Date")}</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              <div><Label>{t("体重", "Weight")} (kg)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder={lang === "zh" ? "如 65.5" : "e.g. 65.5"} /></div>
+              <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
               <Button className="w-full" onClick={() => {
                 if (!form.weight) return;
                 saveMutation.mutate({ date: form.date, weight: Number(form.weight), notes: form.notes || null });
-              }}>保存</Button>
+              }}>{t("保存", "Save")}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -228,7 +232,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
               </span>
             )}
             {targetWeight && (
-              <span className="text-xs text-muted-foreground">目标: {targetWeight} kg</span>
+              <span className="text-xs text-muted-foreground">{t("目标:", "Target:")} {targetWeight} kg</span>
             )}
           </div>
         )}
@@ -236,15 +240,15 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
         {targetWeight && (
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <Checkbox checked={showTarget} onCheckedChange={(v) => setShowTarget(!!v)} />
-            <span className="text-muted-foreground">显示目标线</span>
+            <span className="text-muted-foreground">{t("显示目标线", "Show target line")}</span>
           </label>
         )}
 
         <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="week">周</TabsTrigger>
-            <TabsTrigger value="month">月</TabsTrigger>
-            <TabsTrigger value="year">年</TabsTrigger>
+            <TabsTrigger value="week">{t("周", "Week")}</TabsTrigger>
+            <TabsTrigger value="month">{t("月", "Month")}</TabsTrigger>
+            <TabsTrigger value="year">{t("年", "Year")}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -255,21 +259,21 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
               <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
               <YAxis domain={yDomain as any} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
               <Tooltip />
-              <Line type="monotone" dataKey="体重" stroke="#5a9da8" strokeWidth={2} dot={{ r: 2 }} />
+              <Line type="monotone" dataKey="Weight" stroke="#5a9da8" strokeWidth={2} dot={{ r: 2 }} />
               {targetWeight && showTarget && (
-                <ReferenceLine y={targetWeight} stroke="#5b8c44" strokeDasharray="5 5" label={{ value: `目标 ${targetWeight}kg`, fontSize: 11, fill: "#5b8c44" }} />
+                <ReferenceLine y={targetWeight} stroke="#5b8c44" strokeDasharray="5 5" label={{ value: lang === "zh" ? `目标 ${targetWeight}kg` : `Target ${targetWeight}kg`, fontSize: 11, fill: "#5b8c44" }} />
               )}
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-8">需要至少2条记录才能显示曲线图</p>
+          <p className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</p>
         )}
 
         {records.length > 0 && (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {[...records].reverse().slice(0, 20).map((r: any) => (
               <div key={r.id} className="flex items-center justify-between text-sm py-1">
-                <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: zhCN })}</span>
+                <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: lang === "zh" ? zhCN : undefined })}</span>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{r.weight} kg</span>
                   <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => deleteMutation.mutate(r.id)}>
@@ -280,7 +284,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
             ))}
           </div>
         )}
-        {records.length === 0 && <p className="text-xs text-muted-foreground">暂无记录，点击右上角添加</p>}
+        {records.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无记录，点击右上角添加", "No records. Tap + to add")}</p>}
       </CardContent>
     </Card>
   );
@@ -296,6 +300,7 @@ const MEASUREMENT_FIELDS = [
 ] as const;
 
 function MeasurementTracker() {
+  const { t, lang } = useLang();
   const { data: records = [] } = useMeasurementRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -310,7 +315,7 @@ function MeasurementTracker() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["measurement_records"] }); setDialogOpen(false); toast({ title: "已记录" }); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["measurement_records"] }); setDialogOpen(false); toast({ title: t("已记录", "Logged") }); },
   });
 
   const deleteMutation = useMutation({
@@ -323,10 +328,15 @@ function MeasurementTracker() {
 
   const filteredRecords = useMemo(() => filterByRange(records, timeRange), [records, timeRange]);
 
+  const MEASUREMENT_LABELS: Record<string, string> = {
+    "腰围": t("腰围", "Waist"), "臀围": t("臀围", "Hip"), "胸围": t("胸围", "Chest"),
+    "臂围": t("臂围", "Arm"), "大腿围": t("大腿围", "Thigh"),
+  };
+
   const chartData = filteredRecords.map((r: any) => {
     const point: any = { date: format(new Date(r.date), "MM/dd") };
     MEASUREMENT_FIELDS.forEach(({ key, label }) => {
-      if (r[key] != null) point[label] = Number(r[key]);
+      if (r[key] != null) point[MEASUREMENT_LABELS[label] || label] = Number(r[key]);
     });
     return point;
   });
@@ -336,18 +346,18 @@ function MeasurementTracker() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">围度记录</CardTitle>
+        <CardTitle className="text-base">{t("围度记录", "Body Measurements")}</CardTitle>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />记录</Button>
+            <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />{t("记录", "Log")}</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>记录围度 (cm)</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{t("记录围度", "Log Measurements")} (cm)</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>日期</Label><Input type="date" value={form.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              <div><Label>{t("日期", "Date")}</Label><Input type="date" value={form.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
               {MEASUREMENT_FIELDS.map(({ key, label }) => (
                 <div key={key}>
-                  <Label>{label} (cm)</Label>
+                  <Label>{MEASUREMENT_LABELS[label] || label} (cm)</Label>
                   <Input type="number" step="0.1" value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                 </div>
               ))}
@@ -355,7 +365,7 @@ function MeasurementTracker() {
                 const payload: any = { date: form.date };
                 MEASUREMENT_FIELDS.forEach(({ key }) => { if (form[key]) payload[key] = Number(form[key]); });
                 saveMutation.mutate(payload);
-              }}>保存</Button>
+              }}>{t("保存", "Save")}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -366,7 +376,7 @@ function MeasurementTracker() {
             {MEASUREMENT_FIELDS.map(({ key, label, color }) => (
               <div key={key}>
                 <div className="text-lg font-bold" style={{ color }}>{latest[key] != null ? `${latest[key]}` : "-"}</div>
-                <div className="text-[10px] text-muted-foreground">{label}</div>
+                <div className="text-[10px] text-muted-foreground">{MEASUREMENT_LABELS[label] || label}</div>
               </div>
             ))}
           </div>
@@ -374,9 +384,9 @@ function MeasurementTracker() {
 
         <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="week">周</TabsTrigger>
-            <TabsTrigger value="month">月</TabsTrigger>
-            <TabsTrigger value="year">年</TabsTrigger>
+            <TabsTrigger value="week">{t("周", "Week")}</TabsTrigger>
+            <TabsTrigger value="month">{t("月", "Month")}</TabsTrigger>
+            <TabsTrigger value="year">{t("年", "Year")}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -389,22 +399,22 @@ function MeasurementTracker() {
               <Tooltip />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               {MEASUREMENT_FIELDS.map(({ label, color }) => (
-                <Line key={label} type="monotone" dataKey={label} stroke={color} strokeWidth={2} dot={{ r: 2 }} connectNulls />
+                <Line key={label} type="monotone" dataKey={MEASUREMENT_LABELS[label] || label} stroke={color} strokeWidth={2} dot={{ r: 2 }} connectNulls />
               ))}
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-8">需要至少2条记录才能显示曲线图</p>
+          <p className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</p>
         )}
 
         {records.length > 0 && (
           <div className="space-y-1 max-h-40 overflow-y-auto">
             {[...records].reverse().slice(0, 20).map((r: any) => (
               <div key={r.id} className="flex items-center justify-between text-sm py-1">
-                <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: zhCN })}</span>
+                <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: lang === "zh" ? zhCN : undefined })}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs">
-                    {MEASUREMENT_FIELDS.filter(({ key }) => r[key] != null).map(({ key, label }) => `${label}${r[key]}`).join(" / ")}
+                    {MEASUREMENT_FIELDS.filter(({ key }) => r[key] != null).map(({ key, label }) => `${MEASUREMENT_LABELS[label] || label}${r[key]}`).join(" / ")}
                   </span>
                   <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => deleteMutation.mutate(r.id)}>
                     <Trash2 className="h-3 w-3" />
@@ -414,7 +424,7 @@ function MeasurementTracker() {
             ))}
           </div>
         )}
-        {records.length === 0 && <p className="text-xs text-muted-foreground">暂无记录，点击右上角添加</p>}
+        {records.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无记录，点击右上角添加", "No records. Tap + to add")}</p>}
       </CardContent>
     </Card>
   );
@@ -422,6 +432,7 @@ function MeasurementTracker() {
 
 // ========== Main Page ==========
 export default function WeightLossPage() {
+  const { t, lang } = useLang();
   const { data: settings, isLoading } = useSettings();
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
@@ -437,7 +448,7 @@ export default function WeightLossPage() {
     }
   }, [settings]);
 
-  if (isLoading || !settings) return <AppLayout title="减肥专项"><p className="text-sm text-muted-foreground">加载中...</p></AppLayout>;
+  if (isLoading || !settings) return <AppLayout title={t("减肥专项", "Weight Loss")}><p className="text-sm text-muted-foreground">{t("加载中...", "Loading...")}</p></AppLayout>;
 
   const startHour = (settings as any).fasting_start_hour ?? 12;
   const startMinute = (settings as any).fasting_start_minute ?? 0;
@@ -450,11 +461,11 @@ export default function WeightLossPage() {
     if (m < 0 || m > 59) return;
     const tw = editTarget ? Number(editTarget) : null;
     await updateSettings.mutateAsync({ fasting_start_hour: h, fasting_start_minute: m, target_weight: tw } as any);
-    toast({ title: "设置已保存" });
+    toast({ title: t("设置已保存", "Settings saved") });
   };
 
   return (
-    <AppLayout title="减肥专项">
+    <AppLayout title={t("减肥专项", "Weight Loss")}>
       <div className="space-y-4">
         <FastingTimer startHour={startHour} startMinute={startMinute} />
         <TodayCalorieSummary />
@@ -462,23 +473,23 @@ export default function WeightLossPage() {
         <MeasurementTracker />
 
         <Card>
-          <CardHeader><CardTitle className="text-base">设置</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("设置", "Settings")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="shrink-0">进食开始</Label>
+              <Label className="shrink-0">{t("进食开始", "Eating starts at")}</Label>
               <Input type="number" min={0} max={23} value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-20" />
-              <span className="text-sm text-muted-foreground">时</span>
+              <span className="text-sm text-muted-foreground">{t("时", "h")}</span>
               <Input type="number" min={0} max={59} step={5} value={editStartMin} onChange={(e) => setEditStartMin(e.target.value)} className="w-20" />
-              <span className="text-sm text-muted-foreground">分</span>
+              <span className="text-sm text-muted-foreground">{t("分", "m")}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Label className="shrink-0">目标体重</Label>
+              <Label className="shrink-0">{t("目标体重", "Target Weight")}</Label>
               <Input type="number" step="0.1" value={editTarget} onChange={(e) => setEditTarget(e.target.value)} className="w-24" placeholder="kg" />
               <span className="text-sm text-muted-foreground">kg</span>
             </div>
-            <Button size="sm" onClick={handleSaveSettings}>保存设置</Button>
+            <Button size="sm" onClick={handleSaveSettings}>{t("保存设置", "Save Settings")}</Button>
             <p className="text-xs text-muted-foreground">
-              进食时段：{startHour}:{String(startMinute).padStart(2, "0")} - {Math.floor(((startHour * 60 + startMinute) + 8 * 60) / 60) % 24}:{String(((startHour * 60 + startMinute) + 8 * 60) % 60).padStart(2, "0")} | 时区：{Intl.DateTimeFormat().resolvedOptions().timeZone}
+              {t("进食时段", "Eating window")}：{startHour}:{String(startMinute).padStart(2, "0")} - {Math.floor(((startHour * 60 + startMinute) + 8 * 60) / 60) % 24}:{String(((startHour * 60 + startMinute) + 8 * 60) % 60).padStart(2, "0")} | {t("时区", "Timezone")}：{Intl.DateTimeFormat().resolvedOptions().timeZone}
             </p>
           </CardContent>
         </Card>

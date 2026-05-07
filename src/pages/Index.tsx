@@ -7,6 +7,7 @@ import {
   ChevronRight, ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLang } from "@/contexts/LanguageContext";
 import {
   useTodaySchedule, useTodayCalorieSummary, useTodayCalorieBreakdown, useMonthFinanceSummary, useFinanceByMonth,
   usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
@@ -16,6 +17,7 @@ import { format } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getGreeting(hour: number): string {
   if (hour < 6) return "凌晨好";
@@ -23,6 +25,14 @@ function getGreeting(hour: number): string {
   if (hour < 14) return "中午好";
   if (hour < 18) return "下午好";
   return "晚上好";
+}
+
+function getGreetingEn(hour: number): string {
+  if (hour < 6) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 14) return "Good afternoon";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 // Category color config matching justhireme.ai accent palette
@@ -119,6 +129,7 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { t, lang } = useLang();
   const now = new Date();
   const { data: settings } = useSettings();
   const { data: todayEvents = [] } = useTodaySchedule();
@@ -160,8 +171,11 @@ export default function DashboardPage() {
     : 0;
   const remainingCalories = calorieTarget - todayCalories;
 
-  const greeting = getGreeting(now.getHours());
-  const dateLabel = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${WEEKDAYS_ZH[now.getDay()]}`;
+  const greeting = lang === "zh" ? getGreeting(now.getHours()) : getGreetingEn(now.getHours());
+  const weekdays = lang === "zh" ? WEEKDAYS_ZH : WEEKDAYS_EN;
+  const dateLabel = lang === "zh"
+    ? `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`
+    : `${weekdays[now.getDay()]}, ${now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
   // Fasting calculation
   const fastingStartHour = settings?.fasting_start_hour ?? 12;
@@ -191,7 +205,7 @@ export default function DashboardPage() {
   }).length;
 
   return (
-    <AppLayout title="首页概览">
+    <AppLayout title={t("首页概览", "Dashboard")}>
       <div className="space-y-10">
 
         {/* ── Hero Section ── */}
@@ -204,7 +218,7 @@ export default function DashboardPage() {
           </h1>
           <p className="text-[14px] text-[#8a847a] mt-2">{dateLabel}</p>
           <div className="flex flex-wrap gap-2 mt-3">
-            {["日程", "记账", "热量", "待办", "目标", "项目"].map((tag) => (
+            {[t("日程", "Schedule"), t("记账", "Finance"), t("热量", "Calories"), t("待办", "To-Do"), t("目标", "Goals"), t("项目", "Projects")].map((tag) => (
               <span
                 key={tag}
                 className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white border border-[#e4e1d7] text-[#8a847a]"
@@ -219,39 +233,39 @@ export default function DashboardPage() {
         <section>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <MetricCard
-              label="今日日程"
+              label={t("今日日程", "Today's Schedule")}
               value={todayEvents.length}
-              hint={nextEvent ? `${format(new Date((nextEvent as any).start_time), "HH:mm")}` : "暂无安排"}
+              hint={nextEvent ? `${format(new Date((nextEvent as any).start_time), "HH:mm")}` : t("暂无安排", "No events")}
               color="blue"
             />
             <MetricCard
-              label="今日支出"
+              label={t("今日支出", "Today's Spending")}
               value={`¥${todayFinanceTotal.toFixed(0)}`}
-              hint={`本月 ¥${totalSpending.toFixed(0)}`}
+              hint={lang === "zh" ? `本月 ¥${totalSpending.toFixed(0)}` : `This month ¥${totalSpending.toFixed(0)}`}
               color="orange"
             />
             <MetricCard
-              label="剩余热量"
+              label={t("剩余热量", "Remaining")}
               value={remainingCalories}
               hint={`${todayCalories} / ${calorieTarget} kcal`}
               color={remainingCalories < 0 ? "orange" : "green"}
             />
             <MetricCard
-              label="待办进度"
+              label={t("待办进度", "To-Do Progress")}
               value={`${completedTodos}/${totalTodos}`}
-              hint={overdueTodoCount > 0 ? `${overdueTodoCount} 项逾期` : "无逾期"}
+              hint={overdueTodoCount > 0 ? `${overdueTodoCount} ${t("项逾期", "overdue")}` : t("无逾期", "No overdue")}
               color={overdueTodoCount > 0 ? "orange" : "green"}
             />
             <MetricCard
-              label="本周目标"
+              label={t("本周目标", "Weekly Goals")}
               value={`${goalProgressPct}%`}
-              hint={`${completedGoals}/${weekGoals.length} 已完成`}
+              hint={`${completedGoals}/${weekGoals.length} ${t("已完成", "done")}`}
               color={goalProgressPct >= 50 ? "green" : "blue"}
             />
             <MetricCard
-              label="活跃项目"
+              label={t("活跃项目", "Active Projects")}
               value={activeProjects.length}
-              hint={`平均进度 ${avgProgress}%`}
+              hint={`${t("平均进度", "Avg progress")} ${avgProgress}%`}
               color="purple"
             />
           </div>
@@ -265,9 +279,9 @@ export default function DashboardPage() {
                 className="font-bold text-[#1f1a14] leading-tight"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
-                今日概览
+                {t("今日概览", "Today's Overview")}
               </h2>
-              <p className="text-[12px] text-[#8a847a] mt-1">日程与待办事项</p>
+              <p className="text-[12px] text-[#8a847a] mt-1">{t("日程与待办事项", "Schedule & To-Dos")}</p>
             </div>
           </div>
 
@@ -277,18 +291,18 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-[#5b88b5]" />
-                  <span className="text-[14px] font-semibold text-[#1f1a14]">今日日程</span>
+                  <span className="text-[14px] font-semibold text-[#1f1a14]">{t("今日日程", "Today's Schedule")}</span>
                 </div>
                 <button
                   onClick={() => navigate("/schedule")}
                   className="text-[11px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center gap-0.5"
                 >
-                  查看全部 <ArrowRight className="h-3 w-3" />
+                  {t("查看全部", "View all")} <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
               <div className="py-1">
                 {todayEvents.length === 0 ? (
-                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">暂无安排</p>
+                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">{t("暂无安排", "No events")}</p>
                 ) : (
                   todayEvents.slice(0, 5).map((e: any) => (
                     <PipelineRow
@@ -297,7 +311,7 @@ export default function DashboardPage() {
                       iconColor="bg-[#e1eaf4]"
                       title={e.title}
                       subtitle={format(new Date(e.start_time), "HH:mm")}
-                      pill={e.importance === "重要" ? "重要" : undefined}
+                      pill={e.importance === "重要" ? t("重要", "Important") : undefined}
                       pillColor="orange"
                       onClick={() => navigate("/schedule")}
                     />
@@ -311,28 +325,28 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
                 <div className="flex items-center gap-2">
                   <CheckSquare className="h-4 w-4 text-[#5b8c44]" />
-                  <span className="text-[14px] font-semibold text-[#1f1a14]">待办事项</span>
+                  <span className="text-[14px] font-semibold text-[#1f1a14]">{t("待办事项", "To-Dos")}</span>
                 </div>
                 <button
                   onClick={() => navigate("/todos")}
                   className="text-[11px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center gap-0.5"
                 >
-                  查看全部 <ArrowRight className="h-3 w-3" />
+                  {t("查看全部", "View all")} <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
               <div className="py-1">
                 {pendingTodos.length === 0 ? (
-                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">无待办事项</p>
+                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">{t("无待办事项", "No to-dos")}</p>
                 ) : (
-                  pendingTodos.slice(0, 5).map((t: any) => (
+                  pendingTodos.slice(0, 5).map((todo: any) => (
                     <PipelineRow
-                      key={t.id}
+                      key={todo.id}
                       icon={<CheckSquare className="h-4 w-4 text-[#5b8c44]" />}
                       iconColor="bg-[#dcead4]"
-                      title={t.title}
-                      subtitle={t.category || undefined}
-                      pill={t.importance === "紧急" ? "紧急" : t.importance === "重要" ? "重要" : undefined}
-                      pillColor={t.importance === "紧急" ? "orange" : t.importance === "重要" ? "yellow" : undefined}
+                      title={todo.title}
+                      subtitle={todo.category || undefined}
+                      pill={todo.importance === "紧急" ? t("紧急", "Urgent") : todo.importance === "重要" ? t("重要", "Important") : undefined}
+                      pillColor={todo.importance === "紧急" ? "orange" : todo.importance === "重要" ? "yellow" : undefined}
                       onClick={() => navigate("/todos")}
                     />
                   ))
@@ -350,87 +364,87 @@ export default function DashboardPage() {
                 className="font-bold text-[#1f1a14] leading-tight"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
-                生活模块
+                {t("生活模块", "Life Modules")}
               </h2>
-              <p className="text-[12px] text-[#8a847a] mt-1">管理你的日常生活</p>
+              <p className="text-[12px] text-[#8a847a] mt-1">{t("管理你的日常生活", "Manage your daily life")}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             <FeatureCard
               icon={<CalendarDays className="h-4 w-4 text-[#5b88b5]" />}
-              title="日程计划"
-              description={`${todayEvents.length} 个今日日程`}
+              title={t("日程计划", "Schedule")}
+              description={`${todayEvents.length} ${lang === "zh" ? "个今日日程" : "events today"}`}
               status={todayEvents.length > 0 ? `${todayEvents.length}` : undefined}
               statusColor="blue"
               onClick={() => navigate("/schedule")}
             />
             <FeatureCard
               icon={<Wallet className="h-4 w-4 text-[#d17847]" />}
-              title="记账"
-              description={`本月 ¥${totalSpending.toFixed(0)}`}
-              status={totalSpending > budget ? "超支" : undefined}
+              title={t("记账", "Finance")}
+              description={lang === "zh" ? `本月 ¥${totalSpending.toFixed(0)}` : `This month ¥${totalSpending.toFixed(0)}`}
+              status={totalSpending > budget ? t("超支", "Over") : undefined}
               statusColor="orange"
               onClick={() => navigate("/finance")}
             />
             <FeatureCard
               icon={<Flame className="h-4 w-4 text-[#d17847]" />}
-              title="热量记录"
+              title={t("热量记录", "Calories")}
               description={`${todayCalories} / ${calorieTarget} kcal`}
-              status={remainingCalories < 0 ? "超额" : undefined}
+              status={remainingCalories < 0 ? t("超额", "Over") : undefined}
               statusColor="orange"
               onClick={() => navigate("/calories")}
             />
             <FeatureCard
               icon={<CheckSquare className="h-4 w-4 text-[#5b8c44]" />}
-              title="待办事项"
-              description={`${pendingTodos.length} 个待完成`}
-              status={urgentTodos.length > 0 ? `${urgentTodos.length} 紧急` : undefined}
+              title={t("待办事项", "To-Dos")}
+              description={`${pendingTodos.length} ${lang === "zh" ? "个待完成" : "pending"}`}
+              status={urgentTodos.length > 0 ? `${urgentTodos.length} ${t("紧急", "urgent")}` : undefined}
               statusColor="orange"
               onClick={() => navigate("/todos")}
             />
             <FeatureCard
               icon={<Carrot className="h-4 w-4 text-[#c49840]" />}
-              title="食材管理"
-              description={expiringSoonCount > 0 ? `${expiringSoonCount} 个即将过期` : "库存充足"}
+              title={t("食材管理", "Pantry")}
+              description={expiringSoonCount > 0 ? `${expiringSoonCount} ${t("个即将过期", "expiring soon")}` : t("库存充足", "Well stocked")}
               status={expiringSoonCount > 0 ? `${expiringSoonCount}` : undefined}
               statusColor="yellow"
               onClick={() => navigate("/pantry")}
             />
             <FeatureCard
               icon={<Package className="h-4 w-4 text-[#c49840]" />}
-              title="用品管理"
-              description={overdueDurables.length > 0 ? `${overdueDurables.length} 个超值用品` : "暂无记录"}
+              title={t("用品管理", "Belongings")}
+              description={overdueDurables.length > 0 ? `${overdueDurables.length} ${t("个超值用品", "expiring soon")}` : t("暂无记录", "No records")}
               onClick={() => navigate("/belongings")}
             />
             <FeatureCard
               icon={<Target className="h-4 w-4 text-[#5b8c44]" />}
-              title="目标"
-              description={`${completedGoals}/${weekGoals.length} 本周已完成`}
+              title={t("目标", "Goals")}
+              description={`${completedGoals}/${weekGoals.length} ${t("本周已完成", "done this week")}`}
               status={goalProgressPct > 0 ? `${goalProgressPct}%` : undefined}
               statusColor="green"
               onClick={() => navigate("/goals")}
             />
             <FeatureCard
               icon={<Kanban className="h-4 w-4 text-[#5b88b5]" />}
-              title="项目管理"
-              description={`${activeProjects.length} 个活跃项目`}
+              title={t("项目管理", "Projects")}
+              description={`${activeProjects.length} ${t("个活跃项目", "active projects")}`}
               status={avgProgress > 0 ? `${avgProgress}%` : undefined}
               statusColor="blue"
               onClick={() => navigate("/projects")}
             />
             <FeatureCard
               icon={<TrendingDown className="h-4 w-4 text-[#5a9da8]" />}
-              title="减肥专项"
-              description={latestWeight ? `${latestWeight.toFixed(1)} kg` : "暂无记录"}
+              title={t("减肥专项", "Weight Loss")}
+              description={latestWeight ? `${latestWeight.toFixed(1)} kg` : t("暂无记录", "No records")}
               status={weightDiff !== null ? `${weightDiff > 0 ? "+" : ""}${weightDiff.toFixed(1)}` : undefined}
               statusColor={weightDiff !== null && weightDiff <= 0 ? "teal" : "orange"}
               onClick={() => navigate("/weight-loss")}
             />
             <FeatureCard
               icon={<Lightbulb className="h-4 w-4 text-[#8b7bb8]" />}
-              title="随想"
-              description={recentThoughts.length > 0 ? `${recentThoughts.length} 条最近记录` : "暂无随想"}
+              title={t("随想", "Thoughts")}
+              description={recentThoughts.length > 0 ? `${recentThoughts.length} ${t("条最近记录", "recent records")}` : t("暂无随想", "No thoughts")}
               onClick={() => navigate("/thoughts")}
             />
           </div>
@@ -444,9 +458,9 @@ export default function DashboardPage() {
                 className="font-bold text-[#1f1a14] leading-tight"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
-                数据洞察
+                {t("数据洞察", "Data Insights")}
               </h2>
-              <p className="text-[12px] text-[#8a847a] mt-1">关键数据一目了然</p>
+              <p className="text-[12px] text-[#8a847a] mt-1">{t("关键数据一目了然", "Key metrics at a glance")}</p>
             </div>
           </div>
 
@@ -458,10 +472,10 @@ export default function DashboardPage() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <TrendingDown className="h-4 w-4 text-[#5a9da8]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">体重趋势</span>
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("体重趋势", "Weight Trend")}</span>
               </div>
               {weightTrend.length === 0 ? (
-                <p className="text-[13px] text-[#8a847a]">暂无记录</p>
+                <p className="text-[13px] text-[#8a847a]">{t("暂无记录", "No records")}</p>
               ) : (
                 <div>
                   <div className="flex items-baseline justify-between">
@@ -494,7 +508,7 @@ export default function DashboardPage() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Wallet className="h-4 w-4 text-[#d17847]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">本月支出</span>
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("本月支出", "Monthly Spending")}</span>
               </div>
               <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
                 ¥{totalSpending.toFixed(0)}
@@ -505,7 +519,7 @@ export default function DashboardPage() {
                 className="h-1 mt-3"
               />
               <p className="text-[11px] text-[#8a847a] mt-1">
-                {Math.round((totalSpending / budget) * 100)}% 已使用
+                {Math.round((totalSpending / budget) * 100)}% {t("已使用", "used")}
               </p>
             </div>
 
@@ -516,13 +530,13 @@ export default function DashboardPage() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Timer className="h-4 w-4 text-[#5a9da8]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">16+8 断食</span>
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("16+8 断食", "16+8 Fasting")}</span>
               </div>
               <p className={`text-[20px] font-semibold ${isEatingWindow ? "text-[#5b8c44]" : "text-[#d17847]"}`}>
-                {isEatingWindow ? "进食窗口" : "断食中"}
+                {isEatingWindow ? t("进食窗口", "Eating Window") : t("断食中", "Fasting")}
               </p>
               <p className="text-[11px] text-[#8a847a] mt-1">
-                进食: {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
+                {t("进食:", "Eating:")} {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
               </p>
             </div>
 
@@ -533,10 +547,10 @@ export default function DashboardPage() {
             >
               <div className="flex items-center gap-2 mb-3">
                 <Carrot className="h-4 w-4 text-[#c49840]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">食材预警</span>
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("食材预警", "Pantry Alert")}</span>
               </div>
               {expiringPantry.length === 0 ? (
-                <p className="text-[13px] text-[#8a847a]">无即将过期食材</p>
+                <p className="text-[13px] text-[#8a847a]">{t("无即将过期食材", "No expiring items")}</p>
               ) : (
                 <div className="space-y-1.5">
                   {expiringPantry.slice(0, 3).map((item: any) => {
@@ -547,13 +561,13 @@ export default function DashboardPage() {
                       <div key={item.id} className="flex items-center justify-between">
                         <span className="text-[13px] text-[#1f1a14] truncate max-w-[70%]">{item.name}</span>
                         <span className={`text-[11px] font-medium ${daysLeft !== null && daysLeft <= 1 ? "text-[#d17847]" : "text-[#c49840]"}`}>
-                          {daysLeft !== null ? `${daysLeft} 天` : "未知"}
+                          {daysLeft !== null ? `${daysLeft} ${t("天", "d")}` : t("未知", "Unknown")}
                         </span>
                       </div>
                     );
                   })}
                   {expiringPantry.length > 3 && (
-                    <p className="text-[11px] text-[#8a847a]">+{expiringPantry.length - 3} 个食材</p>
+                    <p className="text-[11px] text-[#8a847a]">+{expiringPantry.length - 3} {t("个食材", "items")}</p>
                   )}
                 </div>
               )}
@@ -570,9 +584,9 @@ export default function DashboardPage() {
             <Sparkles className="h-5 w-5 text-[#8b7bb8]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold text-[#1f1a14]">AI 助手</p>
+            <p className="text-[13px] font-semibold text-[#1f1a14]">{t("AI 助手", "AI Assistant")}</p>
             <p className="text-[11px] text-[#8a847a] truncate">
-              点击打开 AI 助手，快速记录日程、记账、添加待办...
+              {t("点击打开 AI 助手，快速记录日程、记账、添加待办...", "Open AI assistant for quick schedule, finance, and to-do entries...")}
             </p>
           </div>
           <ChevronRight className="h-4 w-4 text-[#e4e1d7] shrink-0" />

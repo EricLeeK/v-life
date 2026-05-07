@@ -8,6 +8,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2, Undo2 } from "lucide-react";
 import { format } from "date-fns";
 import { useSettings } from "@/hooks/useData";
+import { useLang } from "@/contexts/LanguageContext";
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
@@ -57,6 +58,14 @@ const MODULE_LABELS: Record<string, string> = {
   project: "项目",
   project_task: "项目任务",
 };
+
+const getModuleLabels = (t: (zh: string, en: string) => string) => ({
+  finance: t("记账", "Finance"), calories: t("热量", "Calories"), schedule: t("日程", "Schedule"),
+  todo: t("待办", "To-Do"), pantry: t("食材", "Pantry"), thought: t("随想", "Thought"),
+  belongings_daily: t("日用品", "Daily"), belongings_durable: t("耐用品", "Durable"),
+  weight: t("体重", "Weight"), measurement: t("围度", "Measurement"),
+  goal: t("目标", "Goal"), project: t("项目", "Project"), project_task: t("项目任务", "Task"),
+});
 
 const MAX_SESSIONS = 30;
 
@@ -213,6 +222,8 @@ export function AIChatPanel() {
   const qc = useQueryClient();
   const { data: settings } = useSettings();
   const aiMode = settings?.ai_mode || "confirm";
+  const { t, lang } = useLang();
+  const moduleLabels = getModuleLabels(t);
 
   const { data: sessions = [], refetch: refetchSessions } = useQuery({
     queryKey: ["ai_sessions"],
@@ -359,10 +370,10 @@ export function AIChatPanel() {
       for (const op of operations) {
         const table = MODULE_TABLE_MAP[op.module];
         if (!table) {
-          results.push(`❌ 未知模块: ${op.module}`);
+          results.push(`❌ ${t("未知模块", "Unknown module")}: ${op.module}`);
           continue;
         }
-        const label = MODULE_LABELS[op.module] || op.module;
+        const label = moduleLabels[op.module] || op.module;
         const itemName = op.data.name || op.data.title || op.data.food_name || op.data.weight || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
@@ -392,7 +403,7 @@ export function AIChatPanel() {
               : await (supabase.from as any)(table).insert(row).select().single();
             if (error) throw error;
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
-            results.push(`✅ ${label}: 已添加「${itemName}」`);
+            results.push(`✅ ${label}: ${t("已添加", "Added")}「${itemName}」`);
           } else if (op.action === "delete") {
             const match = op.data.match || {};
             const matchEntries = Object.entries(match).filter(([_, v]) => v !== undefined && v !== null && v !== "");
@@ -437,7 +448,7 @@ export function AIChatPanel() {
                 if (error) throw error;
               }
             }
-            results.push(`✅ ${label}: 已删除「${itemName}」`);
+            results.push(`✅ ${label}: ${t("已删除", "Deleted")}「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
             const match = { ...op.data.match };
 
@@ -465,9 +476,9 @@ export function AIChatPanel() {
             if (!found) throw new Error(`未找到匹配的记录`);
             const { error } = await (supabase.from as any)(table).update(op.data.update).eq("id", found.id);
             if (error) throw error;
-            results.push(`✅ ${label}: 已更新「${itemName}」`);
+            results.push(`✅ ${label}: ${t("已更新", "Updated")}「${itemName}」`);
           } else {
-            results.push(`⚠️ ${label}: 不支持的操作 ${op.action}`);
+            results.push(`⚠️ ${label}: ${t("不支持的操作", "Unsupported action")} ${op.action}`);
           }
         } catch (e: any) {
           results.push(`❌ ${label}: ${e.message}`);
@@ -484,7 +495,7 @@ export function AIChatPanel() {
 
       return { results, createdIds };
     },
-    [qc]
+    [qc, t]
   );
 
   const handleUndo = async () => {
@@ -498,7 +509,7 @@ export function AIChatPanel() {
     setRecentlyCreatedIds([]);
     if (undoTimer) clearTimeout(undoTimer);
     setUndoTimer(null);
-    toast({ title: "已撤销操作" });
+    toast({ title: t("已撤销操作", "Operation undone") });
   };
 
   const handleSend = async () => {
@@ -574,17 +585,17 @@ export function AIChatPanel() {
             setUndoTimer(timer);
           }
 
-          toast({ title: "AI 操作完成", description: summary });
+          toast({ title: t("AI 操作完成", "AI operation complete"), description: summary });
         } else {
           const previewLines = operations.map((op) => {
-            const label = MODULE_LABELS[op.module] || op.module;
-            const action = { create: "新增", update: "更新", delete: "删除" }[op.action] || op.action;
+            const label = moduleLabels[op.module] || op.module;
+            const action = { create: t("新增", "Create"), update: t("更新", "Update"), delete: t("删除", "Delete") }[op.action] || op.action;
             const name = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
             return `• ${action} ${label}「${name}」`;
           });
           const assistantMsg: Message = {
             role: "assistant",
-            content: `${summary}\n\n将执行以下操作：\n${previewLines.join("\n")}`,
+            content: `${summary}\n\n${t("将执行以下操作：", "Will execute:")}\n${previewLines.join("\n")}`,
             operations,
             status: "preview",
           };
@@ -603,7 +614,7 @@ export function AIChatPanel() {
         ...prev,
         { role: "assistant", content: `⚠️ ${e.message}` },
       ]);
-      toast({ title: "AI 调用失败", description: e.message, variant: "destructive" });
+      toast({ title: t("AI 调用失败", "AI call failed"), description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -621,9 +632,9 @@ export function AIChatPanel() {
         status: execResults.every((r) => r.startsWith("✅")) ? "executed" : "error",
       };
       setMessages((prev) => prev.map((m, i) => (i === msgIndex ? updatedMsg : m)));
-      toast({ title: "操作已执行" });
+      toast({ title: t("操作已执行", "Operation executed") });
     } catch (e: any) {
-      toast({ title: "执行失败", description: e.message, variant: "destructive" });
+      toast({ title: t("执行失败", "Execution failed"), description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -656,9 +667,9 @@ export function AIChatPanel() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7] bg-white shrink-0">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-[#8b7bb8]" />
-          <span className="font-medium text-sm text-[#1f1a14]">AI 助手</span>
+          <span className="font-medium text-sm text-[#1f1a14]">{t("AI 助手", "AI Assistant")}</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#f4f3ee] text-[#8a847a]">
-            {aiMode === "direct" ? "直接" : "确认"}模式
+            {aiMode === "direct" ? t("直接模式", "Direct mode") : t("确认模式", "Confirm mode")}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -676,7 +687,7 @@ export function AIChatPanel() {
 
       {showHistory ? (
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          <p className="text-xs text-[#8a847a] mb-2">最近 {sessions.length} 个会话</p>
+          <p className="text-xs text-[#8a847a] mb-2">{lang === "zh" ? `最近 ${sessions.length} 个会话` : `${sessions.length} recent sessions`}</p>
           {sessions.map((s: any) => (
             <div
               key={s.id}
@@ -686,7 +697,7 @@ export function AIChatPanel() {
               onClick={() => loadSession(s.id)}
             >
               <div className="min-w-0 flex-1">
-                <p className="text-sm truncate text-[#1f1a14]">{s.title || "无标题"}</p>
+                <p className="text-sm truncate text-[#1f1a14]">{s.title || t("无标题", "Untitled")}</p>
                 <p className="text-[10px] text-[#8a847a]">{format(new Date(s.updated_at), "MM/dd HH:mm")}</p>
               </div>
               <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-[#8a847a] hover:text-red-500 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}>
@@ -694,7 +705,7 @@ export function AIChatPanel() {
               </Button>
             </div>
           ))}
-          {sessions.length === 0 && <p className="text-sm text-[#8a847a] text-center py-4">暂无历史会话</p>}
+          {sessions.length === 0 && <p className="text-sm text-[#8a847a] text-center py-4">{t("暂无历史会话", "No history")}</p>}
         </div>
       ) : (
         <>
@@ -703,11 +714,11 @@ export function AIChatPanel() {
             {messages.length === 0 && (
               <div className="text-center text-[#8a847a] text-sm py-8 space-y-2">
                 <Bot className="h-10 w-10 mx-auto opacity-30" />
-                <p>试试说：</p>
+                <p>{t("试试说：", "Try saying:")}</p>
                 <div className="space-y-1 text-xs">
                   <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"午饭吃了拉面，花了30元，大概600卡"</p>
                   <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"明天下午3点开会，大概1小时"</p>
-                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">📷 拍小票自动识别记账</p>
+                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">{t("📷 拍小票自动识别记账", "📷 Snap receipt for auto-expense")}</p>
                 </div>
               </div>
             )}
@@ -730,23 +741,23 @@ export function AIChatPanel() {
                   {msg.content}
                   {msg.status === "executed" && (
                     <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
-                      <Check className="h-3 w-3" /> 已执行
+                      <Check className="h-3 w-3" /> {t("已执行", "Executed")}
                     </div>
                   )}
                   {msg.status === "error" && (
                     <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
-                      <AlertCircle className="h-3 w-3" /> 部分失败
+                      <AlertCircle className="h-3 w-3" /> {t("部分失败", "Partial failure")}
                     </div>
                   )}
                   {msg.status === "preview" && (
                     <div className="mt-2 flex gap-2">
                       <Button size="sm" className="h-7 text-xs bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" onClick={() => handleConfirmExecute(i)} disabled={loading}>
-                        <Check className="h-3 w-3 mr-1" /> 确认执行
+                        <Check className="h-3 w-3 mr-1" /> {t("确认执行", "Confirm")}
                       </Button>
                       <Button variant="ghost" size="sm" className="h-7 text-xs text-[#8a847a] hover:bg-[#f4f3ee]" onClick={() => {
-                        setMessages(prev => prev.map((m, idx) => idx === i ? { ...m, status: undefined, content: m.content + "\n\n❌ 已取消" } : m));
+                        setMessages(prev => prev.map((m, idx) => idx === i ? { ...m, status: undefined, content: m.content + `\n\n${t("❌ 已取消", "❌ Cancelled")}` } : m));
                       }}>
-                        取消
+                        {t("取消", "Cancel")}
                       </Button>
                     </div>
                   )}
@@ -765,9 +776,9 @@ export function AIChatPanel() {
           {/* Undo bar */}
           {recentlyCreatedIds.length > 0 && (
             <div className="px-3 py-2 border-t border-[#e4e1d7] bg-[#f4f3ee] flex items-center justify-between">
-              <span className="text-xs text-[#8a847a]">刚刚执行了操作</span>
+              <span className="text-xs text-[#8a847a]">{t("刚刚执行了操作", "Operation just executed")}</span>
               <Button size="sm" variant="secondary" className="h-7 text-xs bg-white border border-[#e4e1d7] text-[#1f1a14] hover:bg-[#f4f3ee]" onClick={handleUndo}>
-                <Undo2 className="h-3 w-3 mr-1" /> 撤销
+                <Undo2 className="h-3 w-3 mr-1" /> {t("撤销", "Undo")}
               </Button>
             </div>
           )}
@@ -815,7 +826,7 @@ export function AIChatPanel() {
                     handleSend();
                   }
                 }}
-                placeholder="描述你要记录的内容...（可粘贴图片）"
+                placeholder={t("描述你要记录的内容...（可粘贴图片）", "Describe what to record... (paste images)")}
                 className="flex-1 text-sm min-h-[36px] max-h-[200px] resize-y py-2 overflow-y-auto border-[#e4e1d7] focus-visible:ring-[#1f1a14]/20"
                 rows={1}
                 disabled={loading}
