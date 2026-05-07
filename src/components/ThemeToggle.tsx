@@ -18,7 +18,7 @@ export function ThemeToggle({ collapsed = false }: { collapsed?: boolean }) {
         <Moon className="h-4 w-4 shrink-0" />
       )}
       {!collapsed && (
-        <span>{theme === "dark" ? "樱花模式" : "暗色模式"}</span>
+        <span>{theme === "dark" ? "浅色模式" : "暗色模式"}</span>
       )}
     </Button>
   );

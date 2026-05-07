@@ -1,62 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
-    /* 🌸 Sakura Light Theme */
-    --background: 340 40% 97%;
-    --foreground: 340 20% 15%;
+    /* Warm Cream Theme (justhireme.ai) */
+    --background: 40 20% 95%;
+    --foreground: 30 25% 10%;
 
-    --card: 340 30% 99%;
-    --card-foreground: 340 20% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 25% 10%;
 
-    --popover: 340 30% 99%;
-    --popover-foreground: 340 20% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 25% 10%;
 
-    --primary: 338 70% 62%;
+    --primary: 30 25% 10%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 340 25% 93%;
-    --secondary-foreground: 340 20% 30%;
+    --secondary: 40 16% 91%;
+    --secondary-foreground: 30 20% 25%;
 
-    --muted: 340 20% 94%;
-    --muted-foreground: 340 10% 50%;
+    --muted: 40 16% 91%;
+    --muted-foreground: 36 8% 51%;
 
-    --accent: 338 40% 90%;
-    --accent-foreground: 338 70% 45%;
+    --accent: 40 16% 91%;
+    --accent-foreground: 30 25% 10%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 2%;
+    --warning: 30 70% 55%;
+    --warning-foreground: 0 0% 100%;
 
-    --success: 152 60% 42%;
+    --success: 100 35% 40%;
     --success-foreground: 0 0% 100%;
 
-    --border: 340 20% 90%;
-    --input: 340 20% 88%;
-    --ring: 338 70% 62%;
+    --border: 40 16% 87%;
+    --input: 40 16% 87%;
+    --ring: 30 25% 10%;
 
-    --radius: 0.625rem;
+    --radius: 0.5625rem;
 
-    --sidebar-background: 340 30% 96%;
-    --sidebar-foreground: 340 15% 40%;
-    --sidebar-primary: 338 70% 62%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 36 8% 51%;
+    --sidebar-primary: 30 25% 10%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 338 40% 92%;
-    --sidebar-accent-foreground: 338 70% 45%;
-    --sidebar-border: 340 20% 90%;
-    --sidebar-ring: 338 70% 62%;
+    --sidebar-accent: 40 16% 91%;
+    --sidebar-accent-foreground: 30 25% 10%;
+    --sidebar-border: 40 16% 87%;
+    --sidebar-ring: 30 25% 10%;
 
-    --chart-1: 338 70% 62%;
-    --chart-2: 152 60% 42%;
-    --chart-3: 38 92% 50%;
+    --chart-1: 200 40% 53%;
+    --chart-2: 100 35% 40%;
+    --chart-3: 30 70% 55%;
     --chart-4: 0 72% 51%;
-    --chart-5: 280 60% 55%;
+    --chart-5: 260 35% 60%;
+
+    /* Category accent colors */
+    --cat-green: 100 35% 40%;
+    --cat-green-bg: 100 30% 87%;
+    --cat-blue: 207 40% 53%;
+    --cat-blue-bg: 210 44% 92%;
+    --cat-orange: 22 65% 55%;
+    --cat-orange-bg: 24 82% 87%;
+    --cat-teal: 185 34% 51%;
+    --cat-teal-bg: 164 25% 84%;
+    --cat-purple: 256 30% 60%;
+    --cat-purple-bg: 265 35% 90%;
+    --cat-yellow: 40 55% 51%;
+    --cat-yellow-bg: 42 70% 84%;
   }
 
   .dark {
@@ -108,6 +122,19 @@
     --chart-3: 38 92% 50%;
     --chart-4: 0 72% 51%;
     --chart-5: 262 83% 58%;
+
+    --cat-green: 142 71% 45%;
+    --cat-green-bg: 142 50% 15%;
+    --cat-blue: 199 89% 48%;
+    --cat-blue-bg: 199 70% 15%;
+    --cat-orange: 38 92% 50%;
+    --cat-orange-bg: 38 70% 15%;
+    --cat-teal: 170 60% 40%;
+    --cat-teal-bg: 170 40% 12%;
+    --cat-purple: 262 83% 58%;
+    --cat-purple-bg: 262 50% 15%;
+    --cat-yellow: 45 90% 55%;
+    --cat-yellow-bg: 45 60% 15%;
   }
 }
 
@@ -118,10 +145,14 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
   }
 
-  /* Custom scrollbar for dark theme */
+  /* Monospace for data/metrics */
+  .font-mono-data {
+    font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -130,10 +161,10 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(210 10% 25%);
+    background: hsl(40 10% 78%);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(210 10% 35%);
+    background: hsl(40 10% 65%);
   }
 }

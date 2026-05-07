@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 type Theme = "light" | "dark";
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const stored = localStorage.getItem("vlife-theme") as Theme | null;
-  return stored || "dark";
+  return stored || "light";
 }
 
 export function useTheme() {

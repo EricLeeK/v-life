@@ -51,14 +51,14 @@ export function AppSidebar() {
   const { signOut } = useAuth();
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-[#e4e1d7] bg-white">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
+          <div className="h-8 w-8 rounded-lg bg-[#1f1a14] flex items-center justify-center text-white font-bold text-sm shrink-0">
             V
           </div>
           {!collapsed && (
-            <span className="text-base font-semibold text-foreground tracking-tight">
+            <span className="text-base font-semibold text-[#1f1a14] tracking-tight">
               V-Life
             </span>
           )}
@@ -75,8 +75,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
+                      activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -98,8 +98,8 @@ export function AppSidebar() {
             <SidebarMenuButton asChild tooltip="设置">
               <NavLink
                 to="/settings"
-                className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-                activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
+                activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
               >
                 <Settings className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>设置</span>}
