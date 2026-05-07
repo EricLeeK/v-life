@@ -43,7 +43,7 @@ function MetricCard({ label, value, hint, color }: {
 }) {
   const c = color ? CAT[color] : null;
   return (
-    <div className="bg-white border border-[#e4e1d7] rounded-[9px] p-4 min-w-0">
+    <div className="card-premium p-4 min-w-0">
       <p className="text-[12px] text-[#8a847a] font-medium tracking-wide uppercase">{label}</p>
       <p className="text-[28px] font-semibold text-[#1f1a14] leading-tight mt-1 font-mono-data tracking-tight">
         {value}
@@ -98,7 +98,7 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
   const sc = statusColor ? CAT[statusColor] : null;
   return (
     <div
-      className="bg-white border border-[#e4e1d7] rounded-[9px] p-4 hover:border-[#c8c5bb] transition-colors cursor-pointer group"
+      className="card-premium p-4 cursor-pointer group"
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-2">
@@ -273,7 +273,7 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Today's Schedule */}
-            <div className="bg-white border border-[#e4e1d7] rounded-[9px] overflow-hidden">
+            <div className="card-premium overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-[#5b88b5]" />
@@ -307,7 +307,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Pending Todos */}
-            <div className="bg-white border border-[#e4e1d7] rounded-[9px] overflow-hidden">
+            <div className="card-premium overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
                 <div className="flex items-center gap-2">
                   <CheckSquare className="h-4 w-4 text-[#5b8c44]" />
@@ -453,7 +453,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Weight Trend */}
             <div
-              className="bg-white border border-[#e4e1d7] rounded-[9px] p-4 cursor-pointer hover:border-[#c8c5bb] transition-colors"
+              className="card-premium p-4 cursor-pointer"
               onClick={() => navigate("/weight-loss")}
             >
               <div className="flex items-center gap-2 mb-3">
@@ -489,7 +489,7 @@ export default function DashboardPage() {
 
             {/* Monthly Spending */}
             <div
-              className="bg-white border border-[#e4e1d7] rounded-[9px] p-4 cursor-pointer hover:border-[#c8c5bb] transition-colors"
+              className="card-premium p-4 cursor-pointer"
               onClick={() => navigate("/finance")}
             >
               <div className="flex items-center gap-2 mb-3">
@@ -511,7 +511,7 @@ export default function DashboardPage() {
 
             {/* Fasting Status */}
             <div
-              className="bg-white border border-[#e4e1d7] rounded-[9px] p-4 cursor-pointer hover:border-[#c8c5bb] transition-colors"
+              className="card-premium p-4 cursor-pointer"
               onClick={() => navigate("/weight-loss")}
             >
               <div className="flex items-center gap-2 mb-3">
@@ -528,7 +528,7 @@ export default function DashboardPage() {
 
             {/* Expiring Pantry */}
             <div
-              className="bg-white border border-[#e4e1d7] rounded-[9px] p-4 cursor-pointer hover:border-[#c8c5bb] transition-colors"
+              className="card-premium p-4 cursor-pointer"
               onClick={() => navigate("/pantry")}
             >
               <div className="flex items-center gap-2 mb-3">
