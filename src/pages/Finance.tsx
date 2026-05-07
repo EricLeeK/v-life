@@ -22,7 +22,7 @@ const CATEGORIES = [
   { key: "电子", emoji: "💻" }, { key: "大额", emoji: "🏷️" }, { key: "税费", emoji: "🧾" }, { key: "其他", emoji: "❓" },
 ] as const;
 
-const PIE_COLORS = ["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316", "#6366f1", "#84cc16", "#06b6d4", "#a855f7"];
+const PIE_COLORS = ["#5b88b5", "#5b8c44", "#d17847", "#c96442", "#8b7bb8", "#5a9da8", "#c49840", "#a67c52", "#6a5acd", "#6a9068", "#5a9da8", "#b4452c"];
 
 function getWeekLabel(date: string) {
   const d = new Date(date);

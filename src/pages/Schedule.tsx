@@ -453,7 +453,7 @@ export default function SchedulePage() {
                 return (
                   <div key={d.toISOString()} className="p-1.5 text-center border-l border-border">
                     <div className="text-[10px] text-muted-foreground">{format(d, "EEE", { locale: zhCN })}</div>
-                    <div className={`text-xs font-medium ${isToday ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center mx-auto" : ""}`}>
+                    <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : ""}`}>
                       {format(d, "dd")}
                     </div>
                   </div>

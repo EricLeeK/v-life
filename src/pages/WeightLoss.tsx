@@ -255,9 +255,9 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
               <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
               <YAxis domain={yDomain as any} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
               <Tooltip />
-              <Line type="monotone" dataKey="体重" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} />
+              <Line type="monotone" dataKey="体重" stroke="#5a9da8" strokeWidth={2} dot={{ r: 2 }} />
               {targetWeight && showTarget && (
-                <ReferenceLine y={targetWeight} stroke="#10b981" strokeDasharray="5 5" label={{ value: `目标 ${targetWeight}kg`, fontSize: 11, fill: "#10b981" }} />
+                <ReferenceLine y={targetWeight} stroke="#5b8c44" strokeDasharray="5 5" label={{ value: `目标 ${targetWeight}kg`, fontSize: 11, fill: "#5b8c44" }} />
               )}
             </LineChart>
           </ResponsiveContainer>
@@ -288,11 +288,11 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
 // ========== Measurement Tracker ==========
 const MEASUREMENT_FIELDS = [
-  { key: "waist", label: "腰围", color: "#f97316" },
-  { key: "hip", label: "臀围", color: "#8b5cf6" },
-  { key: "chest", label: "胸围", color: "#06b6d4" },
-  { key: "arm", label: "臂围", color: "#10b981" },
-  { key: "thigh", label: "大腿围", color: "#ec4899" },
+  { key: "waist", label: "腰围", color: "#d17847" },
+  { key: "hip", label: "臀围", color: "#8b7bb8" },
+  { key: "chest", label: "胸围", color: "#5b88b5" },
+  { key: "arm", label: "臂围", color: "#5b8c44" },
+  { key: "thigh", label: "大腿围", color: "#5a9da8" },
 ] as const;
 
 function MeasurementTracker() {

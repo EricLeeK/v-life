@@ -121,7 +121,7 @@ export default function CaloriesPage() {
                       <CardContent className="p-2 px-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span className="text-sm">{r.food_name}</span>
-                          <span className="text-xs text-primary font-medium">{r.calories} kcal</span>
+                          <span className="text-xs text-[#d17847] font-medium">{r.calories} kcal</span>
                         </div>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
