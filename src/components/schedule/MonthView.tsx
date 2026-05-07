@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { IMPORTANCE_COLORS } from "./EventBlock";
@@ -9,6 +10,7 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
   onEdit: (e: any) => void;
   onCreateAt: (start: Date, end: Date) => void;
 }) {
+  const { t, lang } = useLang();
   const today = new Date();
   const monthStart = startOfMonth(baseDate);
   const monthEnd = endOfMonth(baseDate);
@@ -34,7 +36,7 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
     return events.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
   };
 
-  const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
+  const weekDays = lang === "zh" ? ["一", "二", "三", "四", "五", "六", "日"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">

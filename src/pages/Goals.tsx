@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, startOfMonth, startOfYear, format, endOfWeek, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { useLang } from "@/contexts/LanguageContext";
 
 function useGoals(type?: string) {
   return useQuery({
@@ -27,31 +28,36 @@ function useGoals(type?: string) {
 
 type GoalType = "week" | "month" | "year";
 
-function generatePeriodOptions(type: GoalType): { value: string; label: string }[] {
+function generatePeriodOptions(type: GoalType, lang: string): { value: string; label: string }[] {
   const now = new Date();
   const options: { value: string; label: string }[] = [];
 
   if (type === "week") {
-    // 前4周 + 当前周 + 后4周
     for (let i = -4; i <= 4; i++) {
       const d = addWeeks(startOfWeek(now, { weekStartsOn: 1 }), i);
       const end = endOfWeek(d, { weekStartsOn: 1 });
       const value = format(d, "yyyy-MM-dd");
-      const label = `${format(d, "MM/dd")} - ${format(end, "MM/dd")}${i === 0 ? " (本周)" : ""}`;
+      const label = lang === "zh"
+        ? `${format(d, "MM/dd")} - ${format(end, "MM/dd")}${i === 0 ? " (本周)" : ""}`
+        : `${format(d, "MM/dd")} - ${format(end, "MM/dd")}${i === 0 ? " (This Week)" : ""}`;
       options.push({ value, label });
     }
   } else if (type === "month") {
     for (let i = -3; i <= 6; i++) {
       const d = addMonths(startOfMonth(now), i);
       const value = format(d, "yyyy-MM-dd");
-      const label = `${format(d, "yyyy年M月")}${i === 0 ? " (本月)" : ""}`;
+      const label = lang === "zh"
+        ? `${format(d, "yyyy年M月")}${i === 0 ? " (本月)" : ""}`
+        : `${format(d, "MMMM yyyy")}${i === 0 ? " (This Month)" : ""}`;
       options.push({ value, label });
     }
   } else {
     for (let i = -1; i <= 2; i++) {
       const y = now.getFullYear() + i;
       const value = `${y}-01-01`;
-      const label = `${y}年${i === 0 ? " (今年)" : ""}`;
+      const label = lang === "zh"
+        ? `${y}年${i === 0 ? " (今年)" : ""}`
+        : `${y}${i === 0 ? " (This Year)" : ""}`;
       options.push({ value, label });
     }
   }
@@ -62,6 +68,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
   const { data: allGoals = [] } = useGoals(type);
   const qc = useQueryClient();
   const { toast } = useToast();
+  const { t, lang } = useLang();
   const [showAll, setShowAll] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
@@ -73,7 +80,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
   }, [type]);
 
   const [selectedPeriod, setSelectedPeriod] = useState(currentPeriodStart);
-  const periodOptions = useMemo(() => generatePeriodOptions(type), [type]);
+  const periodOptions = useMemo(() => generatePeriodOptions(type, lang), [type, lang]);
 
   const currentGoals = useMemo(() => allGoals.filter(g => g.period_start === currentPeriodStart), [allGoals, currentPeriodStart]);
 
@@ -146,8 +153,8 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
       const end = endOfWeek(d, { weekStartsOn: 1 });
       return `${format(d, "MM/dd")} - ${format(end, "MM/dd")}`;
     }
-    if (type === "month") return format(d, "yyyy年M月");
-    return format(d, "yyyy年");
+    if (type === "month") return lang === "zh" ? format(d, "yyyy年M月") : format(d, "MMMM yyyy");
+    return lang === "zh" ? format(d, "yyyy年") : format(d, "yyyy");
   };
 
   const isCurrent = (dateStr: string) => dateStr === currentPeriodStart;
@@ -175,7 +182,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
           <CardTitle className="text-sm">{label}</CardTitle>
           <Button variant="ghost" size="sm" className="h-6 text-xs gap-1"
             onClick={() => setShowAll(!showAll)}>
-            {showAll ? <><ChevronUp className="h-3 w-3" />当前</> : <><ChevronDown className="h-3 w-3" />全部</>}
+            {showAll ? <><ChevronUp className="h-3 w-3" />{t("当前", "Current")}</> : <><ChevronDown className="h-3 w-3" />{t("全部", "All")}</>}
           </Button>
         </div>
         {!showAll && <p className="text-xs font-semibold text-primary">{formatPeriod(currentPeriodStart)}</p>}
@@ -183,7 +190,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
       <CardContent className="flex-1 space-y-2">
         {!showAll ? (
           <>
-            {currentGoals.length === 0 && <p className="text-xs text-muted-foreground">暂无目标</p>}
+            {currentGoals.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</p>}
             {currentGoals.map(renderGoalItem)}
           </>
         ) : (
@@ -191,12 +198,12 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
             {groupedGoals?.map(([period, goals]) => (
               <div key={period}>
                 <div className={`text-xs font-medium mb-1 ${isCurrent(period) ? "text-primary font-bold" : "text-muted-foreground"}`}>
-                  {formatPeriod(period)}{isCurrent(period) ? " ← 当前" : ""}
+                  {formatPeriod(period)}{isCurrent(period) ? lang === "zh" ? " ← 当前" : " ← Current" : ""}
                 </div>
                 {goals.map(renderGoalItem)}
               </div>
             ))}
-            {groupedGoals?.length === 0 && <p className="text-xs text-muted-foreground">暂无历史目标</p>}
+            {groupedGoals?.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无历史目标", "No history")}</p>}
           </div>
         )}
 
@@ -215,7 +222,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
             </SelectContent>
           </Select>
           <div className="flex gap-1">
-            <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="添加目标..."
+            <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={t("添加目标...", "Add goal...")}
               className="h-7 text-xs" onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })} />
             <Button size="icon" className="h-7 w-7 shrink-0" disabled={!newTitle.trim()}
               onClick={() => newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })}>
@@ -229,12 +236,13 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 }
 
 export default function GoalsPage() {
+  const { t } = useLang();
   return (
-    <AppLayout title="目标">
+    <AppLayout title={t("目标", "Goals")}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GoalColumn type="week" label="📅 周目标" />
-        <GoalColumn type="month" label="📆 月目标" />
-        <GoalColumn type="year" label="🎯 年目标" />
+        <GoalColumn type="week" label={t("📅 周目标", "📅 Weekly")} />
+        <GoalColumn type="month" label={t("📆 月目标", "📆 Monthly")} />
+        <GoalColumn type="year" label={t("🎯 年目标", "🎯 Yearly")} />
       </div>
     </AppLayout>
   );

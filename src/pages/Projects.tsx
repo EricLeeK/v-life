@@ -9,12 +9,14 @@ import {
   useUpdateProject,
 } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
+import { useLang } from "@/contexts/LanguageContext";
 
 export default function ProjectsPage() {
   const { data: projects = [] } = useProjects();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const { toast } = useToast();
+  const { t } = useLang();
 
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
@@ -40,7 +42,7 @@ export default function ProjectsPage() {
       setProjectModalOpen(false);
       setEditingProject(null);
     } catch (e: any) {
-      toast({ title: "保存失败", description: e.message, variant: "destructive" });
+      toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
     }
   };
 
@@ -50,7 +52,7 @@ export default function ProjectsPage() {
   };
 
   return (
-    <AppLayout title="项目管理">
+    <AppLayout title={t("项目管理", "Projects")}>
       <div className="flex h-[calc(100vh-3rem)]">
         <div className="w-80 shrink-0">
           <ProjectSidebar
@@ -72,7 +74,7 @@ export default function ProjectsPage() {
             />
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground">
-              请新建或选择一个项目
+              {t("请新建或选择一个项目", "Create or select a project")}
             </div>
           )}
         </div>

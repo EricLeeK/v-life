@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AIChatPanel } from "@/components/AIChatPanel";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { LangProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PantryPage from "./pages/Pantry";
@@ -25,7 +26,7 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">加载中...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
   if (!user) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
@@ -58,10 +59,12 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-          <AIChatPanel />
-        </AuthProvider>
+        <LangProvider>
+          <AuthProvider>
+            <AppRoutes />
+            <AIChatPanel />
+          </AuthProvider>
+        </LangProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

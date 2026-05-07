@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import { Target, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +32,7 @@ function useCurrentGoals() {
 }
 
 export function GoalsBall() {
+  const { t } = useLang();
   const { data } = useCurrentGoals();
   const totalCount = (data?.week?.length || 0) + (data?.month?.length || 0) + (data?.year?.length || 0);
 
@@ -48,14 +50,14 @@ export function GoalsBall() {
       </PopoverTrigger>
       <PopoverContent className="w-64 p-3" align="end">
         <div className="space-y-2">
-          <span className="text-xs font-semibold text-foreground">当前目标</span>
+          <span className="text-xs font-semibold text-foreground">{t("当前目标", "Current Goals")}</span>
           {(["week", "month", "year"] as const).map(type => {
             const goals = data?.[type] || [];
             if (goals.length === 0) return null;
             return (
               <div key={type}>
                 <div className="text-[10px] font-medium text-muted-foreground mb-0.5">
-                  {{ week: "📅 周", month: "📆 月", year: "🎯 年" }[type]}
+                  {{ week: t("📅 周", "📅 Week"), month: t("📆 月", "📆 Month"), year: t("🎯 年", "🎯 Year") }[type]}
                 </div>
                 {goals.map((g: any) => (
                   <div key={g.id} className={`text-xs py-0.5 ${g.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
@@ -65,7 +67,7 @@ export function GoalsBall() {
               </div>
             );
           })}
-          {totalCount === 0 && <p className="text-xs text-muted-foreground">暂无目标</p>}
+          {totalCount === 0 && <p className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</p>}
         </div>
       </PopoverContent>
     </Popover>

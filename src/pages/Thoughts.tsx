@@ -13,11 +13,16 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useLang } from "@/contexts/LanguageContext";
 
 const PRESET_TAGS = [
   { tag: "科研", emoji: "🔬" }, { tag: "生活", emoji: "🏠" },
   { tag: "AI", emoji: "🤖" }, { tag: "杂念", emoji: "💭" },
 ];
+
+const TAG_LABELS: Record<string, string> = {
+  "科研": "Research", "生活": "Life", "AI": "AI", "杂念": "Random",
+};
 
 export default function ThoughtsPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -25,6 +30,7 @@ export default function ThoughtsPage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({ title: "", content: "", tags: [] as string[], icon: "", newTag: "" });
   const { toast } = useToast();
+  const { t, lang } = useLang();
 
   const { data: thoughts = [] } = thoughtHooks.useList();
   const { data: settings } = useSettings();
@@ -67,13 +73,13 @@ export default function ThoughtsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.content) { toast({ title: "请填写内容", variant: "destructive" }); return; }
+    if (!form.content) { toast({ title: t("请填写内容", "Please fill content"), variant: "destructive" }); return; }
     try {
       const payload = { title: form.title || null, content: form.content, tags: form.tags, icon: form.icon || null };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
       setDialogOpen(false); setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" });
-    } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
   };
 
   const openEdit = (item: any) => {
@@ -83,34 +89,34 @@ export default function ThoughtsPage() {
   };
 
   return (
-    <AppLayout title="随想">
-      <div className="max-w-5xl space-y-4">
+    <AppLayout title={t("随想", "Thoughts")}>
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>全部</Button>
+          <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>{t("全部", "All")}</Button>
           {allTags.map(({ tag, emoji }) => (
             <Button key={tag} variant={selectedTag === tag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(tag)}>
-              {emoji} {tag}
+              {emoji} {lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}
             </Button>
           ))}
           <div className="flex-1" />
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" }); } }}>
             <DialogTrigger asChild>
-              <Button size="sm"><Plus className="h-4 w-4 mr-1" />新随想</Button>
+              <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("新随想", "New Thought")}</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
-              <DialogHeader><DialogTitle>{editingItem ? "编辑随想" : "新随想"}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingItem ? t("编辑随想", "Edit Thought") : t("新随想", "New Thought")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div className="grid grid-cols-[1fr_60px] gap-2">
-                  <div><Label>标题（可选）</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                  <div><Label>图标</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="😊" className="text-center" /></div>
+                  <div><Label>{t("标题（可选）", "Title (optional)")}</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                  <div><Label>{t("图标", "Icon")}</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="😊" className="text-center" /></div>
                 </div>
-                <div><Label>内容 *（支持 Markdown）</Label><Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} /></div>
+                <div><Label>{t("内容", "Content")} * (Markdown)</Label><Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} /></div>
                 <div>
-                  <Label>标签</Label>
+                  <Label>{t("标签", "Tags")}</Label>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {allTags.map(({ tag, emoji }) => (
                       <Button key={tag} variant={form.tags.includes(tag) ? "default" : "secondary"} size="sm" className="h-7 text-xs" onClick={() => toggleTag(tag)}>
-                        {emoji} {tag}
+                        {emoji} {lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}
                       </Button>
                     ))}
                     {/* Show any form tags not in allTags (newly added) */}
@@ -122,19 +128,19 @@ export default function ThoughtsPage() {
                   </div>
                   <div className="flex gap-2 mt-2">
                     <Input value={form.newTag} onChange={(e) => setForm({ ...form, newTag: e.target.value })}
-                      placeholder="添加新标签" className="flex-1 h-8 text-xs"
+                      placeholder={t("添加新标签", "Add new tag")} className="flex-1 h-8 text-xs"
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomTag())} />
                     <Button size="sm" className="h-8 text-xs" onClick={addCustomTag}>+</Button>
                   </div>
                 </div>
-                <Button onClick={handleSave} className="w-full">保存</Button>
+                <Button onClick={handleSave} className="w-full">{t("保存", "Save")}</Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-muted-foreground text-sm py-8 text-center">暂无随想</p>
+          <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无随想", "No thoughts")}</p>
         ) : (
           /* Masonry layout using CSS columns */
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
@@ -157,7 +163,7 @@ export default function ThoughtsPage() {
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
                     {thought.tags?.map((tag: string) => {
                       const preset = allTags.find((t) => t.tag === tag);
-                      return <Badge key={tag} variant="secondary" className="text-xs">{preset?.emoji || "🏷️"} {tag}</Badge>;
+                      return <Badge key={tag} variant="secondary" className="text-xs">{preset?.emoji || "🏷️"} {lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}</Badge>;
                     })}
                     <span className="text-xs text-muted-foreground ml-auto">{format(new Date(thought.created_at), "MM/dd HH:mm")}</span>
                   </div>

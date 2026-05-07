@@ -1,9 +1,13 @@
 import { AppLayout } from "@/components/AppLayout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles } from "lucide-react";
+import {
+  CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
+  Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
+  ChevronRight, ArrowRight,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLang } from "@/contexts/LanguageContext";
 import {
   useTodaySchedule, useTodayCalorieSummary, useTodayCalorieBreakdown, useMonthFinanceSummary, useFinanceByMonth,
   usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
@@ -13,6 +17,7 @@ import { format } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getGreeting(hour: number): string {
   if (hour < 6) return "凌晨好";
@@ -22,52 +27,109 @@ function getGreeting(hour: number): string {
   return "晚上好";
 }
 
-function KpiTile({
-  label,
-  value,
-  hint,
-  hintTone = "muted",
-}: {
+function getGreetingEn(hour: number): string {
+  if (hour < 6) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 14) return "Good afternoon";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+// Category color config matching justhireme.ai accent palette
+const CAT = {
+  green:  { text: "text-[#5b8c44]", bg: "bg-[#dcead4]", border: "border-[#dcead4]" },
+  blue:   { text: "text-[#5b88b5]", bg: "bg-[#e1eaf4]", border: "border-[#e1eaf4]" },
+  orange: { text: "text-[#d17847]", bg: "bg-[#fce0c8]", border: "border-[#fce0c8]" },
+  teal:   { text: "text-[#5a9da8]", bg: "bg-[#cfe4df]", border: "border-[#cfe4df]" },
+  purple: { text: "text-[#8b7bb8]", bg: "bg-[#e7ddf1]", border: "border-[#e7ddf1]" },
+  yellow: { text: "text-[#c49840]", bg: "bg-[#f5e8b8]", border: "border-[#f5e8b8]" },
+};
+
+function MetricCard({ label, value, hint, color }: {
   label: string;
   value: React.ReactNode;
-  hint?: React.ReactNode;
-  hintTone?: "muted" | "warning" | "success";
+  hint?: string;
+  color?: keyof typeof CAT;
 }) {
-  const hintClass =
-    hintTone === "warning"
-      ? "text-warning"
-      : hintTone === "success"
-      ? "text-success"
-      : "text-muted-foreground";
+  const c = color ? CAT[color] : null;
   return (
-    <Card>
-      <CardContent className="p-3">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-lg font-semibold text-foreground mt-1 leading-tight">{value}</p>
-        {hint !== undefined && hint !== null && (
-          <p className={`text-[11px] mt-1 ${hintClass}`}>{hint}</p>
-        )}
-      </CardContent>
-    </Card>
+    <div className="card-premium p-4 min-w-0">
+      <p className="text-[12px] text-[#8a847a] font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-[28px] font-semibold text-[#1f1a14] leading-tight mt-1 font-mono-data tracking-tight">
+        {value}
+      </p>
+      {hint && (
+        <p className={`text-[11px] mt-1 ${c ? c.text : "text-[#8a847a]"}`}>{hint}</p>
+      )}
+    </div>
   );
 }
 
-function DashboardCard({ title, icon: Icon, children, onClick, className = "" }: { title: string; icon: React.ElementType; children: React.ReactNode; onClick?: () => void; className?: string }) {
+function PipelineRow({ icon, iconColor, title, subtitle, pill, pillColor, onClick }: {
+  icon: React.ReactNode;
+  iconColor: string;
+  title: string;
+  subtitle?: string;
+  pill?: string;
+  pillColor?: keyof typeof CAT;
+  onClick?: () => void;
+}) {
+  const pc = pillColor ? CAT[pillColor] : null;
   return (
-    <Card className={`cursor-pointer hover:border-primary/30 transition-colors ${className}`} onClick={onClick}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Icon className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">{title}</span>
+    <div
+      className="flex items-center gap-3 px-4 py-3 hover:bg-[#f4f3ee] rounded-lg transition-colors cursor-pointer group"
+      onClick={onClick}
+    >
+      <div className={`h-8 w-8 rounded-lg ${iconColor} flex items-center justify-center shrink-0`}>
+        {icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-medium text-[#1f1a14] truncate">{title}</p>
+        {subtitle && <p className="text-[11px] text-[#8a847a] truncate">{subtitle}</p>}
+      </div>
+      {pill && pc && (
+        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${pc.bg} ${pc.text} shrink-0`}>
+          {pill}
+        </span>
+      )}
+      <ChevronRight className="h-3.5 w-3.5 text-[#e4e1d7] group-hover:text-[#8a847a] transition-colors shrink-0" />
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, description, status, statusColor, onClick }: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  status?: string;
+  statusColor?: keyof typeof CAT;
+  onClick?: () => void;
+}) {
+  const sc = statusColor ? CAT[statusColor] : null;
+  return (
+    <div
+      className="card-premium p-4 cursor-pointer group"
+      onClick={onClick}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div className="h-8 w-8 rounded-lg bg-[#f4f3ee] flex items-center justify-center">
+          {icon}
         </div>
-        {children}
-      </CardContent>
-    </Card>
+        {status && sc && (
+          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
+            {status}
+          </span>
+        )}
+      </div>
+      <p className="text-[13px] font-semibold text-[#1f1a14] mt-2">{title}</p>
+      <p className="text-[11px] text-[#8a847a] mt-0.5 leading-relaxed">{description}</p>
+    </div>
   );
 }
 
 export default function DashboardPage() {
   const navigate = useNavigate();
+  const { t, lang } = useLang();
   const now = new Date();
   const { data: settings } = useSettings();
   const { data: todayEvents = [] } = useTodaySchedule();
@@ -93,7 +155,7 @@ export default function DashboardPage() {
   const totalSpending = financeSummary?.total || 0;
   const urgentTodos = pendingTodos.filter((t: any) => t.importance === "紧急");
 
-  // ----- KPI strip derived values -----
+  // KPI strip derived values
   const todayStr = format(now, "yyyy-MM-dd");
   const todayFinanceTotal = (monthFinanceRecords as any[])
     .filter((r) => r.date === todayStr)
@@ -109,8 +171,16 @@ export default function DashboardPage() {
     : 0;
   const remainingCalories = calorieTarget - todayCalories;
 
-  const greeting = getGreeting(now.getHours());
-  const dateLabel = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${WEEKDAYS_ZH[now.getDay()]}`;
+  const displayName = settings?.display_name?.trim();
+  const greeting = displayName
+    ? (lang === "zh"
+        ? `${displayName}，${getGreeting(now.getHours())}`
+        : `${getGreetingEn(now.getHours())}, ${displayName}`)
+    : (lang === "zh" ? getGreeting(now.getHours()) : getGreetingEn(now.getHours()));
+  const weekdays = lang === "zh" ? WEEKDAYS_ZH : WEEKDAYS_EN;
+  const dateLabel = lang === "zh"
+    ? `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`
+    : `${weekdays[now.getDay()]}, ${now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
   // Fasting calculation
   const fastingStartHour = settings?.fasting_start_hour ?? 12;
@@ -126,283 +196,407 @@ export default function DashboardPage() {
     ? todayEvents.find((e: any) => new Date(e.start_time) > now) || todayEvents[0]
     : null;
 
+  // Weight trend data
+  const latestWeight = weightTrend.length > 0 ? Number(weightTrend[weightTrend.length - 1]?.weight) : null;
+  const weightDiff = weightTrend.length >= 2
+    ? Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight)
+    : null;
+
+  // Expiring pantry count
+  const expiringSoonCount = expiringPantry.filter((item: any) => {
+    if (!item.expiry_date) return false;
+    const days = Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / 86400000);
+    return days <= 3;
+  }).length;
+
   return (
-    <AppLayout title="首页概览">
-      <div className="space-y-6 max-w-7xl">
-        {/* Hero band */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{greeting}</h1>
-            <p className="text-sm text-muted-foreground mt-1">{dateLabel}</p>
+    <AppLayout title={t("首页概览", "Dashboard")}>
+      <div className="space-y-10">
+
+        {/* ── Hero Section ── */}
+        <section>
+          <h1
+            className="font-bold text-[#1f1a14] leading-[1.1] tracking-tight heading-font"
+            style={{ fontSize: "clamp(34px, 4.8vw, 64px)" }}
+          >
+            {greeting}
+          </h1>
+          <p className="text-[14px] text-[#8a847a] mt-2">{dateLabel}</p>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {[t("日程", "Schedule"), t("记账", "Finance"), t("热量", "Calories"), t("待办", "To-Do"), t("目标", "Goals"), t("项目", "Projects")].map((tag) => (
+              <span
+                key={tag}
+                className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white border border-[#e4e1d7] text-[#8a847a]"
+              >
+                {tag}
+              </span>
+            ))}
           </div>
-        </div>
+        </section>
 
-        {/* KPI strip */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <KpiTile
-            label="今日日程"
-            value={todayEvents.length}
-            hint={nextEvent ? `下一个 ${format(new Date((nextEvent as any).start_time), "HH:mm")}` : "暂无安排"}
-          />
-          <KpiTile
-            label="今日支出"
-            value={`¥${todayFinanceTotal.toFixed(0)}`}
-            hint={`本月 ¥${totalSpending.toFixed(0)}`}
-          />
-          <KpiTile
-            label="剩余热量"
-            value={`${remainingCalories} kcal`}
-            hint={`目标 ${calorieTarget}`}
-            hintTone={remainingCalories < 0 ? "warning" : "muted"}
-          />
-          <KpiTile
-            label="待办完成"
-            value={`${completedTodos}/${totalTodos}`}
-            hint={overdueTodoCount > 0 ? `${overdueTodoCount} 项逾期` : "暂无逾期"}
-            hintTone={overdueTodoCount > 0 ? "warning" : "muted"}
-          />
-          <KpiTile
-            label="本周目标"
-            value={`${completedGoals}/${weekGoals.length}`}
-            hint={`${goalProgressPct}% 完成`}
-            hintTone={goalProgressPct >= 50 ? "success" : "muted"}
-          />
-        </div>
+        {/* ── Metric Strip ── */}
+        <section>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <MetricCard
+              label={t("今日日程", "Today's Schedule")}
+              value={todayEvents.length}
+              hint={nextEvent ? `${format(new Date((nextEvent as any).start_time), "HH:mm")}` : t("暂无安排", "No events")}
+              color="blue"
+            />
+            <MetricCard
+              label={t("今日支出", "Today's Spending")}
+              value={`¥${todayFinanceTotal.toFixed(0)}`}
+              hint={lang === "zh" ? `本月 ¥${totalSpending.toFixed(0)}` : `This month ¥${totalSpending.toFixed(0)}`}
+              color="orange"
+            />
+            <MetricCard
+              label={t("剩余热量", "Remaining")}
+              value={remainingCalories}
+              hint={`${todayCalories} / ${calorieTarget} kcal`}
+              color={remainingCalories < 0 ? "orange" : "green"}
+            />
+            <MetricCard
+              label={t("待办进度", "To-Do Progress")}
+              value={`${completedTodos}/${totalTodos}`}
+              hint={overdueTodoCount > 0 ? `${overdueTodoCount} ${t("项逾期", "overdue")}` : t("无逾期", "No overdue")}
+              color={overdueTodoCount > 0 ? "orange" : "green"}
+            />
+            <MetricCard
+              label={t("本周目标", "Weekly Goals")}
+              value={`${goalProgressPct}%`}
+              hint={`${completedGoals}/${weekGoals.length} ${t("已完成", "done")}`}
+              color={goalProgressPct >= 50 ? "green" : "blue"}
+            />
+            <MetricCard
+              label={t("活跃项目", "Active Projects")}
+              value={activeProjects.length}
+              hint={`${t("平均进度", "Avg progress")} ${avgProgress}%`}
+              color="purple"
+            />
+          </div>
+        </section>
 
-        {/* 12-col card grid */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <DashboardCard title="今日日程" icon={CalendarDays} onClick={() => navigate("/schedule")} className="md:col-span-6">
-            {todayEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无安排</p>
-            ) : (
-              <div className="space-y-2">
-                {todayEvents.slice(0, 3).map((e: any) => (
-                  <div key={e.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
-                      <span className="text-sm text-foreground truncate">{e.title}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground shrink-0 ml-2">
-                      {format(new Date(e.start_time), "HH:mm")}
-                    </span>
-                  </div>
-                ))}
-                {todayEvents.length > 3 && (
-                  <p className="text-[10px] text-muted-foreground">+{todayEvents.length - 3} 个日程</p>
-                )}
-              </div>
-            )}
-          </DashboardCard>
+        {/* ── Pipeline Section: 今日概览 ── */}
+        <section>
+          <div className="flex items-baseline justify-between mb-4">
+            <div>
+              <h2
+                className="font-bold text-[#1f1a14] leading-tight heading-font"
+                style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
+              >
+                {t("今日概览", "Today's Overview")}
+              </h2>
+              <p className="text-[12px] text-[#8a847a] mt-1">{t("日程与待办事项", "Schedule & To-Dos")}</p>
+            </div>
+          </div>
 
-          <DashboardCard title="待办事项" icon={CheckSquare} onClick={() => navigate("/todos")} className="md:col-span-6">
-            {pendingTodos.length === 0 ? (
-              <p className="text-sm text-muted-foreground">无待办</p>
-            ) : (
-              <div className="space-y-2">
-                {pendingTodos.slice(0, 3).map((t: any) => (
-                  <div key={t.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-sm text-foreground truncate">{t.title}</span>
-                    </div>
-                    <Badge
-                      variant={t.importance === "紧急" ? "destructive" : "secondary"}
-                      className="text-[10px] px-1.5 py-0 shrink-0 ml-2"
-                    >
-                      {t.importance}
-                    </Badge>
-                  </div>
-                ))}
-                {pendingTodos.length > 3 && (
-                  <p className="text-[10px] text-muted-foreground">+{pendingTodos.length - 3} 个待办</p>
-                )}
-              </div>
-            )}
-          </DashboardCard>
-
-          <DashboardCard title="本月支出" icon={Wallet} onClick={() => navigate("/finance")} className="md:col-span-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="font-medium">¥{totalSpending.toFixed(2)}</span>
-                <span className="text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
-              </div>
-              <Progress value={Math.min(100, (totalSpending / budget) * 100)} className="h-2" />
-              {(monthFinanceRecords as any[]).length > 0 && (
-                <div className="space-y-1 pt-1">
-                  {(monthFinanceRecords as any[]).slice(0, 3).map((r) => (
-                    <div key={r.id} className="flex justify-between text-xs">
-                      <span className="text-muted-foreground truncate max-w-[60%]">{r.description || r.category}</span>
-                      <span className="text-foreground">¥{Number(r.amount_cny).toFixed(0)}</span>
-                    </div>
-                  ))}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Today's Schedule */}
+            <div className="card-premium overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-[#5b88b5]" />
+                  <span className="text-[14px] font-semibold text-[#1f1a14]">{t("今日日程", "Today's Schedule")}</span>
                 </div>
-              )}
-            </div>
-          </DashboardCard>
-
-          <DashboardCard title="今日热量" icon={Flame} onClick={() => navigate("/calories")} className="md:col-span-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{todayCalories} / {calorieTarget} kcal</span>
-                <span className="text-muted-foreground">{Math.round((todayCalories / calorieTarget) * 100)}%</span>
+                <button
+                  onClick={() => navigate("/schedule")}
+                  className="text-[11px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center gap-0.5"
+                >
+                  {t("查看全部", "View all")} <ArrowRight className="h-3 w-3" />
+                </button>
               </div>
-              <Progress value={Math.min(100, (todayCalories / calorieTarget) * 100)} className="h-2" />
-              {Object.keys(calorieBreakdown).length > 0 && (
-                <div className="flex flex-wrap gap-1 pt-1">
-                  {Object.entries(calorieBreakdown).map(([meal, cals]) => (
-                    <Badge key={meal} variant="outline" className="text-[10px] px-1.5 py-0">
-                      {meal} {Number(cals).toFixed(0)}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-          </DashboardCard>
-
-          <DashboardCard title="16+8 断食" icon={Timer} onClick={() => navigate("/weight-loss")} className="md:col-span-4">
-            <div className="space-y-1">
-              <p className={`text-lg font-semibold ${isEatingWindow ? "text-success" : "text-destructive"}`}>
-                {isEatingWindow ? "🟢 进食窗口" : "🔴 断食中"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                进食: {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
-              </p>
-            </div>
-          </DashboardCard>
-
-          <DashboardCard title="项目管理" icon={Kanban} onClick={() => navigate("/projects")} className="md:col-span-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{activeProjects.length} 个活跃项目</span>
-                <span className="text-muted-foreground">{avgProgress}%</span>
-              </div>
-              <Progress value={avgProgress} className="h-2" />
-            </div>
-          </DashboardCard>
-
-          <DashboardCard title="本周目标" icon={Target} onClick={() => navigate("/goals")} className="md:col-span-4">
-            {weekGoals.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无本周目标</p>
-            ) : (
-              <div className="space-y-1">
-                {weekGoals.slice(0, 3).map((g: any) => (
-                  <p key={g.id} className={`text-xs ${g.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                    {g.is_completed ? "✓ " : "○ "}{g.title}
-                  </p>
-                ))}
-                {weekGoals.length > 3 && <p className="text-[10px] text-muted-foreground">+{weekGoals.length - 3} 个目标</p>}
-              </div>
-            )}
-          </DashboardCard>
-
-          <DashboardCard title="体重趋势" icon={TrendingDown} onClick={() => navigate("/weight-loss")} className="md:col-span-4">
-            {weightTrend.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无记录</p>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex items-baseline justify-between">
-                  <p className="text-2xl font-semibold">{Number(weightTrend[weightTrend.length - 1]?.weight).toFixed(1)} kg</p>
-                  {weightTrend.length >= 2 && (() => {
-                    const diff = Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight);
-                    return <p className={`text-xs ${diff <= 0 ? "text-success" : "text-destructive"}`}>
-                      近{weightTrend.length}次 {diff > 0 ? "+" : ""}{diff.toFixed(1)} kg
-                    </p>;
-                  })()}
-                </div>
-                {weightTrend.length >= 2 && (
-                  <div className="h-16">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={weightTrend.map((w: any) => ({ date: w.date, weight: Number(w.weight) }))}>
-                        <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+              <div className="py-1">
+                {todayEvents.length === 0 ? (
+                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">{t("暂无安排", "No events")}</p>
+                ) : (
+                  todayEvents.slice(0, 5).map((e: any) => (
+                    <PipelineRow
+                      key={e.id}
+                      icon={<CalendarDays className="h-4 w-4 text-[#5b88b5]" />}
+                      iconColor="bg-[#e1eaf4]"
+                      title={e.title}
+                      subtitle={format(new Date(e.start_time), "HH:mm")}
+                      pill={e.importance === "重要" ? t("重要", "Important") : undefined}
+                      pillColor="orange"
+                      onClick={() => navigate("/schedule")}
+                    />
+                  ))
                 )}
               </div>
-            )}
-          </DashboardCard>
+            </div>
 
-          <DashboardCard title="食材库存" icon={Carrot} onClick={() => navigate("/pantry")} className="md:col-span-3">
-            {expiringPantry.length === 0 ? (
-              <p className="text-sm text-muted-foreground">无即将过期食材</p>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">即将过期</p>
-                {expiringPantry.slice(0, 3).map((item: any) => {
-                  const daysLeft = item.expiry_date
-                    ? Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / 86400000)
-                    : null;
-                  return (
-                    <div key={item.id} className="flex items-center justify-between">
-                      <span className="text-sm text-foreground truncate max-w-[70%]">{item.name}</span>
-                      <span className={`text-xs ${daysLeft !== null && daysLeft <= 1 ? "text-destructive" : "text-warning"}`}>
-                        {daysLeft !== null ? `${daysLeft} 天` : "未知"}
-                      </span>
-                    </div>
-                  );
-                })}
-                {expiringPantry.length > 3 && (
-                  <p className="text-[10px] text-muted-foreground">+{expiringPantry.length - 3} 个食材</p>
+            {/* Pending Todos */}
+            <div className="card-premium overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 text-[#5b8c44]" />
+                  <span className="text-[14px] font-semibold text-[#1f1a14]">{t("待办事项", "To-Dos")}</span>
+                </div>
+                <button
+                  onClick={() => navigate("/todos")}
+                  className="text-[11px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center gap-0.5"
+                >
+                  {t("查看全部", "View all")} <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+              <div className="py-1">
+                {pendingTodos.length === 0 ? (
+                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">{t("无待办事项", "No to-dos")}</p>
+                ) : (
+                  pendingTodos.slice(0, 5).map((todo: any) => (
+                    <PipelineRow
+                      key={todo.id}
+                      icon={<CheckSquare className="h-4 w-4 text-[#5b8c44]" />}
+                      iconColor="bg-[#dcead4]"
+                      title={todo.title}
+                      subtitle={todo.category || undefined}
+                      pill={todo.importance === "紧急" ? t("紧急", "Urgent") : todo.importance === "重要" ? t("重要", "Important") : undefined}
+                      pillColor={todo.importance === "紧急" ? "orange" : todo.importance === "重要" ? "yellow" : undefined}
+                      onClick={() => navigate("/todos")}
+                    />
+                  ))
                 )}
               </div>
-            )}
-          </DashboardCard>
+            </div>
+          </div>
+        </section>
 
-          <DashboardCard title="超值用品" icon={Package} onClick={() => navigate("/belongings")} className="md:col-span-3">
-            {overdueDurables.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无超值用品</p>
-            ) : (
-              <div className="space-y-1">
-                {overdueDurables.slice(0, 2).map((item: any) => {
-                  const daysUsed = Math.floor((Date.now() - new Date(item.purchase_date).getTime()) / 86400000);
-                  const saved = (item.purchase_price / item.expected_lifespan_days) * (daysUsed - item.expected_lifespan_days);
-                  return <p key={item.id} className="text-xs text-success">✅ {item.name} 已省 ¥{saved.toFixed(0)}</p>;
-                })}
+        {/* ── Workflow Section: 生活模块 ── */}
+        <section>
+          <div className="flex items-baseline justify-between mb-4">
+            <div>
+              <h2
+                className="font-bold text-[#1f1a14] leading-tight heading-font"
+                style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
+              >
+                {t("生活模块", "Life Modules")}
+              </h2>
+              <p className="text-[12px] text-[#8a847a] mt-1">{t("管理你的日常生活", "Manage your daily life")}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <FeatureCard
+              icon={<CalendarDays className="h-4 w-4 text-[#5b88b5]" />}
+              title={t("日程计划", "Schedule")}
+              description={`${todayEvents.length} ${lang === "zh" ? "个今日日程" : "events today"}`}
+              status={todayEvents.length > 0 ? `${todayEvents.length}` : undefined}
+              statusColor="blue"
+              onClick={() => navigate("/schedule")}
+            />
+            <FeatureCard
+              icon={<Wallet className="h-4 w-4 text-[#d17847]" />}
+              title={t("记账", "Finance")}
+              description={lang === "zh" ? `本月 ¥${totalSpending.toFixed(0)}` : `This month ¥${totalSpending.toFixed(0)}`}
+              status={totalSpending > budget ? t("超支", "Over") : undefined}
+              statusColor="orange"
+              onClick={() => navigate("/finance")}
+            />
+            <FeatureCard
+              icon={<Flame className="h-4 w-4 text-[#d17847]" />}
+              title={t("热量记录", "Calories")}
+              description={`${todayCalories} / ${calorieTarget} kcal`}
+              status={remainingCalories < 0 ? t("超额", "Over") : undefined}
+              statusColor="orange"
+              onClick={() => navigate("/calories")}
+            />
+            <FeatureCard
+              icon={<CheckSquare className="h-4 w-4 text-[#5b8c44]" />}
+              title={t("待办事项", "To-Dos")}
+              description={`${pendingTodos.length} ${lang === "zh" ? "个待完成" : "pending"}`}
+              status={urgentTodos.length > 0 ? `${urgentTodos.length} ${t("紧急", "urgent")}` : undefined}
+              statusColor="orange"
+              onClick={() => navigate("/todos")}
+            />
+            <FeatureCard
+              icon={<Carrot className="h-4 w-4 text-[#c49840]" />}
+              title={t("食材管理", "Pantry")}
+              description={expiringSoonCount > 0 ? `${expiringSoonCount} ${t("个即将过期", "expiring soon")}` : t("库存充足", "Well stocked")}
+              status={expiringSoonCount > 0 ? `${expiringSoonCount}` : undefined}
+              statusColor="yellow"
+              onClick={() => navigate("/pantry")}
+            />
+            <FeatureCard
+              icon={<Package className="h-4 w-4 text-[#c49840]" />}
+              title={t("用品管理", "Belongings")}
+              description={overdueDurables.length > 0 ? `${overdueDurables.length} ${t("个超值用品", "expiring soon")}` : t("暂无记录", "No records")}
+              onClick={() => navigate("/belongings")}
+            />
+            <FeatureCard
+              icon={<Target className="h-4 w-4 text-[#5b8c44]" />}
+              title={t("目标", "Goals")}
+              description={`${completedGoals}/${weekGoals.length} ${t("本周已完成", "done this week")}`}
+              status={goalProgressPct > 0 ? `${goalProgressPct}%` : undefined}
+              statusColor="green"
+              onClick={() => navigate("/goals")}
+            />
+            <FeatureCard
+              icon={<Kanban className="h-4 w-4 text-[#5b88b5]" />}
+              title={t("项目管理", "Projects")}
+              description={`${activeProjects.length} ${t("个活跃项目", "active projects")}`}
+              status={avgProgress > 0 ? `${avgProgress}%` : undefined}
+              statusColor="blue"
+              onClick={() => navigate("/projects")}
+            />
+            <FeatureCard
+              icon={<TrendingDown className="h-4 w-4 text-[#5a9da8]" />}
+              title={t("减肥专项", "Weight Loss")}
+              description={latestWeight ? `${latestWeight.toFixed(1)} kg` : t("暂无记录", "No records")}
+              status={weightDiff !== null ? `${weightDiff > 0 ? "+" : ""}${weightDiff.toFixed(1)}` : undefined}
+              statusColor={weightDiff !== null && weightDiff <= 0 ? "teal" : "orange"}
+              onClick={() => navigate("/weight-loss")}
+            />
+            <FeatureCard
+              icon={<Lightbulb className="h-4 w-4 text-[#8b7bb8]" />}
+              title={t("随想", "Thoughts")}
+              description={recentThoughts.length > 0 ? `${recentThoughts.length} ${t("条最近记录", "recent records")}` : t("暂无随想", "No thoughts")}
+              onClick={() => navigate("/thoughts")}
+            />
+          </div>
+        </section>
+
+        {/* ── Intelligence Layer: 数据洞察 ── */}
+        <section>
+          <div className="flex items-baseline justify-between mb-4">
+            <div>
+              <h2
+                className="font-bold text-[#1f1a14] leading-tight heading-font"
+                style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
+              >
+                {t("数据洞察", "Data Insights")}
+              </h2>
+              <p className="text-[12px] text-[#8a847a] mt-1">{t("关键数据一目了然", "Key metrics at a glance")}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Weight Trend */}
+            <div
+              className="card-premium p-4 cursor-pointer"
+              onClick={() => navigate("/weight-loss")}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingDown className="h-4 w-4 text-[#5a9da8]" />
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("体重趋势", "Weight Trend")}</span>
               </div>
-            )}
-          </DashboardCard>
-
-          <DashboardCard title="最近随想" icon={Lightbulb} onClick={() => navigate("/thoughts")} className="md:col-span-6">
-            {recentThoughts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">暂无随想</p>
-            ) : (
-              <div className="space-y-2">
-                {recentThoughts.map((t: any) => (
-                  <div key={t.id}>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {t.icon} {t.title || t.content.slice(0, 40)}
+              {weightTrend.length === 0 ? (
+                <p className="text-[13px] text-[#8a847a]">{t("暂无记录", "No records")}</p>
+              ) : (
+                <div>
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
+                      {latestWeight?.toFixed(1)} <span className="text-[12px] text-[#8a847a] font-normal">kg</span>
                     </p>
-                    {t.tags?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-0.5">
-                        {t.tags.map((tag: string) => (
-                          <Badge key={tag} variant="outline" className="text-[10px] px-1 py-0">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+                    {weightDiff !== null && (
+                      <span className={`text-[11px] font-medium ${weightDiff <= 0 ? "text-[#5a9da8]" : "text-[#d17847]"}`}>
+                        {weightDiff > 0 ? "+" : ""}{weightDiff.toFixed(1)} kg
+                      </span>
                     )}
                   </div>
-                ))}
-              </div>
-            )}
-          </DashboardCard>
-        </div>
+                  {weightTrend.length >= 2 && (
+                    <div className="h-10 mt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={weightTrend.map((w: any) => ({ date: w.date, weight: Number(w.weight) }))}>
+                          <Line type="monotone" dataKey="weight" stroke="#5a9da8" strokeWidth={2} dot={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
-        {/* AI assistant promo */}
+            {/* Monthly Spending */}
+            <div
+              className="card-premium p-4 cursor-pointer"
+              onClick={() => navigate("/finance")}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Wallet className="h-4 w-4 text-[#d17847]" />
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("本月支出", "Monthly Spending")}</span>
+              </div>
+              <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
+                ¥{totalSpending.toFixed(0)}
+                <span className="text-[12px] text-[#8a847a] font-normal"> / ¥{budget.toLocaleString()}</span>
+              </p>
+              <Progress
+                value={Math.min(100, (totalSpending / budget) * 100)}
+                className="h-1 mt-3"
+              />
+              <p className="text-[11px] text-[#8a847a] mt-1">
+                {Math.round((totalSpending / budget) * 100)}% {t("已使用", "used")}
+              </p>
+            </div>
+
+            {/* Fasting Status */}
+            <div
+              className="card-premium p-4 cursor-pointer"
+              onClick={() => navigate("/weight-loss")}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Timer className="h-4 w-4 text-[#5a9da8]" />
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("16+8 断食", "16+8 Fasting")}</span>
+              </div>
+              <p className={`text-[20px] font-semibold ${isEatingWindow ? "text-[#5b8c44]" : "text-[#d17847]"}`}>
+                {isEatingWindow ? t("进食窗口", "Eating Window") : t("断食中", "Fasting")}
+              </p>
+              <p className="text-[11px] text-[#8a847a] mt-1">
+                {t("进食:", "Eating:")} {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
+              </p>
+            </div>
+
+            {/* Expiring Pantry */}
+            <div
+              className="card-premium p-4 cursor-pointer"
+              onClick={() => navigate("/pantry")}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Carrot className="h-4 w-4 text-[#c49840]" />
+                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("食材预警", "Pantry Alert")}</span>
+              </div>
+              {expiringPantry.length === 0 ? (
+                <p className="text-[13px] text-[#8a847a]">{t("无即将过期食材", "No expiring items")}</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {expiringPantry.slice(0, 3).map((item: any) => {
+                    const daysLeft = item.expiry_date
+                      ? Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / 86400000)
+                      : null;
+                    return (
+                      <div key={item.id} className="flex items-center justify-between">
+                        <span className="text-[13px] text-[#1f1a14] truncate max-w-[70%]">{item.name}</span>
+                        <span className={`text-[11px] font-medium ${daysLeft !== null && daysLeft <= 1 ? "text-[#d17847]" : "text-[#c49840]"}`}>
+                          {daysLeft !== null ? `${daysLeft} ${t("天", "d")}` : t("未知", "Unknown")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {expiringPantry.length > 3 && (
+                    <p className="text-[11px] text-[#8a847a]">+{expiringPantry.length - 3} {t("个食材", "items")}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ── AI Assistant Promo ── */}
         <div
-          className="flex items-center gap-3 p-4 rounded-lg border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
+          className="flex items-center gap-3 p-4 rounded-[9px] border border-[#e4e1d7] bg-white cursor-pointer hover:border-[#c8c5bb] transition-colors"
           onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
         >
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
-          >
-            <Sparkles className="h-5 w-5 text-primary" />
+          <div className="h-10 w-10 rounded-lg bg-[#e7ddf1] flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-[#8b7bb8]" />
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">AI 助手</p>
-            <p className="text-xs text-muted-foreground truncate">
-              点击打开 AI 助手，快速记录日程、记账、添加待办...
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px] font-semibold text-[#1f1a14]">{t("AI 助手", "AI Assistant")}</p>
+            <p className="text-[11px] text-[#8a847a] truncate">
+              {t("点击打开 AI 助手，快速记录日程、记账、添加待办...", "Open AI assistant for quick schedule, finance, and to-do entries...")}
             </p>
           </div>
+          <ChevronRight className="h-4 w-4 text-[#e4e1d7] shrink-0" />
         </div>
+
       </div>
     </AppLayout>
   );

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from "react";
+import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { GoalsBall } from "@/components/schedule/GoalsBall";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import { DayColumn } from "@/components/schedule/DayColumn";
 import { MonthView } from "@/components/schedule/MonthView";
 import { HOUR_HEIGHT, VISIBLE_START, TOTAL_HOURS, IMPORTANCE_COLORS, timeToY } from "@/components/schedule/EventBlock";
 
-const STATUS_OPTIONS = ["未开始", "进行中", "已完成", "已取消"];
 type ViewMode = "3day" | "week" | "month";
 
 // Generate recurring instances from a master event's recurrence rule
@@ -87,6 +87,7 @@ function generateInstances(
 }
 
 export default function SchedulePage() {
+  const { t, lang } = useLang();
   const [baseDate, setBaseDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
   const [viewMode, setViewMode] = useState<ViewMode>("3day");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -154,7 +155,7 @@ export default function SchedulePage() {
 
   const handleSave = async () => {
     if (!form.title || !form.start_date || !form.end_date) {
-      toast({ title: "请填写标题和时间", variant: "destructive" }); return;
+      toast({ title: t("请填写标题和时间", "Please fill in title and time"), variant: "destructive" }); return;
     }
     try {
       const startTime = new Date(`${form.start_date}T${form.start_time}:00`);
@@ -229,7 +230,7 @@ export default function SchedulePage() {
             },
             instances,
           });
-          toast({ title: `已创建重复事件，共 ${instances.length + 1} 条` });
+          toast({ title: t("已创建重复事件，共", "Created recurring events,") + ` ${instances.length + 1} ` + t("条", "total") });
         } else {
           await createMutation.mutateAsync({
             ...basePayload,
@@ -240,7 +241,7 @@ export default function SchedulePage() {
         }
       }
       setDialogOpen(false); setEditingItem(null); resetForm();
-    } catch (e: any) { toast({ title: "保存失败", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
   };
 
   const openEdit = useCallback((event: any) => {
@@ -272,7 +273,7 @@ export default function SchedulePage() {
     if (isSeries) {
       // Delete entire series
       await deleteSeriesMutation.mutateAsync(masterId);
-      toast({ title: "已删除整个重复系列" });
+      toast({ title: t("已删除整个重复系列", "Entire recurring series deleted") });
     } else {
       await deleteMutation.mutateAsync(editingItem.id);
     }
@@ -319,7 +320,7 @@ export default function SchedulePage() {
   }
 
   const headerLabel = viewMode === "month"
-    ? format(baseDate, "yyyy年M月", { locale: zhCN })
+    ? (lang === "zh" ? format(baseDate, "yyyy年M月", { locale: zhCN }) : format(baseDate, "MMMM yyyy"))
     : `${format(days[0], "M/d")} – ${format(days[days.length - 1], "M/d")}`;
 
   const gridCols = viewMode === "week" ? "grid-cols-[40px_repeat(7,1fr)]" : "grid-cols-[50px_1fr_1fr_1fr]";
@@ -332,12 +333,12 @@ export default function SchedulePage() {
   })();
 
   return (
-    <AppLayout title="日程计划">
+    <AppLayout title={t("日程计划", "Schedule")}>
       <div className="space-y-4">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goBack}><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="secondary" size="sm" onClick={goToday}>今天</Button>
+          <Button variant="secondary" size="sm" onClick={goToday}>{t("今天", "Today")}</Button>
           <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goForward}><ChevronRight className="h-4 w-4" /></Button>
           <span className="text-sm font-medium text-foreground min-w-[100px]">{headerLabel}</span>
           <div className="flex-1" />
@@ -347,64 +348,69 @@ export default function SchedulePage() {
               <Button key={mode} variant={viewMode === mode ? "default" : "ghost"} size="sm"
                 className="h-7 text-xs px-3"
                 onClick={() => setViewMode(mode)}>
-                {{ "3day": "3天", "week": "周", "month": "月" }[mode]}
+                {{ "3day": t("3天", "3 Day"), "week": t("周", "Week"), "month": t("月", "Month") }[mode]}
               </Button>
             ))}
           </div>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); resetForm(); } }}>
             <DialogTrigger asChild>
-              <Button size="sm" className="shrink-0" onClick={resetForm}><Plus className="h-4 w-4 mr-1" />新建</Button>
+              <Button size="sm" className="shrink-0" onClick={resetForm}><Plus className="h-4 w-4 mr-1" />{t("新建", "New")}</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>{editingItem ? "编辑事件" : "新建事件"}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>标题 *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                <div><Label>{t("标题", "Title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>开始日期 *</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value, end_date: e.target.value })} /></div>
-                  <div><Label>开始时间</Label><Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
+                  <div><Label>{t("开始日期", "Start Date")} *</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value, end_date: e.target.value })} /></div>
+                  <div><Label>{t("开始时间", "Start Time")}</Label><Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>结束日期 *</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
-                  <div><Label>结束时间</Label><Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
+                  <div><Label>{t("结束日期", "End Date")} *</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
+                  <div><Label>{t("结束时间", "End Time")}</Label><Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>重要性</Label>
+                  <div><Label>{t("重要性", "Importance")}</Label>
                     <Select value={form.importance} onValueChange={(v) => setForm({ ...form, importance: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{Object.keys(IMPORTANCE_COLORS).map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}</SelectContent>
+                      <SelectContent>{Object.keys(IMPORTANCE_COLORS).map((k) => <SelectItem key={k} value={k}>{t(k, { "紧急": "Urgent", "重要": "Important", "普通": "Normal", "低": "Low" }[k] || k)}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div><Label>状态</Label>
+                  <div><Label>{t("状态", "Status")}</Label>
                     <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                      <SelectContent>
+                        <SelectItem value="未开始">{t("未开始", "Not Started")}</SelectItem>
+                        <SelectItem value="进行中">{t("进行中", "In Progress")}</SelectItem>
+                        <SelectItem value="已完成">{t("已完成", "Completed")}</SelectItem>
+                        <SelectItem value="已取消">{t("已取消", "Cancelled")}</SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <div><Label>备注</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <div>
-                  <Label>自定义颜色（可选）</Label>
+                  <Label>{t("自定义颜色（可选）", "Custom Color (optional)")}</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Input type="color" value={form.color || "#0ea5e9"} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-8 p-0.5 cursor-pointer" />
-                    <span className="text-xs text-muted-foreground">{form.color || "使用默认颜色"}</span>
-                    {form.color && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setForm({ ...form, color: "" })}>清除</Button>}
+                    <span className="text-xs text-muted-foreground">{form.color || t("使用默认颜色", "Use default")}</span>
+                    {form.color && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setForm({ ...form, color: "" })}>{t("清除", "Clear")}</Button>}
                   </div>
                 </div>
                 {/* Recurrence */}
                 <div>
-                  <Label>重复</Label>
+                  <Label>{t("重复", "Repeat")}</Label>
                   <Select value={form.recurrence_type} onValueChange={(v) => setForm({ ...form, recurrence_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">不重复</SelectItem>
-                      <SelectItem value="daily">每天</SelectItem>
-                      <SelectItem value="weekly">每周</SelectItem>
-                      <SelectItem value="monthly">每月</SelectItem>
+                      <SelectItem value="none">{t("不重复", "No repeat")}</SelectItem>
+                      <SelectItem value="daily">{t("每天", "Daily")}</SelectItem>
+                      <SelectItem value="weekly">{t("每周", "Weekly")}</SelectItem>
+                      <SelectItem value="monthly">{t("每月", "Monthly")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {form.recurrence_type === "weekly" && (
                     <div className="flex gap-1 mt-2">
-                      {["一","二","三","四","五","六","日"].map((d, i) => {
+                      {(lang === "zh" ? ["一","二","三","四","五","六","日"] : ["M","T","W","T","F","S","S"]).map((d, i) => {
                         const dayNum = i + 1;
                         const selected = form.recurrence_days.includes(dayNum);
                         return (
@@ -418,13 +424,13 @@ export default function SchedulePage() {
                   )}
                   {form.recurrence_type !== "none" && (
                     <div className="mt-2">
-                      <Label className="text-xs">结束日期（可选，不填则生成未来12个月）</Label>
+                      <Label className="text-xs">{t("结束日期（可选，不填则生成未来12个月）", "End date (optional, defaults to 12 months)")}</Label>
                       <Input type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={handleSave} className="flex-1">保存{editingIsSeries ? "（整个系列）" : ""}</Button>
+                  <Button onClick={handleSave} className="flex-1">{t("保存", "Save")}{editingIsSeries ? t("（整个系列）", " (entire series)") : ""}</Button>
                   {editingItem && (
                     <Button variant="destructive" size="icon" onClick={handleDelete}>
                       <Trash2 className="h-4 w-4" />
@@ -432,7 +438,7 @@ export default function SchedulePage() {
                   )}
                 </div>
                 {editingIsSeries && (
-                  <p className="text-xs text-muted-foreground text-center">编辑或删除将影响整个重复系列</p>
+                  <p className="text-xs text-muted-foreground text-center">{t("编辑或删除将影响整个重复系列", "Editing or deleting will affect the entire recurring series")}</p>
                 )}
               </div>
             </DialogContent>
@@ -452,8 +458,8 @@ export default function SchedulePage() {
                 const isToday = format(d, "yyyy-MM-dd") === todayStr;
                 return (
                   <div key={d.toISOString()} className="p-1.5 text-center border-l border-border">
-                    <div className="text-[10px] text-muted-foreground">{format(d, "EEE", { locale: zhCN })}</div>
-                    <div className={`text-xs font-medium ${isToday ? "bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center mx-auto" : ""}`}>
+                    <div className="text-[10px] text-muted-foreground">{format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}</div>
+                    <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : ""}`}>
                       {format(d, "dd")}
                     </div>
                   </div>
