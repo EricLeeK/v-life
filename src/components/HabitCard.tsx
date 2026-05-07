@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Repeat } from "lucide-react";
+import { Repeat, Flame } from "lucide-react";
 import { useHabitLogs, useToggleHabitLog } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
 
@@ -102,8 +102,8 @@ export function HabitCard({ task, projectId }: HabitCardProps) {
           <Repeat className="h-4 w-4 text-purple-500 shrink-0" />
           <span className="text-sm font-medium flex-1 truncate">{task.title}</span>
           {streak > 0 && (
-            <span className="text-[10px] bg-orange-500/20 text-orange-600 px-1.5 py-0.5 rounded-full">
-              🔥 {streak}
+            <span className="text-[10px] bg-orange-500/20 text-orange-600 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+              <Flame className="h-3 w-3" /> {streak}
             </span>
           )}
         </div>
