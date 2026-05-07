@@ -78,7 +78,7 @@ export default function PantryPage() {
 
   return (
     <AppLayout title="食材管理">
-      <div className="max-w-4xl space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

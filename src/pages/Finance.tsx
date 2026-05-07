@@ -106,7 +106,7 @@ export default function FinancePage() {
 
   return (
     <AppLayout title="记账">
-      <div className="max-w-4xl flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
+      <div className="flex flex-col" style={{ height: "calc(100vh - 64px)" }}>
         {/* Sticky top section: month selector + overview + pie chart */}
         <div className="shrink-0 space-y-4 pb-4">
           {/* Month selector + Add button */}

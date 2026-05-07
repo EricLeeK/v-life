@@ -84,7 +84,7 @@ export default function ThoughtsPage() {
 
   return (
     <AppLayout title="随想">
-      <div className="max-w-5xl space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>全部</Button>
           {allTags.map(({ tag, emoji }) => (

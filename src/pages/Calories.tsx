@@ -59,7 +59,7 @@ export default function CaloriesPage() {
 
   return (
     <AppLayout title="热量记录">
-      <div className="max-w-2xl space-y-4">
+      <div className="space-y-4">
         {/* Day nav */}
         <div className="flex gap-1 overflow-x-auto pb-1">
           {navDays.map((d) => (

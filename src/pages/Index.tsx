@@ -192,7 +192,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout title="首页概览">
-      <div className="space-y-10 max-w-7xl">
+      <div className="space-y-10">
 
         {/* ── Hero Section ── */}
         <section>

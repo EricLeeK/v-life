@@ -36,7 +36,11 @@ export function AppLayout({ children, title }: AppLayoutProps) {
               <h1 className="text-base font-semibold text-[#1f1a14]">{title}</h1>
             )}
           </header>
-          <main className="flex-1 p-6 overflow-auto bg-[#f4f3ee]">{children}</main>
+          <main className="flex-1 overflow-auto bg-[#f4f3ee] flex justify-center">
+            <div className="w-full px-6 lg:px-10 py-6" style={{ maxWidth: '100rem' }}>
+              {children}
+            </div>
+          </main>
         </div>
       </div>
     </SidebarProvider>

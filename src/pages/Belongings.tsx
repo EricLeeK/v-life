@@ -66,7 +66,7 @@ export default function BelongingsPage() {
 
   return (
     <AppLayout title="用品管理">
-      <div className="max-w-4xl">
+      <div className="space-y-4">
         <Tabs value={tab} onValueChange={setTab}>
           <div className="flex items-center justify-between mb-4">
             <TabsList>

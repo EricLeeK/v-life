@@ -86,7 +86,7 @@ export default function TodosPage() {
 
   return (
     <AppLayout title="待办事项">
-      <div className="max-w-3xl space-y-4">
+      <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-1">
             {(["category", "importance", "all"] as const).map((mode) => (

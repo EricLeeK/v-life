@@ -120,7 +120,7 @@ export default function SettingsPage() {
 
   return (
     <AppLayout title="设置">
-      <div className="max-w-2xl space-y-6">
+      <div className="space-y-6">
         {/* AI Configuration */}
         <Card>
           <CardHeader><CardTitle className="text-base">AI 配置</CardTitle></CardHeader>
