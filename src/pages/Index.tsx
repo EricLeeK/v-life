@@ -171,7 +171,12 @@ export default function DashboardPage() {
     : 0;
   const remainingCalories = calorieTarget - todayCalories;
 
-  const greeting = lang === "zh" ? getGreeting(now.getHours()) : getGreetingEn(now.getHours());
+  const displayName = settings?.display_name?.trim();
+  const greeting = displayName
+    ? (lang === "zh"
+        ? `${displayName}，${getGreeting(now.getHours())}`
+        : `${getGreetingEn(now.getHours())}, ${displayName}`)
+    : (lang === "zh" ? getGreeting(now.getHours()) : getGreetingEn(now.getHours()));
   const weekdays = lang === "zh" ? WEEKDAYS_ZH : WEEKDAYS_EN;
   const dateLabel = lang === "zh"
     ? `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`

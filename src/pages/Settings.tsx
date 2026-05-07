@@ -123,6 +123,24 @@ export default function SettingsPage() {
   return (
     <AppLayout title={t("设置", "Settings")}>
       <div className="space-y-6">
+        {/* Account Settings */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("账号设置", "Account")}</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>{t("昵称", "Display Name")}</Label>
+              <DebouncedInput
+                value={settings.display_name || ""}
+                onSave={(v) => save({ display_name: v })}
+                placeholder={t("输入你的昵称", "Enter your display name")}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("设置后会在首页问候语中显示", "Shown in the greeting on your dashboard")}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* AI Configuration */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("AI 配置", "AI Configuration")}</CardTitle></CardHeader>
