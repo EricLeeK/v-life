@@ -53,8 +53,8 @@ export default function ProjectsPage() {
 
   return (
     <AppLayout title={t("项目管理", "Projects")}>
-      <div className="flex h-[calc(100vh-3rem)]">
-        <div className="w-80 shrink-0">
+      <div className="flex h-[calc(100vh-3rem)] gap-0">
+        <div className="w-72 shrink-0 border-r border-[#e4e1d7]">
           <ProjectSidebar
             projects={projects}
             selectedId={selectedId}
@@ -73,7 +73,7 @@ export default function ProjectsPage() {
               onEditProject={() => handleEditProject(selectedProject)}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground">
+            <div className="h-full flex items-center justify-center text-[#8a847a] text-sm">
               {t("请新建或选择一个项目", "Create or select a project")}
             </div>
           )}

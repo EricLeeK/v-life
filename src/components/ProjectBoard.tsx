@@ -1,6 +1,4 @@
 import { useState, useMemo } from "react";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BoardColumn } from "./BoardColumn";
 import { TaskCard } from "./TaskCard";
 import { HabitCard } from "./HabitCard";
@@ -47,7 +45,6 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
     return tasks.filter((t) => t.type === filter);
   }, [tasks, filter]);
 
-  // 计算并更新项目进度
   const computeProgress = (allTasks: any[]) => {
     const countable = allTasks.filter((t) => t.type !== "habit");
     if (countable.length === 0) return 0;
@@ -65,10 +62,8 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
 
     const updates: any = { status: newStatus };
 
-    // 乐观更新本地顺序
     updateTask.mutate({ id: task.id, project_id: project.id, ...updates });
 
-    // 检查进度变化
     const simulatedTasks = tasks.map((t) => (t.id === task.id ? { ...t, ...updates } : t));
     const newProgress = computeProgress(simulatedTasks);
     if (newProgress !== project.progress) {
@@ -104,7 +99,6 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
     } else {
       createTask.mutate({ ...values, project_id: project.id }, {
         onSuccess: () => {
-          // 创建后重新计算进度（如果习惯则不影响）
           const newTasks = [...tasks, { ...values, id: "temp" }];
           const newProgress = computeProgress(newTasks);
           if (newProgress !== project.progress) {
@@ -116,33 +110,54 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
     setTaskModalOpen(false);
   };
 
+  const filters: { key: FilterType; label: string }[] = [
+    { key: "all", label: t("全部", "All") },
+    { key: "task", label: t("任务", "Tasks") },
+    { key: "habit", label: t("习惯", "Habits") },
+    { key: "milestone", label: t("里程碑", "Milestones") },
+  ];
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <div className="flex items-center gap-4 min-w-0">
-          <h2 className="text-lg font-semibold truncate">{project.name}</h2>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEditProject}>
-            <Settings2 className="h-4 w-4" />
+    <div className="flex flex-col h-full bg-[#f4f3ee]">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-[#e4e1d7] shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <h2 className="text-base font-semibold text-[#1f1a14] truncate">{project.name}</h2>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-[#1f1a14]" onClick={onEditProject}>
+            <Settings2 className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <div className="flex items-center gap-4">
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)}>
-            <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-xs px-2">{t("全部","All")}</TabsTrigger>
-              <TabsTrigger value="task" className="text-xs px-2">{t("任务","Tasks")}</TabsTrigger>
-              <TabsTrigger value="habit" className="text-xs px-2">{t("习惯","Habits")}</TabsTrigger>
-              <TabsTrigger value="milestone" className="text-xs px-2">{t("里程碑","Milestones")}</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-      </div>
-      <div className="px-4 py-2 shrink-0">
         <div className="flex items-center gap-3">
-          <Progress value={project.progress} className="h-2 flex-1" />
-          <span className="text-sm font-medium w-10 text-right">{project.progress}%</span>
+          {/* Slim progress bar */}
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-1.5 rounded-full bg-[#e4e1d7]">
+              <div
+                className="h-full rounded-full bg-[#1f1a14]/40 transition-all"
+                style={{ width: `${project.progress || 0}%` }}
+              />
+            </div>
+            <span className="text-xs font-medium text-[#8a847a] w-8 text-right">{project.progress || 0}%</span>
+          </div>
+          {/* Filter buttons */}
+          <div className="flex items-center gap-0.5 bg-[#f4f3ee] rounded-lg p-0.5">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`text-[11px] px-2.5 py-1 rounded-md transition-colors font-medium ${
+                  filter === f.key
+                    ? "bg-white text-[#1f1a14] shadow-sm"
+                    : "text-[#8a847a] hover:text-[#1f1a14]"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="flex-1 overflow-x-auto overflow-y-hidden px-4 py-2">
+      {/* Board */}
+      <div className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin px-5 py-3">
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full min-w-max">
             {COLUMNS_ZH.map((col) => {

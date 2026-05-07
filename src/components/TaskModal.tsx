@@ -72,81 +72,84 @@ export function TaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white border-[#e4e1d7]">
         <DialogHeader>
-          <DialogTitle>
-            {initial ? t("编辑工作项","Edit Item") : t("新建工作项","New Item")}
+          <DialogTitle className="text-[#1f1a14] font-display">
+            {initial ? t("编辑工作项", "Edit Item") : t("新建工作项", "New Item")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div>
-            <Label>{t("类型","Type")}</Label>
+            <Label className="text-[#1f1a14] text-sm">{t("类型", "Type")}</Label>
             <Select
               value={form.type}
               onValueChange={(v: any) => setForm({ ...form, type: v })}
               disabled={!!initial}
             >
-              <SelectTrigger>
+              <SelectTrigger className="border-[#e4e1d7] text-[#1f1a14]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="task">{t("任务","Task")}</SelectItem>
-                <SelectItem value="habit">{t("习惯","Habit")}</SelectItem>
-                <SelectItem value="milestone">{t("里程碑","Milestone")}</SelectItem>
+                <SelectItem value="task">{t("任务", "Task")}</SelectItem>
+                <SelectItem value="habit">{t("习惯", "Habit")}</SelectItem>
+                <SelectItem value="milestone">{t("里程碑", "Milestone")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>{t("标题","Title")} *</Label>
+            <Label className="text-[#1f1a14] text-sm">{t("标题", "Title")} *</Label>
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder={isHabit ? (lang === "zh" ? "例如：晨跑 30 分钟" : "e.g. Morning run 30 min") : (lang === "zh" ? "例如：完成文献综述" : "e.g. Complete literature review")}
+              className="border-[#e4e1d7] text-[#1f1a14]"
             />
           </div>
           <div>
-            <Label>{t("描述","Description")}</Label>
+            <Label className="text-[#1f1a14] text-sm">{t("描述", "Description")}</Label>
             <Textarea
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
+              className="border-[#e4e1d7] text-[#1f1a14]"
             />
           </div>
           {!isHabit && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>{t("状态","Status")}</Label>
+                <Label className="text-[#1f1a14] text-sm">{t("状态", "Status")}</Label>
                 <Select
                   value={form.status}
                   onValueChange={(v) => setForm({ ...form, status: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-[#e4e1d7] text-[#1f1a14]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todo">{t("待办","To Do")}</SelectItem>
-                    <SelectItem value="this_week">{t("本周","This Week")}</SelectItem>
-                    <SelectItem value="in_progress">{t("进行中","In Progress")}</SelectItem>
-                    <SelectItem value="waiting">{t("等待中","Waiting")}</SelectItem>
-                    <SelectItem value="done">{t("已完成","Done")}</SelectItem>
+                    <SelectItem value="todo">{t("待办", "To Do")}</SelectItem>
+                    <SelectItem value="this_week">{t("本周", "This Week")}</SelectItem>
+                    <SelectItem value="in_progress">{t("进行中", "In Progress")}</SelectItem>
+                    <SelectItem value="waiting">{t("等待中", "Waiting")}</SelectItem>
+                    <SelectItem value="done">{t("已完成", "Done")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label>{t("权重","Weight")}</Label>
+                <Label className="text-[#1f1a14] text-sm">{t("权重", "Weight")}</Label>
                 <Input
                   type="number"
                   min={0.1}
                   step={0.1}
                   value={form.weight}
                   onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
+                  className="border-[#e4e1d7] text-[#1f1a14]"
                 />
               </div>
             </div>
           )}
           {isHabit && (
             <div>
-              <Label>{t("权重","Weight")}</Label>
+              <Label className="text-[#1f1a14] text-sm">{t("权重", "Weight")}</Label>
               <Input
                 type="number"
                 min={0}
@@ -154,20 +157,22 @@ export function TaskModal({
                 value={form.weight}
                 onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
                 disabled
+                className="border-[#e4e1d7] text-[#1f1a14]"
               />
-              <p className="text-xs text-muted-foreground mt-1">{t("习惯默认不计入项目进度","Habits don't count toward project progress")}</p>
+              <p className="text-xs text-[#8a847a] mt-1">{t("习惯默认不计入项目进度", "Habits don't count toward project progress")}</p>
             </div>
           )}
           <div>
-            <Label>{t("截止日期","Due Date")}</Label>
+            <Label className="text-[#1f1a14] text-sm">{t("截止日期", "Due Date")}</Label>
             <Input
               type="date"
               value={form.due_date}
               onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+              className="border-[#e4e1d7] text-[#1f1a14]"
             />
           </div>
-          <Button onClick={handleSave} className="w-full">
-            {initial ? t("保存修改","Save") : t("创建工作项","Create Item")}
+          <Button onClick={handleSave} className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+            {initial ? t("保存修改", "Save") : t("创建工作项", "Create Item")}
           </Button>
         </div>
       </DialogContent>
