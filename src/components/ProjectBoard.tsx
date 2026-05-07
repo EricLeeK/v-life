@@ -178,39 +178,39 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
               return (
                 <Droppable key={col.id} droppableId={col.id}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex-1 min-h-[120px] h-full">
-                      <BoardColumn
-                        title={lang === "zh" ? col.title : (COLUMN_TITLE_MAP[col.title] || col.title)}
-                        count={colTasks.length}
-                        onAdd={() => openAddModal("task")}
-                      >
-                        {colTasks.map((task, index) => (
-                          <Draggable key={task.id} draggableId={task.id} index={index}>
-                            {(dragProvided) => (
-                              <div
-                                ref={dragProvided.innerRef}
-                                {...dragProvided.draggableProps}
-                                {...dragProvided.dragHandleProps}
-                                className="mb-2"
-                              >
-                                {task.type === "habit" ? (
-                                  <HabitCard task={task} projectId={project.id} />
-                                ) : task.type === "milestone" ? (
-                                  <MilestoneCard
-                                    task={task}
-                                    onToggle={(done) => handleMilestoneToggle(task, done)}
-                                    onClick={() => openEditModal(task)}
-                                  />
-                                ) : (
-                                  <TaskCard task={task} onClick={() => openEditModal(task)} />
-                                )}
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </BoardColumn>
-                    </div>
+                    <BoardColumn
+                      title={lang === "zh" ? col.title : (COLUMN_TITLE_MAP[col.title] || col.title)}
+                      count={colTasks.length}
+                      onAdd={() => openAddModal("task")}
+                      innerRef={provided.innerRef}
+                      placeholder={provided.placeholder}
+                      droppableProps={provided.droppableProps}
+                    >
+                      {colTasks.map((task, index) => (
+                        <Draggable key={task.id} draggableId={task.id} index={index}>
+                          {(dragProvided) => (
+                            <div
+                              ref={dragProvided.innerRef}
+                              {...dragProvided.draggableProps}
+                              {...dragProvided.dragHandleProps}
+                              className="mb-2"
+                            >
+                              {task.type === "habit" ? (
+                                <HabitCard task={task} projectId={project.id} />
+                              ) : task.type === "milestone" ? (
+                                <MilestoneCard
+                                  task={task}
+                                  onToggle={(done) => handleMilestoneToggle(task, done)}
+                                  onClick={() => openEditModal(task)}
+                                />
+                              ) : (
+                                <TaskCard task={task} onClick={() => openEditModal(task)} />
+                              )}
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                    </BoardColumn>
                   )}
                 </Droppable>
               );
