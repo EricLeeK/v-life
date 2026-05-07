@@ -53,7 +53,7 @@ export default function ProjectsPage() {
 
   return (
     <AppLayout title={t("项目管理", "Projects")}>
-      <div className="flex h-[calc(100vh-3rem)] gap-0">
+      <div className="flex h-[calc(100vh-6rem)] gap-0">
         <div className="w-72 shrink-0 border-r border-[#e4e1d7]">
           <ProjectSidebar
             projects={projects}

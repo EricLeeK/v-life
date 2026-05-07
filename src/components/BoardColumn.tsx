@@ -12,7 +12,7 @@ interface BoardColumnProps {
 export function BoardColumn({ title, count, children, onAdd }: BoardColumnProps) {
   const { t } = useLang();
   return (
-    <div className="flex flex-col w-[260px] shrink-0 h-full">
+    <div className="flex flex-col flex-1 min-w-[200px] max-w-[380px] h-full">
       <div className="flex items-center justify-between px-2 py-2">
         <h3 className="text-[13px] font-medium text-[#1f1a14]">{title}</h3>
         <span className="text-[11px] text-[#8a847a] bg-[#f4f3ee] px-1.5 py-0.5 rounded-full font-medium">{count}</span>

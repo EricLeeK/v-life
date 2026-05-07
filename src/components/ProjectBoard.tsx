@@ -12,14 +12,11 @@ import { useLang } from "@/contexts/LanguageContext";
 
 const COLUMNS_ZH = [
   { id: "todo", title: "待办" },
-  { id: "this_week", title: "本周" },
   { id: "in_progress", title: "进行中" },
-  { id: "waiting", title: "等待中" },
   { id: "done", title: "已完成" },
 ] as const;
 const COLUMN_TITLE_MAP: Record<string, string> = {
-  "待办": "To Do", "本周": "This Week", "进行中": "In Progress",
-  "等待中": "Waiting", "已完成": "Done",
+  "待办": "To Do", "进行中": "In Progress", "已完成": "Done",
 };
 
 type FilterType = "all" | "task" | "habit" | "milestone";
