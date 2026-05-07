@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Repeat, Flame } from "lucide-react";
 import { useHabitLogs, useToggleHabitLog } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
@@ -41,7 +42,7 @@ function CircularProgress({ value }: { value: number }) {
   );
 }
 
-export function HabitCard({ task, projectId }: HabitCardProps) {
+function HabitCardInner({ task, projectId }: HabitCardProps) {
   const { t, lang } = useLang();
   const { data: logs = [] } = useHabitLogs(task.id);
   const toggleMutation = useToggleHabitLog();
@@ -124,3 +125,5 @@ export function HabitCard({ task, projectId }: HabitCardProps) {
     </div>
   );
 }
+
+export const HabitCard = memo(HabitCardInner);

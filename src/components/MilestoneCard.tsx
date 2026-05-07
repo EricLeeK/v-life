@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Flag } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -9,7 +10,7 @@ interface MilestoneCardProps {
   onClick?: () => void;
 }
 
-export function MilestoneCard({ task, onToggle, onClick }: MilestoneCardProps) {
+function MilestoneCardInner({ task, onToggle, onClick }: MilestoneCardProps) {
   const { t } = useLang();
   return (
     <div
@@ -40,3 +41,5 @@ export function MilestoneCard({ task, onToggle, onClick }: MilestoneCardProps) {
     </div>
   );
 }
+
+export const MilestoneCard = memo(MilestoneCardInner);

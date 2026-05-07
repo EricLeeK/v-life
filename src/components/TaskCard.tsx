@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { CheckSquare } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -8,7 +9,7 @@ interface TaskCardProps {
   onClick?: () => void;
 }
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+function TaskCardInner({ task, onClick }: TaskCardProps) {
   const { t, lang } = useLang();
   const priorityDot: Record<string, string> = {
     high: "bg-[#c65d4a]",
@@ -55,3 +56,5 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     </div>
   );
 }
+
+export const TaskCard = memo(TaskCardInner);
