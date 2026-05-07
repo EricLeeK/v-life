@@ -63,14 +63,16 @@ export default function CaloriesPage() {
         {/* Day nav — recessed groove with sliding indicator */}
         {(() => {
           const selIdx = navDays.indexOf(selectedDate);
-          const sliderWidth = `${100 / navDays.length}%`;
-          const sliderLeft = `${selIdx * (100 / navDays.length)}%`;
+          const n = navDays.length;
           return (
-            <div className="relative bg-[#e6e3d9] rounded-[11px] p-[5px] shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.07)]">
+            <div className="relative bg-[#e6e3d9] rounded-[11px] p-[5px] shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.07)] overflow-hidden">
               {/* Sliding indicator */}
               <div
                 className="absolute top-[5px] bottom-[5px] bg-white rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
-                style={{ width: sliderWidth, left: sliderLeft }}
+                style={{
+                  width: `calc((100% - 10px) / ${n})`,
+                  left: `calc(5px + ${selIdx} * (100% - 10px) / ${n})`,
+                }}
               />
               {/* Day items */}
               <div className="relative flex">
@@ -81,16 +83,16 @@ export default function CaloriesPage() {
                     <button
                       key={d}
                       onClick={() => setSelectedDate(d)}
-                      className="flex-1 flex flex-col items-center py-2.5 z-10 transition-colors duration-200 cursor-pointer"
+                      className="flex-1 flex flex-col items-center justify-center py-2.5 z-10 transition-colors duration-200 cursor-pointer"
                     >
-                      <span className={`text-[10px] font-medium leading-tight ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
+                      <span className={`text-[10px] font-medium leading-none ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
                         {format(new Date(d), "EEE", { locale: zhCN })}
                       </span>
-                      <span className={`text-[13px] font-semibold leading-tight mt-0.5 ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
+                      <span className={`text-[13px] font-semibold leading-none mt-1 ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
                         {format(new Date(d), "dd")}
                       </span>
                       {isToday && (
-                        <span className={`text-[8px] font-medium mt-0.5 ${isSelected ? 'text-[#5b88b5]' : 'text-[#8a847a]'}`}>今天</span>
+                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-[#5b88b5]' : 'text-[#8a847a]'}`}>今天</span>
                       )}
                     </button>
                   );
