@@ -156,13 +156,13 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
       {/* Board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin px-5 py-3">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 h-full min-w-max">
+          <div className="flex gap-4 h-full">
             {COLUMNS_ZH.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.id);
               return (
                 <Droppable key={col.id} droppableId={col.id}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.droppableProps} className="h-full">
+                    <div ref={provided.innerRef} {...provided.droppableProps} className="flex-1 h-full">
                       <BoardColumn
                         title={lang === "zh" ? col.title : (COLUMN_TITLE_MAP[col.title] || col.title)}
                         count={colTasks.length}
