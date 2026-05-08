@@ -101,8 +101,8 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
       className="absolute left-1 right-1 rounded-md cursor-pointer select-none overflow-hidden group"
       style={{
         top: `${top}px`, height: `${height}px`,
-        background: color + "18", borderLeft: `3px solid ${color}`, zIndex: 10,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+        background: color + "30", borderLeft: `3px solid ${color}`, zIndex: 10,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)",
       }}
       onMouseDown={(e) => handleMouseDown(e, "move")}
     >
