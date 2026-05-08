@@ -160,10 +160,10 @@ export default function DashboardPage() {
   const todayFinanceTotal = (monthFinanceRecords as any[])
     .filter((r) => r.date === todayStr)
     .reduce((sum, r) => sum + Number(r.amount_cny), 0);
-  const completedTodos = (allTodos as any[]).filter((t) => t.is_completed).length;
-  const totalTodos = (allTodos as any[]).length;
+  const completedTodos = (allTodos as any[]).filter((t) => t.is_completed && !t.is_archived).length;
+  const totalTodos = (allTodos as any[]).filter((t) => !t.is_archived).length;
   const overdueTodoCount = (allTodos as any[]).filter(
-    (t) => !t.is_completed && t.due_date && new Date(t.due_date) < now
+    (t) => !t.is_completed && !t.is_archived && t.due_date && new Date(t.due_date) < now
   ).length;
   const completedGoals = (weekGoals as any[]).filter((g) => g.is_completed).length;
   const goalProgressPct = weekGoals.length > 0

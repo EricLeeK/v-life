@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-  useScheduleByRange, scheduleHooks, useSettings,
+  useScheduleByRange, scheduleHooks, useSettings, todoHooks,
   useCreateSeriesWithInstances, useUpdateSeriesWithInstances, useDeleteSeries,
 } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
@@ -120,6 +120,8 @@ export default function SchedulePage() {
   }, [days, viewMode, baseDate]);
 
   const { data: rawEvents = [] } = useScheduleByRange(rangeStart, rangeEnd);
+  const { data: allTodos = [] } = todoHooks.useList();
+  const incompleteTodos = (allTodos as any[]).filter((t) => !t.is_completed && !t.is_archived);
   const { data: settings } = useSettings();
   const createMutation = scheduleHooks.useCreate();
   const updateMutation = scheduleHooks.useUpdate();
@@ -359,6 +361,18 @@ export default function SchedulePage() {
             <DialogContent>
               <DialogHeader><DialogTitle>{editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
+                {incompleteTodos.length > 0 && (
+                  <div>
+                    <Label className="text-xs text-muted-foreground">{t("从待办快速选择", "Quick Pick from To-Dos")}</Label>
+                    <Select onValueChange={(v) => {
+                      const todo = incompleteTodos.find((t: any) => t.id === v);
+                      if (todo) setForm({ ...form, title: todo.title, notes: todo.detail || form.notes });
+                    }}>
+                      <SelectTrigger className="mt-1"><SelectValue placeholder={t("选择待办作为标题...", "Pick a to-do as title...")} /></SelectTrigger>
+                      <SelectContent>{incompleteTodos.map((todo: any) => <SelectItem key={todo.id} value={todo.id}>{todo.title}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div><Label>{t("标题", "Title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label>{t("开始日期", "Start Date")} *</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value, end_date: e.target.value })} /></div>

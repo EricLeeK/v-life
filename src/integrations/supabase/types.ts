@@ -682,6 +682,7 @@ export type Database = {
           detail: string | null
           id: string
           importance: string
+          is_archived: boolean
           is_completed: boolean
           title: string
           updated_at: string
@@ -693,6 +694,7 @@ export type Database = {
           detail?: string | null
           id?: string
           importance?: string
+          is_archived?: boolean
           is_completed?: boolean
           title: string
           updated_at?: string
@@ -704,6 +706,7 @@ export type Database = {
           detail?: string | null
           id?: string
           importance?: string
+          is_archived?: boolean
           is_completed?: boolean
           title?: string
           updated_at?: string

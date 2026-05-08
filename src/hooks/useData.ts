@@ -270,7 +270,8 @@ export function usePendingTodos() {
       const { data, error } = await supabase
         .from("todos")
         .select("*")
-        .eq("is_completed", false);
+        .eq("is_completed", false)
+        .eq("is_archived", false);
       if (error) throw error;
       return data;
     },

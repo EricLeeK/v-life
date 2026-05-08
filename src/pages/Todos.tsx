@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronRight, Archive } from "lucide-react";
 import { todoHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
@@ -32,6 +32,7 @@ export default function TodosPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ title: "", detail: "", importance: "普通", category: "未分类" });
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const { toast } = useToast();
 
   const { data: todos = [] } = todoHooks.useList();
@@ -39,14 +40,25 @@ export default function TodosPage() {
   const updateMutation = todoHooks.useUpdate();
   const deleteMutation = todoHooks.useDelete();
 
-  const filteredTodos = hideCompleted ? todos.filter((t: any) => !t.is_completed) : todos;
+  const nonArchivedTodos = todos.filter((t: any) => !t.is_archived);
+  const archivedTodos = todos.filter((t: any) => t.is_archived);
+  const baseTodos = showArchived ? [...nonArchivedTodos, ...archivedTodos] : nonArchivedTodos;
+  const filteredTodos = hideCompleted ? baseTodos.filter((t: any) => !t.is_completed) : baseTodos;
 
-  // Sort: incomplete first, then by importance
+  // Sort: incomplete first, then by importance; archived always at the very bottom
   const importanceOrder: Record<string, number> = { "紧急": 0, "重要": 1, "普通": 2, "低优先": 3 };
   const sorted = [...filteredTodos].sort((a: any, b: any) => {
+    if (a.is_archived !== b.is_archived) return a.is_archived ? 1 : -1;
     if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
     return (importanceOrder[a.importance] ?? 2) - (importanceOrder[b.importance] ?? 2);
   });
+
+  const hasCompletedNonArchived = nonArchivedTodos.some((t: any) => t.is_completed);
+  const handleArchiveAllCompleted = () => {
+    nonArchivedTodos.filter((t: any) => t.is_completed).forEach((t: any) => {
+      updateMutation.mutate({ id: t.id, is_archived: true });
+    });
+  };
 
   const grouped = viewMode === "category"
     ? sorted.reduce((acc: Record<string, any[]>, t: any) => { (acc[t.category] = acc[t.category] || []).push(t); return acc; }, {})
@@ -81,6 +93,9 @@ export default function TodosPage() {
                 {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
               </Button>
             )}
+            {item.is_completed && !item.is_archived && (
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => updateMutation.mutate({ id: item.id, is_archived: true })}><Archive className="h-3 w-3" /></Button>
+            )}
             <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteMutation.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
           </div>
           {expanded && item.detail && <p className="text-xs text-muted-foreground mt-2 pl-6">{item.detail}</p>}
@@ -104,6 +119,14 @@ export default function TodosPage() {
           <Button variant="secondary" size="sm" onClick={() => setHideCompleted(!hideCompleted)}>
             {hideCompleted ? t("显示已完成", "Show completed") : t("隐藏已完成", "Hide completed")}
           </Button>
+          <Button variant="secondary" size="sm" onClick={() => setShowArchived(!showArchived)}>
+            {showArchived ? t("隐藏已归档", "Hide archived") : t("显示已归档", "Show archived")}
+          </Button>
+          {hasCompletedNonArchived && (
+            <Button variant="secondary" size="sm" onClick={handleArchiveAllCompleted}>
+              <Archive className="h-3.5 w-3.5 mr-1" />{t("归档已完成", "Archive completed")}
+            </Button>
+          )}
           <div className="flex-1" />
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
