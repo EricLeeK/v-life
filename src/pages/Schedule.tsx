@@ -19,6 +19,7 @@ import { zhCN } from "date-fns/locale";
 import { DayColumn } from "@/components/schedule/DayColumn";
 import { MonthView } from "@/components/schedule/MonthView";
 import { HOUR_HEIGHT, VISIBLE_START, TOTAL_HOURS, IMPORTANCE_COLORS, timeToY } from "@/components/schedule/EventBlock";
+import { ScheduleAnalysis } from "@/components/charts/ScheduleAnalysis";
 
 type ViewMode = "3day" | "week" | "month";
 
@@ -522,6 +523,9 @@ export default function SchedulePage() {
             </div>
           </div>
         )}
+
+        {/* Time distribution analysis */}
+        {viewMode !== "month" && <ScheduleAnalysis events={displayEvents as any[]} />}
       </div>
     </AppLayout>
   );

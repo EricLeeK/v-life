@@ -13,6 +13,7 @@ import { startOfWeek, startOfMonth, startOfYear, format, endOfWeek, addWeeks, ad
 import { zhCN } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
+import { GoalStats } from "@/components/charts/GoalStats";
 
 function useGoals(type?: string) {
   const { isDemo, demoData } = useDemoMode();
@@ -261,12 +262,16 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 
 export default function GoalsPage() {
   const { t } = useLang();
+  const { data: allGoals = [] } = useGoals();
   return (
     <AppLayout title={t("目标", "Goals")}>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GoalColumn type="week" label={t("周目标", "Weekly")} />
-        <GoalColumn type="month" label={t("月目标", "Monthly")} />
-        <GoalColumn type="year" label={t("年目标", "Yearly")} />
+      <div className="space-y-4">
+        <GoalStats goals={allGoals as any[]} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <GoalColumn type="week" label={t("周目标", "Weekly")} />
+          <GoalColumn type="month" label={t("月目标", "Monthly")} />
+          <GoalColumn type="year" label={t("年目标", "Yearly")} />
+        </div>
       </div>
     </AppLayout>
   );

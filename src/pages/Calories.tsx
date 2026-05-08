@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, Edit2, Coffee, Sun, Moon, Cookie, Dumbbell } from "lucide-react";
 import { useCaloriesByDate, calorieHooks, useSettings } from "@/hooks/useData";
+import { WeeklyCalorieChart, MealDistributionChart } from "@/components/charts/CalorieCharts";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, subDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -46,10 +47,21 @@ export default function CaloriesPage() {
   const { toast } = useToast();
 
   const { data: records = [] } = useCaloriesByDate(selectedDate);
+  const { data: allCalorieRecords = [] } = calorieHooks.useList();
   const { data: settings } = useSettings();
   const createMutation = calorieHooks.useCreate();
   const updateMutation = calorieHooks.useUpdate();
   const deleteMutation = calorieHooks.useDelete();
+
+  // Weekly chart data (last 7 days)
+  const weeklyRecords = useMemo(() => {
+    const today = new Date();
+    const weekAgo = subDays(today, 6);
+    const startStr = weekAgo.toISOString().split("T")[0];
+    return (allCalorieRecords as any[])
+      .filter((r: any) => r.date >= startStr)
+      .map((r: any) => ({ date: r.date, calories: r.calories, meal_type: r.meal_type }));
+  }, [allCalorieRecords]);
 
   const target = settings?.calorie_target || 2000;
   const foodCalories = records.filter((r: any) => r.meal_type !== "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
@@ -187,6 +199,12 @@ export default function CaloriesPage() {
             </div>
           );
         })}
+
+        {/* Charts section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <WeeklyCalorieChart records={weeklyRecords} target={target} />
+          <MealDistributionChart records={weeklyRecords} />
+        </div>
       </div>
     </AppLayout>
   );

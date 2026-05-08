@@ -11,10 +11,11 @@ import { useLang } from "@/contexts/LanguageContext";
 import {
   useTodaySchedule, useTodayCalorieSummary, useTodayCalorieBreakdown, useMonthFinanceSummary, useFinanceByMonth,
   usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
-  useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks,
+  useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks, calorieHooks, scheduleHooks,
 } from "@/hooks/useData";
-import { format } from "date-fns";
+import { format, subDays, startOfWeek } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { DashboardInsights } from "@/components/charts/DashboardInsights";
 
 const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -145,6 +146,8 @@ export default function DashboardPage() {
   const { data: weekGoals = [] } = useCurrentWeekGoals();
   const { data: weightTrend = [] } = useRecentWeightTrend();
   const { data: allProjects = [] } = useProjects();
+  const { data: allCalorieRecords = [] } = calorieHooks.useList();
+  const { data: weekScheduleEvents = [] } = scheduleHooks.useList();
   const activeProjects = allProjects.filter((p: any) => p.status === "active" || p.status === "planning");
   const avgProgress = activeProjects.length > 0
     ? Math.round(activeProjects.reduce((s: number, p: any) => s + p.progress, 0) / activeProjects.length)
@@ -154,6 +157,37 @@ export default function DashboardPage() {
   const budget = settings?.monthly_budget || 5000;
   const totalSpending = financeSummary?.total || 0;
   const urgentTodos = pendingTodos.filter((t: any) => t.importance === "紧急");
+
+  // Insights computation
+  const weekCalorieRecords = (allCalorieRecords as any[]).filter((r: any) => {
+    const d = r.date;
+    const weekAgo = subDays(now, 6).toISOString().split("T")[0];
+    return d >= weekAgo;
+  });
+  const calorieDaysMap: Record<string, { food: number; exercise: number }> = {};
+  weekCalorieRecords.forEach((r: any) => {
+    if (!calorieDaysMap[r.date]) calorieDaysMap[r.date] = { food: 0, exercise: 0 };
+    if (r.meal_type === "exercise") calorieDaysMap[r.date].exercise += r.calories;
+    else calorieDaysMap[r.date].food += r.calories;
+  });
+  const weekCalorieDaysTotal = Object.keys(calorieDaysMap).length;
+  const weekCalorieDaysOnTarget = Object.values(calorieDaysMap).filter(
+    (d) => (d.food - d.exercise) <= calorieTarget
+  ).length;
+
+  // Study hours from schedule events this week
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const studyHours = (weekScheduleEvents as any[])
+    .filter((e: any) => {
+      const start = new Date(e.start_time);
+      return start >= weekStart && (e.color === "blue" || e.color === "teal");
+    })
+    .reduce((sum: number, e: any) => {
+      const duration = (new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) / (1000 * 60 * 60);
+      return sum + duration;
+    }, 0);
+
+  const completedMonthlyGoals = (weekGoals as any[]).filter((g: any) => g.is_completed).length;
 
   // KPI strip derived values
   const todayStr = format(now, "yyyy-MM-dd");
@@ -274,6 +308,19 @@ export default function DashboardPage() {
               color="purple"
             />
           </div>
+        </section>
+
+        {/* ── Insights Section: 数据概览 ── */}
+        <section>
+          <DashboardInsights
+            monthlySpending={totalSpending}
+            monthlyBudget={budget}
+            weekCalorieDaysOnTarget={weekCalorieDaysOnTarget}
+            weekCalorieDaysTotal={weekCalorieDaysTotal}
+            completedGoals={completedGoals}
+            totalGoals={weekGoals.length}
+            studyHours={studyHours}
+          />
         </section>
 
         {/* ── Pipeline Section: 今日概览 ── */}
