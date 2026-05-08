@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { Compass } from "lucide-react";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useEffect } from "react";
 
@@ -104,15 +105,15 @@ export default function AuthPage() {
       <Card className="w-full max-w-sm border-[#e4e1d7] shadow-none">
         <CardHeader>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-10 w-10 rounded-lg bg-[#1f1a14] flex items-center justify-center text-white font-bold text-lg">V</div>
+            <img src="/v-life-icon.svg" alt="V-Life" className="h-10 w-10 rounded-lg" />
             <span className="text-xl font-semibold text-[#1f1a14]">V-Life</span>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login">
-            <TabsList className="grid w-full grid-cols-2 bg-[#f4f3ee]">
-              <TabsTrigger value="login">{t("登录", "Login")}</TabsTrigger>
-              <TabsTrigger value="signup">{t("注册", "Sign Up")}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-[#ebe8e0] p-1 h-10">
+              <TabsTrigger value="login" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1f1a14] data-[state=active]:shadow-sm text-[#8a847a]">{t("登录", "Login")}</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1f1a14] data-[state=active]:shadow-sm text-[#8a847a]">{t("注册", "Sign Up")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4 mt-4">
@@ -149,8 +150,8 @@ export default function AuthPage() {
             </TabsContent>
           </Tabs>
           <div className="mt-6 pt-4 border-t border-[#e4e1d7]">
-            <Button type="button" variant="outline" className="w-full border-[#e4e1d7] text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14]" onClick={handleGuestTour}>
-              🎭 {t("游客参观", "Guest Tour")}
+            <Button type="button" variant="outline" className="w-full border-[#e4e1d7] text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] gap-2" onClick={handleGuestTour}>
+              <Compass className="h-4 w-4" />{t("游客参观", "Guest Tour")}
             </Button>
             <p className="text-xs text-center text-[#8a847a] mt-2">
               {t("无需注册，直接体验完整功能", "No signup needed, explore all features")}

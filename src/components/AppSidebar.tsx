@@ -55,9 +55,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-[#e4e1d7] bg-white">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-[#1f1a14] flex items-center justify-center text-white font-bold text-sm shrink-0">
-            V
-          </div>
+          <img src="/v-life-icon.svg" alt="V-Life" className="h-8 w-8 rounded-lg shrink-0" />
           {!collapsed && (
             <span className="text-base font-semibold text-[#1f1a14] tracking-tight">
               V-Life
