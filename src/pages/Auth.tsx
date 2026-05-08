@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useEffect } from "react";
 
 export default function AuthPage() {
@@ -16,6 +17,12 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useLang();
+  const { enterDemo } = useDemoMode();
+
+  const handleGuestTour = () => {
+    enterDemo();
+    navigate("/", { replace: true });
+  };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -141,6 +148,14 @@ export default function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+          <div className="mt-6 pt-4 border-t border-[#e4e1d7]">
+            <Button type="button" variant="outline" className="w-full border-[#e4e1d7] text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14]" onClick={handleGuestTour}>
+              🎭 {t("游客参观", "Guest Tour")}
+            </Button>
+            <p className="text-xs text-center text-[#8a847a] mt-2">
+              {t("无需注册，直接体验完整功能", "No signup needed, explore all features")}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

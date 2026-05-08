@@ -5,8 +5,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AIChatPanel } from "@/components/AIChatPanel";
+import { DemoBanner } from "@/components/DemoBanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LangProvider } from "@/contexts/LanguageContext";
+import { DemoModeProvider, useDemoMode } from "@/contexts/DemoModeContext";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -40,32 +42,36 @@ function PageLoader() {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return <PageLoader />;
-  if (!user) return <Navigate to="/auth" replace />;
+  const { isDemo } = useDemoMode();
+  if (loading && !isDemo) return <PageLoader />;
+  if (!user && !isDemo) return <Navigate to="/auth" replace />;
   return <>{children}</>;
 }
 
 function AppRoutes() {
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/auth" element={<AuthPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
-        <Route path="/pantry" element={<ProtectedRoute><PantryPage /></ProtectedRoute>} />
-        <Route path="/belongings" element={<ProtectedRoute><BelongingsPage /></ProtectedRoute>} />
-        <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
-        <Route path="/calories" element={<ProtectedRoute><CaloriesPage /></ProtectedRoute>} />
-        <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
-        <Route path="/todos" element={<ProtectedRoute><TodosPage /></ProtectedRoute>} />
-        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-        <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
-        <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
-        <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <>
+      <DemoBanner />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/pantry" element={<ProtectedRoute><PantryPage /></ProtectedRoute>} />
+          <Route path="/belongings" element={<ProtectedRoute><BelongingsPage /></ProtectedRoute>} />
+          <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
+          <Route path="/calories" element={<ProtectedRoute><CaloriesPage /></ProtectedRoute>} />
+          <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
+          <Route path="/todos" element={<ProtectedRoute><TodosPage /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+          <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
+          <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
+          <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
   );
 }
 
@@ -76,10 +82,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <LangProvider>
-          <AuthProvider>
-            <AppRoutes />
-            <AIChatPanel />
-          </AuthProvider>
+          <DemoModeProvider>
+            <AuthProvider>
+              <AppRoutes />
+              <AIChatPanel />
+            </AuthProvider>
+          </DemoModeProvider>
         </LangProvider>
       </BrowserRouter>
     </TooltipProvider>

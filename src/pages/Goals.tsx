@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 
 function useGoals(type?: string) {
-  return useQuery({
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
     queryKey: ["goals", type],
     queryFn: async () => {
       let query = (supabase.from as any)("goals").select("*").order("period_start", { ascending: false });
@@ -23,7 +25,15 @@ function useGoals(type?: string) {
       if (error) throw error;
       return data as any[];
     },
+    enabled: !isDemo,
   });
+  if (isDemo) {
+    let goals = demoData.goals;
+    if (type) goals = goals.filter((g: any) => g.type === type);
+    goals = [...goals].sort((a: any, b: any) => b.period_start.localeCompare(a.period_start));
+    return { data: goals, isLoading: false, error: null } as any;
+  }
+  return supa;
 }
 
 type GoalType = "week" | "month" | "year";
@@ -70,6 +80,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
   const qc = useQueryClient();
   const { toast } = useToast();
   const { t, lang } = useLang();
+  const { isDemo, addRecord, updateRecord, deleteRecord: demoDeleteRecord } = useDemoMode();
   const [showAll, setShowAll] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
@@ -98,6 +109,10 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 
   const createMutation = useMutation({
     mutationFn: async ({ title, period }: { title: string; period: string }) => {
+      if (isDemo) {
+        addRecord("goals", { type, period_start: period, title, is_completed: false, user_id: "demo-user" });
+        return;
+      }
       const { error } = await (supabase.from as any)("goals").insert({ type, period_start: period, title });
       if (error) throw error;
     },
@@ -106,6 +121,10 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, is_completed }: { id: string; is_completed: boolean }) => {
+      if (isDemo) {
+        updateRecord("goals", id, { is_completed });
+        return;
+      }
       const { error } = await (supabase.from as any)("goals").update({ is_completed }).eq("id", id);
       if (error) throw error;
     },
@@ -128,6 +147,10 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (isDemo) {
+        demoDeleteRecord("goals", id);
+        return;
+      }
       const { error } = await (supabase.from as any)("goals").delete().eq("id", id);
       if (error) throw error;
     },

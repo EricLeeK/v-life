@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useLang } from "@/contexts/LanguageContext";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // ========== Hooks ==========
 function useWeightRecords() {
-  return useQuery({
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
     queryKey: ["weight_records"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("weight_records")
@@ -28,11 +30,18 @@ function useWeightRecords() {
       if (error) throw error;
       return data as any[];
     },
+    enabled: !isDemo,
   });
+  if (isDemo) {
+    const sorted = [...demoData.weight_records].sort((a: any, b: any) => a.date.localeCompare(b.date));
+    return { data: sorted, isLoading: false, error: null } as any;
+  }
+  return supa;
 }
 
 function useMeasurementRecords() {
-  return useQuery({
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
     queryKey: ["measurement_records"],
     queryFn: async () => {
       const { data, error } = await (supabase.from as any)("measurement_records")
@@ -40,7 +49,13 @@ function useMeasurementRecords() {
       if (error) throw error;
       return data as any[];
     },
+    enabled: !isDemo,
   });
+  if (isDemo) {
+    const sorted = [...demoData.measurement_records].sort((a: any, b: any) => a.date.localeCompare(b.date));
+    return { data: sorted, isLoading: false, error: null } as any;
+  }
+  return supa;
 }
 
 type TimeRange = "week" | "month" | "year";
@@ -155,6 +170,7 @@ function TodayCalorieSummary() {
 // ========== Weight Tracker ==========
 function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   const { t, lang } = useLang();
+  const { isDemo, addRecord, updateRecord, deleteRecord: demoDeleteRecord } = useDemoMode();
   const { data: records = [] } = useWeightRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -165,6 +181,15 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
+      if (isDemo) {
+        const existing = (records as any[]).find((r: any) => r.date === payload.date);
+        if (existing) {
+          updateRecord("weight_records", existing.id, payload);
+        } else {
+          addRecord("weight_records", { ...payload, user_id: "demo-user" });
+        }
+        return payload;
+      }
       const { data, error } = await (supabase.from as any)("weight_records")
         .upsert(payload, { onConflict: "user_id,date" }).select().single();
       if (error) throw error;
@@ -175,6 +200,10 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (isDemo) {
+        demoDeleteRecord("weight_records", id);
+        return;
+      }
       const { error } = await (supabase.from as any)("weight_records").delete().eq("id", id);
       if (error) throw error;
     },
@@ -304,6 +333,7 @@ const MEASUREMENT_FIELDS = [
 
 function MeasurementTracker() {
   const { t, lang } = useLang();
+  const { isDemo, addRecord, updateRecord, deleteRecord: demoDeleteRecord } = useDemoMode();
   const { data: records = [] } = useMeasurementRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -313,6 +343,15 @@ function MeasurementTracker() {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
+      if (isDemo) {
+        const existing = (records as any[]).find((r: any) => r.date === payload.date);
+        if (existing) {
+          updateRecord("measurement_records", existing.id, payload);
+        } else {
+          addRecord("measurement_records", { ...payload, user_id: "demo-user" });
+        }
+        return payload;
+      }
       const { data, error } = await (supabase.from as any)("measurement_records")
         .upsert(payload, { onConflict: "user_id,date" }).select().single();
       if (error) throw error;
@@ -323,6 +362,10 @@ function MeasurementTracker() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (isDemo) {
+        demoDeleteRecord("measurement_records", id);
+        return;
+      }
       const { error } = await (supabase.from as any)("measurement_records").delete().eq("id", id);
       if (error) throw error;
     },
