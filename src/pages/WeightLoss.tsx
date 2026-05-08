@@ -11,7 +11,7 @@ import { useSettings, useUpdateSettings, useCaloriesByDate } from "@/hooks/useDa
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, UtensilsCrossed, Timer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, subDays, subMonths, subYears } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -106,8 +106,11 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
       <CardHeader><CardTitle className="text-base">{t("16+8 轻断食", "16+8 Intermittent Fasting")}</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <div className="text-center space-y-2">
-          <div className={`text-3xl font-bold ${colorClass}`}>{isEating ? t("🍽️ 可进食", "🍽️ Eating") : t("⏳ 禁食中", "⏳ Fasting")}</div>
-          <div className={`text-lg font-mono ${colorClass}`}>
+          <div className={`text-3xl font-bold heading-font flex items-center justify-center gap-3 ${colorClass}`}>
+            {isEating ? <UtensilsCrossed className="h-8 w-8" /> : <Timer className="h-8 w-8" />}
+            {isEating ? t("可进食", "Eating") : t("禁食中", "Fasting")}
+          </div>
+          <div className={`text-lg font-bold heading-font ${colorClass}`}>
             {lang === "zh" ? `距离${isEating ? "禁食" : "可进食"}还有 ${hoursLeft}小时 ${minsLeft}分钟` : `${hoursLeft}h ${minsLeft}m until ${isEating ? "fasting" : "eating"}`}
           </div>
         </div>
@@ -140,9 +143,9 @@ function TodayCalorieSummary() {
       <CardHeader><CardTitle className="text-base">{t("今日热量概览", "Today's Calorie Summary")}</CardTitle></CardHeader>
       <CardContent>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <div><div className="text-2xl font-bold text-foreground">{totalIntake}</div><div className="text-xs text-muted-foreground">{t("摄入 kcal", "Intake kcal")}</div></div>
-          <div><div className="text-2xl font-bold text-orange-500">{totalBurned}</div><div className="text-xs text-muted-foreground">{t("消耗 kcal", "Burned kcal")}</div></div>
-          <div><div className={`text-2xl font-bold ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div><div className="text-xs text-muted-foreground">{t("净摄入 kcal", "Net kcal")}</div></div>
+          <div><div className="text-2xl font-bold text-foreground font-mono-data">{totalIntake}</div><div className="text-xs text-muted-foreground">{t("摄入 kcal", "Intake kcal")}</div></div>
+          <div><div className="text-2xl font-bold text-orange-500 font-mono-data">{totalBurned}</div><div className="text-xs text-muted-foreground">{t("消耗 kcal", "Burned kcal")}</div></div>
+          <div><div className={`text-2xl font-bold font-mono-data ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div><div className="text-xs text-muted-foreground">{t("净摄入 kcal", "Net kcal")}</div></div>
         </div>
       </CardContent>
     </Card>
@@ -375,7 +378,7 @@ function MeasurementTracker() {
           <div className="grid grid-cols-5 gap-2 text-center">
             {MEASUREMENT_FIELDS.map(({ key, label, color }) => (
               <div key={key}>
-                <div className="text-lg font-bold" style={{ color }}>{latest[key] != null ? `${latest[key]}` : "-"}</div>
+                <div className="text-lg font-bold font-mono-data" style={{ color }}>{latest[key] != null ? `${latest[key]}` : "-"}</div>
                 <div className="text-[10px] text-muted-foreground">{MEASUREMENT_LABELS[label] || label}</div>
               </div>
             ))}

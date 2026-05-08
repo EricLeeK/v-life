@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, CalendarDays, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { startOfWeek, startOfMonth, startOfYear, format, endOfWeek, addWeeks, addMonths, subWeeks, subMonths } from "date-fns";
@@ -65,6 +65,7 @@ function generatePeriodOptions(type: GoalType, lang: string): { value: string; l
 }
 
 function GoalColumn({ type, label }: { type: GoalType; label: string }) {
+  const icon = type === "year" ? <Target className="h-4 w-4 text-[#5b8c44]" /> : <CalendarDays className="h-4 w-4 text-[#5b88b5]" />;
   const { data: allGoals = [] } = useGoals(type);
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -179,7 +180,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
     <Card className="flex flex-col h-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm">{label}</CardTitle>
+          <CardTitle className="text-sm flex items-center gap-2">{icon}{label}</CardTitle>
           <Button variant="ghost" size="sm" className="h-6 text-xs gap-1"
             onClick={() => setShowAll(!showAll)}>
             {showAll ? <><ChevronUp className="h-3 w-3" />{t("当前", "Current")}</> : <><ChevronDown className="h-3 w-3" />{t("全部", "All")}</>}
@@ -240,9 +241,9 @@ export default function GoalsPage() {
   return (
     <AppLayout title={t("目标", "Goals")}>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <GoalColumn type="week" label={t("📅 周目标", "📅 Weekly")} />
-        <GoalColumn type="month" label={t("📆 月目标", "📆 Monthly")} />
-        <GoalColumn type="year" label={t("🎯 年目标", "🎯 Yearly")} />
+        <GoalColumn type="week" label={t("周目标", "Weekly")} />
+        <GoalColumn type="month" label={t("月目标", "Monthly")} />
+        <GoalColumn type="year" label={t("年目标", "Yearly")} />
       </div>
     </AppLayout>
   );

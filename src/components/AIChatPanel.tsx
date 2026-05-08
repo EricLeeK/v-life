@@ -5,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2, Undo2 } from "lucide-react";
+import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2, Undo2, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { useSettings } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
@@ -366,11 +366,13 @@ export function AIChatPanel() {
 
       const results: string[] = [];
       const createdIds: Array<{ table: string; id: string }> = [];
+      let hasError = false;
 
       for (const op of operations) {
         const table = MODULE_TABLE_MAP[op.module];
         if (!table) {
-          results.push(`❌ ${t("未知模块", "Unknown module")}: ${op.module}`);
+          hasError = true;
+          results.push(`${t("未知模块", "Unknown module")}: ${op.module}`);
           continue;
         }
         const label = moduleLabels[op.module] || op.module;
@@ -403,7 +405,7 @@ export function AIChatPanel() {
               : await (supabase.from as any)(table).insert(row).select().single();
             if (error) throw error;
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
-            results.push(`✅ ${label}: ${t("已添加", "Added")}「${itemName}」`);
+            results.push(`${label}: ${t("已添加", "Added")}「${itemName}」`);
           } else if (op.action === "delete") {
             const match = op.data.match || {};
             const matchEntries = Object.entries(match).filter(([_, v]) => v !== undefined && v !== null && v !== "");
@@ -448,7 +450,7 @@ export function AIChatPanel() {
                 if (error) throw error;
               }
             }
-            results.push(`✅ ${label}: ${t("已删除", "Deleted")}「${itemName}」`);
+            results.push(`${label}: ${t("已删除", "Deleted")}「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
             const match = { ...op.data.match };
 
@@ -476,12 +478,14 @@ export function AIChatPanel() {
             if (!found) throw new Error(`未找到匹配的记录`);
             const { error } = await (supabase.from as any)(table).update(op.data.update).eq("id", found.id);
             if (error) throw error;
-            results.push(`✅ ${label}: ${t("已更新", "Updated")}「${itemName}」`);
+            results.push(`${label}: ${t("已更新", "Updated")}「${itemName}」`);
           } else {
-            results.push(`⚠️ ${label}: ${t("不支持的操作", "Unsupported action")} ${op.action}`);
+            hasError = true;
+            results.push(`${label}: ${t("不支持的操作", "Unsupported action")} ${op.action}`);
           }
         } catch (e: any) {
-          results.push(`❌ ${label}: ${e.message}`);
+          hasError = true;
+          results.push(`${label}: ${e.message}`);
         }
       }
 
@@ -493,7 +497,7 @@ export function AIChatPanel() {
       qc.invalidateQueries({ queryKey: ["finance", "summary"] });
       qc.invalidateQueries({ queryKey: ["todos", "pending"] });
 
-      return { results, createdIds };
+      return { results, createdIds, hasError };
     },
     [qc, t]
   );
@@ -566,12 +570,12 @@ export function AIChatPanel() {
 
       if (operations.length > 0) {
         if (aiMode === "direct") {
-          const { results: execResults, createdIds } = await executeOperations(operations);
+          const { results: execResults, createdIds, hasError } = await executeOperations(operations);
           const assistantMsg: Message = {
             role: "assistant",
             content: `${summary}\n\n${execResults.join("\n")}`,
             operations,
-            status: execResults.every((r) => r.startsWith("✅")) ? "executed" : "error",
+            status: hasError ? "error" : "executed",
           };
           setMessages((prev) => [...prev, assistantMsg]);
           await saveMessage(sessionId, "assistant", assistantMsg.content, undefined, { operations });
@@ -612,7 +616,7 @@ export function AIChatPanel() {
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `⚠️ ${e.message}` },
+        { role: "assistant", content: e.message },
       ]);
       toast({ title: t("AI 调用失败", "AI call failed"), description: e.message, variant: "destructive" });
     } finally {
@@ -625,11 +629,11 @@ export function AIChatPanel() {
     if (!msg?.operations) return;
     setLoading(true);
     try {
-      const { results: execResults } = await executeOperations(msg.operations);
+      const { results: execResults, hasError } = await executeOperations(msg.operations);
       const updatedMsg: Message = {
         ...msg,
         content: `${msg.content.split("\n\n将执行以下操作")[0]}\n\n${execResults.join("\n")}`,
-        status: execResults.every((r) => r.startsWith("✅")) ? "executed" : "error",
+        status: hasError ? "error" : "executed",
       };
       setMessages((prev) => prev.map((m, i) => (i === msgIndex ? updatedMsg : m)));
       toast({ title: t("操作已执行", "Operation executed") });
@@ -718,7 +722,7 @@ export function AIChatPanel() {
                 <div className="space-y-1 text-xs">
                   <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"午饭吃了拉面，花了30元，大概600卡"</p>
                   <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"明天下午3点开会，大概1小时"</p>
-                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">{t("📷 拍小票自动识别记账", "📷 Snap receipt for auto-expense")}</p>
+                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5 flex items-center gap-1.5"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</p>
                 </div>
               </div>
             )}
@@ -755,7 +759,7 @@ export function AIChatPanel() {
                         <Check className="h-3 w-3 mr-1" /> {t("确认执行", "Confirm")}
                       </Button>
                       <Button variant="ghost" size="sm" className="h-7 text-xs text-[#8a847a] hover:bg-[#f4f3ee]" onClick={() => {
-                        setMessages(prev => prev.map((m, idx) => idx === i ? { ...m, status: undefined, content: m.content + `\n\n${t("❌ 已取消", "❌ Cancelled")}` } : m));
+                        setMessages(prev => prev.map((m, idx) => idx === i ? { ...m, status: undefined, content: m.content + `\n\n${t("已取消", "Cancelled")}` } : m));
                       }}>
                         {t("取消", "Cancel")}
                       </Button>

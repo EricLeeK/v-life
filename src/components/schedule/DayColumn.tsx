@@ -1,12 +1,13 @@
 import { useRef, useCallback } from "react";
 import { EventBlock, HOUR_HEIGHT, TOTAL_HOURS, yToTime } from "./EventBlock";
 
-export function DayColumn({ day, events, onEdit, onDragEnd, onCreateAt }: {
+export function DayColumn({ day, events, onEdit, onDragEnd, onCreateAt, isToday }: {
   day: Date;
   events: any[];
   onEdit: (e: any) => void;
   onDragEnd: (id: string, newStart: Date, newEnd: Date) => void;
   onCreateAt: (start: Date, end: Date) => void;
+  isToday?: boolean;
 }) {
   const colRef = useRef<HTMLDivElement>(null);
   const dragCreate = useRef<{ startY: number; indicator: HTMLDivElement | null } | null>(null);
@@ -65,7 +66,7 @@ export function DayColumn({ day, events, onEdit, onDragEnd, onCreateAt }: {
   return (
     <div
       ref={colRef}
-      className="schedule-day-column border-l border-border/50 relative"
+      className={`schedule-day-column border-l relative ${isToday ? "bg-[#f0ede6]" : "border-[#e4e1d7]/50"}`}
       style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }}
       onMouseDown={handleMouseDown}
     >

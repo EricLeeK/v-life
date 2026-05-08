@@ -9,18 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Edit2, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Edit2, ChevronDown, UtensilsCrossed, ShoppingBag, Bus, Home, Smartphone, HeartPulse, Shirt, Gamepad2, BookOpen, Monitor, Gem, FileText, MoreHorizontal } from "lucide-react";
 import { useFinanceByMonth, financeHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
+const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
+  "餐饮": UtensilsCrossed, "日用": ShoppingBag, "交通": Bus,
+  "住房": Home, "通讯/订阅": Smartphone, "医疗": HeartPulse,
+  "服饰": Shirt, "娱乐": Gamepad2, "学习": BookOpen,
+  "电子": Monitor, "大额": Gem, "税费": FileText, "其他": MoreHorizontal,
+};
+
 const CATEGORIES_ZH = [
-  { key: "餐饮", emoji: "🍜" }, { key: "日用", emoji: "🧴" }, { key: "交通", emoji: "🚃" },
-  { key: "住房", emoji: "🏠" }, { key: "通讯/订阅", emoji: "📱" }, { key: "医疗", emoji: "🏥" },
-  { key: "服饰", emoji: "👔" }, { key: "娱乐", emoji: "🎮" }, { key: "学习", emoji: "📚" },
-  { key: "电子", emoji: "💻" }, { key: "大额", emoji: "🏷️" }, { key: "税费", emoji: "🧾" }, { key: "其他", emoji: "❓" },
+  { key: "餐饮" }, { key: "日用" }, { key: "交通" },
+  { key: "住房" }, { key: "通讯/订阅" }, { key: "医疗" },
+  { key: "服饰" }, { key: "娱乐" }, { key: "学习" },
+  { key: "电子" }, { key: "大额" }, { key: "税费" }, { key: "其他" },
 ] as const;
 const CATEGORIES_EN: Record<string, string> = {
   "餐饮": "Food", "日用": "Daily", "交通": "Transport", "住房": "Housing",
@@ -136,7 +143,7 @@ export default function FinancePage() {
                   <div><Label>{t("分类", "Category")} *</Label>
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{CATEGORIES_ZH.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {lang === "zh" ? c.key : (CATEGORIES_EN[c.key] || c.key)}</SelectItem>)}</SelectContent>
+                      <SelectContent>{CATEGORIES_ZH.map((c) => { const CatIcon = CATEGORY_ICON_MAP[c.key]; return <SelectItem key={c.key} value={c.key}><span className="flex items-center gap-1.5">{CatIcon && <CatIcon className="h-4 w-4 text-[#8a847a]" />}{lang === "zh" ? c.key : (CATEGORIES_EN[c.key] || c.key)}</span></SelectItem>; })}</SelectContent>
                     </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -168,7 +175,7 @@ export default function FinancePage() {
               <CardContent className="p-4">
                 <p className="text-sm text-muted-foreground mb-1">{t("本月支出", "Monthly Spending")}</p>
                 <div className="flex justify-between items-baseline mb-2">
-                  <span className="text-2xl font-semibold">¥{totalCny.toFixed(2)}</span>
+                  <span className="text-2xl font-semibold font-mono-data">¥{totalCny.toFixed(2)}</span>
                   <span className="text-sm text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
                 </div>
                 <Progress value={budgetProgress} className="h-2" />
@@ -191,10 +198,10 @@ export default function FinancePage() {
                     </ResponsiveContainer>
                     <div className="flex-1 space-y-1">
                       {categoryData.slice(0, 4).map((item, i) => {
-                        const cat = CATEGORIES_ZH.find((c) => c.key === item.name);
+                        const CatIcon = CATEGORY_ICON_MAP[item.name];
                         return (
                           <div key={item.name} className="flex justify-between text-xs">
-                            <span><span className="inline-block w-2 h-2 rounded-full mr-1" style={{ background: PIE_COLORS[i] }} />{cat?.emoji} {lang === "zh" ? item.name : (CATEGORIES_EN[item.name] || item.name)}</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i] }} />{CatIcon && <CatIcon className="h-3 w-3 text-[#8a847a]" />}{lang === "zh" ? item.name : (CATEGORIES_EN[item.name] || item.name)}</span>
                             <span className="text-muted-foreground">¥{item.value.toFixed(0)}</span>
                           </div>
                         );
@@ -227,12 +234,12 @@ export default function FinancePage() {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pl-2 space-y-1 mt-1">
                     {group.items.map((r: any) => {
-                      const cat = CATEGORIES_ZH.find((c) => c.key === r.category);
+                      const CatIcon = CATEGORY_ICON_MAP[r.category];
                       return (
                         <Card key={r.id} className="hover:border-primary/20 transition-colors">
                           <CardContent className="p-2 px-3 flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="text-sm">{cat?.emoji}</span>
+                              {CatIcon && <CatIcon className="h-4 w-4 text-[#8a847a]" />}
                               <span className="text-sm truncate">{r.name}</span>
                               <span className="text-xs text-muted-foreground">{format(new Date(r.date), "MM/dd")}</span>
                             </div>

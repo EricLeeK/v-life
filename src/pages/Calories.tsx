@@ -8,28 +8,36 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Coffee, Sun, Moon, Cookie, Dumbbell } from "lucide-react";
 import { useCaloriesByDate, calorieHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, subDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 
+const MEAL_TYPE_ICONS: Record<string, React.ElementType> = {
+  breakfast: Coffee,
+  lunch: Sun,
+  dinner: Moon,
+  snack: Cookie,
+  exercise: Dumbbell,
+};
+
 const MEAL_TYPES = [
-  { key: "breakfast", label: "🌅 早餐" },
-  { key: "lunch", label: "☀️ 午餐" },
-  { key: "dinner", label: "🌙 晚餐" },
-  { key: "snack", label: "🍿 加餐" },
-  { key: "exercise", label: "🏃 运动" },
+  { key: "breakfast", label: "早餐" },
+  { key: "lunch", label: "午餐" },
+  { key: "dinner", label: "晚餐" },
+  { key: "snack", label: "加餐" },
+  { key: "exercise", label: "运动" },
 ] as const;
 
 export default function CaloriesPage() {
   const { t, lang } = useLang();
   const MEAL_TYPES_DISPLAY: Record<string, string> = {
-    breakfast: t("🌅 早餐", "🌅 Breakfast"),
-    lunch: t("☀️ 午餐", "☀️ Lunch"),
-    dinner: t("🌙 晚餐", "🌙 Dinner"),
-    snack: t("🍿 加餐", "🍿 Snack"),
-    exercise: t("🏃 运动", "🏃 Exercise"),
+    breakfast: t("早餐", "Breakfast"),
+    lunch: t("午餐", "Lunch"),
+    dinner: t("晚餐", "Dinner"),
+    snack: t("加餐", "Snack"),
+    exercise: t("运动", "Exercise"),
   };
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -115,7 +123,7 @@ export default function CaloriesPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex justify-between text-sm mb-2">
-              <span className="text-foreground font-medium">{foodCalories} - {exerciseCalories} = {totalCalories} kcal</span>
+              <span className="text-foreground font-medium font-mono-data">{foodCalories} - {exerciseCalories} = {totalCalories} kcal</span>
               <span className="text-muted-foreground">/ {target} kcal</span>
             </div>
             <Progress value={progress} className="h-2" />
@@ -126,10 +134,11 @@ export default function CaloriesPage() {
         {MEAL_TYPES.map(({ key, label }) => {
           const mealRecords = records.filter((r: any) => r.meal_type === key);
           const mealTotal = mealRecords.reduce((sum: number, r: any) => sum + r.calories, 0);
+          const MealIcon = MEAL_TYPE_ICONS[key];
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium">{MEAL_TYPES_DISPLAY[key] || label} <span className="text-muted-foreground ml-1">{mealTotal} kcal</span></h3>
+                <h3 className="text-sm font-medium flex items-center gap-1.5">{MealIcon && <MealIcon className="h-4 w-4 text-[#8a847a]" />}{MEAL_TYPES_DISPLAY[key] || label} <span className="text-muted-foreground ml-1">{mealTotal} kcal</span></h3>
                 <Dialog open={dialogOpen && form.meal_type === key} onOpenChange={(o) => { if (o) { setForm({ ...form, meal_type: key }); setDialogOpen(true); } else { setDialogOpen(false); setEditingItem(null); } }}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />{t("添加", "Add")}</Button>
@@ -142,7 +151,7 @@ export default function CaloriesPage() {
                       <div><Label>{t("餐次", "Meal Type")}</Label>
                         <Select value={form.meal_type} onValueChange={(v) => setForm({ ...form, meal_type: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{MEAL_TYPES.map((m) => <SelectItem key={m.key} value={m.key}>{MEAL_TYPES_DISPLAY[m.key] || m.label}</SelectItem>)}</SelectContent>
+                          <SelectContent>{MEAL_TYPES.map((m) => { const MIcon = MEAL_TYPE_ICONS[m.key]; return <SelectItem key={m.key} value={m.key}><span className="flex items-center gap-1.5">{MIcon && <MIcon className="h-4 w-4 text-[#8a847a]" />}{MEAL_TYPES_DISPLAY[m.key] || m.label}</span></SelectItem>; })}</SelectContent>
                         </Select>
                       </div>
                       <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>

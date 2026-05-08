@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Edit2 } from "lucide-react";
+import { Plus, Trash2, Edit2, FlaskConical, Home, Bot, Brain, Tag } from "lucide-react";
 import { thoughtHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -15,9 +15,16 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useLang } from "@/contexts/LanguageContext";
 
+const TAG_ICON_MAP: Record<string, React.ElementType> = {
+  "科研": FlaskConical,
+  "生活": Home,
+  "AI": Bot,
+  "杂念": Brain,
+};
+
 const PRESET_TAGS = [
-  { tag: "科研", emoji: "🔬" }, { tag: "生活", emoji: "🏠" },
-  { tag: "AI", emoji: "🤖" }, { tag: "杂念", emoji: "💭" },
+  { tag: "科研" }, { tag: "生活" },
+  { tag: "AI" }, { tag: "杂念" },
 ];
 
 const TAG_LABELS: Record<string, string> = {
@@ -51,7 +58,7 @@ export default function ThoughtsPage() {
     const extraTags = Array.from(dataTagSet).filter(t => !presetTagNames.includes(t));
     return [
       ...PRESET_TAGS,
-      ...extraTags.map(tag => ({ tag, emoji: "🏷️" })),
+      ...extraTags.map(tag => ({ tag })),
     ];
   }, [thoughts, customTags]);
 
@@ -93,11 +100,14 @@ export default function ThoughtsPage() {
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>{t("全部", "All")}</Button>
-          {allTags.map(({ tag, emoji }) => (
-            <Button key={tag} variant={selectedTag === tag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(tag)}>
-              {emoji} {lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}
-            </Button>
-          ))}
+          {allTags.map(({ tag }) => {
+            const TagIcon = TAG_ICON_MAP[tag] || Tag;
+            return (
+              <Button key={tag} variant={selectedTag === tag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(tag)}>
+                <TagIcon className="h-4 w-4 mr-1" />{lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}
+              </Button>
+            );
+          })}
           <div className="flex-1" />
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" }); } }}>
             <DialogTrigger asChild>
@@ -114,15 +124,18 @@ export default function ThoughtsPage() {
                 <div>
                   <Label>{t("标签", "Tags")}</Label>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {allTags.map(({ tag, emoji }) => (
-                      <Button key={tag} variant={form.tags.includes(tag) ? "default" : "secondary"} size="sm" className="h-7 text-xs" onClick={() => toggleTag(tag)}>
-                        {emoji} {lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}
-                      </Button>
-                    ))}
+                    {allTags.map(({ tag }) => {
+                      const TagIcon = TAG_ICON_MAP[tag] || Tag;
+                      return (
+                        <Button key={tag} variant={form.tags.includes(tag) ? "default" : "secondary"} size="sm" className="h-7 text-xs" onClick={() => toggleTag(tag)}>
+                          <TagIcon className="h-4 w-4 mr-1" />{lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}
+                        </Button>
+                      );
+                    })}
                     {/* Show any form tags not in allTags (newly added) */}
                     {form.tags.filter(t => !allTags.some(at => at.tag === t)).map(tag => (
                       <Button key={tag} variant="default" size="sm" className="h-7 text-xs" onClick={() => toggleTag(tag)}>
-                        🏷️ {tag}
+                        <Tag className="h-4 w-4 mr-1" />{tag}
                       </Button>
                     ))}
                   </div>
@@ -162,8 +175,8 @@ export default function ThoughtsPage() {
                   </div>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
                     {thought.tags?.map((tag: string) => {
-                      const preset = allTags.find((t) => t.tag === tag);
-                      return <Badge key={tag} variant="secondary" className="text-xs">{preset?.emoji || "🏷️"} {lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}</Badge>;
+                      const TagIcon = TAG_ICON_MAP[tag] || Tag;
+                      return <Badge key={tag} variant="secondary" className="text-xs flex items-center gap-1"><TagIcon className="h-3 w-3" />{lang === "zh" ? tag : (TAG_LABELS[tag] || tag)}</Badge>;
                     })}
                     <span className="text-xs text-muted-foreground ml-auto">{format(new Date(thought.created_at), "MM/dd HH:mm")}</span>
                   </div>
