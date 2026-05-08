@@ -4,24 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartTooltip } from "./ChartTooltip";
 
-// Map both hex codes and color names to { hex, label }
-const COLOR_REGISTRY: Record<string, { hex: string; label: { zh: string; en: string } }> = {
-  "#5b88b5": { hex: "#5b88b5", label: { zh: "课程", en: "Classes" } },
-  blue:      { hex: "#5b88b5", label: { zh: "课程", en: "Classes" } },
-  "#5b8c44": { hex: "#5b8c44", label: { zh: "日常", en: "Routine" } },
-  green:     { hex: "#5b8c44", label: { zh: "日常", en: "Routine" } },
-  "#d17847": { hex: "#d17847", label: { zh: "健身", en: "Fitness" } },
-  orange:    { hex: "#d17847", label: { zh: "健身", en: "Fitness" } },
-  "#8b7bb8": { hex: "#8b7bb8", label: { zh: "社交", en: "Social" } },
-  purple:    { hex: "#8b7bb8", label: { zh: "社交", en: "Social" } },
-  "#5a9da8": { hex: "#5a9da8", label: { zh: "学习", en: "Study" } },
-  teal:      { hex: "#5a9da8", label: { zh: "学习", en: "Study" } },
-  "#c49840": { hex: "#c49840", label: { zh: "其他", en: "Other" } },
-  yellow:    { hex: "#c49840", label: { zh: "其他", en: "Other" } },
-  "#ef4444": { hex: "#ef4444", label: { zh: "紧急", en: "Urgent" } },
-  red:       { hex: "#ef4444", label: { zh: "紧急", en: "Urgent" } },
-};
-
 interface ScheduleEvent {
   start_time: string;
   end_time: string;
@@ -33,60 +15,33 @@ export function ScheduleAnalysis({ events }: { events: ScheduleEvent[] }) {
   const { t, lang } = useLang();
 
   const data = useMemo(() => {
-    const hoursByColor: Record<string, number> = {};
+    // Group by color, count events, sum hours
+    const groups: Record<string, { hours: number; count: number; titles: string[] }> = {};
     events.forEach((e) => {
       const start = new Date(e.start_time).getTime();
       const end = new Date(e.end_time).getTime();
       const hours = Math.max(0, (end - start) / (1000 * 60 * 60));
       const color = e.color || "#c49840";
-      hoursByColor[color] = (hoursByColor[color] || 0) + hours;
+      if (!groups[color]) groups[color] = { hours: 0, count: 0, titles: [] };
+      groups[color].hours += hours;
+      groups[color].count++;
+      if (groups[color].titles.length < 2) groups[color].titles.push(e.title);
     });
 
-    const FALLBACK = "#c49840";
-    const results: { name: string; hours: number; color: string }[] = [];
-    let otherHours = 0;
-    const otherColors: string[] = [];
-
-    Object.entries(hoursByColor)
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([color, hours]) => {
-        const entry = COLOR_REGISTRY[color];
-        if (entry) {
-          results.push({
-            name: lang === "zh" ? entry.label.zh : entry.label.en,
-            hours: Number(hours.toFixed(1)),
-            color: entry.hex,
-          });
-        } else {
-          // Unknown color — merge into "其他" or keep separate
-          otherHours += hours;
-          if (otherColors.length < 3) otherColors.push(color);
-        }
-      });
-
-    // Add unknown colors as individual entries (up to 3), rest merged
-    otherColors.forEach((c, i) => {
-      const h = hoursByColor[c];
-      results.push({
-        name: i === 0 ? t("其他", "Other") : "",
-        hours: Number(h.toFixed(1)),
-        color: c,
-      });
-    });
-    // If there are more unknown colors beyond 3, we've already merged conceptually
-    const extraUnknownHours = Object.entries(hoursByColor)
-      .filter(([c]) => !COLOR_REGISTRY[c] && !otherColors.includes(c))
-      .reduce((sum, [, h]) => sum + h, 0);
-    if (extraUnknownHours > 0) {
-      results.push({
-        name: otherColors.length === 0 ? t("其他", "Other") : "",
-        hours: Number(extraUnknownHours.toFixed(1)),
-        color: FALLBACK,
-      });
-    }
-
-    return results;
-  }, [events, lang, t]);
+    return Object.entries(groups)
+      .map(([color, g]) => {
+        // Label: show first 1-2 event titles, truncated
+        const label = g.titles.join(", ");
+        const displayLabel = label.length > 12 ? label.slice(0, 12) + "…" : label;
+        return {
+          name: `${displayLabel} ×${g.count}`,
+          hours: Number(g.hours.toFixed(1)),
+          color,
+          count: g.count,
+        };
+      })
+      .sort((a, b) => b.hours - a.hours);
+  }, [events]);
 
   if (data.length === 0) {
     return (
@@ -115,7 +70,7 @@ export function ScheduleAnalysis({ events }: { events: ScheduleEvent[] }) {
         <ResponsiveContainer width="100%" height={Math.max(120, data.length * 36)}>
           <BarChart data={data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
             <XAxis type="number" tick={{ fontSize: 10, fill: "#8a847a" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}h`} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#1f1a14" }} tickLine={false} axisLine={false} width={60} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#1f1a14" }} tickLine={false} axisLine={false} width={110} />
             <Tooltip content={<ChartTooltip formatter={(v) => `${v}h`} />} />
             <Bar dataKey="hours" radius={[0, 4, 4, 0]} barSize={16}>
               {data.map((entry, i) => (
