@@ -19,7 +19,13 @@ import { zhCN } from "date-fns/locale";
 import { DayColumn } from "@/components/schedule/DayColumn";
 import { MonthView } from "@/components/schedule/MonthView";
 import { HOUR_HEIGHT, VISIBLE_START, TOTAL_HOURS, IMPORTANCE_COLORS, timeToY } from "@/components/schedule/EventBlock";
-import { ScheduleAnalysis } from "@/components/charts/ScheduleAnalysis";
+
+const SCHEDULE_COLORS = [
+  "#ef4444", "#f59e0b", "#84cc16", "#22c55e",
+  "#14b8a6", "#0ea5e9", "#3b82f6", "#6366f1",
+  "#8b5cf6", "#a855f7", "#ec4899", "#f43f5e",
+  "#78716c", "#d97706", "#059669", "#7c3aed",
+];
 
 type ViewMode = "3day" | "week" | "month";
 
@@ -404,12 +410,31 @@ export default function SchedulePage() {
                 </div>
                 <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <div>
-                  <Label>{t("自定义颜色（可选）", "Custom Color (optional)")}</Label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input type="color" value={form.color || "#0ea5e9"} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-10 h-8 p-0.5 cursor-pointer" />
-                    <span className="text-xs text-muted-foreground">{form.color || t("使用默认颜色", "Use default")}</span>
-                    {form.color && <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => setForm({ ...form, color: "" })}>{t("清除", "Clear")}</Button>}
+                  <Label>{t("颜色", "Color")}</Label>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {SCHEDULE_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className="w-6 h-6 rounded-full border-2 transition-all shrink-0"
+                        style={{
+                          backgroundColor: c,
+                          borderColor: form.color === c ? "#1f1a14" : "transparent",
+                          transform: form.color === c ? "scale(1.15)" : "scale(1)",
+                        }}
+                        onClick={() => setForm({ ...form, color: c })}
+                      />
+                    ))}
+                    <button
+                      type="button"
+                      className="w-6 h-6 rounded-full border-2 border-dashed border-[#d1cdc4] flex items-center justify-center text-[10px] text-[#8a847a] hover:border-[#8a847a] transition-colors shrink-0"
+                      onClick={() => setForm({ ...form, color: "" })}
+                      title={t("使用默认颜色", "Use default")}
+                    >
+                      ×
+                    </button>
                   </div>
+                  <span className="text-[10px] text-muted-foreground mt-1 block">{form.color || t("默认颜色", "Default color")}</span>
                 </div>
                 {/* Recurrence */}
                 <div>
@@ -525,7 +550,6 @@ export default function SchedulePage() {
         )}
 
         {/* Time distribution analysis */}
-        {viewMode !== "month" && <ScheduleAnalysis events={displayEvents as any[]} />}
       </div>
     </AppLayout>
   );
