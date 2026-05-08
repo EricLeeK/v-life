@@ -4,23 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartTooltip } from "./ChartTooltip";
 
-const COLOR_MAP: Record<string, string> = {
-  blue: "#5b88b5",
-  green: "#5b8c44",
-  orange: "#d17847",
-  purple: "#8b7bb8",
-  teal: "#5a9da8",
-  yellow: "#c49840",
-  red: "#ef4444",
-};
-
-const CATEGORY_LABELS: Record<string, { zh: string; en: string }> = {
-  blue: { zh: "课程", en: "Classes" },
-  green: { zh: "日常", en: "Routine" },
-  orange: { zh: "健身", en: "Fitness" },
-  purple: { zh: "社交", en: "Social" },
-  teal: { zh: "学习", en: "Study" },
-  yellow: { zh: "其他", en: "Other" },
+// Map both hex codes and color names to { hex, label }
+const COLOR_REGISTRY: Record<string, { hex: string; label: { zh: string; en: string } }> = {
+  "#5b88b5": { hex: "#5b88b5", label: { zh: "课程", en: "Classes" } },
+  blue:      { hex: "#5b88b5", label: { zh: "课程", en: "Classes" } },
+  "#5b8c44": { hex: "#5b8c44", label: { zh: "日常", en: "Routine" } },
+  green:     { hex: "#5b8c44", label: { zh: "日常", en: "Routine" } },
+  "#d17847": { hex: "#d17847", label: { zh: "健身", en: "Fitness" } },
+  orange:    { hex: "#d17847", label: { zh: "健身", en: "Fitness" } },
+  "#8b7bb8": { hex: "#8b7bb8", label: { zh: "社交", en: "Social" } },
+  purple:    { hex: "#8b7bb8", label: { zh: "社交", en: "Social" } },
+  "#5a9da8": { hex: "#5a9da8", label: { zh: "学习", en: "Study" } },
+  teal:      { hex: "#5a9da8", label: { zh: "学习", en: "Study" } },
+  "#c49840": { hex: "#c49840", label: { zh: "其他", en: "Other" } },
+  yellow:    { hex: "#c49840", label: { zh: "其他", en: "Other" } },
+  "#ef4444": { hex: "#ef4444", label: { zh: "紧急", en: "Urgent" } },
+  red:       { hex: "#ef4444", label: { zh: "紧急", en: "Urgent" } },
 };
 
 interface ScheduleEvent {
@@ -45,11 +44,12 @@ export function ScheduleAnalysis({ events }: { events: ScheduleEvent[] }) {
 
     return Object.entries(hoursByColor)
       .map(([color, hours]) => {
-        const label = CATEGORY_LABELS[color];
+        const entry = COLOR_REGISTRY[color];
+        const label = entry?.label;
         return {
           name: label ? (lang === "zh" ? label.zh : label.en) : color,
           hours: Number(hours.toFixed(1)),
-          color: COLOR_MAP[color] || COLOR_MAP.yellow,
+          color: entry?.hex || color,
         };
       })
       .sort((a, b) => b.hours - a.hours);
