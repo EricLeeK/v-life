@@ -38,22 +38,55 @@ export function ScheduleAnalysis({ events }: { events: ScheduleEvent[] }) {
       const start = new Date(e.start_time).getTime();
       const end = new Date(e.end_time).getTime();
       const hours = Math.max(0, (end - start) / (1000 * 60 * 60));
-      const color = e.color || "yellow";
+      const color = e.color || "#c49840";
       hoursByColor[color] = (hoursByColor[color] || 0) + hours;
     });
 
-    return Object.entries(hoursByColor)
-      .map(([color, hours]) => {
+    const FALLBACK = "#c49840";
+    const results: { name: string; hours: number; color: string }[] = [];
+    let otherHours = 0;
+    const otherColors: string[] = [];
+
+    Object.entries(hoursByColor)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([color, hours]) => {
         const entry = COLOR_REGISTRY[color];
-        const label = entry?.label;
-        return {
-          name: label ? (lang === "zh" ? label.zh : label.en) : color,
-          hours: Number(hours.toFixed(1)),
-          color: entry?.hex || color,
-        };
-      })
-      .sort((a, b) => b.hours - a.hours);
-  }, [events, lang]);
+        if (entry) {
+          results.push({
+            name: lang === "zh" ? entry.label.zh : entry.label.en,
+            hours: Number(hours.toFixed(1)),
+            color: entry.hex,
+          });
+        } else {
+          // Unknown color — merge into "其他" or keep separate
+          otherHours += hours;
+          if (otherColors.length < 3) otherColors.push(color);
+        }
+      });
+
+    // Add unknown colors as individual entries (up to 3), rest merged
+    otherColors.forEach((c, i) => {
+      const h = hoursByColor[c];
+      results.push({
+        name: i === 0 ? t("其他", "Other") : "",
+        hours: Number(h.toFixed(1)),
+        color: c,
+      });
+    });
+    // If there are more unknown colors beyond 3, we've already merged conceptually
+    const extraUnknownHours = Object.entries(hoursByColor)
+      .filter(([c]) => !COLOR_REGISTRY[c] && !otherColors.includes(c))
+      .reduce((sum, [, h]) => sum + h, 0);
+    if (extraUnknownHours > 0) {
+      results.push({
+        name: otherColors.length === 0 ? t("其他", "Other") : "",
+        hours: Number(extraUnknownHours.toFixed(1)),
+        color: FALLBACK,
+      });
+    }
+
+    return results;
+  }, [events, lang, t]);
 
   if (data.length === 0) {
     return (
