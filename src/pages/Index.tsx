@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
   Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
-  ChevronRight, ArrowRight,
+  ChevronRight, ArrowRight, ChevronDown, CheckCircle2, Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
@@ -15,7 +16,7 @@ import {
 } from "@/hooks/useData";
 import { format, subDays, startOfWeek } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
-import { DashboardInsights } from "@/components/charts/DashboardInsights";
+
 
 const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
 const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -310,19 +311,6 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* ── Insights Section: 数据概览 ── */}
-        <section>
-          <DashboardInsights
-            monthlySpending={totalSpending}
-            monthlyBudget={budget}
-            weekCalorieDaysOnTarget={weekCalorieDaysOnTarget}
-            weekCalorieDaysTotal={weekCalorieDaysTotal}
-            completedGoals={completedGoals}
-            totalGoals={weekGoals.length}
-            studyHours={studyHours}
-          />
-        </section>
-
         {/* ── Pipeline Section: 今日概览 ── */}
         <section>
           <div className="flex items-baseline justify-between mb-4">
@@ -503,129 +491,215 @@ export default function DashboardPage() {
         </section>
 
         {/* ── Intelligence Layer: 数据洞察 ── */}
-        <section>
-          <div className="flex items-baseline justify-between mb-4">
-            <div>
-              <h2
-                className="font-bold text-[#1f1a14] leading-tight heading-font"
-                style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
-              >
-                {t("数据洞察", "Data Insights")}
-              </h2>
-              <p className="text-[12px] text-[#8a847a] mt-1">{t("关键数据一目了然", "Key metrics at a glance")}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* Weight Trend */}
-            <div
-              className="card-premium p-4 cursor-pointer"
-              onClick={() => navigate("/weight-loss")}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingDown className="h-4 w-4 text-[#5a9da8]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("体重趋势", "Weight Trend")}</span>
-              </div>
-              {weightTrend.length === 0 ? (
-                <p className="text-[13px] text-[#8a847a]">{t("暂无记录", "No records")}</p>
-              ) : (
+        {(() => {
+          const [insightsExpanded, setInsightsExpanded] = useState(false);
+          return (
+            <section>
+              <div className="flex items-baseline justify-between mb-4">
                 <div>
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
-                      {latestWeight?.toFixed(1)} <span className="text-[12px] text-[#8a847a] font-normal">kg</span>
-                    </p>
-                    {weightDiff !== null && (
-                      <span className={`text-[11px] font-medium ${weightDiff <= 0 ? "text-[#5a9da8]" : "text-[#d17847]"}`}>
-                        {weightDiff > 0 ? "+" : ""}{weightDiff.toFixed(1)} kg
-                      </span>
-                    )}
+                  <h2
+                    className="font-bold text-[#1f1a14] leading-tight heading-font"
+                    style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
+                  >
+                    {t("数据洞察", "Data Insights")}
+                  </h2>
+                  <p className="text-[12px] text-[#8a847a] mt-1">{t("关键数据一目了然", "Key metrics at a glance")}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* Weight Trend */}
+                <div
+                  className="card-premium p-4 cursor-pointer"
+                  onClick={() => navigate("/weight-loss")}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingDown className="h-4 w-4 text-[#5a9da8]" />
+                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("体重趋势", "Weight Trend")}</span>
                   </div>
-                  {weightTrend.length >= 2 && (
-                    <div className="h-10 mt-2">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={weightTrend.map((w: any) => ({ date: w.date, weight: Number(w.weight) }))}>
-                          <Line type="monotone" dataKey="weight" stroke="#5a9da8" strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                  {weightTrend.length === 0 ? (
+                    <p className="text-[13px] text-[#8a847a]">{t("暂无记录", "No records")}</p>
+                  ) : (
+                    <div>
+                      <div className="flex items-baseline justify-between">
+                        <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
+                          {latestWeight?.toFixed(1)} <span className="text-[12px] text-[#8a847a] font-normal">kg</span>
+                        </p>
+                        {weightDiff !== null && (
+                          <span className={`text-[11px] font-medium ${weightDiff <= 0 ? "text-[#5a9da8]" : "text-[#d17847]"}`}>
+                            {weightDiff > 0 ? "+" : ""}{weightDiff.toFixed(1)} kg
+                          </span>
+                        )}
+                      </div>
+                      {weightTrend.length >= 2 && (
+                        <div className="h-10 mt-2">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={weightTrend.map((w: any) => ({ date: w.date, weight: Number(w.weight) }))}>
+                              <Line type="monotone" dataKey="weight" stroke="#5a9da8" strokeWidth={2} dot={false} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            {/* Monthly Spending */}
-            <div
-              className="card-premium p-4 cursor-pointer"
-              onClick={() => navigate("/finance")}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Wallet className="h-4 w-4 text-[#d17847]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("本月支出", "Monthly Spending")}</span>
-              </div>
-              <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
-                ¥{totalSpending.toFixed(0)}
-                <span className="text-[12px] text-[#8a847a] font-normal"> / ¥{budget.toLocaleString()}</span>
-              </p>
-              <Progress
-                value={Math.min(100, (totalSpending / budget) * 100)}
-                className="h-1 mt-3"
-              />
-              <p className="text-[11px] text-[#8a847a] mt-1">
-                {Math.round((totalSpending / budget) * 100)}% {t("已使用", "used")}
-              </p>
-            </div>
+                {/* Monthly Spending */}
+                <div
+                  className="card-premium p-4 cursor-pointer"
+                  onClick={() => navigate("/finance")}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Wallet className="h-4 w-4 text-[#d17847]" />
+                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("本月支出", "Monthly Spending")}</span>
+                  </div>
+                  <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
+                    ¥{totalSpending.toFixed(0)}
+                    <span className="text-[12px] text-[#8a847a] font-normal"> / ¥{budget.toLocaleString()}</span>
+                  </p>
+                  <Progress
+                    value={Math.min(100, (totalSpending / budget) * 100)}
+                    className="h-1 mt-3"
+                  />
+                  <p className="text-[11px] text-[#8a847a] mt-1">
+                    {Math.round((totalSpending / budget) * 100)}% {t("已使用", "used")}
+                  </p>
+                </div>
 
-            {/* Fasting Status */}
-            <div
-              className="card-premium p-4 cursor-pointer"
-              onClick={() => navigate("/weight-loss")}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Timer className="h-4 w-4 text-[#5a9da8]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("16+8 断食", "16+8 Fasting")}</span>
-              </div>
-              <p className={`text-[20px] font-semibold ${isEatingWindow ? "text-[#5b8c44]" : "text-[#d17847]"}`}>
-                {isEatingWindow ? t("进食窗口", "Eating Window") : t("断食中", "Fasting")}
-              </p>
-              <p className="text-[11px] text-[#8a847a] mt-1">
-                {t("进食:", "Eating:")} {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
-              </p>
-            </div>
+                {/* Fasting Status */}
+                <div
+                  className="card-premium p-4 cursor-pointer"
+                  onClick={() => navigate("/weight-loss")}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Timer className="h-4 w-4 text-[#5a9da8]" />
+                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("16+8 断食", "16+8 Fasting")}</span>
+                  </div>
+                  <p className={`text-[20px] font-semibold ${isEatingWindow ? "text-[#5b8c44]" : "text-[#d17847]"}`}>
+                    {isEatingWindow ? t("进食窗口", "Eating Window") : t("断食中", "Fasting")}
+                  </p>
+                  <p className="text-[11px] text-[#8a847a] mt-1">
+                    {t("进食:", "Eating:")} {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
+                  </p>
+                </div>
 
-            {/* Expiring Pantry */}
-            <div
-              className="card-premium p-4 cursor-pointer"
-              onClick={() => navigate("/pantry")}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <Carrot className="h-4 w-4 text-[#c49840]" />
-                <span className="text-[14px] font-semibold text-[#1f1a14]">{t("食材预警", "Pantry Alert")}</span>
-              </div>
-              {expiringPantry.length === 0 ? (
-                <p className="text-[13px] text-[#8a847a]">{t("无即将过期食材", "No expiring items")}</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {expiringPantry.slice(0, 3).map((item: any) => {
-                    const daysLeft = item.expiry_date
-                      ? Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / 86400000)
-                      : null;
-                    return (
-                      <div key={item.id} className="flex items-center justify-between">
-                        <span className="text-[13px] text-[#1f1a14] truncate max-w-[70%]">{item.name}</span>
-                        <span className={`text-[11px] font-medium ${daysLeft !== null && daysLeft <= 1 ? "text-[#d17847]" : "text-[#c49840]"}`}>
-                          {daysLeft !== null ? `${daysLeft} ${t("天", "d")}` : t("未知", "Unknown")}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {expiringPantry.length > 3 && (
-                    <p className="text-[11px] text-[#8a847a]">+{expiringPantry.length - 3} {t("个食材", "items")}</p>
+                {/* Expiring Pantry */}
+                <div
+                  className="card-premium p-4 cursor-pointer"
+                  onClick={() => navigate("/pantry")}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Carrot className="h-4 w-4 text-[#c49840]" />
+                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("食材预警", "Pantry Alert")}</span>
+                  </div>
+                  {expiringPantry.length === 0 ? (
+                    <p className="text-[13px] text-[#8a847a]">{t("无即将过期食材", "No expiring items")}</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {expiringPantry.slice(0, 3).map((item: any) => {
+                        const daysLeft = item.expiry_date
+                          ? Math.ceil((new Date(item.expiry_date).getTime() - Date.now()) / 86400000)
+                          : null;
+                        return (
+                          <div key={item.id} className="flex items-center justify-between">
+                            <span className="text-[13px] text-[#1f1a14] truncate max-w-[70%]">{item.name}</span>
+                            <span className={`text-[11px] font-medium ${daysLeft !== null && daysLeft <= 1 ? "text-[#d17847]" : "text-[#c49840]"}`}>
+                              {daysLeft !== null ? `${daysLeft} ${t("天", "d")}` : t("未知", "Unknown")}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {expiringPantry.length > 3 && (
+                        <p className="text-[11px] text-[#8a847a]">+{expiringPantry.length - 3} {t("个食材", "items")}</p>
+                      )}
+                    </div>
                   )}
                 </div>
+              </div>
+
+              {/* Expandable extra insights */}
+              {!insightsExpanded && (
+                <button
+                  onClick={() => setInsightsExpanded(true)}
+                  className="w-full mt-3 py-2 text-[12px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center justify-center gap-1"
+                >
+                  {t("展开更多", "Show more")} <ChevronDown className="h-3 w-3" />
+                </button>
               )}
-            </div>
-          </div>
-        </section>
+              {insightsExpanded && (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
+                    {/* Budget Remaining */}
+                    <div
+                      className="card-premium p-4 cursor-pointer"
+                      onClick={() => navigate("/finance")}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="h-4 w-4 text-[#5b8c44]" />
+                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("剩余预算", "Budget Remaining")}</span>
+                      </div>
+                      <p className="text-[20px] font-semibold font-mono-data text-[#5b8c44]">
+                        ¥{(budget - totalSpending).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </p>
+                      <p className="text-[11px] text-[#8a847a] mt-1">
+                        {((1 - totalSpending / budget) * 100).toFixed(0)}% {t("剩余", "left")}
+                      </p>
+                    </div>
+
+                    {/* Calorie Target */}
+                    <div
+                      className="card-premium p-4 cursor-pointer"
+                      onClick={() => navigate("/calories")}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="h-4 w-4 text-[#5b88b5]" />
+                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("本周热量达标", "Calorie Target")}</span>
+                      </div>
+                      <p className="text-[20px] font-semibold font-mono-data text-[#1f1a14]">
+                        {weekCalorieDaysOnTarget}/{weekCalorieDaysTotal}
+                      </p>
+                      <p className="text-[11px] text-[#8a847a] mt-1">
+                        {t("天达标", "days on target")}
+                      </p>
+                    </div>
+
+                    {/* Weekly Goals */}
+                    <div
+                      className="card-premium p-4 cursor-pointer"
+                      onClick={() => navigate("/goals")}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Flame className="h-4 w-4 text-[#8b7bb8]" />
+                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("月目标完成", "Monthly Goals")}</span>
+                      </div>
+                      <p className="text-[20px] font-semibold font-mono-data text-[#1f1a14]">
+                        {completedGoals}/{weekGoals.length}
+                      </p>
+                      <Progress value={weekGoals.length > 0 ? (completedGoals / weekGoals.length) * 100 : 0} className="h-1 mt-2" />
+                    </div>
+
+                    {/* Study Hours */}
+                    <div className="card-premium p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-[#5a9da8]" />
+                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("本周学习时间", "Study Hours")}</span>
+                      </div>
+                      <p className="text-[20px] font-semibold font-mono-data text-[#1f1a14]">
+                        {studyHours.toFixed(1)}<span className="text-[12px] text-[#8a847a] font-normal">h</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setInsightsExpanded(false)}
+                    className="w-full mt-3 py-2 text-[12px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center justify-center gap-1"
+                  >
+                    {t("收起", "Show less")} <ChevronDown className="h-3 w-3 rotate-180" />
+                  </button>
+                </>
+              )}
+            </section>
+          );
+        })()}
 
         {/* ── AI Assistant Promo ── */}
         <div

@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { SpendingTrendChart, CategoryPieChart, BudgetUsageChart } from "@/components/charts/FinanceCharts";
 
 const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
   "餐饮": UtensilsCrossed, "日用": ShoppingBag, "交通": Bus,
@@ -214,13 +213,6 @@ export default function FinancePage() {
             </Card>
           </div>
         </div>
-
-        {/* Charts section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SpendingTrendChart records={monthRecords} budget={budget} year={year} month={month} />
-          <CategoryPieChart categoryData={categoryData} />
-        </div>
-        <BudgetUsageChart budget={budget} totalSpent={totalCny} />
 
         {/* Scrollable weekly breakdown */}
         <div className="flex-1 overflow-y-auto space-y-2 pb-4">
