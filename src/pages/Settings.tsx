@@ -67,14 +67,17 @@ export default function SettingsPage() {
     if (!dirty) return;
     setSaving(true);
     try {
-      // Only send changed keys
+      // Only send changed keys — skip system fields
+      const SKIP = new Set(["id", "created_at", "updated_at"]);
       const changes: Record<string, any> = {};
       const keys = new Set([...Object.keys(draft), ...Object.keys(settings)]);
       for (const key of keys) {
+        if (SKIP.has(key)) continue;
         if (JSON.stringify(draft[key]) !== JSON.stringify(settings[key])) {
           changes[key] = draft[key];
         }
       }
+      if (Object.keys(changes).length === 0) return;
       await updateSettings.mutateAsync(changes);
       toast({ title: t("已保存", "Saved") });
     } catch (e: any) {
