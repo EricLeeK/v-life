@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,32 +6,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { useSettings, useUpdateSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Download } from "lucide-react";
+import { Upload, Download, Save } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
 
-// Debounced text input that only saves after user stops typing
-function DebouncedInput({ value: serverValue, onSave, delay = 800, ...props }: { value: string; onSave: (val: string) => void; delay?: number } & Omit<React.ComponentProps<typeof Input>, "value" | "onChange">) {
-  const [localValue, setLocalValue] = useState(serverValue);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
-
-  useEffect(() => { setLocalValue(serverValue); }, [serverValue]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value;
-    setLocalValue(v);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onSave(v), delay);
-  };
-
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-
-  return <Input value={localValue} onChange={handleChange} {...props} />;
+// Deep equality check to detect unsaved changes
+function hasChanges(local: Record<string, any>, server: Record<string, any>): boolean {
+  const keys = new Set([...Object.keys(local), ...Object.keys(server)]);
+  for (const key of keys) {
+    const a = JSON.stringify(local[key]);
+    const b = JSON.stringify(server[key]);
+    if (a !== b) return true;
+  }
+  return false;
 }
 
 export default function SettingsPage() {
@@ -42,13 +33,59 @@ export default function SettingsPage() {
   const [newTag, setNewTag] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (isLoading || !settings) return <AppLayout title={t("设置", "Settings")}><p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p></AppLayout>;
+  // Local draft state — all edits go here first
+  const [draft, setDraft] = useState<Record<string, any> | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const save = async (updates: Record<string, any>) => {
+  // Sync draft with server when settings load
+  const settingsRef = useRef(settings);
+  if (settings && settings !== settingsRef.current) {
+    settingsRef.current = settings;
+    // Only reset draft if it's null (first load)
+    if (!draft) setDraft({ ...settings });
+  }
+
+  // Initialize draft on first load
+  if (settings && !draft) {
+    setDraft({ ...settings });
+  }
+
+  const dirty = useMemo(() => {
+    if (!draft || !settings) return false;
+    return hasChanges(draft, settings);
+  }, [draft, settings]);
+
+  if (isLoading || !settings || !draft) {
+    return <AppLayout title={t("设置", "Settings")}><p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p></AppLayout>;
+  }
+
+  const update = (key: string, value: any) => {
+    setDraft((prev) => prev ? { ...prev, [key]: value } : prev);
+  };
+
+  const handleSave = async () => {
+    if (!dirty) return;
+    setSaving(true);
     try {
-      await updateSettings.mutateAsync(updates);
+      // Only send changed keys
+      const changes: Record<string, any> = {};
+      const keys = new Set([...Object.keys(draft), ...Object.keys(settings)]);
+      for (const key of keys) {
+        if (JSON.stringify(draft[key]) !== JSON.stringify(settings[key])) {
+          changes[key] = draft[key];
+        }
+      }
+      await updateSettings.mutateAsync(changes);
       toast({ title: t("已保存", "Saved") });
-    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    } catch (e: any) {
+      toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const handleDiscard = () => {
+    setDraft({ ...settings });
+    toast({ title: t("已撤销更改", "Changes discarded") });
   };
 
   const fetchExchangeRate = async () => {
@@ -57,7 +94,8 @@ export default function SettingsPage() {
       const data = await res.json();
       const rate = data.rates?.CNY;
       if (rate) {
-        await save({ exchange_rate_jpy_to_cny: rate, exchange_rate_updated_at: new Date().toISOString() });
+        update("exchange_rate_jpy_to_cny", rate);
+        update("exchange_rate_updated_at", new Date().toISOString());
         toast({ title: `${t("汇率已更新:", "Rate updated:")} 1 JPY = ${rate} CNY` });
       }
     } catch { toast({ title: t("获取汇率失败", "Failed to fetch rate"), variant: "destructive" }); }
@@ -65,15 +103,15 @@ export default function SettingsPage() {
 
   const addTag = () => {
     if (!newTag.trim()) return;
-    const current = (settings.custom_thought_tags as string[] | null) || [];
+    const current = (draft.custom_thought_tags as string[] | null) || [];
     if (current.includes(newTag.trim())) return;
-    save({ custom_thought_tags: [...current, newTag.trim()] });
+    update("custom_thought_tags", [...current, newTag.trim()]);
     setNewTag("");
   };
 
   const removeTag = (tag: string) => {
-    const current = (settings.custom_thought_tags as string[] | null) || [];
-    save({ custom_thought_tags: current.filter((t: string) => t !== tag) });
+    const current = (draft.custom_thought_tags as string[] | null) || [];
+    update("custom_thought_tags", current.filter((t: string) => t !== tag));
   };
 
   const handleExport = async () => {
@@ -98,40 +136,51 @@ export default function SettingsPage() {
     try {
       const text = await file.text();
       const importData = JSON.parse(text);
-
-      // Store in IndexedDB for offline access
       await saveToIndexedDB(importData);
-
-      // Optionally import to Supabase (upsert)
       let importedCount = 0;
       for (const table of TABLES) {
         if (!importData[table] || !Array.isArray(importData[table])) continue;
-        if (table === "settings") continue; // Don't overwrite settings
+        if (table === "settings") continue;
         for (const row of importData[table]) {
           const { error } = await (supabase.from as any)(table).upsert(row, { onConflict: "id" });
           if (!error) importedCount++;
         }
       }
-
       toast({ title: t("导入成功", "Import successful"), description: `${t("已导入", "Imported")} ${importedCount} ${t("条记录", "records")}` });
-    } catch (e: any) {
-      toast({ title: t("导入失败", "Import failed"), description: e.message, variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: t("导入失败", "Import failed"), description: err.message, variant: "destructive" });
     }
     e.target.value = "";
   };
 
   return (
     <AppLayout title={t("设置", "Settings")}>
-      <div className="space-y-6">
-        {/* Account Settings */}
+      {/* Sticky save bar */}
+      {dirty && (
+        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-[#e4e1d7] flex items-center justify-between">
+          <span className="text-[13px] text-[#d17847] font-medium">{t("有未保存的更改", "Unsaved changes")}</span>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" className="text-[#8a847a]" onClick={handleDiscard}>
+              {t("撤销", "Discard")}
+            </Button>
+            <Button size="sm" className="bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white gap-1.5" onClick={handleSave} disabled={saving}>
+              <Save className="h-3.5 w-3.5" />
+              {saving ? t("保存中...", "Saving...") : t("保存", "Save")}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-6 mt-2">
+        {/* Account */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("账号设置", "Account")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label>{t("昵称", "Display Name")}</Label>
-              <DebouncedInput
-                value={settings.display_name || ""}
-                onSave={(v) => save({ display_name: v })}
+              <Input
+                value={draft.display_name || ""}
+                onChange={(e) => update("display_name", e.target.value)}
                 placeholder={t("输入你的昵称", "Enter your display name")}
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -147,7 +196,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div>
               <Label>{t("API 平台", "API Platform")}</Label>
-              <Select value={settings.ai_platform || "gemini"} onValueChange={(v) => save({ ai_platform: v })}>
+              <Select value={draft.ai_platform || "gemini"} onValueChange={(v) => update("ai_platform", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gemini">Google Gemini</SelectItem>
@@ -156,15 +205,25 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>API Key</Label><DebouncedInput type="password" value={settings.ai_api_key || ""} onSave={(v) => save({ ai_api_key: v })} placeholder={t("输入 API Key", "Enter API Key")} autoComplete="new-password" /><p className="text-xs text-muted-foreground mt-1">{t("API Key 仅在服务端使用，不会暴露到浏览器", "API Key is only used server-side, not exposed to browser")}</p></div>
-            <div><Label>{t("模型名称", "Model Name")}</Label><DebouncedInput value={settings.ai_model || ""} onSave={(v) => save({ ai_model: v })} placeholder="gemini-2.5-flash" /></div>
-            <div><Label>API Base URL ({t("高级", "Advanced")})</Label><DebouncedInput value={settings.ai_base_url || ""} onSave={(v) => save({ ai_base_url: v })} placeholder={t("默认使用官方端点", "Default: official endpoint")} /></div>
+            <div>
+              <Label>API Key</Label>
+              <Input type="password" value={draft.ai_api_key || ""} onChange={(e) => update("ai_api_key", e.target.value)} placeholder={t("输入 API Key", "Enter API Key")} autoComplete="new-password" />
+              <p className="text-xs text-muted-foreground mt-1">{t("API Key 仅在服务端使用，不会暴露到浏览器", "API Key is only used server-side, not exposed to browser")}</p>
+            </div>
+            <div>
+              <Label>{t("模型名称", "Model Name")}</Label>
+              <Input value={draft.ai_model || ""} onChange={(e) => update("ai_model", e.target.value)} placeholder="gemini-2.5-flash" />
+            </div>
+            <div>
+              <Label>API Base URL ({t("高级", "Advanced")})</Label>
+              <Input value={draft.ai_base_url || ""} onChange={(e) => update("ai_base_url", e.target.value)} placeholder={t("默认使用官方端点", "Default: official endpoint")} />
+            </div>
             <div className="flex items-center justify-between">
               <div>
                 <Label>{t("AI 操作模式", "AI Operation Mode")}</Label>
                 <p className="text-xs text-muted-foreground">{t("确认模式：预览后执行 / 直接模式：自动执行+撤销", "Confirm: preview then execute / Direct: auto-execute + undo")}</p>
               </div>
-              <Switch checked={settings.ai_mode === "direct"} onCheckedChange={(v) => save({ ai_mode: v ? "direct" : "confirm" })} />
+              <Switch checked={draft.ai_mode === "direct"} onCheckedChange={(v) => update("ai_mode", v ? "direct" : "confirm")} />
             </div>
           </CardContent>
         </Card>
@@ -178,10 +237,12 @@ export default function SettingsPage() {
                 <Label>{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
                 <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
               </div>
-              <Switch checked={settings.show_goals_in_schedule !== false} onCheckedChange={(v) => save({ show_goals_in_schedule: v })} />
+              <Switch checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
             </div>
           </CardContent>
         </Card>
+
+        {/* Finance */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("财务设置", "Finance Settings")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -189,15 +250,15 @@ export default function SettingsPage() {
               <div>
                 <Label>JPY → CNY 汇率</Label>
                 <p className="text-xs text-muted-foreground">
-                  {t("当前:", "Current:")} 1 JPY = {settings.exchange_rate_jpy_to_cny} CNY
-                  {settings.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(settings.exchange_rate_updated_at).toLocaleDateString()})`}
+                  {t("当前:", "Current:")} 1 JPY = {draft.exchange_rate_jpy_to_cny} CNY
+                  {draft.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(draft.exchange_rate_updated_at).toLocaleDateString()})`}
                 </p>
               </div>
               <Button variant="secondary" size="sm" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
             </div>
             <div>
               <Label>{t("月度预算", "Monthly Budget")} (CNY)</Label>
-              <Input type="number" value={settings.monthly_budget || 5000} onChange={(e) => save({ monthly_budget: Number(e.target.value) })} />
+              <Input type="number" value={draft.monthly_budget || 5000} onChange={(e) => update("monthly_budget", Number(e.target.value))} />
             </div>
           </CardContent>
         </Card>
@@ -207,7 +268,7 @@ export default function SettingsPage() {
           <CardHeader><CardTitle className="text-base">{t("热量设置", "Calorie Settings")}</CardTitle></CardHeader>
           <CardContent>
             <Label>{t("每日热量目标", "Daily Calorie Target")} (kcal)</Label>
-            <Input type="number" value={settings.calorie_target || 2000} onChange={(e) => save({ calorie_target: Number(e.target.value) })} />
+            <Input type="number" value={draft.calorie_target || 2000} onChange={(e) => update("calorie_target", Number(e.target.value))} />
           </CardContent>
         </Card>
 
@@ -216,7 +277,7 @@ export default function SettingsPage() {
           <CardHeader><CardTitle className="text-base">{t("随想标签", "Thought Tags")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-wrap gap-1">
-              {((settings.custom_thought_tags as string[] | null) || []).map((tag: string) => (
+              {((draft.custom_thought_tags as string[] | null) || []).map((tag: string) => (
                 <Button key={tag} variant="secondary" size="sm" className="h-7" onClick={() => removeTag(tag)}>
                   {tag} ×
                 </Button>
