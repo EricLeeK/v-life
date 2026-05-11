@@ -31,13 +31,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 import type { Tables } from "@/integrations/supabase/types";
+import { getErrorMessage } from "@/lib/errorMessage";
 
 type LearningCourse = Tables<"learning_courses">;
 type LearningNote = Tables<"learning_notes">;
-
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
 
 export default function LearningNotesPage() {
   const { data: coursesData = [] } = useLearningCourses();
@@ -81,7 +78,7 @@ export default function LearningNotesPage() {
       setCourseModalOpen(false);
       setEditingCourse(null);
     } catch (e: unknown) {
-      toast({ title: t("保存失败", "Save failed"), description: errorMessage(e), variant: "destructive" });
+      toast({ title: t("保存失败", "Save failed"), description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
@@ -93,7 +90,7 @@ export default function LearningNotesPage() {
       }
       setCourseToDelete(null);
     } catch (e: unknown) {
-      toast({ title: t("删除失败", "Delete failed"), description: errorMessage(e), variant: "destructive" });
+      toast({ title: t("删除失败", "Delete failed"), description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
@@ -101,7 +98,7 @@ export default function LearningNotesPage() {
     try {
       return await createNote.mutateAsync(values) as LearningNote;
     } catch (e: unknown) {
-      toast({ title: t("创建失败", "Create failed"), description: errorMessage(e), variant: "destructive" });
+      toast({ title: t("创建失败", "Create failed"), description: getErrorMessage(e), variant: "destructive" });
       throw e;
     }
   };
@@ -111,7 +108,7 @@ export default function LearningNotesPage() {
       await updateNote.mutateAsync(values);
       toast({ title: t("笔记已保存", "Note saved") });
     } catch (e: unknown) {
-      toast({ title: t("保存失败", "Save failed"), description: errorMessage(e), variant: "destructive" });
+      toast({ title: t("保存失败", "Save failed"), description: getErrorMessage(e), variant: "destructive" });
       throw e;
     }
   };
@@ -120,7 +117,7 @@ export default function LearningNotesPage() {
     try {
       await deleteNote.mutateAsync(values);
     } catch (e: unknown) {
-      toast({ title: t("删除失败", "Delete failed"), description: errorMessage(e), variant: "destructive" });
+      toast({ title: t("删除失败", "Delete failed"), description: getErrorMessage(e), variant: "destructive" });
     }
   };
 
