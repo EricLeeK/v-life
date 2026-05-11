@@ -751,6 +751,224 @@ export function useCurrentWeekGoals() {
   return supa;
 }
 
+// ============ Learning Notes Hooks ============
+
+export function useLearningCourses() {
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
+    queryKey: ["learning_courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("learning_courses").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    const sorted = [...demoData.learning_courses].sort((a: any, b: any) => (b.created_at || "").localeCompare(a.created_at || ""));
+    return { data: sorted, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useCreateLearningCourse() {
+  const { isDemo, addRecord } = useDemoMode();
+  const qc = useQueryClient();
+  const supa = useMutation({
+    mutationFn: async (item: any) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("未登录");
+      const { data, error } = await supabase.from("learning_courses").insert({ ...item, user_id: user.id }).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["learning_courses"] }),
+  });
+  if (isDemo) {
+    return {
+      mutate: (item: any) => { addRecord("learning_courses", { ...item, user_id: "demo-user" }); qc.invalidateQueries({ queryKey: ["learning_courses"] }); },
+      mutateAsync: async (item: any) => { const r = addRecord("learning_courses", { ...item, user_id: "demo-user" }); qc.invalidateQueries({ queryKey: ["learning_courses"] }); return r; },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
+export function useUpdateLearningCourse() {
+  const { isDemo, updateRecord } = useDemoMode();
+  const qc = useQueryClient();
+  const supa = useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string;[key: string]: any }) => {
+      const { data, error } = await supabase.from("learning_courses").update(updates as any).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["learning_courses"] }),
+  });
+  if (isDemo) {
+    return {
+      mutate: ({ id, ...updates }: any) => { updateRecord("learning_courses", id, updates); qc.invalidateQueries({ queryKey: ["learning_courses"] }); },
+      mutateAsync: async ({ id, ...updates }: any) => { updateRecord("learning_courses", id, updates); qc.invalidateQueries({ queryKey: ["learning_courses"] }); return { id, ...updates }; },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
+export function useDeleteLearningCourse() {
+  const { isDemo, demoData, deleteRecord } = useDemoMode();
+  const qc = useQueryClient();
+  const supa = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("learning_courses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_data, id) => {
+      qc.invalidateQueries({ queryKey: ["learning_courses"] });
+      qc.invalidateQueries({ queryKey: ["learning_notes", id] });
+    },
+  });
+  if (isDemo) {
+    return {
+      mutate: (id: string) => {
+        deleteRecord("learning_courses", id);
+        demoData.learning_notes.filter((n: any) => n.course_id === id).forEach((n: any) => deleteRecord("learning_notes", n.id));
+        qc.invalidateQueries({ queryKey: ["learning_courses"] });
+        qc.invalidateQueries({ queryKey: ["learning_notes", id] });
+      },
+      mutateAsync: async (id: string) => {
+        deleteRecord("learning_courses", id);
+        demoData.learning_notes.filter((n: any) => n.course_id === id).forEach((n: any) => deleteRecord("learning_notes", n.id));
+        qc.invalidateQueries({ queryKey: ["learning_courses"] });
+        qc.invalidateQueries({ queryKey: ["learning_notes", id] });
+      },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
+export function useLearningNotes(courseId?: string) {
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
+    queryKey: ["learning_notes", courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("learning_notes")
+        .select("*")
+        .eq("course_id", courseId)
+        .order("note_date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!courseId && !isDemo,
+  });
+  if (isDemo && courseId) {
+    const filtered = demoData.learning_notes
+      .filter((n: any) => n.course_id === courseId)
+      .sort((a: any, b: any) => ((b.note_date || b.created_at || "")).localeCompare(a.note_date || a.created_at || ""));
+    return { data: filtered, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useCreateLearningNote() {
+  const { isDemo, addRecord } = useDemoMode();
+  const qc = useQueryClient();
+  const supa = useMutation({
+    mutationFn: async (item: any) => {
+      const { data, error } = await supabase.from("learning_notes").insert(item).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["learning_notes", variables.course_id] });
+    },
+  });
+  if (isDemo) {
+    return {
+      mutate: (item: any) => { addRecord("learning_notes", item); qc.invalidateQueries({ queryKey: ["learning_notes", item.course_id] }); },
+      mutateAsync: async (item: any) => { const r = addRecord("learning_notes", item); qc.invalidateQueries({ queryKey: ["learning_notes", item.course_id] }); return r; },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
+export function useUpdateLearningNote() {
+  const { isDemo, updateRecord } = useDemoMode();
+  const qc = useQueryClient();
+  const supa = useMutation({
+    mutationFn: async ({ id, course_id, ...updates }: { id: string; course_id: string;[key: string]: any }) => {
+      const { data, error } = await supabase.from("learning_notes").update(updates as any).eq("id", id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async ({ id, course_id, ...updates }) => {
+      await qc.cancelQueries({ queryKey: ["learning_notes", course_id] });
+      const queries = qc.getQueriesData<any[]>({ queryKey: ["learning_notes", course_id] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          qc.setQueryData(key, data.map((item: any) => item.id === id ? { ...item, ...updates } : item));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, { course_id }, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    onSettled: (_data, _err, { course_id }) => {
+      qc.invalidateQueries({ queryKey: ["learning_notes", course_id] });
+    },
+  });
+  if (isDemo) {
+    return {
+      mutate: ({ id, course_id, ...updates }: any) => { updateRecord("learning_notes", id, updates); qc.invalidateQueries({ queryKey: ["learning_notes", course_id] }); },
+      mutateAsync: async ({ id, course_id, ...updates }: any) => { updateRecord("learning_notes", id, updates); qc.invalidateQueries({ queryKey: ["learning_notes", course_id] }); return { id, ...updates }; },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
+export function useDeleteLearningNote() {
+  const { isDemo, deleteRecord } = useDemoMode();
+  const qc = useQueryClient();
+  const supa = useMutation({
+    mutationFn: async ({ id }: { id: string; course_id: string }) => {
+      const { error } = await supabase.from("learning_notes").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async ({ id, course_id }) => {
+      await qc.cancelQueries({ queryKey: ["learning_notes", course_id] });
+      const queries = qc.getQueriesData<any[]>({ queryKey: ["learning_notes", course_id] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          qc.setQueryData(key, data.filter((item: any) => item.id !== id));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, { course_id }, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+    },
+    onSettled: (_data, _err, { course_id }) => {
+      qc.invalidateQueries({ queryKey: ["learning_notes", course_id] });
+    },
+  });
+  if (isDemo) {
+    return {
+      mutate: ({ id, course_id }: any) => { deleteRecord("learning_notes", id); qc.invalidateQueries({ queryKey: ["learning_notes", course_id] }); },
+      mutateAsync: async ({ id, course_id }: any) => { deleteRecord("learning_notes", id); qc.invalidateQueries({ queryKey: ["learning_notes", course_id] }); },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
 // ============ Project Management Hooks ============
 
 export function useProjects() {

@@ -22,6 +22,7 @@ const CaloriesPage = lazy(() => import("./pages/Calories"));
 const FinancePage = lazy(() => import("./pages/Finance"));
 const TodosPage = lazy(() => import("./pages/Todos"));
 const ThoughtsPage = lazy(() => import("./pages/Thoughts"));
+const LearningNotesPage = lazy(() => import("./pages/LearningNotes"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
 const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
@@ -66,6 +67,7 @@ function AppRoutes() {
           <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
           <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
           <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
+          <Route path="/learning-notes" element={<ProtectedRoute><LearningNotesPage /></ProtectedRoute>} />
           <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

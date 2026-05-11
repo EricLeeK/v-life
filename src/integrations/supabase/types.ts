@@ -291,6 +291,77 @@ export type Database = {
           },
         ]
       }
+      learning_courses: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      learning_notes: {
+        Row: {
+          content: string
+          course_id: string
+          created_at: string | null
+          id: string
+          note_date: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string
+          course_id: string
+          created_at?: string | null
+          id?: string
+          note_date?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          note_date?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_notes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "learning_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       measurement_records: {
         Row: {
           arm: number | null

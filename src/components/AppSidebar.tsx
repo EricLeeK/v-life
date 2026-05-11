@@ -12,6 +12,7 @@ import {
   Scale,
   LogOut,
   Kanban,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { LangToggle } from "@/components/LangToggle";
@@ -48,6 +49,7 @@ export function AppSidebar() {
     { title: t("项目管理", "Projects"), url: "/projects", icon: Kanban },
     { title: t("目标", "Goals"), url: "/goals", icon: Target },
     { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
+    { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
   ];
 

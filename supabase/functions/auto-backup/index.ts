@@ -10,7 +10,7 @@ const corsHeaders = {
 const TABLES = [
   "pantry_items", "belongings_daily", "belongings_durable",
   "schedule_events", "calorie_records", "finance_records",
-  "todos", "thoughts", "settings"
+  "todos", "thoughts", "learning_courses", "learning_notes", "settings"
 ];
 
 const MAX_BACKUPS = 3;

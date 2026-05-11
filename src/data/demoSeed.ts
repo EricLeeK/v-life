@@ -24,6 +24,10 @@ const PROJ_FEM = "demo-30000000-0000-0000-0000-000000000001";
 const PROJ_BLOG = "demo-30000000-0000-0000-0000-000000000002";
 const PROJ_THESIS = "demo-30000000-0000-0000-0000-000000000003";
 
+// Learning course UUIDs
+const COURSE_DL = "demo-60000000-0000-0000-0000-000000000001";
+const COURSE_PROB = "demo-60000000-0000-0000-0000-000000000002";
+
 // Task tag UUIDs
 const TAG_URGENT = "demo-40000000-0000-0000-0000-000000000001";
 const TAG_INPROG = "demo-40000000-0000-0000-0000-000000000002";
@@ -317,6 +321,45 @@ export const demoThoughts = [
   { id: "demo-th000000-0000-0000-0000-000000000009", title: "和彤彤的旅行计划", content: "暑假彤彤要来札幌，计划带她去富良野看薰衣草、小樽运河散步、吃海鲜。要提前订好酒店和租车。", tags: ["生活"], icon: null, created_at: "2026-04-15T20:00:00+09:00", updated_at: "2026-04-15T20:00:00+09:00", user_id: DEMO_USER },
 ];
 
+// ============ Learning Notes ============
+export const demoLearningCourses = [
+  { id: COURSE_DL, name: "深度学习研讨", description: "课程论文、反向传播、CNN/RNN/Transformer 等主题笔记", color: "#5b88b5", created_at: "2026-04-20T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00", user_id: DEMO_USER },
+  { id: COURSE_PROB, name: "概率论复习", description: "考试复习重点：贝叶斯、马尔可夫链、极限定理", color: "#c49840", created_at: "2026-04-18T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00", user_id: DEMO_USER },
+];
+
+export const demoLearningNotes = [
+  {
+    id: "demo-61000000-0000-0000-0000-000000000001",
+    course_id: COURSE_DL,
+    title: "反向传播与链式法则",
+    content: "## 核心想法\n\n反向传播就是在计算图上反向应用链式法则。\n\n- 前向：缓存每个中间变量\n- 反向：从 loss 对输出的梯度开始传回\n- 关键：局部梯度乘以上游梯度",
+    tags: ["lecture", "重点"],
+    note_date: "2026-05-07",
+    created_at: "2026-05-07T21:00:00+09:00",
+    updated_at: "2026-05-07T21:00:00+09:00",
+  },
+  {
+    id: "demo-61000000-0000-0000-0000-000000000002",
+    course_id: COURSE_DL,
+    title: "Transformer 注意力",
+    content: "## Scaled Dot-Product Attention\n\n`softmax(QK^T / sqrt(d_k))V`\n\n需要注意 mask 的位置，以及多头注意力只是把表示空间拆成多个子空间。",
+    tags: ["paper", "Transformer"],
+    note_date: "2026-05-05",
+    created_at: "2026-05-05T20:30:00+09:00",
+    updated_at: "2026-05-05T20:30:00+09:00",
+  },
+  {
+    id: "demo-61000000-0000-0000-0000-000000000003",
+    course_id: COURSE_PROB,
+    title: "贝叶斯公式",
+    content: "## 公式\n\n`P(A|B) = P(B|A)P(A) / P(B)`\n\n考试题里通常要先拆全概率公式，再代入贝叶斯公式。",
+    tags: ["exam"],
+    note_date: "2026-05-04",
+    created_at: "2026-05-04T22:00:00+09:00",
+    updated_at: "2026-05-04T22:00:00+09:00",
+  },
+];
+
 // ============ Projects ============
 export const demoProjects = [
   { id: PROJ_FEM, name: "可微分FEM框架", description: "基于PyTorch的可微分有限元方法框架，支持自动微分和GPU加速", status: "active", priority: "high", progress: 60, target_date: "2026-09-01", user_id: DEMO_USER, created_at: "2026-03-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
@@ -399,6 +442,8 @@ export interface DemoDataStore {
   belongings_daily: typeof demoBelongingsDaily;
   belongings_durable: typeof demoBelongingsDurable;
   thoughts: typeof demoThoughts;
+  learning_courses: typeof demoLearningCourses;
+  learning_notes: typeof demoLearningNotes;
   projects: typeof demoProjects;
   project_tasks: typeof demoProjectTasks;
   task_tags: typeof demoTaskTags;
@@ -419,6 +464,8 @@ export function createDemoDataStore(): DemoDataStore {
     belongings_daily: [...demoBelongingsDaily],
     belongings_durable: [...demoBelongingsDurable],
     thoughts: [...demoThoughts],
+    learning_courses: [...demoLearningCourses],
+    learning_notes: [...demoLearningNotes],
     projects: [...demoProjects],
     project_tasks: [...demoProjectTasks],
     task_tags: [...demoTaskTags],

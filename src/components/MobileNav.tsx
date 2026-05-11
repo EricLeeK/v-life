@@ -13,6 +13,7 @@ import {
   Scale,
   LogOut,
   Languages,
+  BookOpen,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
@@ -38,6 +39,7 @@ export function MobileNav() {
     { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },
     { title: t("目标", "Goals"), url: "/goals", icon: Target },
     { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
+    { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
   ];

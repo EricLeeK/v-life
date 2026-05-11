@@ -152,6 +152,33 @@ const TABLES: Record<string, TableDef> = {
       { name: "icon", type: "string", description: "装饰emoji" },
     ],
   },
+  learning_courses: {
+    table: "learning_courses", label: "学习课程",
+    listColumns: ["name", "description", "color"],
+    searchColumns: ["name", "description", "color"],
+    createFields: [
+      { name: "name", type: "string", required: true, description: "课程名称" },
+      { name: "user_id", type: "string", required: true, description: "用户UUID" },
+      { name: "description", type: "string", description: "课程描述" },
+      { name: "color", type: "string", description: "标识颜色" },
+    ],
+  },
+  learning_notes: {
+    table: "learning_notes", label: "学习笔记",
+    listColumns: ["title", "course_id", "note_date", "tags"],
+    searchColumns: ["title", "content", "course_id", "note_date", "tags"],
+    listFilters: [
+      { name: "course_id", type: "string", description: "课程ID" },
+      { name: "note_date", type: "string", description: "日期 YYYY-MM-DD" },
+    ],
+    createFields: [
+      { name: "course_id", type: "string", required: true, description: "课程ID" },
+      { name: "title", type: "string", required: true, description: "标题" },
+      { name: "content", type: "string", required: true, description: "Markdown内容" },
+      { name: "tags", type: "string", description: "标签(逗号分隔)" },
+      { name: "note_date", type: "string", description: "日期 YYYY-MM-DD" },
+    ],
+  },
   weight: {
     table: "weight_records", label: "体重",
     listColumns: ["date", "weight"],
@@ -234,6 +261,8 @@ for (const [mod, def] of Object.entries(TABLES)) {
       if (mod === "finance" && params.month) q = q.gte("date", params.month + "-01").lte("date", params.month + "-31");
       if (params.category) q = q.eq("category", params.category);
       if (params.date) q = q.eq("date", params.date);
+      if (params.note_date) q = q.eq("note_date", params.note_date);
+      if (params.course_id) q = q.eq("course_id", params.course_id);
       if (params.meal_type) q = q.eq("meal_type", params.meal_type);
       if (params.importance) q = q.eq("importance", params.importance);
       if (params.is_completed !== undefined) q = q.eq("is_completed", params.is_completed);
@@ -347,7 +376,7 @@ mcpServer.tool("finance_summary", {
 
 // ─── Data Export / Import ───
 
-const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings", "goals", "weight_records", "measurement_records"];
+const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "learning_courses", "learning_notes", "settings", "goals", "weight_records", "measurement_records"];
 
 mcpServer.tool("data_export", {
   description: "导出全量数据为JSON",

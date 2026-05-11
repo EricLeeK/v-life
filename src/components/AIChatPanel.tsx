@@ -41,6 +41,8 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   goal: "goals",
   project: "projects",
   project_task: "project_tasks",
+  learning_course: "learning_courses",
+  learning_note: "learning_notes",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -57,6 +59,8 @@ const MODULE_LABELS: Record<string, string> = {
   goal: "目标",
   project: "项目",
   project_task: "项目任务",
+  learning_course: "课程",
+  learning_note: "学习笔记",
 };
 
 const getModuleLabels = (t: (zh: string, en: string) => string) => ({
@@ -65,6 +69,7 @@ const getModuleLabels = (t: (zh: string, en: string) => string) => ({
   belongings_daily: t("日用品", "Daily"), belongings_durable: t("耐用品", "Durable"),
   weight: t("体重", "Weight"), measurement: t("围度", "Measurement"),
   goal: t("目标", "Goal"), project: t("项目", "Project"), project_task: t("项目任务", "Task"),
+  learning_course: t("课程", "Course"), learning_note: t("学习笔记", "Learning Note"),
 });
 
 const MAX_SESSIONS = 30;
@@ -192,6 +197,20 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         description: data.description || null,
         due_date: data.due_date || null,
         weight: data.weight || 1,
+      };
+    case "learning_course":
+      return {
+        name: data.name || "未命名课程",
+        description: data.description || null,
+        color: data.color || "#5b88b5",
+      };
+    case "learning_note":
+      return {
+        course_id: data.course_id,
+        title: data.title || "未命名笔记",
+        content: data.content || "",
+        tags: data.tags || [],
+        note_date: data.note_date || today,
       };
     default:
       return data;
@@ -381,7 +400,7 @@ export function AIChatPanel() {
           if (op.action === "create") {
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
 
-            if (op.module === "project") {
+            if (op.module === "project" || op.module === "learning_course") {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) throw new Error("未登录");
               row.user_id = user.id;
@@ -489,7 +508,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks", "learning_courses", "learning_notes"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       qc.invalidateQueries({ queryKey: ["schedule", "today"] });
@@ -507,7 +526,7 @@ export function AIChatPanel() {
     for (const { table, id } of recentlyCreatedIds) {
       await (supabase.from as any)(table).delete().eq("id", id);
     }
-    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks"]) {
+    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks", "learning_courses", "learning_notes"]) {
       qc.invalidateQueries({ queryKey: [key] });
     }
     setRecentlyCreatedIds([]);
