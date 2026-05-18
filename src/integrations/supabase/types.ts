@@ -184,6 +184,53 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_tasks: {
+        Row: {
+          base_points: number
+          completed_at: string | null
+          created_at: string
+          difficulty: string | null
+          id: string
+          is_completed: boolean
+          task_date: string
+          todo_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_points?: number
+          completed_at?: string | null
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          is_completed?: boolean
+          task_date?: string
+          todo_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_points?: number
+          completed_at?: string | null
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          is_completed?: boolean
+          task_date?: string
+          todo_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_tasks_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_records: {
         Row: {
           amount: number
@@ -782,6 +829,39 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_points: {
+        Row: {
+          best_streak: number
+          created_at: string
+          current_streak: number
+          id: string
+          last_active_date: string | null
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_streak?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          best_streak?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

@@ -51,6 +51,13 @@ const TASK_THESIS_CH1 = "demo-50000000-0000-0000-0000-000000000010";
 const HABIT_GYM = "demo-50000000-0000-0000-0000-000000000011";
 const HABIT_EARLY = "demo-50000000-0000-0000-0000-000000000012";
 const HABIT_READ = "demo-50000000-0000-0000-0000-000000000013";
+// Daily task UUIDs
+const DTASK_1 = "demo-dt000000-0000-0000-0000-000000000001";
+const DTASK_2 = "demo-dt000000-0000-0000-0000-000000000002";
+const DTASK_3 = "demo-dt000000-0000-0000-0000-000000000003";
+const DTASK_4 = "demo-dt000000-0000-0000-0000-000000000004";
+const DTASK_5 = "demo-dt000000-0000-0000-0000-000000000005";
+const UPOINTS_ID = "demo-up000000-0000-0000-0000-000000000001";
 
 // ============ Settings ============
 export const demoSettings = {
@@ -212,6 +219,20 @@ export const demoTodos = [
   { id: "demo-t0000000-0000-0000-0000-000000000011", title: "提交研究报告", detail: "季度进展报告", importance: "important", category: "工作", is_completed: true, is_archived: false, created_at: "2026-04-22T10:00:00+09:00", updated_at: "2026-04-25T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t0000000-0000-0000-0000-000000000012", title: "修理自行车刹车", detail: null, importance: "low", category: "生活", is_completed: false, is_archived: false, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t0000000-0000-0000-0000-000000000013", title: "回复导师邮件", detail: "关于实验参数设置的问题", importance: "important", category: "工作", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
+];
+
+// ============ Daily Tasks (Today's Todo) ============
+export const demoDailyTasks = [
+  { id: DTASK_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000001", task_date: "2026-05-18", difficulty: "hard", base_points: 30, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
+  { id: DTASK_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000004", task_date: "2026-05-18", difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
+  { id: DTASK_3, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000002", task_date: "2026-05-18", difficulty: "easy", base_points: 10, is_completed: true, completed_at: "2026-05-18T10:30:00+09:00", created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T10:30:00+09:00" },
+  { id: DTASK_4, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000013", task_date: "2026-05-18", difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
+  { id: DTASK_5, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000005", task_date: "2026-05-18", difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
+];
+
+// ============ User Points ============
+export const demoUserPoints = [
+  { id: UPOINTS_ID, user_id: DEMO_USER, total_points: 1240, current_streak: 7, best_streak: 12, last_active_date: "2026-05-18", created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-18T10:30:00+09:00" },
 ];
 
 // ============ Goals ============
@@ -435,6 +456,8 @@ export interface DemoDataStore {
   finance_records: typeof demoFinanceRecords;
   calorie_records: typeof demoCalorieRecords;
   todos: typeof demoTodos;
+  daily_tasks: typeof demoDailyTasks;
+  user_points: typeof demoUserPoints;
   goals: typeof demoGoals;
   weight_records: typeof demoWeightRecords;
   measurement_records: typeof demoMeasurementRecords;
@@ -457,6 +480,8 @@ export function createDemoDataStore(): DemoDataStore {
     finance_records: [...demoFinanceRecords],
     calorie_records: [...demoCalorieRecords],
     todos: [...demoTodos],
+    daily_tasks: [...demoDailyTasks],
+    user_points: [...demoUserPoints],
     goals: [...demoGoals],
     weight_records: [...demoWeightRecords],
     measurement_records: [...demoMeasurementRecords],

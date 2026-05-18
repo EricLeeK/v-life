@@ -1276,3 +1276,200 @@ export function useTaskTags(projectId?: string) {
   }
   return supa;
 }
+
+// ============ Today's Todo ============
+
+export const dailyTasksHooks = useCrudHooks("daily_tasks", "daily_tasks", "task_date");
+export const userPointsHooks = useCrudHooks("user_points", "user_points");
+
+export function useTodayTasks() {
+  const { isDemo, demoData } = useDemoMode();
+  const today = new Date().toISOString().split("T")[0];
+  const supa = useQuery({
+    queryKey: ["daily_tasks", "today", today],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .select("*, todos(title, detail, importance, category, is_completed, is_archived)")
+        .eq("task_date", today)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    const today = new Date().toISOString().split("T")[0];
+    const tasks = demoData.daily_tasks
+      .filter((dt: any) => dt.task_date === today)
+      .map((dt: any) => {
+        const todo = demoData.todos.find((t: any) => t.id === dt.todo_id);
+        return { ...dt, todos: todo || null };
+      })
+      .sort((a: any, b: any) => a.created_at.localeCompare(b.created_at));
+    return { data: tasks, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useUserPoints() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  const supa = useQuery({
+    queryKey: ["user_points"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_points")
+        .select("*")
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") throw error;
+      if (!data) {
+        const { data: created, error: createErr } = await supabase
+          .from("user_points")
+          .insert({ total_points: 0, current_streak: 0, best_streak: 0 })
+          .select()
+          .single();
+        if (createErr) throw createErr;
+        queryClient.invalidateQueries({ queryKey: ["user_points"] });
+        return created as any;
+      }
+      return data as any;
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    return { data: demoData.user_points[0] || null, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useAddToToday() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { todo_id: string; difficulty: string; base_points: number }) => {
+      if (isDemo) {
+        const id = crypto.randomUUID();
+        const now = new Date().toISOString();
+        const today = new Date().toISOString().split("T")[0];
+        const item = { id, user_id: "demo-user", ...payload, task_date: today, is_completed: false, completed_at: null, created_at: now, updated_at: now };
+        demoData.daily_tasks.push(item);
+        return item;
+      }
+      const { data, error } = await supabase.from("daily_tasks").insert(payload).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["daily_tasks"] }); },
+  });
+}
+
+export function useCompleteDailyTask() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, is_completed }: { id: string; is_completed: boolean }) => {
+      if (isDemo) {
+        const task = demoData.daily_tasks.find((t: any) => t.id === id);
+        if (task) { task.is_completed = is_completed; task.completed_at = is_completed ? new Date().toISOString() : null; task.updated_at = new Date().toISOString(); }
+        return task;
+      }
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .update({ is_completed, completed_at: is_completed ? new Date().toISOString() : null })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["user_points"] });
+    },
+  });
+}
+
+export function useRemoveFromToday() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (isDemo) {
+        demoData.daily_tasks = demoData.daily_tasks.filter((t: any) => t.id !== id);
+        return id;
+      }
+      const { error } = await supabase.from("daily_tasks").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["daily_tasks"] }); },
+  });
+}
+
+export function useRecalculatePoints() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      if (isDemo) {
+        const p = demoData.user_points[0];
+        if (p) { p.total_points += 10; p.updated_at = new Date().toISOString(); }
+        return p;
+      }
+      const today = new Date().toISOString().split("T")[0];
+      const { data: tasks, error: tErr } = await supabase
+        .from("daily_tasks")
+        .select("base_points, is_completed, todo_id")
+        .eq("task_date", today);
+      if (tErr) throw tErr;
+      const completed = (tasks || []).filter((t) => t.is_completed);
+      const base_sum = completed.reduce((s, t) => s + (t.base_points || 0), 0);
+      const total = (tasks || []).length;
+      const pct = total > 0 ? completed.length / total : 0;
+      const completion_bonus = pct >= 0.8 || pct === 1 ? 50 : completed.length >= 1 ? 15 : 0;
+      const habit_bonus = 0;
+      const { data: points, error: pErr } = await supabase
+        .from("user_points")
+        .select("*")
+        .single();
+      if (pErr) throw pErr;
+      const lastActive = points.last_active_date;
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+      let streak = points.current_streak || 0;
+      if (lastActive === today) {
+      } else if (lastActive === yesterday) {
+        streak += 1;
+      } else if (lastActive) {
+        streak = 1;
+      } else {
+        streak = 1;
+      }
+      const streak_mult = streak >= 30 ? 3 : streak >= 14 ? 2 : streak >= 7 ? 1.5 : 1;
+      const final = Math.round((base_sum + completion_bonus + habit_bonus) * streak_mult);
+      const newTotal = (points.total_points || 0) + final;
+      const newBest = Math.max(points.best_streak || 0, streak);
+      const { data: updated, error: uErr } = await supabase
+        .from("user_points")
+        .update({ total_points: newTotal, current_streak: streak, best_streak: newBest, last_active_date: today })
+        .eq("id", points.id)
+        .select()
+        .single();
+      if (uErr) throw uErr;
+      return updated;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["user_points"] }); },
+  });
+}
+
+export function useEstimateDifficulty() {
+  return useMutation({
+    mutationFn: async (titles: string[]) => {
+      const { data, error } = await supabase.functions.invoke("estimate-difficulty", {
+        body: { titles },
+      });
+      if (error) throw error;
+      return data as { results: { title: string; difficulty: string }[] };
+    },
+  });
+}

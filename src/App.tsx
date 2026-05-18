@@ -21,6 +21,7 @@ const SchedulePage = lazy(() => import("./pages/Schedule"));
 const CaloriesPage = lazy(() => import("./pages/Calories"));
 const FinancePage = lazy(() => import("./pages/Finance"));
 const TodosPage = lazy(() => import("./pages/Todos"));
+const TodayTodoPage = lazy(() => import("./pages/TodayTodo"));
 const ThoughtsPage = lazy(() => import("./pages/Thoughts"));
 const LearningNotesPage = lazy(() => import("./pages/LearningNotes"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
@@ -64,6 +65,7 @@ function AppRoutes() {
           <Route path="/calories" element={<ProtectedRoute><CaloriesPage /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
           <Route path="/todos" element={<ProtectedRoute><TodosPage /></ProtectedRoute>} />
+          <Route path="/today" element={<ProtectedRoute><TodayTodoPage /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
           <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
           <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
