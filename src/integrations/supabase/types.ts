@@ -192,6 +192,7 @@ export type Database = {
           difficulty: string | null
           id: string
           is_completed: boolean
+          metadata: Json
           task_date: string
           todo_id: string
           updated_at: string
@@ -204,6 +205,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           is_completed?: boolean
+          metadata?: Json
           task_date?: string
           todo_id: string
           updated_at?: string
@@ -216,6 +218,7 @@ export type Database = {
           difficulty?: string | null
           id?: string
           is_completed?: boolean
+          metadata?: Json
           task_date?: string
           todo_id?: string
           updated_at?: string
@@ -839,6 +842,9 @@ export type Database = {
           current_streak: number
           id: string
           last_active_date: string | null
+          rest_day_date: string | null
+          skip_chore_active: boolean
+          sleep_in_date: string | null
           total_points: number
           updated_at: string
           user_id: string
@@ -849,6 +855,9 @@ export type Database = {
           current_streak?: number
           id?: string
           last_active_date?: string | null
+          rest_day_date?: string | null
+          skip_chore_active?: boolean
+          sleep_in_date?: string | null
           total_points?: number
           updated_at?: string
           user_id: string
@@ -859,6 +868,9 @@ export type Database = {
           current_streak?: number
           id?: string
           last_active_date?: string | null
+          rest_day_date?: string | null
+          skip_chore_active?: boolean
+          sleep_in_date?: string | null
           total_points?: number
           updated_at?: string
           user_id?: string
@@ -892,6 +904,110 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           weight?: number
+        }
+        Relationships: []
+      }
+      shop_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          item_type: string
+          metadata: Json
+          name: string
+          price: number | null
+          rarity: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_type: string
+          metadata?: Json
+          name: string
+          price?: number | null
+          rarity: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          item_type?: string
+          metadata?: Json
+          name?: string
+          price?: number | null
+          rarity?: string
+        }
+        Relationships: []
+      }
+      user_inventory: {
+        Row: {
+          id: string
+          is_equipped: boolean
+          is_used: boolean
+          item_id: string
+          purchased_at: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_equipped?: boolean
+          is_used?: boolean
+          item_id: string
+          purchased_at?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_equipped?: boolean
+          is_used?: boolean
+          item_id?: string
+          purchased_at?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gacha_pity: {
+        Row: {
+          created_at: string
+          id: string
+          pulls_since_legendary: number
+          total_pulls: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pulls_since_legendary?: number
+          total_pulls?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pulls_since_legendary?: number
+          total_pulls?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

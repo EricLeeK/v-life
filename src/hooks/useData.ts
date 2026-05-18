@@ -1347,12 +1347,12 @@ export function useAddToToday() {
   const { isDemo, demoData } = useDemoMode();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { todo_id: string; difficulty: string; base_points: number }) => {
+    mutationFn: async (payload: { todo_id: string; difficulty: string; base_points: number; metadata?: any }) => {
       if (isDemo) {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
         const today = new Date().toISOString().split("T")[0];
-        const item = { id, user_id: "demo-user", ...payload, task_date: today, is_completed: false, completed_at: null, created_at: now, updated_at: now };
+        const item = { id, user_id: "demo-user", ...payload, task_date: today, is_completed: false, completed_at: null, created_at: now, updated_at: now, metadata: payload.metadata || {} };
         demoData.daily_tasks.push(item);
         return item;
       }
@@ -1462,6 +1462,16 @@ export function useRecalculatePoints() {
   });
 }
 
+export interface Evaluation4D {
+  cognitive_level: number;
+  willpower_level: number;
+  duration_level: number;
+  impact_level: number;
+  awarded_xp: number;
+  attribute_tags: string[];
+  ai_encouragement: string;
+}
+
 export function useEstimateDifficulty() {
   return useMutation({
     mutationFn: async (titles: string[]) => {
@@ -1469,7 +1479,425 @@ export function useEstimateDifficulty() {
         body: { titles },
       });
       if (error) throw error;
-      return data as { results: { title: string; difficulty: string }[] };
+      return data as { results: { title: string; difficulty: string; evaluation?: Evaluation4D }[] };
+    },
+  });
+}
+
+// ============ Shop System ============
+
+export const shopItemsHooks = useCrudHooks("shop_items", "shop_items");
+export const userInventoryHooks = useCrudHooks("user_inventory", "user_inventory");
+export const gachaPityHooks = useCrudHooks("gacha_pity", "gacha_pity");
+
+export function useShopItems() {
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
+    queryKey: ["shop_items"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shop_items")
+        .select("*")
+        .eq("is_active", true)
+        .order("rarity", { ascending: true })
+        .order("price", { ascending: true });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    return { data: (demoData as any).shop_items?.filter((i: any) => i.is_active) || [], isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useUserInventory() {
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
+    queryKey: ["user_inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_inventory")
+        .select("*, shop_items(*)")
+        .order("purchased_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    const inv = (demoData as any).user_inventory || [];
+    const items = (demoData as any).shop_items || [];
+    const enriched = inv.map((invItem: any) => ({
+      ...invItem,
+      shop_items: items.find((i: any) => i.id === invItem.item_id) || null,
+    }));
+    return { data: enriched, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useGachaPity() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  const supa = useQuery({
+    queryKey: ["gacha_pity"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gacha_pity")
+        .select("*")
+        .maybeSingle();
+      if (error && error.code !== "PGRST116") throw error;
+      if (!data) {
+        const { data: created, error: createErr } = await supabase
+          .from("gacha_pity")
+          .insert({ pulls_since_legendary: 0, total_pulls: 0 })
+          .select()
+          .single();
+        if (createErr) throw createErr;
+        queryClient.invalidateQueries({ queryKey: ["gacha_pity"] });
+        return created as any;
+      }
+      return data as any;
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    const pity = (demoData as any).gacha_pity?.[0] || { pulls_since_legendary: 0, total_pulls: 0 };
+    return { data: pity, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useSpendablePoints() {
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
+    queryKey: ["spendable_points"],
+    queryFn: async () => {
+      const { data: points, error: pErr } = await supabase
+        .from("user_points")
+        .select("total_points")
+        .single();
+      if (pErr) throw pErr;
+      const { data: inventory, error: iErr } = await supabase
+        .from("user_inventory")
+        .select("shop_items(price)")
+        .eq("source", "shop_purchase");
+      if (iErr) throw iErr;
+      const spent = (inventory || []).reduce((sum: number, inv: any) => sum + (inv.shop_items?.price || 0), 0);
+      return (points?.total_points || 0) - spent;
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    const pts = (demoData as any).user_points?.[0]?.total_points || 0;
+    return { data: pts, isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function usePullGacha() {
+  const { isDemo, demoData, addRecord } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (pullCount: 1 | 10) => {
+      const cost = pullCount === 1 ? 100 : 900;
+
+      if (isDemo) {
+        const pts = (demoData as any).user_points?.[0];
+        if (!pts || pts.total_points < cost) throw new Error("Insufficient points");
+        pts.total_points -= cost;
+        const allItems = (demoData as any).shop_items || [];
+        const owned = new Set(((demoData as any).user_inventory || []).map((i: any) => i.item_id));
+        const available = allItems.filter((i: any) => i.is_active && !owned.has(i.id));
+        const results: any[] = [];
+        for (let i = 0; i < pullCount; i++) {
+          const roll = Math.random() * 100;
+          let rarity = roll < 10 ? "legendary" : roll < 40 ? "rare" : "common";
+          let pool = available.filter((item: any) => item.rarity === rarity);
+          if (pool.length === 0) pool = available.filter((item: any) => item.rarity !== "common");
+          if (pool.length === 0) pool = available;
+          if (pool.length === 0) throw new Error("Collection complete!");
+          const picked = pool[Math.floor(Math.random() * pool.length)];
+          const invItem = {
+            id: crypto.randomUUID(),
+            user_id: "demo-user",
+            item_id: picked.id,
+            source: "gacha_pull",
+            is_equipped: false,
+            is_used: false,
+            purchased_at: new Date().toISOString(),
+          };
+          if (!(demoData as any).user_inventory) (demoData as any).user_inventory = [];
+          (demoData as any).user_inventory.push(invItem);
+          results.push({ ...invItem, shop_items: picked });
+        }
+        return results;
+      }
+
+      // Supabase path
+      const { data: points, error: pErr } = await supabase
+        .from("user_points")
+        .select("total_points")
+        .single();
+      if (pErr) throw pErr;
+      if ((points?.total_points || 0) < cost) throw new Error("Insufficient points");
+
+      const { data: pity, error: pityErr } = await supabase
+        .from("gacha_pity")
+        .select("*")
+        .maybeSingle();
+      if (pityErr) throw pityErr;
+      let pityData = pity || { id: null, pulls_since_legendary: 0, total_pulls: 0 };
+
+      const { data: allItems, error: itemsErr } = await supabase
+        .from("shop_items")
+        .select("*")
+        .eq("is_active", true);
+      if (itemsErr) throw itemsErr;
+
+      const { data: owned, error: ownedErr } = await supabase
+        .from("user_inventory")
+        .select("item_id");
+      if (ownedErr) throw ownedErr;
+
+      const ownedIds = new Set((owned || []).map((o) => o.item_id));
+      const available = (allItems || []).filter((item) => !ownedIds.has(item.id));
+
+      const results: any[] = [];
+      let pullsSinceLeg = pityData.pulls_since_legendary;
+
+      for (let i = 0; i < pullCount; i++) {
+        let rarity: string;
+        if (pullsSinceLeg >= 14) {
+          rarity = "legendary";
+          pullsSinceLeg = 0;
+        } else {
+          const roll = Math.random() * 100;
+          rarity = roll < 10 ? "legendary" : roll < 40 ? "rare" : "common";
+          if (rarity === "legendary") pullsSinceLeg = 0;
+          else pullsSinceLeg++;
+        }
+
+        let pool = available.filter((item) => item.rarity === rarity);
+        if (pool.length === 0) {
+          pool = available.filter((item) => item.rarity !== "common");
+        }
+        if (pool.length === 0) pool = available;
+        if (pool.length === 0) throw new Error("Collection complete!");
+
+        const picked = pool[Math.floor(Math.random() * pool.length)];
+        const { data: invItem, error: invErr } = await supabase
+          .from("user_inventory")
+          .insert({ item_id: picked.id, source: "gacha_pull" })
+          .select("*, shop_items(*)")
+          .single();
+        if (invErr) throw invErr;
+        results.push(invItem);
+
+        const idx = available.findIndex((a) => a.id === picked.id);
+        if (idx >= 0) available.splice(idx, 1);
+      }
+
+      // Update pity
+      if (pityData.id) {
+        await supabase
+          .from("gacha_pity")
+          .update({
+            pulls_since_legendary: pullsSinceLeg,
+            total_pulls: (pityData.total_pulls || 0) + pullCount,
+          })
+          .eq("id", pityData.id);
+      } else {
+        await supabase
+          .from("gacha_pity")
+          .insert({ pulls_since_legendary: pullsSinceLeg, total_pulls: pullCount });
+      }
+
+      // Deduct points
+      const newTotal = (points?.total_points || 0) - cost;
+      await supabase
+        .from("user_points")
+        .update({ total_points: newTotal })
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
+
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["user_points"] });
+      queryClient.invalidateQueries({ queryKey: ["gacha_pity"] });
+      queryClient.invalidateQueries({ queryKey: ["spendable_points"] });
+    },
+  });
+}
+
+export function useBuyFromShop() {
+  const { isDemo, demoData, addRecord } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (itemId: string) => {
+      if (isDemo) {
+        const items = (demoData as any).shop_items || [];
+        const item = items.find((i: any) => i.id === itemId);
+        if (!item) throw new Error("Item not found");
+        const pts = (demoData as any).user_points?.[0];
+        if (!pts || pts.total_points < (item.price || 0)) throw new Error("Insufficient points");
+        pts.total_points -= item.price;
+        const invItem = {
+          id: crypto.randomUUID(),
+          user_id: "demo-user",
+          item_id: itemId,
+          source: "shop_purchase",
+          is_equipped: false,
+          is_used: false,
+          purchased_at: new Date().toISOString(),
+        };
+        if (!(demoData as any).user_inventory) (demoData as any).user_inventory = [];
+        (demoData as any).user_inventory.push(invItem);
+        return { ...invItem, shop_items: item };
+      }
+
+      const { data: item, error: itemErr } = await supabase
+        .from("shop_items")
+        .select("*")
+        .eq("id", itemId)
+        .single();
+      if (itemErr) throw itemErr;
+      if (!item.price) throw new Error("Item not purchasable");
+
+      const { data: points, error: pErr } = await supabase
+        .from("user_points")
+        .select("total_points")
+        .single();
+      if (pErr) throw pErr;
+      if ((points?.total_points || 0) < item.price) throw new Error("Insufficient points");
+
+      const { data: invItem, error: invErr } = await supabase
+        .from("user_inventory")
+        .insert({ item_id: itemId, source: "shop_purchase" })
+        .select("*, shop_items(*)")
+        .single();
+      if (invErr) throw invErr;
+
+      const newTotal = (points?.total_points || 0) - item.price;
+      await supabase
+        .from("user_points")
+        .update({ total_points: newTotal })
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
+
+      return invItem;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["user_points"] });
+      queryClient.invalidateQueries({ queryKey: ["spendable_points"] });
+    },
+  });
+}
+
+export function useEquipItem() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ inventoryId, itemType }: { inventoryId: string; itemType: string }) => {
+      if (isDemo) {
+        const inv = (demoData as any).user_inventory || [];
+        inv.forEach((item: any) => {
+          const shopItem = ((demoData as any).shop_items || []).find((si: any) => si.id === item.item_id);
+          if (shopItem?.item_type === itemType) item.is_equipped = false;
+        });
+        const target = inv.find((item: any) => item.id === inventoryId);
+        if (target) target.is_equipped = true;
+        return target;
+      }
+
+      // Unequip all items of same type
+      const { data: currentItems, error: fetchErr } = await supabase
+        .from("user_inventory")
+        .select("id, shop_items(item_type)")
+        .eq("is_equipped", true);
+      if (fetchErr) throw fetchErr;
+
+      for (const item of currentItems || []) {
+        if ((item as any).shop_items?.item_type === itemType) {
+          await supabase.from("user_inventory").update({ is_equipped: false }).eq("id", item.id);
+        }
+      }
+
+      const { data, error } = await supabase
+        .from("user_inventory")
+        .update({ is_equipped: true })
+        .eq("id", inventoryId)
+        .select("*, shop_items(*)")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_inventory"] });
+    },
+  });
+}
+
+export function useUseCoupon() {
+  const { isDemo, demoData } = useDemoMode();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (inventoryId: string) => {
+      if (isDemo) {
+        const inv = (demoData as any).user_inventory || [];
+        const target = inv.find((item: any) => item.id === inventoryId);
+        if (target) {
+          target.is_used = true;
+          const shopItem = ((demoData as any).shop_items || []).find((si: any) => si.id === target.item_id);
+          if (shopItem?.metadata?.effect_type === "rest_day") {
+            const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+            const pts = (demoData as any).user_points?.[0];
+            if (pts) pts.rest_day_date = tomorrow;
+          } else if (shopItem?.metadata?.effect_type === "skip_chore") {
+            const pts = (demoData as any).user_points?.[0];
+            if (pts) pts.skip_chore_active = true;
+          } else if (shopItem?.metadata?.effect_type === "sleep_in") {
+            const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+            const pts = (demoData as any).user_points?.[0];
+            if (pts) pts.sleep_in_date = tomorrow;
+          }
+        }
+        return target;
+      }
+
+      const { data: invItem, error: invErr } = await supabase
+        .from("user_inventory")
+        .select("*, shop_items(*)")
+        .eq("id", inventoryId)
+        .single();
+      if (invErr) throw invErr;
+
+      const effectType = (invItem as any).shop_items?.metadata?.effect_type;
+      if (effectType === "rest_day") {
+        const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+        await supabase.from("user_points").update({ rest_day_date: tomorrow }).eq("user_id", invItem.user_id);
+      } else if (effectType === "skip_chore") {
+        await supabase.from("user_points").update({ skip_chore_active: true }).eq("user_id", invItem.user_id);
+      } else if (effectType === "sleep_in") {
+        const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+        await supabase.from("user_points").update({ sleep_in_date: tomorrow }).eq("user_id", invItem.user_id);
+      }
+
+      const { data, error } = await supabase
+        .from("user_inventory")
+        .update({ is_used: true })
+        .eq("id", inventoryId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["user_points"] });
     },
   });
 }

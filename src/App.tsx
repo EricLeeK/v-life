@@ -27,9 +27,14 @@ const LearningNotesPage = lazy(() => import("./pages/LearningNotes"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
 const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
+const ShopPage = lazy(() => import("./pages/Shop"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 3 * 60 * 1000 },
+  },
+});
 
 function PageLoader() {
   return (
@@ -71,6 +76,7 @@ function AppRoutes() {
           <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
           <Route path="/learning-notes" element={<ProtectedRoute><LearningNotesPage /></ProtectedRoute>} />
           <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
+          <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

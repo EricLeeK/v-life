@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -28,7 +28,7 @@ const DIFFICULTY_CONFIG = {
 } as const;
 
 const MOTIVATIONAL_QUOTES = [
-  { zh: "先做五分钟，开始了就停不下来 ✨", en: "Start with 5 minutes — once you begin, you won't stop ✨" },
+  { zh: "先做五分钟，开始了就停不下来", en: "Start with 5 minutes — once you begin, you won't stop" },
   { zh: "今天也要元气满满哦", en: "Stay energetic today!" },
   { zh: "完成比完美更重要", en: "Done is better than perfect" },
   { zh: "小步前进也是进步", en: "Small steps still count as progress" },
@@ -59,9 +59,9 @@ function CircularProgress({ value, size = 64 }: { value: number; size?: number }
 
 function RewardPopup({ tier, onClose }: { tier: string; onClose: () => void }) {
   const { lang } = useLang();
-  const messages: Record<string, { zh: string; en: string; icon: string }> = {
-    gold: { zh: "太棒了！全部完成！", en: "Amazing! All done!", icon: "🏆" },
-    silver: { zh: "好的开始！继续加油！", en: "Good start! Keep going!", icon: "⭐" },
+  const messages: Record<string, { zh: string; en: string; icon: typeof Trophy }> = {
+    gold: { zh: "太棒了！全部完成！", en: "Amazing! All done!", icon: Trophy },
+    silver: { zh: "好的开始！继续加油！", en: "Good start! Keep going!", icon: Star },
   };
   const msg = messages[tier];
   if (!msg) return null;
@@ -71,7 +71,7 @@ function RewardPopup({ tier, onClose }: { tier: string; onClose: () => void }) {
         className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-xs animate-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-5xl mb-4">{msg.icon}</div>
+        <msg.icon className="h-12 w-12 mx-auto mb-4" style={{ color: "#d17847" }} />
         <p className="text-lg font-semibold" style={{ color: "#1f1a14" }}>
           {lang === "zh" ? msg.zh : msg.en}
         </p>
@@ -101,6 +101,7 @@ export default function TodayTodoPage() {
   const [manualDifficulties, setManualDifficulties] = useState<Record<string, string>>({});
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimatedDifficulties, setEstimatedDifficulties] = useState<Record<string, string>>({});
+  const [estimatedEvaluations, setEstimatedEvaluations] = useState<Record<string, any>>({});
   const [adjustMode, setAdjustMode] = useState(false);
   const [rewardTier, setRewardTier] = useState<string | null>(null);
   const [quote] = useState(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]);
@@ -142,11 +143,16 @@ export default function TodayTodoPage() {
         return todo?.title || "";
       });
       const result = await estimateDifficulty.mutateAsync(titles);
-      const map: Record<string, string> = {};
+      const diffMap: Record<string, string> = {};
+      const evalMap: Record<string, any> = {};
       result.results.forEach((r: any, i: number) => {
-        map[selectedTodos[i]] = r.difficulty;
+        diffMap[selectedTodos[i]] = r.difficulty;
+        if (r.evaluation) {
+          evalMap[selectedTodos[i]] = r.evaluation;
+        }
       });
-      setEstimatedDifficulties(map);
+      setEstimatedDifficulties(diffMap);
+      setEstimatedEvaluations(evalMap);
       setAdjustMode(false);
     } catch {
       setAdjustMode(true);
@@ -162,8 +168,14 @@ export default function TodayTodoPage() {
   const handleConfirmAdd = async () => {
     for (const todoId of selectedTodos) {
       const diff = getDifficulty(todoId);
-      const pts = DIFFICULTY_CONFIG[diff as keyof typeof DIFFICULTY_CONFIG]?.points || 20;
-      await addToToday.mutateAsync({ todo_id: todoId, difficulty: diff, base_points: pts });
+      const eval4d = estimatedEvaluations[todoId];
+      const pts = eval4d?.awarded_xp || DIFFICULTY_CONFIG[diff as keyof typeof DIFFICULTY_CONFIG]?.points || 20;
+      await addToToday.mutateAsync({
+        todo_id: todoId,
+        difficulty: diff,
+        base_points: pts,
+        metadata: eval4d || {},
+      });
     }
     setAddDialogOpen(false);
     toast({ title: lang === "zh" ? "已添加到今天" : "Added to today" });
@@ -294,9 +306,16 @@ export default function TodayTodoPage() {
                         </Select>
                       )}
                       {!adjustMode && estimatedDifficulties[todo.id] && selectedTodos.includes(todo.id) && (
-                        <Badge className={`text-xs ${DIFFICULTY_CONFIG[estimatedDifficulties[todo.id] as keyof typeof DIFFICULTY_CONFIG]?.color}`}>
-                          {DIFFICULTY_CONFIG[estimatedDifficulties[todo.id] as keyof typeof DIFFICULTY_CONFIG]?.label[lang]}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge className={`text-xs ${DIFFICULTY_CONFIG[estimatedDifficulties[todo.id] as keyof typeof DIFFICULTY_CONFIG]?.color}`}>
+                            {DIFFICULTY_CONFIG[estimatedDifficulties[todo.id] as keyof typeof DIFFICULTY_CONFIG]?.label[lang]}
+                          </Badge>
+                          {estimatedEvaluations[todo.id] && (
+                            <span className="text-[10px] font-medium" style={{ color: "#d17847" }}>
+                              +{estimatedEvaluations[todo.id].awarded_xp} XP
+                            </span>
+                          )}
+                        </div>
                       )}
                     </label>
                   ))
@@ -332,7 +351,7 @@ export default function TodayTodoPage() {
         {todayTasks.length === 0 ? (
           <Card className="bg-white border-[#e4e1d7]">
             <CardContent className="p-8 text-center">
-              <p className="text-4xl mb-3">📋</p>
+              <ClipboardList className="h-10 w-10 mx-auto mb-3" style={{ color: "#d1c9bc" }} />
               <p className="text-sm" style={{ color: "#8a847a" }}>
                 {t("今天还没有任务，点击上方按钮添加", "No tasks today — tap the button above to add some")}
               </p>
@@ -343,6 +362,8 @@ export default function TodayTodoPage() {
             {todayTasks.map((task: any) => {
               const diff = task.difficulty || "medium";
               const cfg = DIFFICULTY_CONFIG[diff as keyof typeof DIFFICULTY_CONFIG];
+              const meta = task.metadata || {};
+              const has4D = meta.cognitive_level != null;
               return (
                 <Card key={task.id} className={`bg-white border-[#e4e1d7] transition-all ${task.is_completed ? "opacity-60" : ""}`}>
                   <CardContent className="p-3 px-4">
@@ -359,10 +380,45 @@ export default function TodayTodoPage() {
                         {task.todos?.detail && (
                           <p className="text-xs mt-0.5 truncate" style={{ color: "#8a847a" }}>{task.todos.detail}</p>
                         )}
+                        {has4D && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {(meta.attribute_tags || []).map((tag: string) => (
+                              <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 bg-[#f9f8f5] text-[#8a847a] border-[#e4e1d7]">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {has4D && meta.ai_encouragement && (
+                          <p className="text-[10px] mt-1 italic" style={{ color: "#b8a590" }}>
+                            {meta.ai_encouragement}
+                          </p>
+                        )}
                       </div>
-                      <Badge className={`text-xs ${cfg?.color}`}>
-                        {cfg?.label[lang]}
-                      </Badge>
+                      {has4D ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="flex gap-1">
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-blue-50 text-blue-600 border-blue-200">
+                              <Brain className="h-2.5 w-2.5 mr-0.5" />L{meta.cognitive_level}
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-50 text-purple-600 border-purple-200">
+                              <Dumbbell className="h-2.5 w-2.5 mr-0.5" />L{meta.willpower_level}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-1">
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-cyan-50 text-cyan-600 border-cyan-200">
+                              <Clock className="h-2.5 w-2.5 mr-0.5" />L{meta.duration_level}
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-amber-50 text-amber-600 border-amber-200">
+                              <TrendingUp className="h-2.5 w-2.5 mr-0.5" />L{meta.impact_level}
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        <Badge className={`text-xs ${cfg?.color}`}>
+                          {cfg?.label[lang]}
+                        </Badge>
+                      )}
                       <span className="text-xs font-medium" style={{ fontFamily: "JetBrains Mono, monospace", color: "#d17847" }}>
                         +{task.base_points || cfg?.points || 20}
                       </span>
@@ -392,8 +448,14 @@ export default function TodayTodoPage() {
             <Card className="bg-white border-[#e4e1d7] mt-2">
               <CardContent className="p-4 space-y-3 text-xs" style={{ color: "#8a847a" }}>
                 <div>
-                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("难度基础分", "Difficulty Base Points")}</p>
-                  <p>{t("简单 10 分 · 中等 20 分 · 困难 30 分", "Easy 10 · Medium 20 · Hard 30")}</p>
+                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("四维评估矩阵", "4D Evaluation Matrix")}</p>
+                  <p>{t("认知负荷(L1-L5) · 意志力消耗(L1-L5) · 时间跨度(L1-L5) · 重要性(L1-L5)", "Cognitive(L1-L5) · Willpower(L1-L5) · Duration(L1-L5) · Impact(L1-L5)")}</p>
+                </div>
+                <div>
+                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("积分公式", "Scoring Formula")}</p>
+                  <p>{t("基础 XP = (认知 + 意志) × 5", "Base XP = (Cognitive + Willpower) × 5")}</p>
+                  <p>{t("时间倍率: L1=×0.5, L2=×1, L3=×1.5, L4=×2, L5=×3", "Time mult: L1=×0.5, L2=×1, L3=×1.5, L4=×2, L5=×3")}</p>
+                  <p>{t("重要性奖励: L4=+10, L5=+30", "Impact bonus: L4=+10, L5=+30")}</p>
                 </div>
                 <div>
                   <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("完成奖励", "Completion Bonus")}</p>
@@ -402,10 +464,6 @@ export default function TodayTodoPage() {
                 <div>
                   <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("连续加成", "Streak Multiplier")}</p>
                   <p>{t("1-6 天 ×1 · 7-13 天 ×1.5 · 14-29 天 ×2 · 30+ 天 ×3", "1-6d ×1 · 7-13d ×1.5 · 14-29d ×2 · 30+ ×3")}</p>
-                </div>
-                <div>
-                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("休息日", "Rest Days")}</p>
-                  <p>{t("不扣分，不重置连续天数", "No penalty — streak pauses, doesn't reset")}</p>
                 </div>
               </CardContent>
             </Card>

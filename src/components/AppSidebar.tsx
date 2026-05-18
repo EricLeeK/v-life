@@ -14,6 +14,7 @@ import {
   LogOut,
   Kanban,
   BookOpen,
+  ShoppingBag,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { LangToggle } from "@/components/LangToggle";
@@ -94,6 +95,18 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
+              <NavLink
+                to="/shop"
+                className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
+                activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
+              >
+                <ShoppingBag className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>{t("商店", "Shop")}</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <LangToggle collapsed={collapsed} />
           </SidebarMenuItem>

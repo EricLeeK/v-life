@@ -15,6 +15,7 @@ import {
   LogOut,
   Languages,
   BookOpen,
+  ShoppingBag,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
@@ -43,6 +44,7 @@ export function MobileNav() {
     { title: t("今日待办", "Today"), url: "/today", icon: CalendarCheck },
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
+    { title: t("商店", "Shop"), url: "/shop", icon: ShoppingBag },
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
   ];
 

@@ -59,6 +59,28 @@ const DTASK_4 = "demo-dt000000-0000-0000-0000-000000000004";
 const DTASK_5 = "demo-dt000000-0000-0000-0000-000000000005";
 const UPOINTS_ID = "demo-up000000-0000-0000-0000-000000000001";
 
+// Shop item UUIDs
+const SHOP_TITLE_BEGINNER = "demo-si000000-0000-0000-0000-000000000001";
+const SHOP_TITLE_EXECUTOR = "demo-si000000-0000-0000-0000-000000000002";
+const SHOP_TITLE_WARRIOR = "demo-si000000-0000-0000-0000-000000000003";
+const SHOP_TITLE_MASTER = "demo-si000000-0000-0000-0000-000000000004";
+const SHOP_TITLE_LEGEND = "demo-si000000-0000-0000-0000-000000000005";
+const SHOP_TITLE_WARRIOR100 = "demo-si000000-0000-0000-0000-000000000006";
+const SHOP_FRAME_BRONZE = "demo-si000000-0000-0000-0000-000000000007";
+const SHOP_FRAME_SILVER = "demo-si000000-0000-0000-0000-000000000008";
+const SHOP_FRAME_GOLD = "demo-si000000-0000-0000-0000-000000000009";
+const SHOP_FRAME_CRYSTAL = "demo-si000000-0000-0000-0000-000000000010";
+const SHOP_FRAME_FLAME = "demo-si000000-0000-0000-0000-000000000011";
+const SHOP_FRAME_AURORA = "demo-si000000-0000-0000-0000-000000000012";
+const SHOP_COUPON_REST = "demo-si000000-0000-0000-0000-000000000013";
+const SHOP_COUPON_SKIP = "demo-si000000-0000-0000-0000-000000000014";
+const SHOP_COUPON_GAMING = "demo-si000000-0000-0000-0000-000000000015";
+const SHOP_COUPON_TREAT = "demo-si000000-0000-0000-0000-000000000016";
+const SHOP_COUPON_SLEEP = "demo-si000000-0000-0000-0000-000000000017";
+
+// Gacha pity UUID
+const GACHA_PITY_ID = "demo-gp000000-0000-0000-0000-000000000001";
+
 // ============ Settings ============
 export const demoSettings = {
   id: SETTINGS_ID,
@@ -232,7 +254,47 @@ export const demoDailyTasks = [
 
 // ============ User Points ============
 export const demoUserPoints = [
-  { id: UPOINTS_ID, user_id: DEMO_USER, total_points: 1240, current_streak: 7, best_streak: 12, last_active_date: "2026-05-18", created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-18T10:30:00+09:00" },
+  { id: UPOINTS_ID, user_id: DEMO_USER, total_points: 1240, current_streak: 7, best_streak: 12, last_active_date: "2026-05-18", rest_day_date: null, skip_chore_active: false, sleep_in_date: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-18T10:30:00+09:00" },
+];
+
+// ============ Shop Items ============
+export const demoShopItems = [
+  // Titles - Common
+  { id: SHOP_TITLE_BEGINNER, name: "初心者 / Beginner", description: "Every master was once a beginner.", item_type: "cosmetic_title", rarity: "common", price: 80, image_url: null, metadata: { title_text: "初心者" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_TITLE_EXECUTOR, name: "执行者 / Executor", description: "Actions speak louder than words.", item_type: "cosmetic_title", rarity: "common", price: 80, image_url: null, metadata: { title_text: "执行者" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  // Titles - Rare
+  { id: SHOP_TITLE_WARRIOR, name: "逻辑战士 / Logic Warrior", description: "Master of algorithms and reason.", item_type: "cosmetic_title", rarity: "rare", price: 200, image_url: null, metadata: { title_text: "逻辑战士" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_TITLE_MASTER, name: "连击大师 / Streak Master", description: "Consistency is the ultimate power.", item_type: "cosmetic_title", rarity: "rare", price: null, image_url: null, metadata: { title_text: "连击大师" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  // Titles - Legendary
+  { id: SHOP_TITLE_LEGEND, name: "不灭传说 / Immortal Legend", description: "Your legend precedes you.", item_type: "cosmetic_title", rarity: "legendary", price: null, image_url: null, metadata: { title_text: "不灭传说" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_TITLE_WARRIOR100, name: "百日武者 / 100-Day Warrior", description: "100 days of unwavering dedication.", item_type: "cosmetic_title", rarity: "legendary", price: null, image_url: null, metadata: { title_text: "百日武者" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  // Profile Decorations - Common
+  { id: SHOP_FRAME_BRONZE, name: "青铜之框 / Bronze Frame", description: "A humble beginning.", item_type: "cosmetic_profile", rarity: "common", price: 80, image_url: null, metadata: { frame_style: "bronze" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_FRAME_SILVER, name: "白银之框 / Silver Frame", description: "Polished and refined.", item_type: "cosmetic_profile", rarity: "common", price: 80, image_url: null, metadata: { frame_style: "silver" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  // Profile Decorations - Rare
+  { id: SHOP_FRAME_GOLD, name: "黄金之框 / Gold Frame", description: "Shines with achievement.", item_type: "cosmetic_profile", rarity: "rare", price: 200, image_url: null, metadata: { frame_style: "gold" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_FRAME_CRYSTAL, name: "水晶之框 / Crystal Frame", description: "Translucent elegance.", item_type: "cosmetic_profile", rarity: "rare", price: 200, image_url: null, metadata: { frame_style: "crystal" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  // Profile Decorations - Legendary
+  { id: SHOP_FRAME_FLAME, name: "烈焰之框 / Flame Frame", description: "Burns with eternal fire.", item_type: "cosmetic_profile", rarity: "legendary", price: null, image_url: null, metadata: { frame_style: "flame" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_FRAME_AURORA, name: "极光之框 / Aurora Frame", description: "Dancing lights of the north.", item_type: "cosmetic_profile", rarity: "legendary", price: null, image_url: null, metadata: { frame_style: "aurora" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  // Privilege Coupons (milestone-only, no price)
+  { id: SHOP_COUPON_REST, name: "休息日通行证 / Rest Day Pass", description: "Take a day off without breaking your streak.", item_type: "privilege_coupon", rarity: "rare", price: null, image_url: null, metadata: { effect_type: "rest_day" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_COUPON_SKIP, name: "跳过家务卡 / Skip Chore Pass", description: "Auto-complete your next household task.", item_type: "privilege_coupon", rarity: "rare", price: null, image_url: null, metadata: { effect_type: "skip_chore" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_COUPON_GAMING, name: "游戏豁免券 / Gaming Session", description: "2 hours of guilt-free gaming.", item_type: "privilege_coupon", rarity: "common", price: null, image_url: null, metadata: { effect_type: "gaming_session", duration_hours: 2 }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_COUPON_TREAT, name: "犒劳自己卡 / Treat Yourself", description: "You deserve a nice meal.", item_type: "privilege_coupon", rarity: "legendary", price: null, image_url: null, metadata: { effect_type: "treat_yourself" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+  { id: SHOP_COUPON_SLEEP, name: "睡懒觉卡 / Sleep In Pass", description: "Skip tomorrow morning's alarm.", item_type: "privilege_coupon", rarity: "rare", price: null, image_url: null, metadata: { effect_type: "sleep_in" }, is_active: true, created_at: "2026-05-18T00:00:00+09:00" },
+];
+
+// ============ User Inventory (demo: a few owned items) ============
+export const demoUserInventory = [
+  { id: "demo-inv00000-0000-0000-0000-000000000001", user_id: DEMO_USER, item_id: SHOP_TITLE_BEGINNER, source: "gacha_pull", is_equipped: true, is_used: false, purchased_at: "2026-05-10T14:00:00+09:00" },
+  { id: "demo-inv00000-0000-0000-0000-000000000002", user_id: DEMO_USER, item_id: SHOP_FRAME_BRONZE, source: "shop_purchase", is_equipped: true, is_used: false, purchased_at: "2026-05-12T09:00:00+09:00" },
+  { id: "demo-inv00000-0000-0000-0000-000000000003", user_id: DEMO_USER, item_id: SHOP_COUPON_GAMING, source: "milestone_unlock", is_equipped: false, is_used: false, purchased_at: "2026-05-15T18:00:00+09:00" },
+];
+
+// ============ Gacha Pity ============
+export const demoGachaPity = [
+  { id: GACHA_PITY_ID, user_id: DEMO_USER, pulls_since_legendary: 3, total_pulls: 8, created_at: "2026-05-10T00:00:00+09:00", updated_at: "2026-05-18T00:00:00+09:00" },
 ];
 
 // ============ Goals ============
@@ -471,6 +533,9 @@ export interface DemoDataStore {
   project_tasks: typeof demoProjectTasks;
   task_tags: typeof demoTaskTags;
   habit_logs: typeof demoHabitLogs;
+  shop_items: typeof demoShopItems;
+  user_inventory: typeof demoUserInventory;
+  gacha_pity: typeof demoGachaPity;
 }
 
 export function createDemoDataStore(): DemoDataStore {
@@ -495,5 +560,8 @@ export function createDemoDataStore(): DemoDataStore {
     project_tasks: [...demoProjectTasks],
     task_tags: [...demoTaskTags],
     habit_logs: [...demoHabitLogs],
+    shop_items: [...demoShopItems],
+    user_inventory: [...demoUserInventory],
+    gacha_pity: [...demoGachaPity],
   };
 }
