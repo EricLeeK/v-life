@@ -1,23 +1,12 @@
 // Demo seed data for Guest Tour mode
 // Persona: 小明 (Xiao Ming) — Chinese grad student in Sapporo, Japan
-// "Today" is 2026-05-08 (Friday)
+// Dates are generated dynamically relative to the current date
 
 // ============ Fixed UUIDs ============
 const DEMO_USER = "demo-00000000-0000-0000-0000-000000000001";
 const SETTINGS_ID = "demo-10000000-0000-0000-0000-000000000001";
 
-// Schedule event UUIDs
-const EVT_WAKE = "demo-20000000-0000-0000-0000-000000000001";
-const EVT_LUNCH = "demo-20000000-0000-0000-0000-000000000002";
-const EVT_GYM = "demo-20000000-0000-0000-0000-000000000003";
-const EVT_SLEEP = "demo-20000000-0000-0000-0000-000000000004";
-const EVT_MATH1 = "demo-20000000-0000-0000-0000-000000000005";
-const EVT_MATH2 = "demo-20000000-0000-0000-0000-000000000006";
-const EVT_MATH3 = "demo-20000000-0000-0000-0000-000000000007";
-const EVT_DL1 = "demo-20000000-0000-0000-0000-000000000008";
-const EVT_DL2 = "demo-20000000-0000-0000-0000-000000000009";
-const EVT_DINNER = "demo-20000000-0000-0000-0000-000000000010";
-const EVT_MEETING = "demo-20000000-0000-0000-0000-000000000011";
+// Schedule event IDs are now generated dynamically per date
 
 // Project UUIDs
 const PROJ_FEM = "demo-30000000-0000-0000-0000-000000000001";
@@ -105,44 +94,109 @@ export const demoSettings = {
   updated_at: "2026-05-08T00:00:00+09:00",
 };
 
-// ============ Schedule Events ============
-export const demoScheduleEvents = [
-  // Daily routines — today (2026-05-08, Friday)
-  { id: EVT_WAKE, title: "起床", start_time: "2026-05-08T07:00:00+09:00", end_time: "2026-05-08T07:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_LUNCH, title: "午餐", start_time: "2026-05-08T12:00:00+09:00", end_time: "2026-05-08T12:45:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_GYM, title: "健身", start_time: "2026-05-08T17:00:00+09:00", end_time: "2026-05-08T18:00:00+09:00", importance: "normal", status: "confirmed", color: "#d17847", notes: "胸部+三头", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_SLEEP, title: "睡觉", start_time: "2026-05-08T23:00:00+09:00", end_time: "2026-05-08T23:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  // Friday classes
-  { id: EVT_MATH3, title: "高等数学 III", start_time: "2026-05-08T09:00:00+09:00", end_time: "2026-05-08T10:30:00+09:00", importance: "important", status: "confirmed", color: "#5b88b5", notes: "講義室 A301", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  // 导师组会 (Friday afternoon)
-  { id: EVT_MEETING, title: "导师组会", start_time: "2026-05-08T14:00:00+09:00", end_time: "2026-05-08T16:00:00+09:00", importance: "important", status: "confirmed", color: "#8b7bb8", notes: "汇报FEM项目进展", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  // Monday (May 4)
-  { id: "demo-20000000-0000-0000-0000-000000000020", title: "起床", start_time: "2026-05-04T07:00:00+09:00", end_time: "2026-05-04T07:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-04T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_MATH1, title: "高等数学 I", start_time: "2026-05-04T09:00:00+09:00", end_time: "2026-05-04T10:30:00+09:00", importance: "important", status: "confirmed", color: "#5b88b5", notes: "講義室 A301", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-04T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000021", title: "午餐", start_time: "2026-05-04T12:00:00+09:00", end_time: "2026-05-04T12:45:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-04T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000022", title: "健身", start_time: "2026-05-04T17:00:00+09:00", end_time: "2026-05-04T18:00:00+09:00", importance: "normal", status: "confirmed", color: "#d17847", notes: "腿部训练", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-04T00:00:00+09:00", user_id: DEMO_USER },
-  // Tuesday (May 5)
-  { id: "demo-20000000-0000-0000-0000-000000000030", title: "起床", start_time: "2026-05-05T07:00:00+09:00", end_time: "2026-05-05T07:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-05T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_DL1, title: "深度学习研讨", start_time: "2026-05-05T14:00:00+09:00", end_time: "2026-05-05T16:00:00+09:00", importance: "important", status: "confirmed", color: "#5b88b5", notes: "研讨室 B205", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-05T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000031", title: "午餐", start_time: "2026-05-05T12:00:00+09:00", end_time: "2026-05-05T12:45:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-05T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000032", title: "健身", start_time: "2026-05-05T17:00:00+09:00", end_time: "2026-05-05T18:00:00+09:00", importance: "normal", status: "confirmed", color: "#d17847", notes: "背部+二头", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-05T00:00:00+09:00", user_id: DEMO_USER },
-  // Wednesday (May 6)
-  { id: "demo-20000000-0000-0000-0000-000000000040", title: "起床", start_time: "2026-05-06T07:00:00+09:00", end_time: "2026-05-06T07:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-06T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_MATH2, title: "高等数学 II", start_time: "2026-05-06T09:00:00+09:00", end_time: "2026-05-06T10:30:00+09:00", importance: "important", status: "confirmed", color: "#5b88b5", notes: "講義室 A301", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-06T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000041", title: "午餐", start_time: "2026-05-06T12:00:00+09:00", end_time: "2026-05-06T12:45:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-06T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000042", title: "健身", start_time: "2026-05-06T17:00:00+09:00", end_time: "2026-05-06T18:00:00+09:00", importance: "normal", status: "confirmed", color: "#d17847", notes: "肩部+核心", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-06T00:00:00+09:00", user_id: DEMO_USER },
-  // Thursday (May 7)
-  { id: "demo-20000000-0000-0000-0000-000000000050", title: "起床", start_time: "2026-05-07T07:00:00+09:00", end_time: "2026-05-07T07:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-07T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_DL2, title: "深度学习研讨", start_time: "2026-05-07T14:00:00+09:00", end_time: "2026-05-07T16:00:00+09:00", importance: "important", status: "confirmed", color: "#5b88b5", notes: "研讨室 B205", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-07T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000051", title: "午餐", start_time: "2026-05-07T12:00:00+09:00", end_time: "2026-05-07T12:45:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-07T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000052", title: "健身", start_time: "2026-05-07T17:00:00+09:00", end_time: "2026-05-07T18:00:00+09:00", importance: "normal", status: "confirmed", color: "#d17847", notes: "有氧+拉伸", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-07T00:00:00+09:00", user_id: DEMO_USER },
-  // Saturday (May 9) — weekend
-  { id: "demo-20000000-0000-0000-0000-000000000060", title: "起床", start_time: "2026-05-09T09:00:00+09:00", end_time: "2026-05-09T09:30:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: EVT_DINNER, title: "和朋友聚餐", start_time: "2026-05-09T18:00:00+09:00", end_time: "2026-05-09T20:00:00+09:00", importance: "normal", status: "confirmed", color: "#8b7bb8", notes: "札幌站附近烤肉店", parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  // Sunday (May 10)
-  { id: "demo-20000000-0000-0000-0000-000000000070", title: "起床", start_time: "2026-05-10T09:30:00+09:00", end_time: "2026-05-10T10:00:00+09:00", importance: "normal", status: "confirmed", color: "#5b8c44", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-20000000-0000-0000-0000-000000000071", title: "视频通话 彤彤", start_time: "2026-05-10T15:00:00+09:00", end_time: "2026-05-10T16:00:00+09:00", importance: "normal", status: "confirmed", color: "#8b7bb8", notes: null, parent_event_id: null, recurrence: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-];
+// ============ Schedule Events (dynamic — relative to current date) ============
+// Weekday class schedule: day-of-week (0=Sun..6=Sat) → events
+const WEEKDAY_CLASSES: Record<number, Array<{ idSuffix: string; title: string; startHour: number; endHour: number; color: string; notes: string | null }>> = {
+  1: [{ idSuffix: "math1", title: "高等数学 I", startHour: 9, endHour: 10.5, color: "#5b88b5", notes: "講義室 A301" }],
+  2: [{ idSuffix: "dl1", title: "深度学习研讨", startHour: 14, endHour: 16, color: "#5b88b5", notes: "研讨室 B205" }],
+  3: [{ idSuffix: "math2", title: "高等数学 II", startHour: 9, endHour: 10.5, color: "#5b88b5", notes: "講義室 A301" }],
+  4: [{ idSuffix: "dl2", title: "深度学习研讨", startHour: 14, endHour: 16, color: "#5b88b5", notes: "研讨室 B205" }],
+  5: [
+    { idSuffix: "math3", title: "高等数学 III", startHour: 9, endHour: 10.5, color: "#5b88b5", notes: "講義室 A301" },
+    { idSuffix: "meeting", title: "导师组会", startHour: 14, endHour: 16, color: "#8b7bb8", notes: "汇报FEM项目进展" },
+  ],
+};
+const WEEKDAY_GYM_NOTES: Record<number, string> = {
+  1: "腿部训练", 2: "背部+二头", 3: "肩部+核心", 4: "有氧+拉伸", 5: "胸部+三头",
+};
+
+function fmt(d: Date, hour: number, minute = 0): string {
+  const dt = new Date(d);
+  dt.setHours(hour, minute, 0, 0);
+  return dt.toISOString();
+}
+
+function generateScheduleEvents(): typeof demoScheduleEvents {
+  const events: typeof demoScheduleEvents = [];
+  const today = new Date();
+  const dow = today.getDay(); // 0=Sun
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - ((dow + 6) % 7)); // Monday of this week
+  mon.setHours(0, 0, 0, 0);
+
+  for (let dayOffset = -14; dayOffset <= 14; dayOffset++) {
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + dayOffset);
+    const dayOfWeek = d.getDay();
+    const dateStr = d.toISOString().split("T")[0];
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const created = `${dateStr}T00:00:00+09:00`;
+
+    // Wake up
+    const wakeHour = isWeekend ? 9 : 7;
+    events.push({
+      id: `demo-se-wake-${dateStr}`, title: "起床",
+      start_time: fmt(d, wakeHour), end_time: fmt(d, wakeHour, 30),
+      importance: "normal", status: "confirmed", color: "#5b8c44", notes: null,
+      parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+    });
+
+    if (isWeekend) {
+      // Weekend: just wake + sleep; Saturday has dinner with friends
+      if (dayOfWeek === 6) {
+        events.push({
+          id: `demo-se-dinner-${dateStr}`, title: "和朋友聚餐",
+          start_time: fmt(d, 18), end_time: fmt(d, 20),
+          importance: "normal", status: "confirmed", color: "#8b7bb8", notes: "札幌站附近",
+          parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+        });
+      }
+      if (dayOfWeek === 0) {
+        events.push({
+          id: `demo-se-video-${dateStr}`, title: "视频通话 彤彤",
+          start_time: fmt(d, 15), end_time: fmt(d, 16),
+          importance: "normal", status: "confirmed", color: "#8b7bb8", notes: null,
+          parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+        });
+      }
+    } else {
+      // Weekday: lunch, classes, gym, sleep
+      events.push({
+        id: `demo-se-lunch-${dateStr}`, title: "午餐",
+        start_time: fmt(d, 12), end_time: fmt(d, 12, 45),
+        importance: "normal", status: "confirmed", color: "#5b8c44", notes: null,
+        parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+      });
+      for (const cls of WEEKDAY_CLASSES[dayOfWeek] ?? []) {
+        events.push({
+          id: `demo-se-${cls.idSuffix}-${dateStr}`, title: cls.title,
+          start_time: fmt(d, Math.floor(cls.startHour), (cls.startHour % 1) * 60),
+          end_time: fmt(d, Math.floor(cls.endHour), (cls.endHour % 1) * 60),
+          importance: "important", status: "confirmed", color: cls.color, notes: cls.notes,
+          parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+        });
+      }
+      events.push({
+        id: `demo-se-gym-${dateStr}`, title: "健身",
+        start_time: fmt(d, 17), end_time: fmt(d, 18),
+        importance: "normal", status: "confirmed", color: "#d17847",
+        notes: WEEKDAY_GYM_NOTES[dayOfWeek] ?? null,
+        parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+      });
+    }
+
+    // Sleep (every day)
+    events.push({
+      id: `demo-se-sleep-${dateStr}`, title: "睡觉",
+      start_time: fmt(d, 23), end_time: fmt(d, 23, 30),
+      importance: "normal", status: "confirmed", color: "#5b8c44", notes: null,
+      parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+    });
+  }
+  return events;
+}
+
+export const demoScheduleEvents = generateScheduleEvents();
 
 // ============ Finance Records ============
 const FX = 0.048;
@@ -188,43 +242,59 @@ export const demoFinanceRecords = [
   { id: "demo-f0000000-0000-0000-0000-000000000026", name: "生日礼物", amount: 5800, amount_cny: Math.round(5800 * FX * 100) / 100, currency: "JPY", exchange_rate: FX, category: "日用", date: "2026-04-15", notes: "给彤彤的生日礼物", created_at: "2026-04-15T10:00:00+09:00", updated_at: "2026-04-15T10:00:00+09:00", user_id: DEMO_USER },
 ];
 
-// ============ Calorie Records ============
-export const demoCalorieRecords = [
-  // May 8 (today)
-  { id: "demo-c0000000-0000-0000-0000-000000000001", food_name: "燕麦牛奶", calories: 320, meal_type: "breakfast", date: "2026-05-08", notes: null, created_at: "2026-05-08T08:00:00+09:00", updated_at: "2026-05-08T08:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000002", food_name: "便当", calories: 580, meal_type: "lunch", date: "2026-05-08", notes: null, created_at: "2026-05-08T12:10:00+09:00", updated_at: "2026-05-08T12:10:00+09:00", user_id: DEMO_USER },
-  // May 7
-  { id: "demo-c0000000-0000-0000-0000-000000000010", food_name: "全麦面包+鸡蛋", calories: 350, meal_type: "breakfast", date: "2026-05-07", notes: null, created_at: "2026-05-07T07:30:00+09:00", updated_at: "2026-05-07T07:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000011", food_name: "松屋牛丼", calories: 680, meal_type: "lunch", date: "2026-05-07", notes: null, created_at: "2026-05-07T12:20:00+09:00", updated_at: "2026-05-07T12:20:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000012", food_name: "米饭配鸡胸肉+西兰花", calories: 650, meal_type: "dinner", date: "2026-05-07", notes: null, created_at: "2026-05-07T19:00:00+09:00", updated_at: "2026-05-07T19:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000013", food_name: "跑步 5km", calories: 280, meal_type: "exercise", date: "2026-05-07", notes: null, created_at: "2026-05-07T17:30:00+09:00", updated_at: "2026-05-07T17:30:00+09:00", user_id: DEMO_USER },
-  // May 6
-  { id: "demo-c0000000-0000-0000-0000-000000000020", food_name: "燕麦酸奶", calories: 300, meal_type: "breakfast", date: "2026-05-06", notes: null, created_at: "2026-05-06T07:45:00+09:00", updated_at: "2026-05-06T07:45:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000021", food_name: "便利店便当", calories: 620, meal_type: "lunch", date: "2026-05-06", notes: null, created_at: "2026-05-06T12:15:00+09:00", updated_at: "2026-05-06T12:15:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000022", food_name: "拉面", calories: 780, meal_type: "dinner", date: "2026-05-06", notes: null, created_at: "2026-05-06T19:30:00+09:00", updated_at: "2026-05-06T19:30:00+09:00", user_id: DEMO_USER },
-  // May 5
-  { id: "demo-c0000000-0000-0000-0000-000000000030", food_name: "面包+牛奶", calories: 340, meal_type: "breakfast", date: "2026-05-05", notes: null, created_at: "2026-05-05T07:30:00+09:00", updated_at: "2026-05-05T07:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000031", food_name: "麦当劳套餐", calories: 720, meal_type: "lunch", date: "2026-05-05", notes: null, created_at: "2026-05-05T12:30:00+09:00", updated_at: "2026-05-05T12:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000032", food_name: "米饭配咖喱", calories: 700, meal_type: "dinner", date: "2026-05-05", notes: null, created_at: "2026-05-05T19:00:00+09:00", updated_at: "2026-05-05T19:00:00+09:00", user_id: DEMO_USER },
-  // May 4
-  { id: "demo-c0000000-0000-0000-0000-000000000040", food_name: "燕麦+香蕉", calories: 310, meal_type: "breakfast", date: "2026-05-04", notes: null, created_at: "2026-05-04T07:45:00+09:00", updated_at: "2026-05-04T07:45:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000041", food_name: "便当", calories: 550, meal_type: "lunch", date: "2026-05-04", notes: null, created_at: "2026-05-04T12:20:00+09:00", updated_at: "2026-05-04T12:20:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000042", food_name: "鸡胸肉沙拉", calories: 450, meal_type: "dinner", date: "2026-05-04", notes: null, created_at: "2026-05-04T19:00:00+09:00", updated_at: "2026-05-04T19:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000043", food_name: "腿部训练", calories: 250, meal_type: "exercise", date: "2026-05-04", notes: null, created_at: "2026-05-04T17:30:00+09:00", updated_at: "2026-05-04T17:30:00+09:00", user_id: DEMO_USER },
-  // May 3
-  { id: "demo-c0000000-0000-0000-0000-000000000050", food_name: "三明治", calories: 380, meal_type: "breakfast", date: "2026-05-03", notes: null, created_at: "2026-05-03T08:00:00+09:00", updated_at: "2026-05-03T08:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000051", food_name: "乌冬面", calories: 520, meal_type: "lunch", date: "2026-05-03", notes: null, created_at: "2026-05-03T12:30:00+09:00", updated_at: "2026-05-03T12:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000052", food_name: "烤鱼定食", calories: 650, meal_type: "dinner", date: "2026-05-03", notes: null, created_at: "2026-05-03T19:00:00+09:00", updated_at: "2026-05-03T19:00:00+09:00", user_id: DEMO_USER },
-  // May 2
-  { id: "demo-c0000000-0000-0000-0000-000000000060", food_name: "牛奶+面包", calories: 330, meal_type: "breakfast", date: "2026-05-02", notes: null, created_at: "2026-05-02T08:00:00+09:00", updated_at: "2026-05-02T08:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000061", food_name: "咖喱饭", calories: 680, meal_type: "lunch", date: "2026-05-02", notes: null, created_at: "2026-05-02T12:30:00+09:00", updated_at: "2026-05-02T12:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000062", food_name: "炒饭", calories: 600, meal_type: "dinner", date: "2026-05-02", notes: null, created_at: "2026-05-02T19:00:00+09:00", updated_at: "2026-05-02T19:00:00+09:00", user_id: DEMO_USER },
-  // May 1
-  { id: "demo-c0000000-0000-0000-0000-000000000070", food_name: "燕麦+蓝莓", calories: 290, meal_type: "breakfast", date: "2026-05-01", notes: null, created_at: "2026-05-01T07:30:00+09:00", updated_at: "2026-05-01T07:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000071", food_name: "便当", calories: 560, meal_type: "lunch", date: "2026-05-01", notes: null, created_at: "2026-05-01T12:15:00+09:00", updated_at: "2026-05-01T12:15:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000072", food_name: "麻辣烫", calories: 720, meal_type: "dinner", date: "2026-05-01", notes: null, created_at: "2026-05-01T19:30:00+09:00", updated_at: "2026-05-01T19:30:00+09:00", user_id: DEMO_USER },
-  { id: "demo-c0000000-0000-0000-0000-000000000073", food_name: "跑步 4km", calories: 240, meal_type: "exercise", date: "2026-05-01", notes: null, created_at: "2026-05-01T17:00:00+09:00", updated_at: "2026-05-01T17:00:00+09:00", user_id: DEMO_USER },
+// ============ Calorie Records (dynamic — last 14 days) ============
+const BREAKFAST_OPTIONS = [
+  { name: "燕麦牛奶", cal: 320 }, { name: "全麦面包+鸡蛋", cal: 350 },
+  { name: "燕麦酸奶", cal: 300 }, { name: "面包+牛奶", cal: 340 },
+  { name: "燕麦+香蕉", cal: 310 }, { name: "三明治", cal: 380 },
+  { name: "牛奶+面包", cal: 330 }, { name: "燕麦+蓝莓", cal: 290 },
 ];
+const LUNCH_OPTIONS = [
+  { name: "便当", cal: 580 }, { name: "松屋牛丼", cal: 680 },
+  { name: "便利店便当", cal: 620 }, { name: "麦当劳套餐", cal: 720 },
+  { name: "便当", cal: 550 }, { name: "乌冬面", cal: 520 },
+  { name: "咖喱饭", cal: 680 }, { name: "拉面", cal: 650 },
+];
+const DINNER_OPTIONS = [
+  { name: "米饭配鸡胸肉+西兰花", cal: 650 }, { name: "拉面", cal: 780 },
+  { name: "米饭配咖喱", cal: 700 }, { name: "鸡胸肉沙拉", cal: 450 },
+  { name: "烤鱼定食", cal: 650 }, { name: "炒饭", cal: 600 },
+  { name: "麻辣烫", cal: 720 }, { name: "烤肉定食", cal: 700 },
+];
+
+function generateCalorieRecords(): typeof demoCalorieRecords {
+  const records: typeof demoCalorieRecords = [];
+  const today = new Date();
+  for (let dayOffset = -13; dayOffset <= 0; dayOffset++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + dayOffset);
+    const dateStr = d.toISOString().split("T")[0];
+    const seed = dayOffset + 13; // 0..13
+    const brk = BREAKFAST_OPTIONS[seed % BREAKFAST_OPTIONS.length];
+    const lnc = LUNCH_OPTIONS[seed % LUNCH_OPTIONS.length];
+    const dnr = DINNER_OPTIONS[seed % DINNER_OPTIONS.length];
+
+    records.push(
+      { id: `demo-cal-brk-${dateStr}`, food_name: brk.name, calories: brk.cal, meal_type: "breakfast", date: dateStr, notes: null, created_at: `${dateStr}T08:00:00+09:00`, updated_at: `${dateStr}T08:00:00+09:00`, user_id: DEMO_USER },
+      { id: `demo-cal-lnc-${dateStr}`, food_name: lnc.name, calories: lnc.cal, meal_type: "lunch", date: dateStr, notes: null, created_at: `${dateStr}T12:15:00+09:00`, updated_at: `${dateStr}T12:15:00+09:00`, user_id: DEMO_USER },
+      { id: `demo-cal-dnr-${dateStr}`, food_name: dnr.name, calories: dnr.cal, meal_type: "dinner", date: dateStr, notes: null, created_at: `${dateStr}T19:00:00+09:00`, updated_at: `${dateStr}T19:00:00+09:00`, user_id: DEMO_USER },
+    );
+    // Add exercise every other day
+    if (dayOffset % 2 === 0) {
+      const exercises = [
+        { name: "跑步 5km", cal: 280 }, { name: "腿部训练", cal: 250 },
+        { name: "跑步 4km", cal: 240 }, { name: "有氧操", cal: 200 },
+      ];
+      const ex = exercises[seed % exercises.length];
+      records.push(
+        { id: `demo-cal-ex-${dateStr}`, food_name: ex.name, calories: ex.cal, meal_type: "exercise", date: dateStr, notes: null, created_at: `${dateStr}T17:30:00+09:00`, updated_at: `${dateStr}T17:30:00+09:00`, user_id: DEMO_USER },
+      );
+    }
+  }
+  return records;
+}
+
+export const demoCalorieRecords = generateCalorieRecords();
 
 // ============ Todos ============
 export const demoTodos = [
@@ -243,18 +313,26 @@ export const demoTodos = [
   { id: "demo-t0000000-0000-0000-0000-000000000013", title: "回复导师邮件", detail: "关于实验参数设置的问题", importance: "important", category: "工作", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
 ];
 
-// ============ Daily Tasks (Today's Todo) ============
-export const demoDailyTasks = [
-  { id: DTASK_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000001", task_date: "2026-05-18", difficulty: "hard", base_points: 30, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
-  { id: DTASK_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000004", task_date: "2026-05-18", difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
-  { id: DTASK_3, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000002", task_date: "2026-05-18", difficulty: "easy", base_points: 10, is_completed: true, completed_at: "2026-05-18T10:30:00+09:00", created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T10:30:00+09:00" },
-  { id: DTASK_4, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000013", task_date: "2026-05-18", difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
-  { id: DTASK_5, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000005", task_date: "2026-05-18", difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: "2026-05-18T07:00:00+09:00", updated_at: "2026-05-18T07:00:00+09:00" },
-];
+// ============ Daily Tasks (Today's Todo — dynamic) ============
+function generateDailyTasks(): typeof demoDailyTasks {
+  const today = new Date();
+  const dateStr = today.toISOString().split("T")[0];
+  const ts = `${dateStr}T07:00:00+09:00`;
+  return [
+    { id: DTASK_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000001", task_date: dateStr, difficulty: "hard", base_points: 30, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
+    { id: DTASK_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000004", task_date: dateStr, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
+    { id: DTASK_3, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000002", task_date: dateStr, difficulty: "easy", base_points: 10, is_completed: true, completed_at: `${dateStr}T10:30:00+09:00`, created_at: ts, updated_at: `${dateStr}T10:30:00+09:00` },
+    { id: DTASK_4, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000013", task_date: dateStr, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
+    { id: DTASK_5, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000005", task_date: dateStr, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
+  ];
+}
+
+export const demoDailyTasks = generateDailyTasks();
 
 // ============ User Points ============
+const _todayStr = new Date().toISOString().split("T")[0];
 export const demoUserPoints = [
-  { id: UPOINTS_ID, user_id: DEMO_USER, total_points: 1240, current_streak: 7, best_streak: 12, last_active_date: "2026-05-18", rest_day_date: null, skip_chore_active: false, sleep_in_date: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: "2026-05-18T10:30:00+09:00" },
+  { id: UPOINTS_ID, user_id: DEMO_USER, total_points: 1240, current_streak: 7, best_streak: 12, last_active_date: _todayStr, rest_day_date: null, skip_chore_active: false, sleep_in_date: null, created_at: "2026-04-01T00:00:00+09:00", updated_at: `${_todayStr}T10:30:00+09:00` },
 ];
 
 // ============ Shop Items ============
@@ -297,31 +375,56 @@ export const demoGachaPity = [
   { id: GACHA_PITY_ID, user_id: DEMO_USER, pulls_since_legendary: 3, total_pulls: 8, created_at: "2026-05-10T00:00:00+09:00", updated_at: "2026-05-18T00:00:00+09:00" },
 ];
 
-// ============ Goals ============
-// Current week: 2026-05-04 (Monday)
-// Current month: 2026-05-01
-// Current year: 2026-01-01
-export const demoGoals = [
-  // Weekly goals (current week)
-  { id: "demo-g0000000-0000-0000-0000-000000000001", title: "完成FEM自动微分模块初版", type: "week", period_start: "2026-05-04", is_completed: false, created_at: "2026-05-04T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000002", title: "复习概率论第1-3章", type: "week", period_start: "2026-05-04", is_completed: true, created_at: "2026-05-04T08:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000003", title: "健身5次", type: "week", period_start: "2026-05-04", is_completed: false, created_at: "2026-05-04T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000004", title: "读完《深度学习》第5章", type: "week", period_start: "2026-05-04", is_completed: true, created_at: "2026-05-04T08:00:00+09:00", updated_at: "2026-05-07T20:00:00+09:00", user_id: DEMO_USER },
-  // Monthly goals (May)
-  { id: "demo-g0000000-0000-0000-0000-000000000010", title: "完成论文第二章初稿", type: "month", period_start: "2026-05-01", is_completed: false, created_at: "2026-05-01T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000011", title: "体重降到74kg", type: "month", period_start: "2026-05-01", is_completed: false, created_at: "2026-05-01T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000012", title: "博客上线并发布3篇文章", type: "month", period_start: "2026-05-01", is_completed: false, created_at: "2026-05-01T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  // Last week (completed)
-  { id: "demo-g0000000-0000-0000-0000-000000000020", title: "提交实验报告", type: "week", period_start: "2026-04-27", is_completed: true, created_at: "2026-04-27T08:00:00+09:00", updated_at: "2026-04-30T10:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000021", title: "整理房间", type: "week", period_start: "2026-04-27", is_completed: true, created_at: "2026-04-27T08:00:00+09:00", updated_at: "2026-04-28T10:00:00+09:00", user_id: DEMO_USER },
-  // Yearly goals
-  { id: "demo-g0000000-0000-0000-0000-000000000030", title: "学完CS231n课程", type: "year", period_start: "2026-01-01", is_completed: false, created_at: "2026-01-01T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000031", title: "发表一篇顶会论文", type: "year", period_start: "2026-01-01", is_completed: false, created_at: "2026-01-01T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-g0000000-0000-0000-0000-000000000032", title: "体重稳定在72kg", type: "year", period_start: "2026-01-01", is_completed: false, created_at: "2026-01-01T08:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
-];
+// ============ Goals (dynamic — relative to current week/month/year) ============
+function getCurrentMonday(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.toISOString().split("T")[0];
+}
 
-// ============ Weight Records ============
-// 30+ days from April 1 to May 8, trending 76 → 74.5
+function getCurrentMonthStart(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function getLastMonday(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - 7);
+  return d.toISOString().split("T")[0];
+}
+
+function generateGoals(): typeof demoGoals {
+  const thisMon = getCurrentMonday();
+  const thisMonth = getCurrentMonthStart();
+  const lastMon = getLastMonday();
+  const thisYear = `${new Date().getFullYear()}-01-01`;
+  const ts = (date: string) => `${date}T08:00:00+09:00`;
+
+  return [
+    // Weekly goals (current week)
+    { id: "demo-g0000000-0000-0000-0000-000000000001", title: "完成FEM自动微分模块初版", type: "week", period_start: thisMon, is_completed: false, created_at: ts(thisMon), updated_at: ts(thisMon), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000002", title: "复习概率论第1-3章", type: "week", period_start: thisMon, is_completed: true, created_at: ts(thisMon), updated_at: ts(thisMon), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000003", title: "健身5次", type: "week", period_start: thisMon, is_completed: false, created_at: ts(thisMon), updated_at: ts(thisMon), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000004", title: "读完《深度学习》第5章", type: "week", period_start: thisMon, is_completed: true, created_at: ts(thisMon), updated_at: ts(thisMon), user_id: DEMO_USER },
+    // Monthly goals (current month)
+    { id: "demo-g0000000-0000-0000-0000-000000000010", title: "完成论文第二章初稿", type: "month", period_start: thisMonth, is_completed: false, created_at: ts(thisMonth), updated_at: ts(thisMonth), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000011", title: "体重降到74kg", type: "month", period_start: thisMonth, is_completed: false, created_at: ts(thisMonth), updated_at: ts(thisMonth), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000012", title: "博客上线并发布3篇文章", type: "month", period_start: thisMonth, is_completed: false, created_at: ts(thisMonth), updated_at: ts(thisMonth), user_id: DEMO_USER },
+    // Last week (completed)
+    { id: "demo-g0000000-0000-0000-0000-000000000020", title: "提交实验报告", type: "week", period_start: lastMon, is_completed: true, created_at: ts(lastMon), updated_at: ts(lastMon), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000021", title: "整理房间", type: "week", period_start: lastMon, is_completed: true, created_at: ts(lastMon), updated_at: ts(lastMon), user_id: DEMO_USER },
+    // Yearly goals
+    { id: "demo-g0000000-0000-0000-0000-000000000030", title: "学完CS231n课程", type: "year", period_start: thisYear, is_completed: false, created_at: ts(thisYear), updated_at: ts(thisYear), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000031", title: "发表一篇顶会论文", type: "year", period_start: thisYear, is_completed: false, created_at: ts(thisYear), updated_at: ts(thisYear), user_id: DEMO_USER },
+    { id: "demo-g0000000-0000-0000-0000-000000000032", title: "体重稳定在72kg", type: "year", period_start: thisYear, is_completed: false, created_at: ts(thisYear), updated_at: ts(thisYear), user_id: DEMO_USER },
+  ];
+}
+
+export const demoGoals = generateGoals();
+
+// ============ Weight Records (dynamic — last 38 days, trending 76 → 74.5) ============
 export const demoWeightRecords: Array<{ id: string; weight: number; date: string; notes: string | null; created_at: string; updated_at: string; user_id: string }> = [];
 (function generateWeight() {
   const weights = [
@@ -330,8 +433,10 @@ export const demoWeightRecords: Array<{ id: string; weight: number; date: string
     74.6, 74.8, 74.5, 74.4, 74.6, 74.3, 74.5, 74.4, 74.6, 74.5,
     74.3, 74.5, 74.4, 74.2, 74.4, 74.3, 74.5, 74.4,
   ];
+  const today = new Date();
   for (let i = 0; i < weights.length; i++) {
-    const d = new Date(2026, 3, 1 + i); // April 1 + i
+    const d = new Date(today);
+    d.setDate(today.getDate() - (weights.length - 1 - i));
     const dateStr = d.toISOString().split("T")[0];
     demoWeightRecords.push({
       id: `demo-w0000000-0000-0000-0000-${String(i).padStart(12, "0")}`,
@@ -487,14 +592,15 @@ export const demoProjectTasks = [
   { id: TASK_THESIS_CH1, title: "写第一章", description: "绪论：研究背景、动机和贡献", status: "todo", type: "task", due_date: "2026-08-01", sort_order: 3, weight: 2, project_id: PROJ_THESIS, created_at: "2026-02-01T10:00:00+09:00", updated_at: "2026-02-01T10:00:00+09:00" },
 ];
 
-// ============ Habit Logs ============
+// ============ Habit Logs (dynamic — last 14 days) ============
 export const demoHabitLogs: Array<{ id: string; task_id: string; log_date: string; completed_at: string | null }> = [];
 (function generateHabitLogs() {
   let logIdx = 0;
   const habits = [HABIT_GYM, HABIT_EARLY, HABIT_READ];
-  // Generate for last 14 days (April 25 - May 8)
-  for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
-    const d = new Date(2026, 3, 25 + dayOffset);
+  const today = new Date();
+  for (let dayOffset = -13; dayOffset <= 0; dayOffset++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + dayOffset);
     const dateStr = d.toISOString().split("T")[0];
     for (const taskId of habits) {
       // ~75% completion rate
