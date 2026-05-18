@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -294,7 +295,8 @@ export default function ShopPage() {
   }, [currentStreak, totalPoints]);
 
   return (
-    <div className="min-h-screen bg-[#f4f3ee] pb-20 md:pb-4">
+    <AppLayout title={t("商店", "Shop")}>
+    <div className="pb-20 md:pb-4">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
@@ -617,5 +619,6 @@ export default function ShopPage() {
       {/* Gacha Results Dialog */}
       {pullResults && <GachaAnimation results={pullResults} onClose={() => setPullResults(null)} />}
     </div>
+    </AppLayout>
   );
 }
