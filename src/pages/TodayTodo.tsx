@@ -83,6 +83,33 @@ function RewardPopup({ tier, onClose }: { tier: string; onClose: () => void }) {
   );
 }
 
+const calculateXpFrom4D = (evalObj: any) => {
+  if (!evalObj) return 20;
+  const cog = Number(evalObj.cognitive_level) || 1;
+  const will = Number(evalObj.willpower_level) || 1;
+  const dur = Number(evalObj.duration_level) || 1;
+  const imp = Number(evalObj.impact_level) || 1;
+
+  // 基础 XP = (认知负荷 + 意志力消耗) × 5
+  const baseXP = (cog + will) * 5;
+
+  // 时间倍率 = 基础 XP × (时间跨度L级的对应倍数：L1=0.5, L2=1.0, L3=1.5, L4=2.0, L5=3.0)
+  const durationMultipliers = [0.5, 1.0, 1.5, 2.0, 3.0];
+  const durIndex = Math.min(Math.max(1, dur), 5) - 1;
+  const durationMult = durationMultipliers[durIndex];
+  const timeScaledXP = baseXP * durationMult;
+
+  // 成长奖励 = 若重要性达到 L4，总分额外 +10；若达到 L5，总分额外 +30
+  let bonus = 0;
+  if (imp === 4) {
+    bonus = 10;
+  } else if (imp === 5) {
+    bonus = 30;
+  }
+
+  return Math.round(timeScaledXP + bonus);
+};
+
 export default function TodayTodoPage() {
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -210,20 +237,39 @@ export default function TodayTodoPage() {
       const diffMap: Record<string, string> = {};
       const evalMap: Record<string, any> = {};
       result.results.forEach((r: any, i: number) => {
-        const diff = (r.difficulty || "medium").toLowerCase() as keyof typeof DIFFICULTY_CONFIG;
+        // Fallback default levels if not fully returned
+        const evalObj = r.evaluation || {
+          cognitive_level: 2,
+          willpower_level: 2,
+          duration_level: 2,
+          impact_level: 2
+        };
+        
+        // 1. Calculate XP score using the script formula (not LLM calculation)
+        const pts = calculateXpFrom4D(evalObj);
+        
+        // 2. Classify difficulty level string based on score bounds
+        const diff = pts < 20 ? "easy" : pts < 40 ? "medium" : "hard";
         diffMap[selectedTodos[i]] = diff;
         
-        const pts = DIFFICULTY_CONFIG[diff]?.points || 20;
+        // 3. Save all 4D dimensions to evalMap
         evalMap[selectedTodos[i]] = {
+          cognitive_level: Number(evalObj.cognitive_level) || 2,
+          willpower_level: Number(evalObj.willpower_level) || 2,
+          duration_level: Number(evalObj.duration_level) || 2,
+          impact_level: Number(evalObj.impact_level) || 2,
           awarded_xp: pts,
           difficulty: diff,
-          ...(r.evaluation || {})
+          category: r.category || "自律",
+          attribute_tags: r.attribute_tags || ["专注"],
+          ai_encouragement: r.ai_encouragement || "",
         };
       });
       setEstimatedDifficulties(diffMap);
       setEstimatedEvaluations(evalMap);
       setAdjustMode(false);
-    } catch {
+    } catch (err) {
+      console.error("Auto estimate error:", err);
       setAdjustMode(true);
     } finally {
       setIsEstimating(false);
@@ -470,15 +516,45 @@ export default function TodayTodoPage() {
                         }}
                         className="rounded accent-[#d17847]"
                       />
-                      <span className="text-sm flex-1 font-medium" style={{ color: "#1f1a14" }}>
-                        {(() => {
-                          if (todo.parent_id) {
-                            const parent = allTodos.find((p: any) => p.id === todo.parent_id);
-                            return parent ? `${parent.title} > ${todo.title}` : todo.title;
-                          }
-                          return todo.title;
-                        })()}
-                      </span>
+                      <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
+                        <span className="text-sm font-medium" style={{ color: "#1f1a14" }}>
+                          {(() => {
+                            if (todo.parent_id) {
+                              const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                              return parent ? `${parent.title} > ${todo.title}` : todo.title;
+                            }
+                            return todo.title;
+                          })()}
+                        </span>
+                        
+                        {/* 4D dimensions details display */}
+                        {selectedTodos.includes(todo.id) && estimatedEvaluations[todo.id] && (
+                          <div className="mt-1.5 flex flex-wrap gap-1 items-center animate-in fade-in duration-200">
+                            <span className="text-[9px] bg-sky-50 text-sky-700 px-1 py-0.2 rounded border border-sky-100 font-semibold">
+                              脑力 L{estimatedEvaluations[todo.id].cognitive_level || 1}
+                            </span>
+                            <span className="text-[9px] bg-violet-50 text-violet-700 px-1 py-0.2 rounded border border-violet-100 font-semibold">
+                              意志 L{estimatedEvaluations[todo.id].willpower_level || 1}
+                            </span>
+                            <span className="text-[9px] bg-amber-50 text-amber-700 px-1 py-0.2 rounded border border-amber-100 font-semibold">
+                              时间 L{estimatedEvaluations[todo.id].duration_level || 1}
+                            </span>
+                            <span className="text-[9px] bg-rose-50 text-rose-700 px-1 py-0.2 rounded border border-rose-100 font-semibold">
+                              价值 L{estimatedEvaluations[todo.id].impact_level || 1}
+                            </span>
+                            {estimatedEvaluations[todo.id].category && (
+                              <span className="text-[9px] bg-stone-100 text-stone-600 px-1 py-0.2 rounded border border-stone-200 font-semibold">
+                                {estimatedEvaluations[todo.id].category}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {selectedTodos.includes(todo.id) && estimatedEvaluations[todo.id]?.ai_encouragement && (
+                          <p className="text-[9px] mt-1 italic text-[#b8a590] leading-snug">
+                            "{estimatedEvaluations[todo.id].ai_encouragement}"
+                          </p>
+                        )}
+                      </div>
                       {selectedTodos.includes(todo.id) && (
                         <div className="shrink-0 animate-in fade-in duration-200">
                           {!adjustMode && estimatedDifficulties[todo.id] && estimatedEvaluations[todo.id] ? (() => {
@@ -768,25 +844,87 @@ export default function TodayTodoPage() {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <Card className="bg-white border-[#e4e1d7] mt-2">
-              <CardContent className="p-4 space-y-3 text-xs" style={{ color: "#8a847a" }}>
-                <div>
-                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("四维评估矩阵", "4D Evaluation Matrix")}</p>
-                  <p>{t("认知负荷(L1-L5) · 意志力消耗(L1-L5) · 时间跨度(L1-L5) · 重要性(L1-L5)", "Cognitive(L1-L5) · Willpower(L1-L5) · Duration(L1-L5) · Impact(L1-L5)")}</p>
+            <Card className="bg-white border-[#e4e1d7] mt-2 shadow-sm rounded-xl overflow-hidden">
+              <CardContent className="p-5 space-y-4 text-xs leading-relaxed" style={{ color: "#5c564f" }}>
+                <div className="border-b border-[#f0ede6] pb-3">
+                  <h4 className="font-bold text-sm mb-2 text-[#1f1a14] flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-[#d17847]" />
+                    {t("🎮 日程游戏化 AI 裁判长：四维评估矩阵", "🎮 Game Life AI Referee: 4D Evaluation Matrix")}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-[#1f1a14]">{t("1. 认知负荷 (Cognitive Load)", "1. Cognitive Load")}</p>
+                      <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-[#8a847a]">
+                        <li><strong>L1:</strong> {t("机械/无脑操作 (如: 倒垃圾, 整理桌面)", "Routine/No-brain (e.g. trash, desk clean)")}</li>
+                        <li><strong>L2:</strong> {t("轻度思考 (如: 回复日常邮件, 浏览网页)", "Light thinking (e.g. routine emails, browsing)")}</li>
+                        <li><strong>L3:</strong> {t("常规专业技能/需要专注 (如: 编写基础代码)", "Focused work (e.g. writing base code)")}</li>
+                        <li><strong>L4:</strong> {t("高强度脑力/复杂逻辑 (如: 架构设计, 读学术论文)", "High cognitive load (e.g. system design, reading papers)")}</li>
+                        <li><strong>L5:</strong> {t("未知探索/突破知识盲区 (如: 攻克科研难点)", "Exploration/Zero to one (e.g. research breakthrough)")}</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="font-semibold text-[#1f1a14]">{t("2. 意志力消耗 (Willpower & Resistance)", "2. Willpower & Resistance")}</p>
+                      <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-[#8a847a]">
+                        <li><strong>L1:</strong> {t("极度享受/娱乐 (如: 玩游戏, 看剧)", "Enjoyable/Entertainment (e.g. games, shows)")}</li>
+                        <li><strong>L2:</strong> {t("轻松愉快/有动力 (如: 业余兴趣爱好)", "Pleasurable (e.g. personal hobbies)")}</li>
+                        <li><strong>L3:</strong> {t("中性任务 (如: 日常学习, 基础开发)", "Neutral (e.g. routine study, dev tasks)")}</li>
+                        <li><strong>L4:</strong> {t("明显拖延倾向/需要咬牙克服 (如: 写枯燥报告)", "Resistance/Requires willpower (e.g. dry reports)")}</li>
+                        <li><strong>L5:</strong> {t("极度抗拒/面临重大恐惧 (如: 重大考试复习)", "Extreme anxiety/Deadline stress (e.g. crucial exams)")}</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="font-semibold text-[#1f1a14]">{t("3. 时间跨度 (Duration Estimate)", "3. Duration Estimate")}</p>
+                      <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-[#8a847a]">
+                        <li><strong>L1:</strong> {t("碎片时间 (< 15分钟) [倍率 0.5]", "Micro-task (< 15m) [Mult 0.5]")}</li>
+                        <li><strong>L2:</strong> {t("短时专注 (15 - 45分钟, ~1个番茄钟) [倍率 1.0]", "Short focus (15-45m, ~1 pomodoro) [Mult 1.0]")}</li>
+                        <li><strong>L3:</strong> {t("深度工作 (1 - 2小时) [倍率 1.5]", "Deep work (1-2h) [Mult 1.5]")}</li>
+                        <li><strong>L4:</strong> {t("半日攻坚 (2 - 4小时) [倍率 2.0]", "Half-day sprint (2-4h) [Mult 2.0]")}</li>
+                        <li><strong>L5:</strong> {t("长期战役 (> 4小时) [倍率 3.0]", "Epic battle (> 4h) [Mult 3.0]")}</li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-1">
+                      <p className="font-semibold text-[#1f1a14]">{t("4. 重要性与成长价值 (Impact & Growth)", "4. Impact & Growth")}</p>
+                      <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-[#8a847a]">
+                        <li><strong>L1:</strong> {t("琐事，对长期目标无影响", "Trivial tasks, no long-term impact")}</li>
+                        <li><strong>L2:</strong> {t("维持生活的必要任务", "Necessary for normal life maintenance")}</li>
+                        <li><strong>L3:</strong> {t("稳步积累，对个人技能有增益", "Skill building & regular accumulation")}</li>
+                        <li><strong>L4:</strong> {t("核心目标关键节点 [奖励 +10 XP]", "Milestone checkpoint [Bonus +10 XP]")}</li>
+                        <li><strong>L5:</strong> {t("改变人生轨迹的里程碑事件 [奖励 +30 XP]", "Life-changing milestone [Bonus +30 XP]")}</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("积分公式", "Scoring Formula")}</p>
-                  <p>{t("基础 XP = (认知 + 意志) × 5", "Base XP = (Cognitive + Willpower) × 5")}</p>
-                  <p>{t("时间倍率: L1=×0.5, L2=×1, L3=×1.5, L4=×2, L5=×3", "Time mult: L1=×0.5, L2=×1, L3=×1.5, L4=×2, L5=×3")}</p>
-                  <p>{t("重要性奖励: L4=+10, L5=+30", "Impact bonus: L4=+10, L5=+30")}</p>
-                </div>
-                <div>
-                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("完成奖励", "Completion Bonus")}</p>
-                  <p>{t("全部完成或 ≥80%：+50 分 · 完成 1+ 项：+15 分", "All done or ≥80%: +50 · 1+ completed: +15")}</p>
-                </div>
-                <div>
-                  <p className="font-medium mb-1" style={{ color: "#1f1a14" }}>{t("连续加成", "Streak Multiplier")}</p>
-                  <p>{t("1-6 天 ×1 · 7-13 天 ×1.5 · 14-29 天 ×2 · 30+ 天 ×3", "1-6d ×1 · 7-13d ×1.5 · 14-29d ×2 · 30+ ×3")}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+                  <div className="space-y-1 bg-[#fdfbf7] p-3 rounded-lg border border-[#f0ede6]">
+                    <p className="font-bold text-[#1f1a14]">{t("🧮 裁判长算法公式", "🧮 Referee XP Formula")}</p>
+                    <p className="text-[11px] text-[#8a847a]">
+                      1. <strong>{t("基础分", "Base XP")}</strong> = ({t("认知负荷", "Cognitive")} + {t("意志力消耗", "Willpower")}) × 5<br />
+                      2. <strong>{t("时间加权", "Time scaled")}</strong> = {t("基础分", "Base XP")} × {t("时间倍率", "Time multiplier")}<br />
+                      3. <strong>{t("最终 XP", "Final XP")}</strong> = Math.round({t("时间加权", "Time scaled")} + {t("成长奖励", "Growth reward")})
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-1 bg-[#f9f8f5] p-3 rounded-lg border border-[#f0ede6]">
+                    <p className="font-semibold text-[#1f1a14]">{t("完成奖励", "Completion Bonus")}</p>
+                    <p className="text-[11px] text-[#8a847a]">
+                      {t("全部完成或完成度 ≥80%：", "All done or progress ≥80%:")} <strong>+50 XP</strong><br />
+                      {t("完成度在 0% 到 80% 之间：", "Progress between 0% and 80%:")} <strong>+15 XP</strong>
+                    </p>
+                  </div>
+
+                  <div className="space-y-1 bg-[#f9f8f5] p-3 rounded-lg border border-[#f0ede6]">
+                    <p className="font-semibold text-[#1f1a14]">{t("连续加成 (Streak Mult)", "Streak Multiplier")}</p>
+                    <p className="text-[11px] text-[#8a847a]">
+                      {t("连续 1-6 天: ×1.0 倍", "1-6 days: ×1.0")}<br />
+                      {t("连续 7-13 天: ×1.5 倍", "7-13 days: ×1.5")}<br />
+                      {t("连续 14-29 天: ×2.0 倍", "14-29 days: ×2.0")}<br />
+                      {t("连续 30天以上: ×3.0 倍", "30+ days: ×3.0")}
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
