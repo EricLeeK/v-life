@@ -185,15 +185,7 @@ export default function TodayTodoPage() {
   const totalCount = todayTasks.length;
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
-  useEffect(() => {
-    if (totalCount > 0 && completedCount === totalCount && totalCount >= 2) {
-      setRewardTier("gold");
-    } else if (completedCount >= 1 && progressPct >= 80) {
-      setRewardTier("gold");
-    } else if (completedCount === 1 && totalCount > 1) {
-      setRewardTier("silver");
-    }
-  }, [completedCount, totalCount, progressPct]);
+
 
   const handleAddDialogOpen = (open: boolean) => {
     setAddDialogOpen(open);
@@ -257,9 +249,22 @@ export default function TodayTodoPage() {
   };
 
   const handleComplete = async (task: any) => {
-    await completeTask.mutateAsync({ id: task.id, is_completed: !task.is_completed });
-    if (!task.is_completed) {
+    const isNowCompleted = !task.is_completed;
+    await completeTask.mutateAsync({ id: task.id, is_completed: isNowCompleted });
+    
+    if (isNowCompleted) {
       await recalcPoints.mutateAsync();
+      
+      const newCompletedCount = todayTasks.filter((t: any) => t.id === task.id ? true : t.is_completed).length;
+      const newProgressPct = totalCount > 0 ? (newCompletedCount / totalCount) * 100 : 0;
+      
+      if (totalCount > 0 && newCompletedCount === totalCount && totalCount >= 2) {
+        setRewardTier("gold");
+      } else if (newCompletedCount >= 1 && newProgressPct >= 80) {
+        setRewardTier("gold");
+      } else if (newCompletedCount === 1 && totalCount > 1) {
+        setRewardTier("silver");
+      }
     }
   };
 
