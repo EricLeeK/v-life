@@ -17,9 +17,9 @@ export function DemoBanner() {
   };
 
   return (
-    <div className="sticky top-0 z-50 w-full bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between">
+    <div className="fixed top-0 left-0 right-0 h-10 z-[100] w-full bg-amber-50 border-b border-amber-200 px-4 flex items-center justify-between">
       <span className="text-sm text-amber-800 font-medium flex items-center gap-1.5">
-        <Compass className="h-4 w-4" />
+        <Compass className="h-4 w-4 text-amber-600" />
         {t("游览模式 — 数据为演示用途", "Tour Mode — Demo data only")}
       </span>
       <Button

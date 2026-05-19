@@ -15,13 +15,15 @@ import {
   Kanban,
   BookOpen,
   ShoppingBag,
+  Compass,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { LangToggle } from "@/components/LangToggle";
 import { useLang } from "@/contexts/LanguageContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/hooks/useData";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import {
   Sidebar,
   SidebarContent,
@@ -39,7 +41,9 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { isDemo, exitDemo } = useDemoMode();
   const { t } = useLang();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
@@ -132,10 +136,24 @@ export function AppSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip={t("退出登录", "Log out")} onClick={signOut}>
-              <LogOut className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{t("退出登录", "Log out")}</span>}
-            </SidebarMenuButton>
+            {isDemo ? (
+              <SidebarMenuButton
+                tooltip={t("注册开始", "Register / Start")}
+                onClick={() => {
+                  exitDemo();
+                  navigate("/auth", { replace: true });
+                }}
+                className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors rounded-md font-medium"
+              >
+                <Compass className="h-4 w-4 shrink-0 text-amber-600" />
+                {!collapsed && <span>{t("注册开始", "Register / Start")}</span>}
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton tooltip={t("退出登录", "Log out")} onClick={signOut}>
+                <LogOut className="h-4 w-4 shrink-0" />
+                {!collapsed && <span>{t("退出登录", "Log out")}</span>}
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
