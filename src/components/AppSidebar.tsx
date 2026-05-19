@@ -21,6 +21,7 @@ import { LangToggle } from "@/components/LangToggle";
 import { useLang } from "@/contexts/LanguageContext";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/hooks/useData";
 import {
   Sidebar,
   SidebarContent,
@@ -40,6 +41,9 @@ export function AppSidebar() {
   const location = useLocation();
   const { signOut } = useAuth();
   const { t } = useLang();
+  const { data: settings } = useSettings();
+  const hiddenFeatures = settings?.hidden_features || [];
+
   const mainItems = [
     { title: t("首页概览", "Dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
@@ -55,6 +59,11 @@ export function AppSidebar() {
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
   ];
+
+  const visibleItems = mainItems.filter((item) => {
+    const key = item.url.replace("/", "");
+    return !hiddenFeatures.includes(key);
+  });
 
   return (
     <Sidebar collapsible="icon" className="border-r border-[#e4e1d7] bg-white">
@@ -73,7 +82,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => (
+              {visibleItems.map((item) => (
                 <SidebarMenuItem key={item.url}>
                   <SidebarMenuButton asChild tooltip={item.title}>
                     <NavLink

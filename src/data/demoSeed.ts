@@ -90,6 +90,7 @@ export const demoSettings = {
   show_goals_in_schedule: true,
   timezone: "Asia/Tokyo",
   custom_thought_tags: null,
+  hidden_features: [] as string[],
   created_at: "2026-04-01T00:00:00+09:00",
   updated_at: "2026-05-08T00:00:00+09:00",
 };

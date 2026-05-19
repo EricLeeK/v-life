@@ -245,6 +245,59 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Module Visibility Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t("导航栏与模块控制", "Navigation & Module Control")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "在此选择要在侧边栏和手机导航中显示的非核心模块。关闭某个模块仅做视觉隐藏，您存过的历史数据不会受到任何影响。",
+                "Choose which modules to display in the sidebar and mobile nav. Disabling a module only hides it visually; your historical data remains completely safe."
+              )}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {[
+                { id: "pantry", name: t("食材管理", "Pantry") },
+                { id: "belongings", name: t("用品管理", "Belongings") },
+                { id: "calories", name: t("热量记录", "Calories") },
+                { id: "finance", name: t("记账", "Finance") },
+                { id: "projects", name: t("项目管理", "Projects") },
+                { id: "goals", name: t("目标管理", "Goals") },
+                { id: "thoughts", name: t("随想", "Thoughts") },
+                { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
+                { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
+              ].map((feature) => {
+                const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);
+                return (
+                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-[#e4e1d7]/50 bg-[#fbfbfa]">
+                    <div>
+                      <Label className="font-medium text-sm text-[#1f1a14]">{feature.name}</Label>
+                    </div>
+                    <Switch
+                      checked={!isHidden}
+                      onCheckedChange={(checked) => {
+                        const current = (draft.hidden_features as string[] | null) || [];
+                        if (!checked) {
+                          // Hide: add to hidden_features
+                          update("hidden_features", [...current.filter(x => x !== feature.id), feature.id]);
+                        } else {
+                          // Show: remove from hidden_features
+                          update("hidden_features", current.filter(x => x !== feature.id));
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+
         {/* Finance */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("财务设置", "Finance Settings")}</CardTitle></CardHeader>

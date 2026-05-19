@@ -22,11 +22,14 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
+import { useSettings } from "@/hooks/useData";
 
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
   const { signOut } = useAuth();
   const { t, lang, toggleLang } = useLang();
+  const { data: settings } = useSettings();
+  const hiddenFeatures = settings?.hidden_features || [];
 
   const primaryItems = [
     { title: t("首页", "Home"), url: "/", icon: LayoutDashboard },
@@ -48,6 +51,16 @@ export function MobileNav() {
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
   ];
 
+  const visiblePrimaryItems = primaryItems.filter((item) => {
+    const key = item.url.replace("/", "");
+    return !hiddenFeatures.includes(key);
+  });
+
+  const visibleMoreItems = moreItems.filter((item) => {
+    const key = item.url.replace("/", "");
+    return !hiddenFeatures.includes(key);
+  });
+
   return (
     <>
       {/* More panel overlay */}
@@ -55,7 +68,7 @@ export function MobileNav() {
         <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden" onClick={() => setShowMore(false)}>
           <div className="absolute bottom-16 left-0 right-0 bg-card border-t border-border p-4" onClick={e => e.stopPropagation()}>
             <div className="grid grid-cols-5 gap-3">
-              {moreItems.map((item) => (
+              {visibleMoreItems.map((item) => (
                 <NavLink
                   key={item.url}
                   to={item.url}
@@ -89,7 +102,7 @@ export function MobileNav() {
       {/* Bottom nav bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border md:hidden">
         <div className="flex items-center justify-around h-14">
-          {primaryItems.map((item) => (
+          {visiblePrimaryItems.map((item) => (
             <NavLink
               key={item.url}
               to={item.url}

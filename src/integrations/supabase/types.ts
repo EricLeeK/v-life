@@ -687,6 +687,7 @@ export type Database = {
           show_goals_in_schedule: boolean | null
           target_weight: number | null
           timezone: string | null
+          hidden_features: string[] | null
           updated_at: string
           user_id: string | null
         }
@@ -708,6 +709,7 @@ export type Database = {
           show_goals_in_schedule?: boolean | null
           target_weight?: number | null
           timezone?: string | null
+          hidden_features?: string[] | null
           updated_at?: string
           user_id?: string | null
         }
@@ -729,6 +731,7 @@ export type Database = {
           show_goals_in_schedule?: boolean | null
           target_weight?: number | null
           timezone?: string | null
+          hidden_features?: string[] | null
           updated_at?: string
           user_id?: string | null
         }
