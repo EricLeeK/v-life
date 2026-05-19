@@ -210,10 +210,15 @@ export default function TodayTodoPage() {
       const diffMap: Record<string, string> = {};
       const evalMap: Record<string, any> = {};
       result.results.forEach((r: any, i: number) => {
-        diffMap[selectedTodos[i]] = r.difficulty;
-        if (r.evaluation) {
-          evalMap[selectedTodos[i]] = r.evaluation;
-        }
+        const diff = (r.difficulty || "medium").toLowerCase() as keyof typeof DIFFICULTY_CONFIG;
+        diffMap[selectedTodos[i]] = diff;
+        
+        const pts = DIFFICULTY_CONFIG[diff]?.points || 20;
+        evalMap[selectedTodos[i]] = {
+          awarded_xp: pts,
+          difficulty: diff,
+          ...(r.evaluation || {})
+        };
       });
       setEstimatedDifficulties(diffMap);
       setEstimatedEvaluations(evalMap);
