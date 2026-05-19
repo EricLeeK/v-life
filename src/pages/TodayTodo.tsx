@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp, Play, Square, Sliders, Minus } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
