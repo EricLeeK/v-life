@@ -25,3 +25,9 @@ dist-ssr
 .worktrees/
 .vercel
 .alma-snapshots
+
+# Playwright MCP auto-generated files
+.playwright-mcp/
+
+# Superpowers brainstorm & local server logs
+.superpowers/
