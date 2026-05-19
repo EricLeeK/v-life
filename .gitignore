@@ -31,3 +31,6 @@ dist-ssr
 
 # Superpowers brainstorm & local server logs
 .superpowers/
+
+# Supabase CLI temp files
+supabase/.temp/
