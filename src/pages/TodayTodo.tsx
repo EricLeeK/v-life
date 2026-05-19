@@ -239,17 +239,20 @@ export default function TodayTodoPage() {
 
   const handleConfirmAdd = async () => {
     for (const todoId of selectedTodos) {
-      const diff = getDifficulty(todoId);
       const eval4d = estimatedEvaluations[todoId];
-      const pts = eval4d?.awarded_xp || DIFFICULTY_CONFIG[diff as keyof typeof DIFFICULTY_CONFIG]?.points || 20;
+      const manualPoints = manualDifficulties[todoId] ? parseInt(manualDifficulties[todoId]) : null;
+      const pts = manualPoints ?? eval4d?.awarded_xp ?? 20;
       await addToToday.mutateAsync({
         todo_id: todoId,
-        difficulty: diff,
+        difficulty: pts >= 40 ? "hard" : pts >= 20 ? "medium" : "easy",
         base_points: pts,
         metadata: eval4d || {},
       });
     }
     setAddDialogOpen(false);
+    setManualDifficulties({});
+    setSelectedTodos([]);
+    setAdjustMode(false);
     toast({ title: lang === "zh" ? "已添加到今天" : "Added to today" });
   };
 
@@ -466,30 +469,64 @@ export default function TodayTodoPage() {
                           return todo.title;
                         })()}
                       </span>
-                      {(adjustMode || !estimatedDifficulties[todo.id]) && selectedTodos.includes(todo.id) && (
-                        <Select
-                          value={getDifficulty(todo.id)}
-                          onValueChange={(v) => setManualDifficulties({ ...manualDifficulties, [todo.id]: v })}
-                        >
-                          <SelectTrigger className="w-20 h-7 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(DIFFICULTY_CONFIG).map(([k, v]) => (
-                              <SelectItem key={k} value={k}>{v.label[lang]}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      {!adjustMode && estimatedDifficulties[todo.id] && selectedTodos.includes(todo.id) && (
-                        <div className="flex items-center gap-1">
-                          <Badge className={`text-xs ${DIFFICULTY_CONFIG[estimatedDifficulties[todo.id] as keyof typeof DIFFICULTY_CONFIG]?.color}`}>
-                            {DIFFICULTY_CONFIG[estimatedDifficulties[todo.id] as keyof typeof DIFFICULTY_CONFIG]?.label[lang]}
-                          </Badge>
-                          {estimatedEvaluations[todo.id] && (
-                            <span className="text-[10px] font-medium" style={{ color: "#d17847" }}>
-                              +{estimatedEvaluations[todo.id].awarded_xp} XP
-                            </span>
+                      {selectedTodos.includes(todo.id) && (
+                        <div className="shrink-0 animate-in fade-in duration-200">
+                          {!adjustMode && estimatedDifficulties[todo.id] && estimatedEvaluations[todo.id] ? (() => {
+                            const pts = estimatedEvaluations[todo.id].awarded_xp || 20;
+                            const badgeColor =
+                              pts < 20
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : pts < 40
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-rose-50 text-rose-700 border-rose-200";
+                            return (
+                              <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
+                                +{pts} XP
+                              </Badge>
+                            );
+                          })() : (
+                            <div className="flex items-center gap-1 shrink-0 bg-stone-50 p-0.5 rounded-md border border-[#e4e1d7]">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const currentPoints = manualDifficulties[todo.id]
+                                    ? parseInt(manualDifficulties[todo.id])
+                                    : (estimatedEvaluations[todo.id]?.awarded_xp || 20);
+                                  const newPoints = Math.max(5, currentPoints - 5);
+                                  setManualDifficulties({ ...manualDifficulties, [todo.id]: newPoints.toString() });
+                                }}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="text-xs font-bold text-[#1f1a14] min-w-[20px] text-center" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                                {manualDifficulties[todo.id]
+                                  ? manualDifficulties[todo.id]
+                                  : (estimatedEvaluations[todo.id]?.awarded_xp || 20)}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const currentPoints = manualDifficulties[todo.id]
+                                    ? parseInt(manualDifficulties[todo.id])
+                                    : (estimatedEvaluations[todo.id]?.awarded_xp || 20);
+                                  const newPoints = Math.min(1000, currentPoints + 5);
+                                  setManualDifficulties({ ...manualDifficulties, [todo.id]: newPoints.toString() });
+                                }}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                              <span className="text-[10px] font-bold text-stone-400 mr-1 shrink-0">XP</span>
+                            </div>
                           )}
                         </div>
                       )}

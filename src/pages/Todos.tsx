@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Archive, Pencil, CornerDownRight } from "lucide-react";
+import { Plus, Trash2, Archive, Pencil, CornerDownRight, ChevronDown, ChevronUp, Sliders } from "lucide-react";
 import { todoHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
@@ -35,6 +35,9 @@ export default function TodosPage() {
   const [editingTodo, setEditingTodo] = useState<any>(null);
   const [editForm, setEditForm] = useState({ title: "", detail: "", importance: "普通", category: "生活" });
   const [subtaskTitles, setSubtaskTitles] = useState<Record<string, string>>({});
+  
+  const [isManageMode, setIsManageMode] = useState(false);
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   
   const [hideCompleted, setHideCompleted] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -142,89 +145,160 @@ export default function TodosPage() {
     const itemSubtasks = childTodos.filter((t: any) => t.parent_id === item.id);
     const subtaskTitleVal = subtaskTitles[item.id] || "";
 
+    const hasDetailsOrSubtasks = !!item.detail || itemSubtasks.length > 0;
+    const isExpanded = !!expandedTasks[item.id];
+    const showSubtasks = isExpanded || isManageMode;
+
     return (
       <div className="space-y-1.5 mb-2">
-        <Card className={`transition-colors shadow-sm border border-[#e4e1d7] ${item.is_completed ? "opacity-60 bg-[#faf9f4]" : "hover:border-[#5b88b5]/40 bg-white"}`}>
+        <Card className={`transition-all duration-200 shadow-sm border border-[#e4e1d7] ${item.is_completed ? "opacity-60 bg-[#faf9f4]" : "hover:border-[#5b88b5]/40 bg-white"} ${isExpanded ? "ring-1 ring-[#5b88b5]/20 border-[#5b88b5]/30" : ""}`}>
           <CardContent className="p-3">
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <Checkbox checked={item.is_completed} onCheckedChange={() => toggleComplete(item)} />
+              <Checkbox
+                checked={item.is_completed}
+                onCheckedChange={() => toggleComplete(item)}
+                className="accent-[#5b88b5]"
+              />
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${item.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
                   {item.title}
                 </span>
-                {item.detail && <p className="text-xs text-muted-foreground mt-0.5">{item.detail}</p>}
+                
+                {isExpanded && item.detail && (
+                  <p className="text-xs text-muted-foreground mt-1.5 border-t border-[#e4e1d7]/40 pt-1.5 italic">
+                    {item.detail}
+                  </p>
+                )}
               </div>
               
-              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-md font-medium border ${imp?.color || "bg-slate-50"}`}>
+              <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+                <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-md font-medium border shrink-0 ${imp?.color || "bg-slate-50"}`}>
                   {IMPORTANCE_LABELS[item.importance] || item.importance}
                 </Badge>
                 
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(item)}>
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-
-                {item.is_completed && !item.is_archived && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => updateMutation.mutate({ id: item.id, is_archived: true })}>
-                    <Archive className="h-3.5 w-3.5" />
+                {hasDetailsOrSubtasks && !isManageMode && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-stone-50 rounded-md shrink-0 transition-transform duration-200"
+                    onClick={() => setExpandedTasks(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                  >
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-[#5b88b5]" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </Button>
                 )}
-                
-                <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-rose-600 hover:bg-rose-50" onClick={() => deleteMutation.mutate(item.id)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+
+                {isManageMode && (
+                  <div className="flex items-center gap-1 shrink-0 animate-in fade-in slide-in-from-right-2 duration-200">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-stone-50 rounded-md"
+                      onClick={() => handleOpenEdit(item)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+
+                    {item.is_completed && !item.is_archived && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-stone-50 rounded-md"
+                        onClick={() => updateMutation.mutate({ id: item.id, is_archived: true })}
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-rose-600 hover:bg-rose-50 rounded-md"
+                      onClick={() => deleteMutation.mutate(item.id)}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Subtasks Section */}
-        <div className="pl-6 border-l border-[#e4e1d7]/60 ml-3 space-y-1.5 pt-0.5 pb-2">
-          {itemSubtasks.map((sub: any) => {
-            const subImp = IMPORTANCE_LEVELS.find((l) => l.key === sub.importance);
-            return (
-              <div key={sub.id} className={`flex items-center gap-2 p-2 rounded-lg border border-[#e4e1d7]/40 bg-stone-50/50 hover:bg-stone-50 transition-colors ${sub.is_completed ? "opacity-60" : ""}`}>
-                <CornerDownRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                <Checkbox checked={sub.is_completed} onCheckedChange={() => toggleComplete(sub)} />
-                <div className="flex-1 min-w-0">
-                  <span className={`text-xs font-medium ${sub.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
-                    {sub.title}
-                  </span>
-                  {sub.detail && <p className="text-[10px] text-muted-foreground">{sub.detail}</p>}
+        {/* Subtasks & Add subtasks form */}
+        {showSubtasks && (itemSubtasks.length > 0 || isManageMode) && (
+          <div className="pl-6 border-l border-[#e4e1d7]/60 ml-3 space-y-1.5 pt-0.5 pb-2 animate-in fade-in slide-in-from-top-1 duration-200">
+            {itemSubtasks.map((sub: any) => {
+              return (
+                <div
+                  key={sub.id}
+                  className={`flex items-center gap-2 p-2 rounded-lg border border-[#e4e1d7]/40 bg-stone-50/50 hover:bg-stone-50 transition-colors ${sub.is_completed ? "opacity-60" : ""}`}
+                >
+                  <CornerDownRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                  <Checkbox
+                    checked={sub.is_completed}
+                    onCheckedChange={() => toggleComplete(sub)}
+                    className="accent-[#5b88b5]"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-xs font-medium ${sub.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
+                      {sub.title}
+                    </span>
+                    {isExpanded && sub.detail && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 italic">{sub.detail}</p>
+                    )}
+                  </div>
+                  
+                  {isManageMode && (
+                    <div className="flex items-center gap-1 shrink-0 animate-in fade-in slide-in-from-right-1 duration-200">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground rounded-md"
+                        onClick={() => handleOpenEdit(sub)}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-destructive hover:text-rose-600 rounded-md"
+                        onClick={() => deleteMutation.mutate(sub.id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-                
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(sub)}>
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive hover:text-rose-600" onClick={() => deleteMutation.mutate(sub.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-          {/* Quick Add Subtask Inline Form */}
-          <div className="flex items-center gap-1.5 pl-5 pt-0.5">
-            <Input
-              value={subtaskTitleVal}
-              onChange={(e) => setSubtaskTitles({ ...subtaskTitles, [item.id]: e.target.value })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddSubtask(item.id, item.category, item.importance);
-              }}
-              placeholder={t("添加子任务...", "Add subtask...")}
-              className="h-7 text-xs bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#5b88b5]"
-            />
-            <Button
-              size="icon"
-              className="h-7 w-7 shrink-0"
-              onClick={() => handleAddSubtask(item.id, item.category, item.importance)}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+            {/* Quick Add Subtask Inline Form */}
+            {isManageMode && (
+              <div className="flex items-center gap-1.5 pl-5 pt-0.5 animate-in fade-in duration-200">
+                <Input
+                  value={subtaskTitleVal}
+                  onChange={(e) => setSubtaskTitles({ ...subtaskTitles, [item.id]: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddSubtask(item.id, item.category, item.importance);
+                  }}
+                  placeholder={t("添加子任务...", "Add subtask...")}
+                  className="h-7 text-xs bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#5b88b5]"
+                />
+                <Button
+                  size="icon"
+                  className="h-7 w-7 shrink-0 bg-[#5b88b5] hover:bg-[#4a77a4] text-white rounded-md"
+                  onClick={() => handleAddSubtask(item.id, item.category, item.importance)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -255,7 +329,17 @@ export default function TodosPage() {
           )}
           <div className="flex-1" />
           
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
+          <Button
+            variant={isManageMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsManageMode(!isManageMode)}
+            className={`transition-all ${isManageMode ? "bg-[#d17847] hover:bg-[#c06838] text-white border-transparent" : "border-[#e4e1d7] text-stone-700 hover:bg-stone-50"}`}
+          >
+            <Sliders className="h-4 w-4 mr-1.5" />
+            {isManageMode ? t("退出管理", "Exit Manage") : t("管理模式", "Manage Mode")}
+          </Button>
+
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="bg-[#5b88b5] hover:bg-[#4a77a4] text-white">
             <Plus className="h-4 w-4 mr-1" />{t("添加主任务", "Add To-Do")}
           </Button>
           
