@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp } from "lucide-react";
+import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp, Play, Square } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -105,6 +105,69 @@ export default function TodayTodoPage() {
   const [adjustMode, setAdjustMode] = useState(false);
   const [rewardTier, setRewardTier] = useState<string | null>(null);
   const [quote] = useState(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]);
+
+  // ============ Focus Timer States ============
+  const [timerState, setTimerState] = useState<"idle" | "running" | "paused">("idle");
+  const [timerMode, setTimerMode] = useState<"countdown" | "countup">("countdown");
+  const [timeLeft, setTimeLeft] = useState(300); // 5 mins in seconds
+  const [countUpElapsed, setCountUpElapsed] = useState(0); // positive countup seconds
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [taskSelectorOpen, setTaskSelectorOpen] = useState(false);
+  const [congratsDialogOpen, setCongratsDialogOpen] = useState(false);
+  const [finalTimeStr, setFinalTimeStr] = useState("");
+
+  useEffect(() => {
+    let interval: any = null;
+    if (timerState === "running") {
+      interval = setInterval(() => {
+        if (timerMode === "countdown") {
+          setTimeLeft((prev) => {
+            if (prev <= 1) {
+              setTimerMode("countup");
+              return 0;
+            }
+            return prev - 1;
+          });
+        } else {
+          setCountUpElapsed((prev) => prev + 1);
+        }
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerState, timerMode]);
+
+  const getElapsedSeconds = () => {
+    if (timerMode === "countdown") {
+      return 300 - timeLeft;
+    } else {
+      return 300 + countUpElapsed;
+    }
+  };
+
+  const formatTimeZh = (totalSeconds: number) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}分${secs}秒`;
+  };
+
+  const handleStopTimer = () => {
+    const elapsed = getElapsedSeconds();
+    setTimerState("idle");
+    setFinalTimeStr(formatTimeZh(elapsed));
+    setCongratsDialogOpen(true);
+    // Reset timer
+    setTimeLeft(300);
+    setCountUpElapsed(0);
+    setTimerMode("countdown");
+    setActiveTaskId(null);
+  };
+
+  const handleStartTimer = () => {
+    setTaskSelectorOpen(true);
+  };
+
 
   const todayTaskIds = useMemo(() => new Set(todayTasks.map((dt: any) => dt.todo_id)), [todayTasks]);
   const availableTodos = allTodos.filter((t: any) => !t.is_completed && !t.is_archived && !todayTaskIds.has(t.id));
@@ -209,18 +272,107 @@ export default function TodayTodoPage() {
   return (
     <AppLayout title={t("今日待办", "Today's Todo")}>
       <div className="space-y-5">
-        {/* Motivational Banner */}
+        <style>{`
+          @keyframes flameFlickerLeft {
+            0%, 100% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 4px rgba(209, 120, 71, 0.6)); }
+            50% { transform: scale(1.2) rotate(3deg); filter: drop-shadow(0 0 12px rgba(209, 120, 71, 0.9)); }
+          }
+          @keyframes flameFlickerRight {
+            0%, 100% { transform: scale(1.2) rotate(3deg); filter: drop-shadow(0 0 12px rgba(209, 120, 71, 0.9)); }
+            50% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 4px rgba(209, 120, 71, 0.6)); }
+          }
+          .animate-flame-left {
+            animation: flameFlickerLeft 0.6s infinite alternate ease-in-out;
+          }
+          .animate-flame-right {
+            animation: flameFlickerRight 0.6s infinite alternate ease-in-out;
+          }
+        `}</style>
+
+        {/* Focus Timer Banner */}
         <div
-          className="rounded-xl p-4 text-center"
+          className="rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
           style={{
             background: "linear-gradient(135deg, #fdf8f3 0%, #f9efe6 50%, #f3e8db 100%)",
             border: "1px solid #e8ddd0",
           }}
         >
-          <p className="text-base font-medium" style={{ color: "#1f1a14", fontFamily: lang === "zh" ? "inherit" : "Inter, sans-serif" }}>
-            {lang === "zh" ? quote.zh : quote.en}
-          </p>
+          {/* Left Title */}
+          <div className="flex items-center gap-2">
+            <Zap className="h-5 w-5 text-[#d17847] animate-pulse" />
+            <p className="text-lg font-semibold text-[#1f1a14]">
+              {t("先开始做五分钟", "Start with 5 minutes")}
+            </p>
+          </div>
+
+          {/* Right Timer Control */}
+          <div className="flex items-center gap-3">
+            {timerState === "idle" ? (
+              <Button
+                onClick={handleStartTimer}
+                className="bg-[#d17847] hover:bg-[#c06838] text-white font-medium shadow-sm transition-all flex items-center gap-1.5"
+              >
+                <Play className="h-4 w-4" />
+                {t("开启五分钟计时", "Start 5-Min Timer")}
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#e4e1d7] py-1.5 px-3 rounded-lg shadow-sm">
+                <span
+                  className="font-bold text-lg text-[#d17847] font-mono tracking-wider animate-pulse"
+                  style={{ minWidth: "55px", textAlign: "center" }}
+                >
+                  {(() => {
+                    const total = timerMode === "countdown" ? timeLeft : 300 + countUpElapsed;
+                    const mins = Math.floor(total / 60);
+                    const secs = total % 60;
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                  })()}
+                </span>
+                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-[#f3e8db] text-[#d17847]">
+                  {timerMode === "countdown" ? t("专注中", "Focusing") : t("突破中", "Overachieving")}
+                </span>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleStopTimer}
+                  className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md"
+                >
+                  <Square className="h-4 w-4 fill-red-500" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* "On Fire" Active Task Section */}
+        {timerState === "running" && (
+          <div
+            className="rounded-xl p-4 flex items-center justify-between border border-[#f3e8db] shadow-md animate-in slide-in-from-top-3 duration-300 relative overflow-hidden"
+            style={{
+              background: "linear-gradient(135deg, rgba(253, 248, 243, 0.95) 0%, rgba(249, 239, 230, 0.95) 100%)",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            {/* Soft decorative glow behind the text */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(209,120,71,0.06)_0%,transparent_70%)] pointer-events-none" />
+
+            <div className="flex items-center justify-center w-full gap-4 relative z-10">
+              <Flame className="h-7 w-7 text-[#d17847] animate-flame-left shrink-0" />
+              <div className="text-center">
+                <span className="text-xs uppercase tracking-wider font-semibold text-[#8a847a] block mb-1">
+                  {t("正在专注做", "CURRENTLY FOCUSING ON")}
+                </span>
+                <span className="text-base font-bold text-[#1f1a14] max-w-md block truncate">
+                  {activeTaskId
+                    ? todayTasks.find((t: any) => t.id === activeTaskId)?.todos?.title || t("专注任务", "Focus Task")
+                    : t("不指定特定任务，直接开始", "General Session")}
+                </span>
+              </div>
+              <Flame className="h-7 w-7 text-[#d17847] animate-flame-right shrink-0" />
+            </div>
+          </div>
+        )}
+
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-3">
@@ -470,6 +622,81 @@ export default function TodayTodoPage() {
           </CollapsibleContent>
         </Collapsible>
       </div>
+
+      {/* Focus Timer Selector Dialog */}
+      <Dialog open={taskSelectorOpen} onOpenChange={setTaskSelectorOpen}>
+        <DialogContent className="max-w-md bg-white border border-[#e4e1d7] rounded-xl shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1f1a14] flex items-center gap-2">
+              <Flame className="h-5 w-5 text-[#d17847]" />
+              {t("选择你要专注的任务", "Select a Task to Focus On")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-4 max-h-[300px] overflow-y-auto pr-1">
+            {todayTasks.filter((t: any) => !t.is_completed).length === 0 ? (
+              <p className="text-sm text-center py-4 text-[#8a847a]">
+                {t("今天还没有未完成的任务哦，去添加几个吧！", "No active tasks today — add some first!")}
+              </p>
+            ) : (
+              todayTasks.filter((t: any) => !t.is_completed).map((task: any) => (
+                <button
+                  key={task.id}
+                  onClick={() => {
+                    setActiveTaskId(task.id);
+                    setTimerState("running");
+                    setTaskSelectorOpen(false);
+                  }}
+                  className="w-full text-left p-3 rounded-lg border border-[#e4e1d7] hover:border-[#d17847]/60 hover:bg-[#fdf8f3] transition-all flex items-center justify-between group"
+                >
+                  <span className="text-sm font-medium text-[#1f1a14] truncate max-w-[280px]">
+                    {task.todos?.title || t("未知任务", "Unknown task")}
+                  </span>
+                  <span className="text-xs text-[#d17847] opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                    {t("开始专注 →", "Focus →")}
+                  </span>
+                </button>
+              ))
+            )}
+            <button
+              onClick={() => {
+                setActiveTaskId(null);
+                setTimerState("running");
+                setTaskSelectorOpen(false);
+              }}
+              className="w-full text-center p-3 rounded-lg border border-dashed border-[#e4e1d7] hover:border-[#d17847]/60 hover:bg-[#fdf8f3] transition-all text-sm font-medium text-[#8a847a] hover:text-[#d17847]"
+            >
+              {t("直接开启专注会话", "Start general session directly")}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Focus Timer Congrats Dialog */}
+      <Dialog open={congratsDialogOpen} onOpenChange={setCongratsDialogOpen}>
+        <DialogContent className="max-w-xs text-center p-6 bg-white border border-[#e4e1d7] rounded-xl shadow-2xl animate-in zoom-in-95 duration-300">
+          <Trophy className="h-12 w-12 text-[#d17847] mx-auto mb-4 animate-bounce" />
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1f1a14] text-center w-full">
+              {t("专注达成！", "Focus Accomplished!")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-[#8a847a] leading-relaxed">
+              {t("您这次成功专注了 ", "You successfully focused for ")}
+              <strong className="text-base font-bold text-[#d17847]">{finalTimeStr}</strong>！
+            </p>
+            <p className="text-xs text-[#b8a590] mt-3 italic">
+              {t("先做五分钟，您已经迈出了最关键的一步，继续保持！", "Start with five minutes — you've taken the most crucial step!")}
+            </p>
+          </div>
+          <Button
+            onClick={() => setCongratsDialogOpen(false)}
+            className="w-full bg-[#d17847] hover:bg-[#c06838] text-white mt-2 font-medium"
+          >
+            {t("太棒了！", "Awesome!")}
+          </Button>
+        </DialogContent>
+      </Dialog>
 
       {/* Reward Popup */}
       {rewardTier && <RewardPopup tier={rewardTier} onClose={() => setRewardTier(null)} />}
