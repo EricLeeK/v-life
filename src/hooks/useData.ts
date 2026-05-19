@@ -1368,15 +1368,38 @@ export function useCompleteDailyTask() {
   const { isDemo, demoData } = useDemoMode();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, is_completed }: { id: string; is_completed: boolean }) => {
+    mutationFn: async ({ id, is_completed, base_points, metadata }: { id: string; is_completed?: boolean; base_points?: number; metadata?: any }) => {
       if (isDemo) {
         const task = demoData.daily_tasks.find((t: any) => t.id === id);
-        if (task) { task.is_completed = is_completed; task.completed_at = is_completed ? new Date().toISOString() : null; task.updated_at = new Date().toISOString(); }
+        if (task) {
+          if (is_completed !== undefined) {
+            task.is_completed = is_completed;
+            task.completed_at = is_completed ? new Date().toISOString() : null;
+          }
+          if (base_points !== undefined) {
+            task.base_points = base_points;
+          }
+          if (metadata !== undefined) {
+            task.metadata = metadata;
+          }
+          task.updated_at = new Date().toISOString();
+        }
         return task;
+      }
+      const updates: any = {};
+      if (is_completed !== undefined) {
+        updates.is_completed = is_completed;
+        updates.completed_at = is_completed ? new Date().toISOString() : null;
+      }
+      if (base_points !== undefined) {
+        updates.base_points = base_points;
+      }
+      if (metadata !== undefined) {
+        updates.metadata = metadata;
       }
       const { data, error } = await supabase
         .from("daily_tasks")
-        .update({ is_completed, completed_at: is_completed ? new Date().toISOString() : null })
+        .update(updates)
         .eq("id", id)
         .select()
         .single();

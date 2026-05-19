@@ -128,7 +128,12 @@ export default function SchedulePage() {
 
   const { data: rawEvents = [] } = useScheduleByRange(rangeStart, rangeEnd);
   const { data: allTodos = [] } = todoHooks.useList();
-  const incompleteTodos = (allTodos as any[]).filter((t) => !t.is_completed && !t.is_archived);
+  const incompleteTodos = (allTodos as any[]).filter((t) => {
+    if (t.is_completed || t.is_archived) return false;
+    if (t.parent_id) return true;
+    const hasActiveChildren = allTodos.some((child: any) => child.parent_id === t.id && !child.is_completed && !child.is_archived);
+    return !hasActiveChildren;
+  });
   const { data: settings } = useSettings();
   const createMutation = scheduleHooks.useCreate();
   const updateMutation = scheduleHooks.useUpdate();
@@ -376,7 +381,22 @@ export default function SchedulePage() {
                       if (todo) setForm({ ...form, title: todo.title, notes: todo.detail || form.notes });
                     }}>
                       <SelectTrigger className="mt-1"><SelectValue placeholder={t("选择待办作为标题...", "Pick a to-do as title...")} /></SelectTrigger>
-                      <SelectContent>{incompleteTodos.map((todo: any) => <SelectItem key={todo.id} value={todo.id}>{todo.title}</SelectItem>)}</SelectContent>
+                      <SelectContent>
+                        {incompleteTodos.map((todo: any) => {
+                          const displayTitle = (() => {
+                            if (todo.parent_id) {
+                              const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                              return parent ? `${parent.title} > ${todo.title}` : todo.title;
+                            }
+                            return todo.title;
+                          })();
+                          return (
+                            <SelectItem key={todo.id} value={todo.id}>
+                              {displayTitle}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
                     </Select>
                   </div>
                 )}

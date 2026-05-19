@@ -808,6 +808,7 @@ export type Database = {
           importance: string
           is_archived: boolean
           is_completed: boolean
+          parent_id: string | null
           title: string
           updated_at: string
           user_id: string | null
@@ -820,6 +821,7 @@ export type Database = {
           importance?: string
           is_archived?: boolean
           is_completed?: boolean
+          parent_id?: string | null
           title: string
           updated_at?: string
           user_id?: string | null
@@ -832,11 +834,19 @@ export type Database = {
           importance?: string
           is_archived?: boolean
           is_completed?: boolean
+          parent_id?: string | null
           title?: string
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "todos_parent_id_fkey"
+            columns: ["parent_id"]
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       user_points: {
         Row: {

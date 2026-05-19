@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp, Play, Square } from "lucide-react";
+import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp, Play, Square, Sliders, Minus } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -106,6 +106,10 @@ export default function TodayTodoPage() {
   const [rewardTier, setRewardTier] = useState<string | null>(null);
   const [quote] = useState(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]);
 
+  const [adjustingTaskId, setAdjustingTaskId] = useState<string | null>(null);
+  const [adjustingPoints, setAdjustingPoints] = useState<number>(20);
+  const [adjustingFeedback, setAdjustingFeedback] = useState<string>("");
+
   // ============ Focus Timer States ============
   const [timerState, setTimerState] = useState<"idle" | "running" | "paused">("idle");
   const [timerMode, setTimerMode] = useState<"countdown" | "countup">("countdown");
@@ -170,7 +174,12 @@ export default function TodayTodoPage() {
 
 
   const todayTaskIds = useMemo(() => new Set(todayTasks.map((dt: any) => dt.todo_id)), [todayTasks]);
-  const availableTodos = allTodos.filter((t: any) => !t.is_completed && !t.is_archived && !todayTaskIds.has(t.id));
+  const availableTodos = allTodos.filter((t: any) => {
+    if (t.is_completed || t.is_archived || todayTaskIds.has(t.id)) return false;
+    if (t.parent_id) return true;
+    const hasActiveChildren = allTodos.some((child: any) => child.parent_id === t.id && !child.is_completed && !child.is_archived);
+    return !hasActiveChildren;
+  });
 
   const completedCount = todayTasks.filter((t: any) => t.is_completed).length;
   const totalCount = todayTasks.length;
@@ -363,9 +372,16 @@ export default function TodayTodoPage() {
                   {t("正在专注做", "CURRENTLY FOCUSING ON")}
                 </span>
                 <span className="text-base font-bold text-[#1f1a14] max-w-md block truncate">
-                  {activeTaskId
-                    ? todayTasks.find((t: any) => t.id === activeTaskId)?.todos?.title || t("专注任务", "Focus Task")
-                    : t("不指定特定任务，直接开始", "General Session")}
+                  {(() => {
+                    if (!activeTaskId) return t("不指定特定任务，直接开始", "General Session");
+                    const task = todayTasks.find((t: any) => t.id === activeTaskId);
+                    const todo = task?.todos;
+                    if (todo?.parent_id) {
+                      const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                      return parent ? `${parent.title} > ${todo.title}` : (todo.title || t("专注任务", "Focus Task"));
+                    }
+                    return todo?.title || t("专注任务", "Focus Task");
+                  })()}
                 </span>
               </div>
               <Flame className="h-7 w-7 text-[#d17847] animate-flame-right shrink-0" />
@@ -441,7 +457,15 @@ export default function TodayTodoPage() {
                         }}
                         className="rounded accent-[#d17847]"
                       />
-                      <span className="text-sm flex-1" style={{ color: "#1f1a14" }}>{todo.title}</span>
+                      <span className="text-sm flex-1 font-medium" style={{ color: "#1f1a14" }}>
+                        {(() => {
+                          if (todo.parent_id) {
+                            const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                            return parent ? `${parent.title} > ${todo.title}` : todo.title;
+                          }
+                          return todo.title;
+                        })()}
+                      </span>
                       {(adjustMode || !estimatedDifficulties[todo.id]) && selectedTodos.includes(todo.id) && (
                         <Select
                           value={getDifficulty(todo.id)}
@@ -517,70 +541,170 @@ export default function TodayTodoPage() {
               const meta = task.metadata || {};
               const has4D = meta.cognitive_level != null;
               return (
-                <Card key={task.id} className={`bg-white border-[#e4e1d7] transition-all ${task.is_completed ? "opacity-60" : ""}`}>
+                <Card key={task.id} className={`bg-white border-[#e4e1d7] transition-all shadow-sm ${task.is_completed ? "opacity-60 bg-stone-50/50" : "hover:border-[#d17847]/30"}`}>
                   <CardContent className="p-3 px-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
                       <Checkbox
                         checked={task.is_completed}
                         onCheckedChange={() => handleComplete(task)}
                         className="accent-[#d17847]"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${task.is_completed ? "line-through" : ""}`} style={{ color: "#1f1a14" }}>
-                          {task.todos?.title || t("未知任务", "Unknown task")}
+                        <p className={`text-sm font-medium ${task.is_completed ? "line-through text-[#8a847a]" : "text-[#1f1a14]"}`}>
+                          {(() => {
+                            const todo = task.todos;
+                            if (todo?.parent_id) {
+                              const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                              return parent ? `${parent.title} > ${todo.title}` : (todo?.title || t("未知任务", "Unknown task"));
+                            }
+                            return todo?.title || t("未知任务", "Unknown task");
+                          })()}
                         </p>
                         {task.todos?.detail && (
-                          <p className="text-xs mt-0.5 truncate" style={{ color: "#8a847a" }}>{task.todos.detail}</p>
+                          <p className="text-xs mt-0.5 truncate text-[#8a847a]">{task.todos.detail}</p>
                         )}
                         {has4D && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {(meta.attribute_tags || []).map((tag: string) => (
-                              <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 bg-[#f9f8f5] text-[#8a847a] border-[#e4e1d7]">
+                              <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 bg-[#f9f8f5] text-[#8a847a] border-[#e4e1d7] rounded">
                                 {tag}
                               </Badge>
                             ))}
                           </div>
                         )}
                         {has4D && meta.ai_encouragement && (
-                          <p className="text-[10px] mt-1 italic" style={{ color: "#b8a590" }}>
-                            {meta.ai_encouragement}
-                          </p>
+                          <p className="text-[10px] mt-1 italic text-[#b8a590]">{meta.ai_encouragement}</p>
                         )}
                       </div>
-                      {has4D ? (
-                        <div className="flex flex-col items-end gap-1">
-                          <div className="flex gap-1">
+
+                      <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+                        {has4D && (
+                          <div className="flex gap-1 mr-1 hidden md:flex">
                             <Badge variant="outline" className="text-[10px] px-1 py-0 bg-blue-50 text-blue-600 border-blue-200">
-                              <Brain className="h-2.5 w-2.5 mr-0.5" />L{meta.cognitive_level}
+                              L{meta.cognitive_level}
                             </Badge>
                             <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-50 text-purple-600 border-purple-200">
-                              <Dumbbell className="h-2.5 w-2.5 mr-0.5" />L{meta.willpower_level}
+                              L{meta.willpower_level}
                             </Badge>
                           </div>
-                          <div className="flex gap-1">
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-cyan-50 text-cyan-600 border-cyan-200">
-                              <Clock className="h-2.5 w-2.5 mr-0.5" />L{meta.duration_level}
+                        )}
+
+                        {(() => {
+                          const pts = task.base_points || cfg?.points || 20;
+                          const badgeColor =
+                            pts < 20
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : pts < 40
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : "bg-rose-50 text-rose-700 border-rose-200";
+                          return (
+                            <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
+                              +{pts} XP
                             </Badge>
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-amber-50 text-amber-600 border-amber-200">
-                              <TrendingUp className="h-2.5 w-2.5 mr-0.5" />L{meta.impact_level}
-                            </Badge>
+                          );
+                        })()}
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-[#8a847a] hover:text-[#d17847] hover:bg-[#fdf8f3] rounded-md shrink-0"
+                          onClick={() => {
+                            if (adjustingTaskId === task.id) {
+                              setAdjustingTaskId(null);
+                            } else {
+                              setAdjustingTaskId(task.id);
+                              setAdjustingPoints(task.base_points || cfg?.points || 20);
+                              setAdjustingFeedback(task.metadata?.feedback || "");
+                            }
+                          }}
+                        >
+                          <Sliders className="h-3.5 w-3.5" />
+                        </Button>
+
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-red-500 rounded-md shrink-0"
+                          onClick={() => handleRemove(task.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {adjustingTaskId === task.id && (
+                      <div className="mt-3 p-3 bg-stone-50 border border-[#e4e1d7] rounded-lg space-y-3 relative z-10 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-semibold text-[#8a847a]">
+                            {t("调整分值", "Adjust Score")}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 rounded-md border-[#e4e1d7] bg-white hover:bg-stone-50"
+                              onClick={() => setAdjustingPoints((prev) => Math.max(5, prev - 5))}
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </Button>
+                            <span className="text-sm font-bold text-[#1f1a14] min-w-[32px] text-center" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                              {adjustingPoints}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-7 w-7 rounded-md border-[#e4e1d7] bg-white hover:bg-stone-50"
+                              onClick={() => setAdjustingPoints((prev) => Math.min(1000, prev + 5))}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </div>
-                      ) : (
-                        <Badge className={`text-xs ${cfg?.color}`}>
-                          {cfg?.label[lang]}
-                        </Badge>
-                      )}
-                      <span className="text-xs font-medium" style={{ fontFamily: "JetBrains Mono, monospace", color: "#d17847" }}>
-                        +{task.base_points || cfg?.points || 20}
-                      </span>
-                      <Button
-                        variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-red-500"
-                        onClick={() => handleRemove(task.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                        
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-semibold text-[#8a847a] uppercase tracking-wider">
+                            {t("为什么不合理？ (可选)", "Why is it unreasonable? (Optional)")}
+                          </Label>
+                          <Input
+                            value={adjustingFeedback}
+                            onChange={(e) => setAdjustingFeedback(e.target.value)}
+                            placeholder={t("例如：实际耗时更长 / 任务难度较高", "E.g., Took more effort / High cognitive load")}
+                            className="h-8 text-xs bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#d17847]"
+                          />
+                        </div>
+
+                        <div className="flex justify-end gap-1.5 pt-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => setAdjustingTaskId(null)}
+                          >
+                            {t("取消", "Cancel")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs bg-[#d17847] hover:bg-[#c06838] text-white font-medium"
+                            onClick={async () => {
+                              try {
+                                await completeTask.mutateAsync({
+                                  id: task.id,
+                                  base_points: adjustingPoints,
+                                  metadata: {
+                                    ...meta,
+                                    feedback: adjustingFeedback,
+                                  },
+                                });
+                                setAdjustingTaskId(null);
+                                toast({ title: t("分值调整成功", "Score updated successfully") });
+                              } catch (err: any) {
+                                toast({ title: t("调整失败", "Failed to adjust"), description: err.message, variant: "destructive" });
+                              }
+                            }}
+                          >
+                            {t("确定", "Confirm")}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -649,7 +773,14 @@ export default function TodayTodoPage() {
                   className="w-full text-left p-3 rounded-lg border border-[#e4e1d7] hover:border-[#d17847]/60 hover:bg-[#fdf8f3] transition-all flex items-center justify-between group"
                 >
                   <span className="text-sm font-medium text-[#1f1a14] truncate max-w-[280px]">
-                    {task.todos?.title || t("未知任务", "Unknown task")}
+                    {(() => {
+                      const todo = task.todos;
+                      if (todo?.parent_id) {
+                        const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                        return parent ? `${parent.title} > ${todo.title}` : (todo.title || t("未知任务", "Unknown task"));
+                      }
+                      return todo?.title || t("未知任务", "Unknown task");
+                    })()}
                   </span>
                   <span className="text-xs text-[#d17847] opacity-0 group-hover:opacity-100 transition-opacity font-medium">
                     {t("开始专注 →", "Focus →")}
