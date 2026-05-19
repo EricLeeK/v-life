@@ -849,7 +849,7 @@ export default function TodayTodoPage() {
                 <div className="border-b border-[#f0ede6] pb-3">
                   <h4 className="font-bold text-sm mb-2 text-[#1f1a14] flex items-center gap-1.5">
                     <Sparkles className="h-4 w-4 text-[#d17847]" />
-                    {t("🎮 日程游戏化 AI 裁判长：四维评估矩阵", "🎮 Game Life AI Referee: 4D Evaluation Matrix")}
+                    {t("日程游戏化 AI 裁判长：四维评估矩阵", "Game Life AI Referee: 4D Evaluation Matrix")}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                     <div className="space-y-1">
@@ -900,7 +900,7 @@ export default function TodayTodoPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1 bg-[#fdfbf7] p-3 rounded-lg border border-[#f0ede6]">
-                    <p className="font-bold text-[#1f1a14]">{t("🧮 裁判长算法公式", "🧮 Referee XP Formula")}</p>
+                    <p className="font-bold text-[#1f1a14]">{t("裁判长算法公式", "Referee XP Formula")}</p>
                     <p className="text-[11px] text-[#8a847a]">
                       1. <strong>{t("基础分", "Base XP")}</strong> = ({t("认知负荷", "Cognitive")} + {t("意志力消耗", "Willpower")}) × 5<br />
                       2. <strong>{t("时间加权", "Time scaled")}</strong> = {t("基础分", "Base XP")} × {t("时间倍率", "Time multiplier")}<br />
