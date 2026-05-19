@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Archive, Pencil, CornerDownRight, ChevronDown, ChevronUp, Sliders } from "lucide-react";
+import { Plus, Trash2, Archive, Pencil, CornerDownRight, ChevronDown, ChevronUp, ChevronRight, Sliders } from "lucide-react";
 import { todoHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
@@ -140,7 +140,33 @@ export default function TodosPage() {
     }
   };
 
-  const TodoItem = ({ item }: { item: any }) => {
+  const [pendingChanges, setPendingChanges] = useState<Record<string, { title: string; detail: string }>>({});
+
+  const handleToggleManageMode = async () => {
+    if (isManageMode) {
+      const modifiedIds = Object.keys(pendingChanges);
+      if (modifiedIds.length > 0) {
+        try {
+          const promises = modifiedIds.map(id => {
+            const change = pendingChanges[id];
+            return updateMutation.mutateAsync({
+              id,
+              title: change.title,
+              detail: change.detail || null,
+            });
+          });
+          await Promise.all(promises);
+          toast({ title: t("修改已统一保存", "All changes saved successfully") });
+        } catch (e: any) {
+          toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
+        }
+      }
+      setPendingChanges({});
+    }
+    setIsManageMode(!isManageMode);
+  };
+
+  const renderTodoItem = (item: any) => {
     const imp = IMPORTANCE_LEVELS.find((l) => l.key === item.importance);
     const itemSubtasks = childTodos.filter((t: any) => t.parent_id === item.id);
     const subtaskTitleVal = subtaskTitles[item.id] || "";
@@ -149,25 +175,79 @@ export default function TodosPage() {
     const isExpanded = !!expandedTasks[item.id];
     const showSubtasks = isExpanded || isManageMode;
 
+    const change = pendingChanges[item.id];
+    const currentTitle = change ? change.title : item.title;
+    const currentDetail = change ? change.detail : (item.detail || "");
+
     return (
-      <div className="space-y-1.5 mb-2">
+      <div className="space-y-1.5 mb-2" key={item.id}>
         <Card className={`transition-all duration-200 shadow-sm border border-[#e4e1d7] ${item.is_completed ? "opacity-60 bg-[#faf9f4]" : "hover:border-[#5b88b5]/40 bg-white"} ${isExpanded ? "ring-1 ring-[#5b88b5]/20 border-[#5b88b5]/30" : ""}`}>
           <CardContent className="p-3">
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {/* Collapse/Expand Chevron on the very left of the checklist card */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-stone-50 rounded-md shrink-0 transition-transform duration-200 ${hasDetailsOrSubtasks ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+                onClick={() => setExpandedTasks(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+              >
+                <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? "rotate-90 text-[#5b88b5]" : ""}`} />
+              </Button>
+
               <Checkbox
                 checked={item.is_completed}
                 onCheckedChange={() => toggleComplete(item)}
                 className="accent-[#5b88b5]"
               />
+
               <div className="flex-1 min-w-0">
-                <span className={`text-sm font-medium ${item.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
-                  {item.title}
-                </span>
+                {isManageMode ? (
+                  <Input
+                    value={currentTitle}
+                    onChange={(e) => {
+                      setPendingChanges(prev => ({
+                        ...prev,
+                        [item.id]: {
+                          title: e.target.value,
+                          detail: prev[item.id]?.detail ?? (item.detail || ""),
+                        }
+                      }));
+                    }}
+                    className="h-8 text-sm font-medium bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#5b88b5] w-full"
+                  />
+                ) : (
+                  <span className={`text-sm font-medium ${item.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
+                    {item.title}
+                  </span>
+                )}
                 
-                {isExpanded && item.detail && (
-                  <p className="text-xs text-muted-foreground mt-1.5 border-t border-[#e4e1d7]/40 pt-1.5 italic">
-                    {item.detail}
-                  </p>
+                {/* Parent Task Details/简介 display */}
+                {isManageMode ? (
+                  <div className="mt-1.5 pt-1.5 border-t border-[#e4e1d7]/40 space-y-1">
+                    <span className="text-[10px] font-semibold text-[#8a847a] uppercase tracking-wider block">
+                      {t("任务简介", "Task Detail")}
+                    </span>
+                    <Input
+                      value={currentDetail}
+                      onChange={(e) => {
+                        setPendingChanges(prev => ({
+                          ...prev,
+                          [item.id]: {
+                            title: prev[item.id]?.title ?? item.title,
+                            detail: e.target.value,
+                          }
+                        }));
+                      }}
+                      placeholder={t("添加详细描述...", "Add detailed description...")}
+                      className="h-7 text-xs bg-stone-50 border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#5b88b5] w-full"
+                    />
+                  </div>
+                ) : (
+                  isExpanded && item.detail && (
+                    <p className="text-xs text-muted-foreground mt-1.5 border-t border-[#e4e1d7]/40 pt-1.5 italic">
+                      {item.detail}
+                    </p>
+                  )
                 )}
               </div>
               
@@ -176,21 +256,6 @@ export default function TodosPage() {
                   {IMPORTANCE_LABELS[item.importance] || item.importance}
                 </Badge>
                 
-                {hasDetailsOrSubtasks && !isManageMode && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-stone-50 rounded-md shrink-0 transition-transform duration-200"
-                    onClick={() => setExpandedTasks(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
-                  >
-                    {isExpanded ? (
-                      <ChevronUp className="h-4 w-4 text-[#5b88b5]" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                )}
-
                 {isManageMode && (
                   <div className="flex items-center gap-1 shrink-0 animate-in fade-in slide-in-from-right-2 duration-200">
                     <Button
@@ -230,8 +295,11 @@ export default function TodosPage() {
 
         {/* Subtasks & Add subtasks form */}
         {showSubtasks && (itemSubtasks.length > 0 || isManageMode) && (
-          <div className="pl-6 border-l border-[#e4e1d7]/60 ml-3 space-y-1.5 pt-0.5 pb-2 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="pl-6 border-l border-[#e4e1d7]/60 ml-7 space-y-1.5 pt-0.5 pb-2 animate-in fade-in slide-in-from-top-1 duration-200">
             {itemSubtasks.map((sub: any) => {
+              const subChange = pendingChanges[sub.id];
+              const currentSubTitle = subChange ? subChange.title : sub.title;
+
               return (
                 <div
                   key={sub.id}
@@ -243,14 +311,30 @@ export default function TodosPage() {
                     onCheckedChange={() => toggleComplete(sub)}
                     className="accent-[#5b88b5]"
                   />
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-xs font-medium ${sub.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
-                      {sub.title}
-                    </span>
-                    {isExpanded && sub.detail && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5 italic">{sub.detail}</p>
-                    )}
-                  </div>
+                  
+                  {isManageMode ? (
+                    <div className="flex-grow min-w-0">
+                      <Input
+                        value={currentSubTitle}
+                        onChange={(e) => {
+                          setPendingChanges(prev => ({
+                            ...prev,
+                            [sub.id]: {
+                              title: e.target.value,
+                              detail: prev[sub.id]?.detail ?? (sub.detail || ""),
+                            }
+                          }));
+                        }}
+                        className="h-7 text-xs bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#5b88b5] w-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex-grow min-w-0">
+                      <span className={`text-xs font-medium ${sub.is_completed ? "line-through text-muted-foreground" : "text-[#1f1a14]"}`}>
+                        {sub.title}
+                      </span>
+                    </div>
+                  )}
                   
                   {isManageMode && (
                     <div className="flex items-center gap-1 shrink-0 animate-in fade-in slide-in-from-right-1 duration-200">
@@ -332,7 +416,7 @@ export default function TodosPage() {
           <Button
             variant={isManageMode ? "default" : "outline"}
             size="sm"
-            onClick={() => setIsManageMode(!isManageMode)}
+            onClick={handleToggleManageMode}
             className={`transition-all ${isManageMode ? "bg-[#d17847] hover:bg-[#c06838] text-white border-transparent" : "border-[#e4e1d7] text-stone-700 hover:bg-stone-50"}`}
           >
             <Sliders className="h-4 w-4 mr-1.5" />
@@ -421,7 +505,7 @@ export default function TodosPage() {
                 </h3>
               )}
               <div className="space-y-1">
-                {(items as any[]).map((item) => <TodoItem key={item.id} item={item} />)}
+                {(items as any[]).map((item) => renderTodoItem(item))}
               </div>
             </div>
           ))
