@@ -1430,58 +1430,168 @@ export function useRemoveFromToday() {
   });
 }
 
+export const getLocalDateString = (date = new Date()) => {
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  return localDate.toISOString().split("T")[0];
+};
+
+export const getYesterdayLocalDateString = (date = new Date()) => {
+  const yesterday = new Date(date.getTime() - 86400000);
+  return getLocalDateString(yesterday);
+};
+
+export const getDatesBetween = (startStr: string, endStr: string): string[] => {
+  const dates: string[] = [];
+  const startParts = startStr.split("-").map(Number);
+  const endParts = endStr.split("-").map(Number);
+  const start = new Date(startParts[0], startParts[1] - 1, startParts[2]);
+  const end = new Date(endParts[0], endParts[1] - 1, endParts[2]);
+  
+  const current = new Date(start);
+  current.setDate(current.getDate() + 1);
+  while (current <= end) {
+    const yyyy = current.getFullYear();
+    const mm = String(current.getMonth() + 1).padStart(2, '0');
+    const dd = String(current.getDate()).padStart(2, '0');
+    dates.push(`${yyyy}-${mm}-${dd}`);
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+};
+
 export function useRecalculatePoints() {
   const { isDemo, demoData } = useDemoMode();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
+      const today = getLocalDateString(new Date());
+      const yesterday = getYesterdayLocalDateString(new Date());
+
       if (isDemo) {
-        const p = demoData.user_points[0];
-        if (p) { p.total_points += 10; p.updated_at = new Date().toISOString(); }
-        return p;
+        let points = demoData.user_points[0];
+        if (!points) {
+          points = {
+            id: "demo-points",
+            total_points: 0,
+            current_streak: 0,
+            best_streak: 0,
+            last_active_date: yesterday,
+            updated_at: new Date().toISOString()
+          };
+          demoData.user_points = [points];
+        }
+        let streak = points.current_streak || 0;
+        let total_points = points.total_points || 0;
+        let best_streak = points.best_streak || 0;
+        let lastActive = points.last_active_date || yesterday;
+
+        if (lastActive === today) {
+          return points; // already settled today
+        }
+
+        const datesToSettle = getDatesBetween(lastActive, yesterday);
+        for (const d of datesToSettle) {
+          const tasks = (demoData.daily_tasks || []).filter((t: any) => t.task_date === d);
+          const completed = tasks.filter((t: any) => t.is_completed);
+          const base_sum = completed.reduce((s: number, t: any) => s + (t.base_points || 0), 0);
+          const total = tasks.length;
+          const pct = total > 0 ? completed.length / total : 0;
+          const completion_bonus = pct >= 0.8 || pct === 1 ? 50 : completed.length >= 1 ? 15 : 0;
+
+          if (completed.length > 0) {
+            streak += 1;
+          } else {
+            streak = 0;
+          }
+          const streak_mult = streak >= 30 ? 3 : streak >= 14 ? 2 : streak >= 7 ? 1.5 : 1;
+          const day_points = Math.round((base_sum + completion_bonus) * streak_mult);
+          total_points += day_points;
+          best_streak = Math.max(best_streak, streak);
+        }
+
+        points.total_points = total_points;
+        points.current_streak = streak;
+        points.best_streak = best_streak;
+        points.last_active_date = today;
+        points.updated_at = new Date().toISOString();
+        return points;
       }
-      const today = new Date().toISOString().split("T")[0];
-      const { data: tasks, error: tErr } = await supabase
-        .from("daily_tasks")
-        .select("base_points, is_completed, todo_id")
-        .eq("task_date", today);
-      if (tErr) throw tErr;
-      const completed = (tasks || []).filter((t) => t.is_completed);
-      const base_sum = completed.reduce((s, t) => s + (t.base_points || 0), 0);
-      const total = (tasks || []).length;
-      const pct = total > 0 ? completed.length / total : 0;
-      const completion_bonus = pct >= 0.8 || pct === 1 ? 50 : completed.length >= 1 ? 15 : 0;
-      const habit_bonus = 0;
+
+      // Online mode (Supabase)
       const { data: points, error: pErr } = await supabase
         .from("user_points")
         .select("*")
-        .single();
+        .maybeSingle();
       if (pErr) throw pErr;
-      const lastActive = points.last_active_date;
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-      let streak = points.current_streak || 0;
-      if (lastActive === today) {
-      } else if (lastActive === yesterday) {
-        streak += 1;
-      } else if (lastActive) {
-        streak = 1;
-      } else {
-        streak = 1;
+
+      if (!points) {
+        // No points record yet, create one
+        const { data: created, error: cErr } = await supabase
+          .from("user_points")
+          .insert({ total_points: 0, current_streak: 0, best_streak: 0, last_active_date: today })
+          .select()
+          .single();
+        if (cErr) throw cErr;
+        return created;
       }
-      const streak_mult = streak >= 30 ? 3 : streak >= 14 ? 2 : streak >= 7 ? 1.5 : 1;
-      const final = Math.round((base_sum + completion_bonus + habit_bonus) * streak_mult);
-      const newTotal = (points.total_points || 0) + final;
-      const newBest = Math.max(points.best_streak || 0, streak);
+
+      let lastActive = points.last_active_date;
+      if (!lastActive) {
+        lastActive = yesterday;
+      }
+
+      if (lastActive === today) {
+        return points; // already settled today
+      }
+
+      const datesToSettle = getDatesBetween(lastActive, yesterday);
+      let streak = points.current_streak || 0;
+      let total_points = points.total_points || 0;
+      let best_streak = points.best_streak || 0;
+
+      for (const d of datesToSettle) {
+        const { data: tasks, error: tErr } = await supabase
+          .from("daily_tasks")
+          .select("base_points, is_completed")
+          .eq("task_date", d);
+        if (tErr) throw tErr;
+
+        const completed = (tasks || []).filter((t) => t.is_completed);
+        const base_sum = completed.reduce((s, t) => s + (t.base_points || 0), 0);
+        const total = (tasks || []).length;
+        const pct = total > 0 ? completed.length / total : 0;
+        const completion_bonus = pct >= 0.8 || pct === 1 ? 50 : completed.length >= 1 ? 15 : 0;
+
+        if (completed.length > 0) {
+          streak += 1;
+        } else {
+          streak = 0;
+        }
+        const streak_mult = streak >= 30 ? 3 : streak >= 14 ? 2 : streak >= 7 ? 1.5 : 1;
+        const day_points = Math.round((base_sum + completion_bonus) * streak_mult);
+        total_points += day_points;
+        best_streak = Math.max(best_streak, streak);
+      }
+
       const { data: updated, error: uErr } = await supabase
         .from("user_points")
-        .update({ total_points: newTotal, current_streak: streak, best_streak: newBest, last_active_date: today })
+        .update({
+          total_points,
+          current_streak: streak,
+          best_streak,
+          last_active_date: today,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", points.id)
         .select()
         .single();
       if (uErr) throw uErr;
       return updated;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["user_points"] }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user_points"] });
+    },
   });
 }
 

@@ -26,6 +26,58 @@ const IMPORTANCE_LABELS: Record<string, string> = {
 
 type ViewMode = "category" | "importance" | "all";
 
+const CategoryInput = ({ value, onChange, existingCategories, placeholder, t }: {
+  value: string;
+  onChange: (val: string) => void;
+  existingCategories: string[];
+  placeholder?: string;
+  t: (zh: string, en: string) => string;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative mt-1">
+      <div className="relative flex items-center">
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="pr-8"
+        />
+        {existingCategories.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setIsOpen(!isOpen)}
+            className="absolute right-2 text-stone-400 hover:text-stone-600 focus:outline-none"
+            style={{ zIndex: 5 }}
+          >
+            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          </button>
+        )}
+      </div>
+      {isOpen && existingCategories.length > 0 && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto bg-white border border-[#e4e1d7] rounded-md shadow-lg z-20 py-1">
+            {existingCategories.map((cat: string) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  onChange(cat);
+                  setIsOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-xs text-[#1f1a14] hover:bg-stone-50 transition-colors"
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export default function TodosPage() {
   const { t, lang } = useLang();
   const [viewMode, setViewMode] = useState<ViewMode>("category");
@@ -44,6 +96,13 @@ export default function TodosPage() {
   const { toast } = useToast();
 
   const { data: todos = [] } = todoHooks.useList();
+  const existingCategories = Array.from(
+    new Set(
+      todos
+        .map((t: any) => t.category?.trim() || "")
+        .filter((c: string) => c !== "" && c !== "未分类" && c !== "Uncategorized")
+    )
+  ) as string[];
   const createMutation = todoHooks.useCreate();
   const updateMutation = todoHooks.useUpdate();
   const deleteMutation = todoHooks.useDelete();
@@ -75,10 +134,21 @@ export default function TodosPage() {
   };
 
   const grouped = viewMode === "category"
-    ? sortedParents.reduce((acc: Record<string, any[]>, t: any) => { (acc[t.category || "生活"] = acc[t.category || "生活"] || []).push(t); return acc; }, {})
+    ? sortedParents.reduce((acc: Record<string, any[]>, t: any) => {
+        const cat = t.category ? t.category.trim() : "";
+        const key = cat === "" || cat === "未分类" || cat === "Uncategorized" ? "未分类" : cat;
+        (acc[key] = acc[key] || []).push(t);
+        return acc;
+      }, {})
     : viewMode === "importance"
     ? sortedParents.reduce((acc: Record<string, any[]>, t: any) => { (acc[t.importance || "普通"] = acc[t.importance || "普通"] || []).push(t); return acc; }, {})
     : { "全部": sortedParents };
+
+  const groupedEntries = Object.entries(grouped).sort(([aKey], [bKey]) => {
+    if (aKey === "未分类") return 1;
+    if (bKey === "未分类") return -1;
+    return aKey.localeCompare(bKey);
+  });
 
   const handleSave = async () => {
     if (!form.title) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
@@ -140,7 +210,7 @@ export default function TodosPage() {
     }
   };
 
-  const [pendingChanges, setPendingChanges] = useState<Record<string, { title: string; detail: string }>>({});
+  const [pendingChanges, setPendingChanges] = useState<Record<string, { title: string; detail: string; importance?: string }>>({});
 
   const handleToggleManageMode = async () => {
     if (isManageMode) {
@@ -153,6 +223,7 @@ export default function TodosPage() {
               id,
               title: change.title,
               detail: change.detail || null,
+              ...(change.importance ? { importance: change.importance } : {}),
             });
           });
           await Promise.all(promises);
@@ -252,9 +323,32 @@ export default function TodosPage() {
               </div>
               
               <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
-                <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-md font-medium border shrink-0 ${imp?.color || "bg-slate-50"}`}>
-                  {IMPORTANCE_LABELS[item.importance] || item.importance}
-                </Badge>
+                {isManageMode ? (
+                  <select
+                    value={pendingChanges[item.id]?.importance ?? item.importance}
+                    onChange={(e) => {
+                      setPendingChanges(prev => ({
+                        ...prev,
+                        [item.id]: {
+                          title: prev[item.id]?.title ?? item.title,
+                          detail: prev[item.id]?.detail ?? (item.detail || ""),
+                          importance: e.target.value,
+                        }
+                      }));
+                    }}
+                    className="text-xs px-2 py-1 rounded-md font-medium border bg-white border-[#e4e1d7] focus:outline-none focus:ring-1 focus:ring-[#5b88b5] text-stone-700"
+                  >
+                    {IMPORTANCE_LEVELS.map((l) => (
+                      <option key={l.key} value={l.key}>
+                        {IMPORTANCE_LABELS[l.key] || l.key}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Badge variant="outline" className={`text-xs px-2 py-0.5 rounded-md font-medium border shrink-0 ${imp?.color || "bg-slate-50"}`}>
+                    {IMPORTANCE_LABELS[item.importance] || item.importance}
+                  </Badge>
+                )}
                 
                 {isManageMode && (
                   <div className="flex items-center gap-1 shrink-0 animate-in fade-in slide-in-from-right-2 duration-200">
@@ -443,16 +537,27 @@ export default function TodosPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs font-medium text-foreground">{t("重要性", "Priority")}</Label>
-                    <Select value={form.importance} onValueChange={(v) => setForm({ ...form, importance: v })}>
-                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {IMPORTANCE_LEVELS.map((l) => <SelectItem key={l.key} value={l.key}>{IMPORTANCE_LABELS[l.key] || l.key}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      value={form.importance}
+                      onChange={(e) => setForm({ ...form, importance: e.target.value })}
+                      className="mt-1 block w-full h-10 rounded-md border border-[#e4e1d7] bg-white px-3 py-2 text-sm text-stone-700 shadow-sm focus:border-[#5b88b5] focus:outline-none focus:ring-1 focus:ring-[#5b88b5]"
+                    >
+                      {IMPORTANCE_LEVELS.map((l) => (
+                        <option key={l.key} value={l.key}>
+                          {IMPORTANCE_LABELS[l.key] || l.key}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label className="text-xs font-medium text-foreground">{t("分类", "Category")}</Label>
-                    <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="生活" className="mt-1" />
+                    <CategoryInput
+                      value={form.category}
+                      onChange={(v) => setForm({ ...form, category: v })}
+                      existingCategories={existingCategories}
+                      placeholder={t("生活", "Life")}
+                      t={t}
+                    />
                   </div>
                 </div>
                 <Button onClick={handleSave} className="w-full mt-2">{t("添加", "Add")}</Button>
@@ -476,16 +581,27 @@ export default function TodosPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs font-medium text-foreground">{t("重要性", "Priority")}</Label>
-                    <Select value={editForm.importance} onValueChange={(v) => setEditForm({ ...editForm, importance: v })}>
-                      <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {IMPORTANCE_LEVELS.map((l) => <SelectItem key={l.key} value={l.key}>{IMPORTANCE_LABELS[l.key] || l.key}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <select
+                      value={editForm.importance}
+                      onChange={(e) => setEditForm({ ...editForm, importance: e.target.value })}
+                      className="mt-1 block w-full h-10 rounded-md border border-[#e4e1d7] bg-white px-3 py-2 text-sm text-stone-700 shadow-sm focus:border-[#5b88b5] focus:outline-none focus:ring-1 focus:ring-[#5b88b5]"
+                    >
+                      {IMPORTANCE_LEVELS.map((l) => (
+                        <option key={l.key} value={l.key}>
+                          {IMPORTANCE_LABELS[l.key] || l.key}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label className="text-xs font-medium text-foreground">{t("分类", "Category")}</Label>
-                    <Input value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })} className="mt-1" />
+                    <CategoryInput
+                      value={editForm.category}
+                      onChange={(v) => setEditForm({ ...editForm, category: v })}
+                      existingCategories={existingCategories}
+                      placeholder={t("生活", "Life")}
+                      t={t}
+                    />
                   </div>
                 </div>
                 <Button onClick={handleSaveEdit} className="w-full mt-2">{t("保存修改", "Save Changes")}</Button>
@@ -494,14 +610,14 @@ export default function TodosPage() {
           </Dialog>
         </div>
 
-        {Object.keys(grouped).length === 0 ? (
+        {groupedEntries.length === 0 ? (
           <p className="text-muted-foreground text-sm py-12 text-center">{t("暂无待办事项", "No to-dos")}</p>
         ) : (
-          Object.entries(grouped).map(([group, items]) => (
+          groupedEntries.map(([group, items]) => (
             <div key={group} className="space-y-2">
               {viewMode !== "all" && (
                 <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase pt-2 px-1">
-                  {group}
+                  {group === "未分类" ? t("未分类", "Uncategorized") : group}
                 </h3>
               )}
               <div className="space-y-1">

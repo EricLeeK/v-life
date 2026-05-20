@@ -21,6 +21,7 @@ import {
   useRecalculatePoints,
   useEstimateDifficulty,
   todoHooks,
+  getLocalDateString,
 } from "@/hooks/useData";
 
 const DIFFICULTY_CONFIG = {
@@ -138,6 +139,15 @@ export default function TodayTodoPage() {
   const [adjustingTaskId, setAdjustingTaskId] = useState<string | null>(null);
   const [adjustingPoints, setAdjustingPoints] = useState<number>(20);
   const [adjustingFeedback, setAdjustingFeedback] = useState<string>("");
+
+  useEffect(() => {
+    if (userPoints) {
+      const todayStr = getLocalDateString();
+      if (!userPoints.last_active_date || userPoints.last_active_date < todayStr) {
+        recalcPoints.mutate();
+      }
+    }
+  }, [userPoints]);
 
   // ============ Focus Timer States ============
   const [timerState, setTimerState] = useState<"idle" | "running" | "paused">("idle");
@@ -306,8 +316,6 @@ export default function TodayTodoPage() {
     await completeTask.mutateAsync({ id: task.id, is_completed: isNowCompleted });
     
     if (isNowCompleted) {
-      await recalcPoints.mutateAsync();
-      
       const newCompletedCount = todayTasks.filter((t: any) => t.id === task.id ? true : t.is_completed).length;
       const newProgressPct = totalCount > 0 ? (newCompletedCount / totalCount) * 100 : 0;
       
@@ -328,6 +336,41 @@ export default function TodayTodoPage() {
   const streak = userPoints?.current_streak || 0;
   const totalPts = userPoints?.total_points || 0;
   const bestStreak = userPoints?.best_streak || 0;
+
+  // ============ Live Estimates & Real-time Calculations ============
+  const { completed_base_sum, total_base_sum } = useMemo(() => {
+    let completedSum = 0;
+    let totalSum = 0;
+    todayTasks.forEach((t: any) => {
+      const pts = t.base_points || 20;
+      totalSum += pts;
+      if (t.is_completed) {
+        completedSum += pts;
+      }
+    });
+    return { completed_base_sum: completedSum, total_base_sum: totalSum };
+  }, [todayTasks]);
+
+  const livePct = totalCount > 0 ? completedCount / totalCount : 0;
+  
+  // Current completion bonus: pct >= 0.8 ? 50 : completedCount >= 1 ? 15 : 0
+  const liveCompletionBonus = livePct >= 0.8 || livePct === 1 ? 50 : completedCount >= 1 ? 15 : 0;
+  
+  // Current multiplier based on current streak
+  const liveStreakMult = streak >= 30 ? 3 : streak >= 14 ? 2 : streak >= 7 ? 1.5 : 1;
+  
+  // Settle multiplier based on next streak
+  const nextStreak = completedCount > 0 ? streak + 1 : 0;
+  const nextStreakMult = nextStreak >= 30 ? 3 : nextStreak >= 14 ? 2 : nextStreak >= 7 ? 1.5 : 1;
+
+  // 今日已赚得 (Earned Today So Far)
+  const earnedTodaySoFar = Math.round((completed_base_sum + liveCompletionBonus) * liveStreakMult);
+
+  // 今日将结算 (Estimated Total Today if settled as-is)
+  const estimatedTotalToday = Math.round((completed_base_sum + liveCompletionBonus) * nextStreakMult);
+
+  // Potential total if fully completed (100% completion bonus = 50 XP)
+  const potentialTotalToday = Math.round((total_base_sum + (totalCount > 0 ? 50 : 0)) * nextStreakMult);
 
   if (tasksLoading) {
     return (
@@ -469,6 +512,64 @@ export default function TodayTodoPage() {
             </Card>
           ))}
         </div>
+
+        {/* Live Earnings & Settle Estimate Card */}
+        <Card className="overflow-hidden border-[#e8ddd0] bg-gradient-to-br from-[#fdfbf7] via-[#fbf6ef] to-[#f5ebd7] shadow-sm relative">
+          <div className="absolute top-0 right-0 p-3 opacity-[0.08]">
+            <Sparkles className="h-20 w-20 text-[#d17847]" />
+          </div>
+          <CardContent className="p-4 relative z-10">
+            <div className="flex items-center justify-between border-b border-[#f0ede6] pb-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-[#d17847]" />
+                <span className="text-xs font-bold text-[#1f1a14] uppercase tracking-wider">
+                  {t("今日积分结算看板", "Today's Settlement Board")}
+                </span>
+              </div>
+              <Badge variant="outline" className="bg-[#fcf8f3] text-[#d17847] border-[#e8ddd0] text-[10px] py-0.5 px-2 font-mono font-semibold">
+                {t("结算时间: 00:00 (自动)", "Settle: 00:00 (Auto)")}
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <span className="text-[10px] text-[#8a847a] block font-medium uppercase tracking-wide">
+                  {t("今日已赚得", "Earned Today So Far")}
+                </span>
+                <span className="text-2xl font-black text-[#d17847] block font-mono leading-none tracking-tight">
+                  {earnedTodaySoFar} <span className="text-xs font-bold text-[#8a847a]">XP</span>
+                </span>
+                <span className="text-[9px] text-[#b8a590] block leading-relaxed">
+                  {t(`基础 ${completed_base_sum} + 完成奖 ${liveCompletionBonus}`, `Base ${completed_base_sum} + Bonus ${liveCompletionBonus}`)} (×{liveStreakMult})
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-[10px] text-[#8a847a] block font-medium uppercase tracking-wide">
+                  {t("今日将结算 (当前状态)", "Estimated Settle (As-Is)")}
+                </span>
+                <span className="text-2xl font-black text-[#5b88b5] block font-mono leading-none tracking-tight">
+                  {estimatedTotalToday} <span className="text-xs font-bold text-[#8a847a]">XP</span>
+                </span>
+                <span className="text-[9px] text-[#8a847a] block leading-relaxed">
+                  {t(`明日结算时预计获得 (连击 ×${nextStreakMult})`, `Expected at 00:00 (Streak ×${nextStreakMult})`)}
+                </span>
+              </div>
+
+              <div className="col-span-2 sm:col-span-1 space-y-1 bg-white/50 border border-[#e4e1d7]/40 rounded-lg p-2.5">
+                <span className="text-[10px] text-[#8a847a] block font-medium uppercase tracking-wide">
+                  {t("完美完成奖励估算", "Perfect Run Potential")}
+                </span>
+                <span className="text-lg font-bold text-[#c06838] block font-mono leading-none tracking-tight">
+                  {potentialTotalToday} <span className="text-[10px] font-semibold text-[#8a847a]">XP</span>
+                </span>
+                <span className="text-[9px] text-[#b8a590] block leading-relaxed mt-0.5">
+                  {t(`若100%完成今日全部任务`, `If 100% completed today's tasks`)}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Progress Ring + Add Button */}
         <div className="flex items-center gap-4">
