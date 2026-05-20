@@ -1356,7 +1356,18 @@ export function useAddToToday() {
         demoData.daily_tasks.push(item);
         return item;
       }
-      const { data, error } = await supabase.from("daily_tasks").insert(payload).select().single();
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const todayStr = getLocalDateString();
+      const insertData = {
+        ...payload,
+        user_id: user.id,
+        task_date: todayStr,
+      };
+
+      const { data, error } = await supabase.from("daily_tasks").insert(insertData).select().single();
       if (error) throw error;
       return data;
     },

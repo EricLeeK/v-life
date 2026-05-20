@@ -293,22 +293,30 @@ export default function TodayTodoPage() {
   };
 
   const handleConfirmAdd = async () => {
-    for (const todoId of selectedTodos) {
-      const eval4d = estimatedEvaluations[todoId];
-      const manualPoints = manualDifficulties[todoId] ? parseInt(manualDifficulties[todoId]) : null;
-      const pts = manualPoints ?? eval4d?.awarded_xp ?? 20;
-      await addToToday.mutateAsync({
-        todo_id: todoId,
-        difficulty: pts >= 40 ? "hard" : pts >= 20 ? "medium" : "easy",
-        base_points: pts,
-        metadata: eval4d || {},
+    try {
+      for (const todoId of selectedTodos) {
+        const eval4d = estimatedEvaluations[todoId];
+        const manualPoints = manualDifficulties[todoId] ? parseInt(manualDifficulties[todoId]) : null;
+        const pts = manualPoints ?? eval4d?.awarded_xp ?? 20;
+        await addToToday.mutateAsync({
+          todo_id: todoId,
+          difficulty: pts >= 40 ? "hard" : pts >= 20 ? "medium" : "easy",
+          base_points: pts,
+          metadata: eval4d || {},
+        });
+      }
+      setAddDialogOpen(false);
+      setManualDifficulties({});
+      setSelectedTodos([]);
+      setAdjustMode(false);
+      toast({ title: lang === "zh" ? "已添加到今天" : "Added to today" });
+    } catch (err: any) {
+      toast({
+        title: t("添加失败", "Failed to add tasks"),
+        description: err.message,
+        variant: "destructive"
       });
     }
-    setAddDialogOpen(false);
-    setManualDifficulties({});
-    setSelectedTodos([]);
-    setAdjustMode(false);
-    toast({ title: lang === "zh" ? "已添加到今天" : "Added to today" });
   };
 
   const handleComplete = async (task: any) => {
