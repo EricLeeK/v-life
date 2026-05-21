@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp, Play, Square, Sliders, Minus } from "lucide-react";
+import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, ChevronRight, Sparkles, Zap, CheckCircle2, Loader2, AlertCircle, ClipboardList, Brain, Dumbbell, Clock, TrendingUp, Play, Square, Sliders, Minus, Volume2, VolumeX, Pause, X } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -150,14 +151,63 @@ export default function TodayTodoPage() {
   }, [userPoints]);
 
   // ============ Focus Timer States ============
+  const [activeTab, setActiveTab] = useState<"list" | "pomodoro">("list");
+  const [timerDuration, setTimerDuration] = useState(300); // Preset duration (default 5 mins)
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [timerState, setTimerState] = useState<"idle" | "running" | "paused">("idle");
   const [timerMode, setTimerMode] = useState<"countdown" | "countup">("countdown");
-  const [timeLeft, setTimeLeft] = useState(300); // 5 mins in seconds
+  const [timeLeft, setTimeLeft] = useState(300); // remaining time in seconds
   const [countUpElapsed, setCountUpElapsed] = useState(0); // positive countup seconds
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [taskSelectorOpen, setTaskSelectorOpen] = useState(false);
   const [congratsDialogOpen, setCongratsDialogOpen] = useState(false);
   const [finalTimeStr, setFinalTimeStr] = useState("");
+  const [autoOverachieve, setAutoOverachieve] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== "pomodoro" && timerState === "idle") {
+      setAutoOverachieve(false);
+    }
+  }, [activeTab, timerState]);
+
+  const requestNotificationPermission = async () => {
+    if ("Notification" in window) {
+      if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        await Notification.requestPermission();
+      }
+    }
+  };
+
+  const sendSystemNotification = (title: string, body: string) => {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body });
+    }
+  };
+
+  const playFocusSound = () => {
+    if (!soundEnabled) return;
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const playBeep = (freq: number, duration: number, startTime: number) => {
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gainNode.gain.setValueAtTime(0, startTime);
+        gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = audioCtx.currentTime;
+      playBeep(659.25, 0.4, now); // E5
+      playBeep(880.00, 0.6, now + 0.15); // A5
+    } catch (err) {
+      console.error("Audio Context failed:", err);
+    }
+  };
 
   useEffect(() => {
     let interval: any = null;
@@ -166,7 +216,24 @@ export default function TodayTodoPage() {
         if (timerMode === "countdown") {
           setTimeLeft((prev) => {
             if (prev <= 1) {
-              setTimerMode("countup");
+              playFocusSound();
+              if (autoOverachieve) {
+                setTimerMode("countup");
+                sendSystemNotification(
+                  lang === "zh" ? "番茄钟完成！" : "Pomodoro Complete!",
+                  lang === "zh" ? "起步5分钟完成！目前已自动进入突破心流阶段，尽情发挥吧！" : "5 minutes complete! You are now in the overachieving flow state!"
+                );
+              } else {
+                setTimerState("idle");
+                sendSystemNotification(
+                  lang === "zh" ? "专注结束！" : "Focus Complete!",
+                  lang === "zh" ? "您设定的专注时长已达成，休息一下吧！" : "Your focus session is over. Take a break!"
+                );
+                // Reset the visual timer after a brief delay
+                setTimeout(() => {
+                  setTimeLeft(timerDuration);
+                }, 1500);
+              }
               return 0;
             }
             return prev - 1;
@@ -179,13 +246,13 @@ export default function TodayTodoPage() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [timerState, timerMode]);
+  }, [timerState, timerMode, soundEnabled, timerDuration]);
 
   const getElapsedSeconds = () => {
     if (timerMode === "countdown") {
-      return 300 - timeLeft;
+      return timerDuration - timeLeft;
     } else {
-      return 300 + countUpElapsed;
+      return timerDuration + countUpElapsed;
     }
   };
 
@@ -199,9 +266,8 @@ export default function TodayTodoPage() {
     const elapsed = getElapsedSeconds();
     setTimerState("idle");
     setFinalTimeStr(formatTimeZh(elapsed));
-    setCongratsDialogOpen(true);
     // Reset timer
-    setTimeLeft(300);
+    setTimeLeft(timerDuration);
     setCountUpElapsed(0);
     setTimerMode("countdown");
     setActiveTaskId(null);
@@ -359,6 +425,29 @@ export default function TodayTodoPage() {
     return { completed_base_sum: completedSum, total_base_sum: totalSum };
   }, [todayTasks]);
 
+  const { groupedTasks, ungroupedTasks } = useMemo(() => {
+    const groups: { [key: string]: { parent: any; tasks: any[] } } = {};
+    const ungrouped: any[] = [];
+    
+    todayTasks.forEach((task: any) => {
+      const todo = task.todos;
+      if (todo?.parent_id) {
+        if (!groups[todo.parent_id]) {
+          const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+          groups[todo.parent_id] = { parent, tasks: [] };
+        }
+        groups[todo.parent_id].tasks.push(task);
+      } else {
+        ungrouped.push(task);
+      }
+    });
+    
+    return {
+      groupedTasks: Object.values(groups),
+      ungroupedTasks: ungrouped,
+    };
+  }, [todayTasks, allTodos]);
+
   const livePct = totalCount > 0 ? completedCount / totalCount : 0;
   
   // Current completion bonus: pct >= 0.8 ? 50 : completedCount >= 1 ? 15 : 0
@@ -379,6 +468,174 @@ export default function TodayTodoPage() {
 
   // Potential total if fully completed (100% completion bonus = 50 XP)
   const potentialTotalToday = Math.round((total_base_sum + (totalCount > 0 ? 50 : 0)) * nextStreakMult);
+
+  const renderTaskRow = (task: any) => {
+    const diff = task.difficulty || "medium";
+    const cfg = DIFFICULTY_CONFIG[diff as keyof typeof DIFFICULTY_CONFIG];
+    const meta = task.metadata || {};
+    const has4D = meta.cognitive_level != null;
+    return (
+      <Card key={task.id} className={`bg-white border-[#e4e1d7] transition-all shadow-sm ${task.is_completed ? "opacity-60 bg-stone-50/50" : "hover:border-[#d17847]/30"}`}>
+        <CardContent className="p-3 px-4">
+          <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+            <Checkbox
+              checked={task.is_completed}
+              onCheckedChange={() => handleComplete(task)}
+              className="accent-[#d17847]"
+            />
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${task.is_completed ? "line-through text-[#8a847a]" : "text-[#1f1a14]"}`}>
+                {task.todos?.title || t("未知任务", "Unknown task")}
+              </p>
+              {task.todos?.detail && (
+                <p className="text-xs mt-0.5 truncate text-[#8a847a]">{task.todos.detail}</p>
+              )}
+              {has4D && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {(meta.attribute_tags || []).map((tag: string) => (
+                    <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 bg-[#f9f8f5] text-[#8a847a] border-[#e4e1d7] rounded">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {has4D && meta.ai_encouragement && (
+                <p className="text-[10px] mt-1 italic text-[#b8a590]">{meta.ai_encouragement}</p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+              {has4D && (
+                <div className="flex gap-1 mr-1 hidden md:flex">
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-blue-50 text-blue-600 border-blue-200">
+                    L{meta.cognitive_level}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-50 text-purple-600 border-purple-200">
+                    L{meta.willpower_level}
+                  </Badge>
+                </div>
+              )}
+
+              {(() => {
+                const pts = task.base_points || cfg?.points || 20;
+                const badgeColor =
+                  pts < 20
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : pts < 40
+                    ? "bg-blue-50 text-blue-700 border-blue-200"
+                    : "bg-rose-50 text-rose-700 border-rose-200";
+                return (
+                  <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
+                    +{pts} XP
+                  </Badge>
+                );
+              })()}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-[#8a847a] hover:text-[#d17847] hover:bg-[#fdf8f3] rounded-md shrink-0"
+                onClick={() => {
+                  if (adjustingTaskId === task.id) {
+                    setAdjustingTaskId(null);
+                  } else {
+                    setAdjustingTaskId(task.id);
+                    setAdjustingPoints(task.base_points || cfg?.points || 20);
+                    setAdjustingFeedback(task.metadata?.feedback || "");
+                  }
+                }}
+              >
+                <Sliders className="h-3.5 w-3.5" />
+              </Button>
+
+              <Button
+                variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-red-500 rounded-md shrink-0"
+                onClick={() => handleRemove(task.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {adjustingTaskId === task.id && (
+            <div className="mt-3 p-3 bg-stone-50 border border-[#e4e1d7] rounded-lg space-y-3 relative z-10 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-[#8a847a]">
+                  {t("调整分值", "Adjust Score")}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 rounded-md border-[#e4e1d7] bg-white hover:bg-stone-50"
+                    onClick={() => setAdjustingPoints((prev) => Math.max(5, prev - 5))}
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-sm font-bold text-[#1f1a14] min-w-[32px] text-center" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                    {adjustingPoints}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 rounded-md border-[#e4e1d7] bg-white hover:bg-stone-50"
+                    onClick={() => setAdjustingPoints((prev) => Math.min(1000, prev + 5))}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <Label className="text-[10px] font-semibold text-[#8a847a] uppercase tracking-wider">
+                  {t("为什么不合理？ (可选)", "Why is it unreasonable? (Optional)")}
+                </Label>
+                <Input
+                  value={adjustingFeedback}
+                  onChange={(e) => setAdjustingFeedback(e.target.value)}
+                  placeholder={t("例如：实际耗时更长 / 任务难度较高", "E.g., Took more effort / High cognitive load")}
+                  className="h-8 text-xs bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#d17847]"
+                />
+              </div>
+
+              <div className="flex justify-end gap-1.5 pt-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => setAdjustingTaskId(null)}
+                >
+                  {t("取消", "Cancel")}
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-7 text-xs bg-[#d17847] hover:bg-[#c06838] text-white font-medium"
+                  onClick={async () => {
+                    try {
+                      await completeTask.mutateAsync({
+                        id: task.id,
+                        base_points: adjustingPoints,
+                        metadata: {
+                          ...meta,
+                          feedback: adjustingFeedback,
+                        },
+                      });
+                      setAdjustingTaskId(null);
+                      toast({ title: t("分值调整成功", "Score updated successfully") });
+                    } catch (err: any) {
+                      toast({ title: t("调整失败", "Failed to adjust"), description: err.message, variant: "destructive" });
+                    }
+                  }}
+                >
+                  {t("确定", "Confirm")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   if (tasksLoading) {
     return (
@@ -402,15 +659,60 @@ export default function TodayTodoPage() {
             0%, 100% { transform: scale(1.2) rotate(3deg); filter: drop-shadow(0 0 12px rgba(209, 120, 71, 0.9)); }
             50% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 0 4px rgba(209, 120, 71, 0.6)); }
           }
+          @keyframes borderGlow {
+            0%, 100% { box-shadow: 0 0 8px rgba(209, 120, 71, 0.15), inset 0 0 4px rgba(209, 120, 71, 0.05); }
+            50% { box-shadow: 0 0 24px rgba(209, 120, 71, 0.45), inset 0 0 12px rgba(209, 120, 71, 0.2); }
+          }
+          @keyframes slowBlink {
+            0%, 100% { opacity: 0.85; transform: scale(0.99); text-shadow: 0 0 4px rgba(209, 120, 71, 0.25); }
+            50% { opacity: 1; transform: scale(1.01); text-shadow: 0 0 16px rgba(209, 120, 71, 0.65); }
+          }
           .animate-flame-left {
             animation: flameFlickerLeft 0.6s infinite alternate ease-in-out;
           }
           .animate-flame-right {
             animation: flameFlickerRight 0.6s infinite alternate ease-in-out;
           }
+          .animate-glow-focus {
+            animation: borderGlow 3s infinite ease-in-out;
+          }
+          .animate-slow-blink {
+            animation: slowBlink 2.5s infinite ease-in-out;
+          }
         `}</style>
 
-        {/* Focus Timer Banner */}
+        {/* Navigation Tabs Switcher */}
+        <div className="flex bg-[#f3e8db]/60 p-1.5 rounded-xl border border-[#e8ddd0] gap-1.5 max-w-sm mx-auto sm:mx-0 shadow-inner">
+          <button
+            onClick={() => setActiveTab("list")}
+            className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === "list"
+                ? "bg-white text-[#d17847] shadow-sm border border-[#e4e1d7]"
+                : "text-[#8a847a] hover:text-[#1f1a14]"
+            }`}
+          >
+            <ClipboardList className="h-4 w-4" />
+            {t("今日待办", "Today's List")}
+          </button>
+          <button
+            onClick={() => setActiveTab("pomodoro")}
+            className={`flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              activeTab === "pomodoro"
+                ? "bg-white text-[#d17847] shadow-sm border border-[#e4e1d7]"
+                : "text-[#8a847a] hover:text-[#1f1a14]"
+            }`}
+          >
+            <Clock className={`h-4 w-4 ${timerState === "running" ? "animate-spin" : ""}`} />
+            {t("专注心流", "Focus Flow")}
+            {timerState === "running" && (
+              <span className="h-2 w-2 rounded-full bg-[#d17847] animate-pulse" />
+            )}
+          </button>
+        </div>
+
+        {activeTab === "list" && (
+          <>
+            {/* Focus Timer Banner */}
         <div
           className="rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
           style={{
@@ -430,77 +732,34 @@ export default function TodayTodoPage() {
           <div className="flex items-center gap-3">
             {timerState === "idle" ? (
               <Button
-                onClick={handleStartTimer}
+                onClick={async () => {
+                  await requestNotificationPermission();
+                  setAutoOverachieve(true);
+                  setTimerDuration(300);
+                  setTimeLeft(300);
+                  if (!activeTaskId && todayTasks.filter((t: any) => !t.is_completed).length > 0) {
+                    setTaskSelectorOpen(true);
+                  } else {
+                    setTimerState("running");
+                    setActiveTab("pomodoro");
+                  }
+                }}
                 className="bg-[#d17847] hover:bg-[#c06838] text-white font-medium shadow-sm transition-all flex items-center gap-1.5"
               >
                 <Play className="h-4 w-4" />
                 {t("开启五分钟计时", "Start 5-Min Timer")}
               </Button>
             ) : (
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-[#e4e1d7] py-1.5 px-3 rounded-lg shadow-sm">
-                <span
-                  className="font-bold text-lg text-[#d17847] font-mono tracking-wider animate-pulse"
-                  style={{ minWidth: "55px", textAlign: "center" }}
-                >
-                  {(() => {
-                    const total = timerMode === "countdown" ? timeLeft : 300 + countUpElapsed;
-                    const mins = Math.floor(total / 60);
-                    const secs = total % 60;
-                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-                  })()}
-                </span>
-                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-[#f3e8db] text-[#d17847]">
-                  {timerMode === "countdown" ? t("专注中", "Focusing") : t("突破中", "Overachieving")}
-                </span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleStopTimer}
-                  className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-md"
-                >
-                  <Square className="h-4 w-4 fill-red-500" />
-                </Button>
-              </div>
+              <Button
+                onClick={() => setActiveTab("pomodoro")}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all flex items-center gap-1.5 animate-pulse"
+              >
+                <Clock className="h-4 w-4" />
+                {t("回到专注心流", "Return to Flow")}
+              </Button>
             )}
           </div>
         </div>
-
-        {/* "On Fire" Active Task Section */}
-        {timerState === "running" && (
-          <div
-            className="rounded-xl p-4 flex items-center justify-between border border-[#f3e8db] shadow-md animate-in slide-in-from-top-3 duration-300 relative overflow-hidden"
-            style={{
-              background: "linear-gradient(135deg, rgba(253, 248, 243, 0.95) 0%, rgba(249, 239, 230, 0.95) 100%)",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            {/* Soft decorative glow behind the text */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(209,120,71,0.06)_0%,transparent_70%)] pointer-events-none" />
-
-            <div className="flex items-center justify-center w-full gap-4 relative z-10">
-              <Flame className="h-7 w-7 text-[#d17847] animate-flame-left shrink-0" />
-              <div className="text-center">
-                <span className="text-xs uppercase tracking-wider font-semibold text-[#8a847a] block mb-1">
-                  {t("正在专注做", "CURRENTLY FOCUSING ON")}
-                </span>
-                <span className="text-base font-bold text-[#1f1a14] max-w-md block truncate">
-                  {(() => {
-                    if (!activeTaskId) return t("不指定特定任务，直接开始", "General Session");
-                    const task = todayTasks.find((t: any) => t.id === activeTaskId);
-                    const todo = task?.todos;
-                    if (todo?.parent_id) {
-                      const parent = allTodos.find((p: any) => p.id === todo.parent_id);
-                      return parent ? `${parent.title} > ${todo.title}` : (todo.title || t("专注任务", "Focus Task"));
-                    }
-                    return todo?.title || t("专注任务", "Focus Task");
-                  })()}
-                </span>
-              </div>
-              <Flame className="h-7 w-7 text-[#d17847] animate-flame-right shrink-0" />
-            </div>
-          </div>
-        )}
-
 
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-3">
@@ -768,181 +1027,29 @@ export default function TodayTodoPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {todayTasks.map((task: any) => {
-              const diff = task.difficulty || "medium";
-              const cfg = DIFFICULTY_CONFIG[diff as keyof typeof DIFFICULTY_CONFIG];
-              const meta = task.metadata || {};
-              const has4D = meta.cognitive_level != null;
-              return (
-                <Card key={task.id} className={`bg-white border-[#e4e1d7] transition-all shadow-sm ${task.is_completed ? "opacity-60 bg-stone-50/50" : "hover:border-[#d17847]/30"}`}>
-                  <CardContent className="p-3 px-4">
-                    <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
-                      <Checkbox
-                        checked={task.is_completed}
-                        onCheckedChange={() => handleComplete(task)}
-                        className="accent-[#d17847]"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${task.is_completed ? "line-through text-[#8a847a]" : "text-[#1f1a14]"}`}>
-                          {(() => {
-                            const todo = task.todos;
-                            if (todo?.parent_id) {
-                              const parent = allTodos.find((p: any) => p.id === todo.parent_id);
-                              return parent ? `${parent.title} > ${todo.title}` : (todo?.title || t("未知任务", "Unknown task"));
-                            }
-                            return todo?.title || t("未知任务", "Unknown task");
-                          })()}
-                        </p>
-                        {task.todos?.detail && (
-                          <p className="text-xs mt-0.5 truncate text-[#8a847a]">{task.todos.detail}</p>
-                        )}
-                        {has4D && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {(meta.attribute_tags || []).map((tag: string) => (
-                              <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 bg-[#f9f8f5] text-[#8a847a] border-[#e4e1d7] rounded">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        {has4D && meta.ai_encouragement && (
-                          <p className="text-[10px] mt-1 italic text-[#b8a590]">{meta.ai_encouragement}</p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
-                        {has4D && (
-                          <div className="flex gap-1 mr-1 hidden md:flex">
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-blue-50 text-blue-600 border-blue-200">
-                              L{meta.cognitive_level}
-                            </Badge>
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-50 text-purple-600 border-purple-200">
-                              L{meta.willpower_level}
-                            </Badge>
-                          </div>
-                        )}
-
-                        {(() => {
-                          const pts = task.base_points || cfg?.points || 20;
-                          const badgeColor =
-                            pts < 20
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : pts < 40
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
-                              : "bg-rose-50 text-rose-700 border-rose-200";
-                          return (
-                            <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
-                              +{pts} XP
-                            </Badge>
-                          );
-                        })()}
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-[#8a847a] hover:text-[#d17847] hover:bg-[#fdf8f3] rounded-md shrink-0"
-                          onClick={() => {
-                            if (adjustingTaskId === task.id) {
-                              setAdjustingTaskId(null);
-                            } else {
-                              setAdjustingTaskId(task.id);
-                              setAdjustingPoints(task.base_points || cfg?.points || 20);
-                              setAdjustingFeedback(task.metadata?.feedback || "");
-                            }
-                          }}
-                        >
-                          <Sliders className="h-3.5 w-3.5" />
-                        </Button>
-
-                        <Button
-                          variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-red-500 rounded-md shrink-0"
-                          onClick={() => handleRemove(task.id)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {adjustingTaskId === task.id && (
-                      <div className="mt-3 p-3 bg-stone-50 border border-[#e4e1d7] rounded-lg space-y-3 relative z-10 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-[#8a847a]">
-                            {t("调整分值", "Adjust Score")}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 rounded-md border-[#e4e1d7] bg-white hover:bg-stone-50"
-                              onClick={() => setAdjustingPoints((prev) => Math.max(5, prev - 5))}
-                            >
-                              <Minus className="h-3.5 w-3.5" />
-                            </Button>
-                            <span className="text-sm font-bold text-[#1f1a14] min-w-[32px] text-center" style={{ fontFamily: "JetBrains Mono, monospace" }}>
-                              {adjustingPoints}
-                            </span>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 rounded-md border-[#e4e1d7] bg-white hover:bg-stone-50"
-                              onClick={() => setAdjustingPoints((prev) => Math.min(1000, prev + 5))}
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <Label className="text-[10px] font-semibold text-[#8a847a] uppercase tracking-wider">
-                            {t("为什么不合理？ (可选)", "Why is it unreasonable? (Optional)")}
-                          </Label>
-                          <Input
-                            value={adjustingFeedback}
-                            onChange={(e) => setAdjustingFeedback(e.target.value)}
-                            placeholder={t("例如：实际耗时更长 / 任务难度较高", "E.g., Took more effort / High cognitive load")}
-                            className="h-8 text-xs bg-white border-[#e4e1d7] focus-visible:ring-1 focus-visible:ring-[#d17847]"
-                          />
-                        </div>
-
-                        <div className="flex justify-end gap-1.5 pt-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => setAdjustingTaskId(null)}
-                          >
-                            {t("取消", "Cancel")}
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs bg-[#d17847] hover:bg-[#c06838] text-white font-medium"
-                            onClick={async () => {
-                              try {
-                                await completeTask.mutateAsync({
-                                  id: task.id,
-                                  base_points: adjustingPoints,
-                                  metadata: {
-                                    ...meta,
-                                    feedback: adjustingFeedback,
-                                  },
-                                });
-                                setAdjustingTaskId(null);
-                                toast({ title: t("分值调整成功", "Score updated successfully") });
-                              } catch (err: any) {
-                                toast({ title: t("调整失败", "Failed to adjust"), description: err.message, variant: "destructive" });
-                              }
-                            }}
-                          >
-                            {t("确定", "Confirm")}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="space-y-4">
+            {groupedTasks.map((group) => (
+              <Card key={group.parent?.id || Math.random().toString()} className="bg-white border-[#e4e1d7] overflow-hidden shadow-sm">
+                <div className="bg-[#fdfbf7] border-b border-[#e4e1d7] px-4 py-2.5 flex items-center justify-between">
+                  <h3 className="font-bold text-[#1f1a14] flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4 text-[#d17847]" />
+                    {group.parent?.title || t("未知主任务", "Unknown Project")}
+                  </h3>
+                  <Badge variant="outline" className="bg-white text-xs border-[#e4e1d7]">
+                    {group.tasks.filter((t: any) => t.is_completed).length} / {group.tasks.length}
+                  </Badge>
+                </div>
+                <div className="p-2 space-y-2 bg-[#fdfbf7]/30">
+                  {group.tasks.map((task: any) => renderTaskRow(task))}
+                </div>
+              </Card>
+            ))}
+            
+            {ungroupedTasks.length > 0 && (
+              <div className="space-y-2">
+                {ungroupedTasks.map((task: any) => renderTaskRow(task))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1041,6 +1148,345 @@ export default function TodayTodoPage() {
             </Card>
           </CollapsibleContent>
         </Collapsible>
+          </>
+        )}
+
+        {activeTab === "pomodoro" && createPortal(
+          <div className="fixed top-0 left-0 w-screen h-screen z-[9999] flex flex-col items-center justify-center overflow-y-auto m-0 p-0 transition-colors duration-1000" 
+            style={{ 
+              background: timerMode === "countdown" ? "linear-gradient(135deg, #cc4d37 0%, #a63925 100%)" : "linear-gradient(135deg, #184333 0%, #0d291e 100%)",
+            }}>
+            <div className="absolute top-6 right-6 z-[110]">
+              <Button variant="ghost" onClick={() => setActiveTab("list")} className="text-white/80 hover:text-white hover:bg-white/20 font-bold">
+                <X className="h-5 w-5 mr-1"/> {t("最小化", "Minimize")}
+              </Button>
+            </div>
+            
+            <div className="w-full max-w-xl p-4 animate-in fade-in zoom-in-95 duration-500 space-y-6 my-auto">
+            
+            {/* Cycle Visualizer (Pomodoro Tomatoes) */}
+            <div className="flex justify-center items-center gap-2 mb-2">
+               {(() => {
+                 const elapsed = getElapsedSeconds();
+                 const totalCycles = Math.floor(elapsed / 1500) + 1;
+                 const cycles = Array.from({ length: Math.min(totalCycles, 8) });
+                 return cycles.map((_, i) => (
+                   <div key={i} className={`h-3 w-3 rounded-full transition-all duration-500 ${i < totalCycles - 1 ? "bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" : "bg-white/30 animate-pulse"}`} />
+                 ));
+               })()}
+            </div>
+
+            {/* Active Task Binder Header Card */}
+            <Card
+              className="bg-white/95 backdrop-blur shadow-2xl relative overflow-hidden transition-all duration-300 border-none"
+            >
+              <CardContent className="p-4 flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[#d17847] block mb-1">
+                    {t("当前专注任务", "CURRENT FOCUS TASK")}
+                  </span>
+                  {activeTaskId ? (
+                    (() => {
+                      const task = todayTasks.find((t: any) => t.id === activeTaskId);
+                      const todo = task?.todos;
+                      let displayTitle = todo?.title || t("专注任务", "Focus Task");
+                      let parentTitle = "";
+                      if (todo?.parent_id) {
+                        const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                        if (parent) {
+                          parentTitle = parent.title;
+                        }
+                      }
+                      return (
+                        <div className="flex items-center gap-2 animate-in fade-in duration-200">
+                          <Flame className="h-4 w-4 text-[#d17847] animate-pulse shrink-0" />
+                          <div className="min-w-0">
+                            {parentTitle && (
+                              <span className="text-[10px] text-[#8a847a] block truncate">
+                                {parentTitle}
+                              </span>
+                            )}
+                            <span className="text-sm font-bold text-[#1f1a14] truncate block">
+                              {displayTitle}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="flex items-center gap-2 animate-in fade-in duration-200">
+                      <Sparkles className="h-4 w-4 text-[#d17847]/70 shrink-0" />
+                      <span className="text-xs font-semibold text-[#8a847a] truncate block">
+                        {timerState === "idle"
+                          ? t("未绑定任务，可在右侧选择或直接开启心流", "No bound task, pick on the right or start flow")
+                          : t("自律专注心流中", "Self-discipline focus flow active")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dropdown Task Binder if Idle */}
+                {timerState === "idle" && todayTasks.filter((t: any) => !t.is_completed).length > 0 && (
+                  <div className="shrink-0 w-44 animate-in fade-in duration-200">
+                    <select
+                      value={activeTaskId || "none"}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setActiveTaskId(val === "none" ? null : val);
+                      }}
+                      className="w-full h-8 text-xs border border-[#e4e1d7] rounded-md focus:ring-1 focus:ring-[#d17847] focus:border-[#d17847] bg-white px-2 outline-none text-[#1f1a14] font-medium"
+                    >
+                      <option value="none" className="font-semibold text-[#8a847a]">
+                        {t("✨ 纯净心流会话", "✨ General Flow")}
+                      </option>
+                      {todayTasks
+                        .filter((t: any) => !t.is_completed)
+                        .map((task: any) => {
+                          const todo = task.todos;
+                          let title = todo?.title || "";
+                          if (todo?.parent_id) {
+                            const parent = allTodos.find((p: any) => p.id === todo.parent_id);
+                            if (parent) title = `${parent.title} > ${title}`;
+                          }
+                          return (
+                            <option key={task.id} value={task.id}>
+                              {title}
+                            </option>
+                          );
+                        })}
+                    </select>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Circular Progress Timer Container */}
+            <div className="flex flex-col items-center justify-center p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl relative overflow-hidden transition-all duration-300">
+              
+              {/* Large SVG Ring Clock */}
+              <div className="relative flex items-center justify-center mb-6 mt-2 select-none">
+                {(() => {
+                  const size = 300;
+                  const strokeWidth = 10;
+                  const radius = (size - strokeWidth) / 2;
+                  const circumference = 2 * Math.PI * radius;
+                  
+                  // Percentage of elapsed / remaining time
+                  let pct = 0;
+                  if (timerMode === "countdown") {
+                    pct = (timeLeft / timerDuration) * 100;
+                  } else {
+                    // Visually represent 25 mins (1500 seconds) cycles during countup
+                    pct = (((timerDuration + countUpElapsed) % 1500) / 1500) * 100;
+                  }
+
+                  const strokeDashoffset = circumference - (pct / 100) * circumference;
+                  const isBreakthrough = timerMode === "countup";
+
+                  return (
+                    <>
+                      <svg width={size} height={size} className="-rotate-90 filter drop-shadow-xl">
+                        {/* Background Ring */}
+                        <circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={radius}
+                          stroke="rgba(255,255,255,0.15)"
+                          strokeWidth={strokeWidth}
+                          fill="transparent"
+                        />
+                        {/* Foreground Ring with transition */}
+                        <circle
+                          cx={size / 2}
+                          cy={size / 2}
+                          r={radius}
+                          stroke="white"
+                          strokeWidth={strokeWidth}
+                          fill="transparent"
+                          strokeDasharray={circumference}
+                          strokeDashoffset={strokeDashoffset}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 ease-linear"
+                        />
+                      </svg>
+
+                      {/* Inside details */}
+                      <div className="absolute flex flex-col items-center justify-center text-center">
+                        <span
+                          className="text-6xl font-extrabold font-mono tracking-widest text-white drop-shadow-md"
+                          style={{
+                            fontFamily: "JetBrains Mono, monospace",
+                          }}
+                        >
+                          {(() => {
+                            const total = timerMode === "countdown" ? timeLeft : timerDuration + countUpElapsed;
+                            const mins = Math.floor(total / 60);
+                            const secs = total % 60;
+                            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                          })()}
+                        </span>
+                        
+                        <Badge
+                          variant="outline"
+                          className={`mt-4 font-bold px-3 py-1 rounded-full border-2 text-xs uppercase tracking-wider transition-all ${
+                            isBreakthrough
+                              ? "bg-white/20 text-white border-white/40"
+                              : timerState === "running"
+                              ? "bg-white/20 text-white border-white/40"
+                              : timerState === "paused"
+                              ? "bg-white/10 text-white/80 border-white/20 animate-pulse"
+                              : "bg-black/10 text-white/60 border-white/10"
+                          }`}
+                        >
+                          {isBreakthrough
+                            ? t("突破挑战中", "Overachieving")
+                            : timerState === "running"
+                            ? t("专注倒计时", "Focusing")
+                            : timerState === "paused"
+                            ? t("已暂停", "Paused")
+                            : t("心流就绪", "Ready")}
+                        </Badge>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Preset Duration Pills */}
+              <div className="w-full max-w-sm mb-8 z-10">
+                <span className="text-[10px] font-bold text-white/60 uppercase tracking-wider block mb-2 text-center">
+                  {t("设定起步时长", "PRESET START DURATION")}
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: t("5分钟", "5 Min"), value: 300 },
+                    { label: t("15分钟", "15 Min"), value: 900 },
+                    { label: t("25分钟", "25 Min"), value: 1500 },
+                    { label: t("35分钟", "35 Min"), value: 2100 },
+                    { label: t("45分钟", "45 Min"), value: 2700 },
+                    { label: t("60分钟", "60 Min"), value: 3600 },
+                  ].map((pill) => {
+                    const isSelected = timerDuration === pill.value;
+                    const isDisabled = timerState !== "idle";
+                    return (
+                      <button
+                        key={pill.value}
+                        disabled={isDisabled}
+                        onClick={() => {
+                          setTimerDuration(pill.value);
+                          setTimeLeft(pill.value);
+                          setAutoOverachieve(false);
+                        }}
+                        className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all border ${
+                          isSelected
+                            ? "bg-white text-[#cc4d37] border-white shadow-md scale-105"
+                            : isDisabled
+                            ? "bg-black/10 text-white/30 border-transparent cursor-not-allowed opacity-50"
+                            : "bg-black/20 text-white/80 border-transparent hover:bg-white/20 hover:text-white"
+                        }`}
+                      >
+                        {pill.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Core Control Panel */}
+              <div className="flex items-center gap-4 z-10">
+                {/* Sound oscillator mute/unmute */}
+                <Button
+                  size="icon"
+                  variant="outline"
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className="h-12 w-12 rounded-full border-none bg-white/20 text-white hover:bg-white/30"
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="h-5 w-5" />
+                  ) : (
+                    <VolumeX className="h-5 w-5 opacity-60" />
+                  )}
+                </Button>
+
+                {/* Play / Pause Toggle */}
+                {timerState === "running" ? (
+                  <Button
+                    onClick={() => setTimerState("paused")}
+                    className="bg-white text-[#cc4d37] hover:bg-[#fdf8f3] h-14 px-8 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl transition-all flex items-center gap-2"
+                  >
+                    <Pause className="h-6 w-6 fill-current text-current" />
+                    {t("暂停专注", "Pause")}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={async () => {
+                      if (!activeTaskId && todayTasks.filter((t: any) => !t.is_completed).length > 0 && timerState === "idle") {
+                        // Prompt task selection if idle and no task selected
+                        // But wait, the task selector dialog is at the bottom of the root. It will be hidden behind createPortal!
+                        // That's fine, we can drop the prompt here because they have the dropdown select above.
+                        // Wait, no, we need to handle this differently. The user CAN pick from the dropdown. 
+                        // If they don't, we can just start general flow.
+                        await requestNotificationPermission();
+                        setTimerState("running");
+                      } else {
+                        await requestNotificationPermission();
+                        setTimerState("running");
+                      }
+                    }}
+                    className="bg-white text-[#cc4d37] hover:bg-[#fdf8f3] h-14 px-8 rounded-full font-bold text-lg shadow-xl hover:shadow-2xl transition-all flex items-center gap-2"
+                  >
+                    <Play className="h-6 w-6 fill-current text-current ml-1" />
+                    {timerState === "paused" ? t("继续", "Resume") : t("开始", "Start")}
+                  </Button>
+                )}
+
+                {/* Stop & Reset (Visible if not idle) */}
+                {timerState !== "idle" && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={handleStopTimer}
+                    className="h-12 w-12 rounded-full border-none bg-white/20 text-white hover:bg-red-500/80"
+                  >
+                    <Square className="h-5 w-5 fill-current" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* HIGH IMPACT MOTIVATIONAL BANNER - “再干两分钟再说别的” */}
+            <div
+              className="rounded-2xl p-5 text-center border overflow-hidden relative shadow-sm animate-slow-blink"
+              style={{
+                background: "linear-gradient(135deg, #fdf8f3 0%, #fdf5eb 100%)",
+                borderColor: "#f3e8db",
+              }}
+            >
+              {/* Radial gradient backing */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(209,120,71,0.04)_0%,transparent_70%)] pointer-events-none" />
+
+              <div className="relative z-10">
+                <span className="text-[#8a847a] text-[10px] tracking-widest font-black block mb-1 uppercase">
+                  {t("🏆 自律心流誓言", "🏆 DISCIPLINE HEART MIND VOW")}
+                </span>
+                <h3
+                  className="text-2xl font-black tracking-wider text-[#d17847]"
+                  style={{
+                    textShadow: "0px 1px 2px rgba(209,120,71,0.15)",
+                  }}
+                >
+                  {t("“再干两分钟再说别的”", "“Just two more minutes before anything else”")}
+                </h3>
+                <p className="text-[10px] text-[#b8a590] mt-1.5 italic font-medium leading-relaxed max-w-sm mx-auto">
+                  {t("五分钟起步，延迟满足。面对分心时，告诉自己再坚持两分钟，突破舒适区！", "Start with 5 minutes, delay gratification. When distracted, push 2 more minutes to expand your limit!")}
+                </p>
+              </div>
+            </div>
+            
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
 
       {/* Focus Timer Selector Dialog */}
@@ -1064,6 +1510,7 @@ export default function TodayTodoPage() {
                   onClick={() => {
                     setActiveTaskId(task.id);
                     setTimerState("running");
+                    setActiveTab("pomodoro");
                     setTaskSelectorOpen(false);
                   }}
                   className="w-full text-left p-3 rounded-lg border border-[#e4e1d7] hover:border-[#d17847]/60 hover:bg-[#fdf8f3] transition-all flex items-center justify-between group"
@@ -1088,6 +1535,7 @@ export default function TodayTodoPage() {
               onClick={() => {
                 setActiveTaskId(null);
                 setTimerState("running");
+                setActiveTab("pomodoro");
                 setTaskSelectorOpen(false);
               }}
               className="w-full text-center p-3 rounded-lg border border-dashed border-[#e4e1d7] hover:border-[#d17847]/60 hover:bg-[#fdf8f3] transition-all text-sm font-medium text-[#8a847a] hover:text-[#d17847]"

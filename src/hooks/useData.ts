@@ -1290,7 +1290,7 @@ export function useTodayTasks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_tasks")
-        .select("*, todos(title, detail, importance, category, is_completed, is_archived)")
+        .select("*, todos(title, detail, importance, category, is_completed, is_archived, parent_id)")
         .eq("task_date", today)
         .order("created_at", { ascending: true });
       if (error) throw error;
