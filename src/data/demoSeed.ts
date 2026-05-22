@@ -89,6 +89,7 @@ export const demoSettings = {
   fasting_start_minute: 0,
   show_goals_in_schedule: true,
   timezone: "Asia/Tokyo",
+  day_start_hour: 0,
   custom_thought_tags: null,
   hidden_features: [] as string[],
   created_at: "2026-04-01T00:00:00+09:00",

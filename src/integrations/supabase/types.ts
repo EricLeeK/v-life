@@ -686,8 +686,8 @@ export type Database = {
           monthly_budget: number | null
           show_goals_in_schedule: boolean | null
           target_weight: number | null
-          timezone: string | null
           hidden_features: string[] | null
+          day_start_hour: number | null
           updated_at: string
           user_id: string | null
         }
@@ -708,8 +708,8 @@ export type Database = {
           monthly_budget?: number | null
           show_goals_in_schedule?: boolean | null
           target_weight?: number | null
-          timezone?: string | null
           hidden_features?: string[] | null
+          day_start_hour?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -730,8 +730,8 @@ export type Database = {
           monthly_budget?: number | null
           show_goals_in_schedule?: boolean | null
           target_weight?: number | null
-          timezone?: string | null
           hidden_features?: string[] | null
+          day_start_hour?: number | null
           updated_at?: string
           user_id?: string | null
         }

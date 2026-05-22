@@ -23,6 +23,7 @@ import {
   useEstimateDifficulty,
   todoHooks,
   getLocalDateString,
+  useSettings,
 } from "@/hooks/useData";
 
 const DIFFICULTY_CONFIG = {
@@ -141,14 +142,17 @@ export default function TodayTodoPage() {
   const [adjustingPoints, setAdjustingPoints] = useState<number>(20);
   const [adjustingFeedback, setAdjustingFeedback] = useState<string>("");
 
+  const { data: settings } = useSettings();
+
   useEffect(() => {
     if (userPoints) {
-      const todayStr = getLocalDateString();
+      const offsetHours = settings?.day_start_hour || 0;
+      const todayStr = getLocalDateString(new Date(), offsetHours);
       if (!userPoints.last_active_date || userPoints.last_active_date < todayStr) {
         recalcPoints.mutate();
       }
     }
-  }, [userPoints]);
+  }, [userPoints, settings?.day_start_hour]);
 
   // ============ Focus Timer States ============
   const [activeTab, setActiveTab] = useState<"list" | "pomodoro">("list");

@@ -245,6 +245,29 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Day Start Time */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("跨天结算时间", "Day Reset Time")}</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              <Label>{t("新的一天从几点开始？", "When does a new day start?")}</Label>
+              <p className="text-xs text-muted-foreground">{t("如果你经常熬夜，可以设置凌晨几点才算新的一天（比如设置 2:00，那么凌晨 1 点还是算昨天）。", "If you stay up late, you can shift the start of the day (e.g., set to 2:00 AM, and 1:00 AM will still count towards yesterday).")}</p>
+              <Select value={String(draft.day_start_hour || 0)} onValueChange={(v) => update("day_start_hour", Number(v))}>
+                <SelectTrigger className="w-full sm:w-[200px] mt-2"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{t("午夜 00:00", "Midnight 00:00")}</SelectItem>
+                  <SelectItem value="1">01:00 AM</SelectItem>
+                  <SelectItem value="2">02:00 AM</SelectItem>
+                  <SelectItem value="3">03:00 AM</SelectItem>
+                  <SelectItem value="4">04:00 AM</SelectItem>
+                  <SelectItem value="5">05:00 AM</SelectItem>
+                  <SelectItem value="6">06:00 AM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Module Visibility Settings */}
         <Card>
           <CardHeader>

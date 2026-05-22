@@ -1284,7 +1284,9 @@ export const userPointsHooks = useCrudHooks("user_points", "user_points");
 
 export function useTodayTasks() {
   const { isDemo, demoData } = useDemoMode();
-  const today = new Date().toISOString().split("T")[0];
+  const { data: settings } = useSettings();
+  const offsetHours = settings?.day_start_hour || 0;
+  const today = getLocalDateString(new Date(), offsetHours);
   const supa = useQuery({
     queryKey: ["daily_tasks", "today", today],
     queryFn: async () => {
@@ -1299,7 +1301,6 @@ export function useTodayTasks() {
     enabled: !isDemo,
   });
   if (isDemo) {
-    const today = new Date().toISOString().split("T")[0];
     const tasks = demoData.daily_tasks
       .filter((dt: any) => dt.task_date === today)
       .map((dt: any) => {
@@ -1345,14 +1346,17 @@ export function useUserPoints() {
 
 export function useAddToToday() {
   const { isDemo, demoData } = useDemoMode();
+  const { data: settings } = useSettings();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { todo_id: string; difficulty: string; base_points: number; metadata?: any }) => {
+      const offsetHours = settings?.day_start_hour || 0;
+      const todayStr = getLocalDateString(new Date(), offsetHours);
+
       if (isDemo) {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
-        const today = new Date().toISOString().split("T")[0];
-        const item = { id, user_id: "demo-user", ...payload, task_date: today, is_completed: false, completed_at: null, created_at: now, updated_at: now, metadata: payload.metadata || {} };
+        const item = { id, user_id: "demo-user", ...payload, task_date: todayStr, is_completed: false, completed_at: null, created_at: now, updated_at: now, metadata: payload.metadata || {} };
         demoData.daily_tasks.push(item);
         return item;
       }
@@ -1360,7 +1364,6 @@ export function useAddToToday() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const todayStr = getLocalDateString();
       const insertData = {
         ...payload,
         user_id: user.id,
@@ -1441,15 +1444,17 @@ export function useRemoveFromToday() {
   });
 }
 
-export const getLocalDateString = (date = new Date()) => {
-  const offset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+export const getLocalDateString = (date = new Date(), offsetHours = 0) => {
+  // shift the date backwards by the offset so that e.g. 1:00 AM becomes 23:00 yesterday
+  const shiftedDate = new Date(date.getTime() - offsetHours * 3600000);
+  const offset = shiftedDate.getTimezoneOffset();
+  const localDate = new Date(shiftedDate.getTime() - offset * 60 * 1000);
   return localDate.toISOString().split("T")[0];
 };
 
-export const getYesterdayLocalDateString = (date = new Date()) => {
+export const getYesterdayLocalDateString = (date = new Date(), offsetHours = 0) => {
   const yesterday = new Date(date.getTime() - 86400000);
-  return getLocalDateString(yesterday);
+  return getLocalDateString(yesterday, offsetHours);
 };
 
 export const getDatesBetween = (startStr: string, endStr: string): string[] => {
@@ -1475,8 +1480,17 @@ export function useRecalculatePoints() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const today = getLocalDateString(new Date());
-      const yesterday = getYesterdayLocalDateString(new Date());
+      let offsetHours = 0;
+      if (!isDemo) {
+        const { data: settingsData } = await supabase.from('settings').select('day_start_hour').limit(1).single();
+        if (settingsData?.day_start_hour) {
+          offsetHours = settingsData.day_start_hour;
+        }
+      } else {
+        offsetHours = demoData.settings.day_start_hour || 0;
+      }
+      const today = getLocalDateString(new Date(), offsetHours);
+      const yesterday = getYesterdayLocalDateString(new Date(), offsetHours);
 
       if (isDemo) {
         let points = demoData.user_points[0];
