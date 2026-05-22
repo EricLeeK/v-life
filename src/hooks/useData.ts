@@ -1460,7 +1460,6 @@ export const getDatesBetween = (startStr: string, endStr: string): string[] => {
   const end = new Date(endParts[0], endParts[1] - 1, endParts[2]);
   
   const current = new Date(start);
-  current.setDate(current.getDate() + 1);
   while (current <= end) {
     const yyyy = current.getFullYear();
     const mm = String(current.getMonth() + 1).padStart(2, '0');
