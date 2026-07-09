@@ -1,0 +1,56 @@
+# Supabase Free-Tier Heartbeat
+#
+# Why: Supabase pauses free-tier projects after 7 days of inactivity (no API
+# requests). A paused project takes down Auth ("Failed to fetch") and Realtime
+# ("unhealthy") together. This workflow pings the project's REST API on a
+# schedule so the inactivity timer never reaches 7 days.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions → New repository secret):
+#   SUPABASE_URL       = your project URL, e.g. https://veabdivlfhctseihypzl.supabase.co
+#                        (copy the value of VITE_SUPABASE_URL from your .env)
+#   SUPABASE_ANON_KEY  = your anon/publishable key
+#                        (copy the value of VITE_SUPABASE_PUBLISHABLE_KEY from your .env)
+#
+# Schedule: every 5 days at 03:17 UTC (off-round minute to avoid GitHub's
+# top-of-the-hour cron load). Adjust freely — just keep the gap under 7 days.
+
+name: Supabase Heartbeat
+
+on:
+  schedule:
+    - cron: "17 3 */5 * *"   # every 5 days
+  workflow_dispatch: {}      # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -uo pipefail
+
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Missing secret(s). Add SUPABASE_URL and SUPABASE_ANON_KEY under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+          echo "Heartbeat -> ${SUPABASE_URL}/rest/v1/"
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/")
+
+          echo "HTTP status: ${code}"
+
+          # 2xx = project is up and the request counts as activity.
+          # Anything else (incl. 000 = unreachable) usually means the project
+          # is paused or deleted — fail so GitHub emails you a heads-up.
+          if [ "${code}" -ge 200 ] && [ "${code}" -lt 300 ]; then
+            echo "✅ Heartbeat OK — project is active, pause timer reset."
+          else
+            echo "::error::Heartbeat failed (status ${code}). The project may be paused or deleted. Restore it at https://supabase.com/dashboard"
+            exit 1
+          fi
