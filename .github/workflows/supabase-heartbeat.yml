@@ -5,11 +5,11 @@
 # ("unhealthy") together. This workflow pings the project's REST API on a
 # schedule so the inactivity timer never reaches 7 days.
 #
-# Required repo secrets (Settings → Secrets and variables → Actions → New repository secret):
+# Required repo secrets (Settings -> Secrets and variables -> Actions -> New repository secret):
 #   SUPABASE_URL       = your project URL, e.g. https://veabdivlfhctseihypzl.supabase.co
 #                        (copy the value of VITE_SUPABASE_URL from your .env)
-#   SUPABASE_ANON_KEY  = your anon/publishable key
-#                        (copy the value of VITE_SUPABASE_PUBLISHABLE_KEY from your .env)
+#   SUPABASE_ANON_KEY  = your current anon/publishable key
+#                        (copy the publishable key from Supabase API Keys)
 #
 # Schedule: every 5 days at 03:17 UTC (off-round minute to avoid GitHub's
 # top-of-the-hour cron load). Adjust freely — just keep the gap under 7 days.
@@ -37,11 +37,12 @@ jobs:
             exit 1
           fi
 
-          echo "Heartbeat -> ${SUPABASE_URL}/rest/v1/"
+          echo "Heartbeat -> ${SUPABASE_URL}/rest/v1/settings?select=id&limit=1"
           code=$(curl -s -o /dev/null -w "%{http_code}" \
             --max-time 30 \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
-            "${SUPABASE_URL}/rest/v1/")
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/settings?select=id&limit=1")
 
           echo "HTTP status: ${code}"
 
