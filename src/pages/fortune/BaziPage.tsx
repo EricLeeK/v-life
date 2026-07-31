@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
+import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
 import { SaveReadingButton } from "@/components/fortune/SaveReadingButton";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/contexts/LanguageContext";
@@ -45,23 +46,37 @@ export default function BaziPage() {
 
   return (
     <AppLayout title={t("八字日柱", "BaZi Day Pillar")}>
-      <div className="mx-auto max-w-lg space-y-4">
-        <Link to="/fortune" className="text-[12px] text-[#8a847a]">
-          ← {t("返回运势", "Back")}
-        </Link>
+      <div className="space-y-8">
+        <FortunePageHeader
+          title={t("八字日柱", "BaZi Day Pillar")}
+          subtitle={t("轻量日柱与五行，不做恐吓向细盘", "A gentle day-pillar snapshot — not a full chart")}
+          backLabel={t("返回运势", "Back to Fortune")}
+        />
+
         {!hasBirthDate ? (
-          <Link
-            to="/settings"
-            className="block rounded-xl border border-[#e4e1d7] bg-white p-4 text-center text-[13px] text-[#d17847]"
-          >
-            {t("请先在设置填写生日", "Please add birthday in Settings")}
-          </Link>
+          <div className="card-premium p-8 text-center">
+            <p className="text-[14px] text-[#8a847a]">
+              {t("请先在设置填写生日", "Please add birthday in Settings")}
+            </p>
+            <Link
+              to="/settings"
+              className="mt-4 inline-flex rounded-lg bg-[#fce0c8] px-4 py-2 text-[13px] font-medium text-[#d17847]"
+            >
+              {t("去设置", "Open Settings")}
+            </Link>
+          </div>
         ) : (
-          <>
-            <div className="rounded-xl border border-[#e4e1d7] bg-white p-4">
-              <div className="text-[11px] text-[#8a847a]">{t("日柱", "Day pillar")}</div>
-              <div className="mt-1 text-2xl font-semibold text-[#1f1a14]">{pillar!.label}</div>
-              <div className="mt-4 space-y-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
+            <div className="card-premium space-y-5 p-5">
+              <div>
+                <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+                  {t("日柱", "Day pillar")}
+                </p>
+                <p className="mt-1 font-mono-data text-[40px] font-semibold text-[#1f1a14]">
+                  {pillar!.label}
+                </p>
+              </div>
+              <div className="space-y-2.5">
                 {pillar!.wuxing.map((w) => (
                   <div key={w.element} className="flex items-center gap-2 text-[12px]">
                     <span className="w-6 text-[#5c564c]">{w.element}</span>
@@ -71,26 +86,37 @@ export default function BaziPage() {
                         style={{ width: `${(w.count / maxWx) * 100}%` }}
                       />
                     </div>
-                    <span className="w-4 text-[#8a847a]">{w.count}</span>
+                    <span className="w-4 font-mono-data text-[#8a847a]">{w.count}</span>
                   </div>
                 ))}
               </div>
+              <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void remind()} disabled={loading}>
+                {loading ? t("生成中…", "Working…") : t("今日提醒", "Today's note")}
+              </Button>
             </div>
-            <Button className="w-full" onClick={() => void remind()} disabled={loading}>
-              {loading ? t("生成中…", "Working…") : t("今日提醒", "Today's note")}
-            </Button>
-            {reading && (
-              <div className="space-y-3 rounded-xl border border-[#e4e1d7] bg-white p-4">
-                <p className="text-[13px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">{reading}</p>
-                <SaveReadingButton
-                  type="bazi"
-                  payload={{ pillar, birth_date: profile?.birth_date }}
-                  reading={reading}
-                  className="w-full"
-                />
-              </div>
-            )}
-          </>
+
+            <div className="card-premium min-h-[280px] p-6">
+              {!reading ? (
+                <div className="flex min-h-[240px] items-center justify-center text-[14px] text-[#8a847a]">
+                  {t("点左侧生成今日提醒", "Generate today's note on the left")}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+                    {t("今日提醒", "Today's note")}
+                  </p>
+                  <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">
+                    {reading}
+                  </p>
+                  <SaveReadingButton
+                    type="bazi"
+                    payload={{ pillar, birth_date: profile?.birth_date }}
+                    reading={reading}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </div>
     </AppLayout>

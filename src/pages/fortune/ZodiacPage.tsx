@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
+import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
 import { SaveReadingButton } from "@/components/fortune/SaveReadingButton";
+import { MetricStarCard } from "@/components/fortune/StarRow";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLang } from "@/contexts/LanguageContext";
@@ -50,35 +51,47 @@ export default function ZodiacPage() {
 
   return (
     <AppLayout title={t("星座详解", "Zodiac")}>
-      <div className="mx-auto max-w-lg space-y-4">
-        <Link to="/fortune" className="text-[12px] text-[#8a847a]">
-          ← {t("返回运势", "Back")}
-        </Link>
-        <Select value={sign} onValueChange={(v) => setSign(v as ZodiacSign)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ZODIAC_SIGNS.map((s) => (
-              <SelectItem key={s} value={s}>
-                {lang === "zh" ? ZODIAC_LABELS[s].zh : ZODIAC_LABELS[s].en}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="rounded-xl border border-[#e4e1d7] bg-white p-4 text-[13px] text-[#5c564c]">
-          {reading || rule.body}
+      <div className="space-y-8">
+        <FortunePageHeader
+          title={t("星座详解", "Zodiac")}
+          subtitle={t("可切换星座浏览，不改动档案", "Browse any sign without changing your profile")}
+          backLabel={t("返回运势", "Back to Fortune")}
+          actions={
+            <Select value={sign} onValueChange={(v) => setSign(v as ZodiacSign)}>
+              <SelectTrigger className="w-[200px] bg-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ZODIAC_SIGNS.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {lang === "zh" ? ZODIAC_LABELS[s].zh : ZODIAC_LABELS[s].en}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
+
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MetricStarCard label={t("整体", "Overall")} value={scores.overall} />
+          <MetricStarCard label={t("爱情", "Love")} value={scores.love} />
+          <MetricStarCard label={t("事业", "Career")} value={scores.career} />
+          <MetricStarCard label={t("财运", "Wealth")} value={scores.wealth} />
         </div>
-        <div className="flex gap-2">
-          <Button className="flex-1" onClick={() => void polish()} disabled={loading}>
-            {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}
-          </Button>
-          <SaveReadingButton
-            className="flex-1"
-            type="zodiac"
-            payload={{ sign, scores }}
-            reading={reading || rule.body}
-          />
+
+        <div className="card-premium p-6">
+          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+            {lang === "zh" ? ZODIAC_LABELS[sign].zh : ZODIAC_LABELS[sign].en}
+          </p>
+          <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c]">
+            {reading || rule.body}
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button className="bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void polish()} disabled={loading}>
+              {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}
+            </Button>
+            <SaveReadingButton type="zodiac" payload={{ sign, scores }} reading={reading || rule.body} />
+          </div>
         </div>
       </div>
     </AppLayout>

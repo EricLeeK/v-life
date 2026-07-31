@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
+import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,44 +29,53 @@ export default function HistoryPage() {
 
   return (
     <AppLayout title={t("我的记录", "My readings")}>
-      <div className="mx-auto max-w-lg space-y-3">
-        <Link to="/fortune" className="text-[12px] text-[#8a847a]">
-          ← {t("返回运势", "Back")}
-        </Link>
+      <div className="space-y-8">
+        <FortunePageHeader
+          title={t("我的记录", "My readings")}
+          subtitle={t("个人占卜历史，不社交", "Private history only")}
+          backLabel={t("返回运势", "Back to Fortune")}
+        />
+
         {isLoading && <p className="text-[13px] text-[#8a847a]">{t("加载中…", "Loading…")}</p>}
+
         {!isLoading && data.length === 0 && (
-          <p className="rounded-xl border border-[#e4e1d7] bg-white p-4 text-center text-[13px] text-[#8a847a]">
+          <div className="card-premium p-10 text-center text-[14px] text-[#8a847a]">
             {t("还没有记录，去抽一次牌吧", "No readings yet — try a draw")}
-          </p>
+          </div>
         )}
-        {data.map((row) => {
-          const label = TYPE_LABEL[row.type] || { zh: row.type, en: row.type };
-          return (
-            <button
-              key={row.id}
-              type="button"
-              onClick={() => setActive(row)}
-              className="block w-full rounded-xl border border-[#e4e1d7] bg-white p-3 text-left"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[13px] font-medium text-[#1f1a14]">
-                  {lang === "zh" ? label.zh : label.en}
-                </span>
-                <span className="text-[11px] text-[#8a847a]">
-                  {new Date(row.created_at).toLocaleString()}
-                </span>
-              </div>
-              {row.question && (
-                <div className="mt-1 truncate text-[12px] text-[#5c564c]">{row.question}</div>
-              )}
-              <div className="mt-1 line-clamp-2 text-[12px] text-[#8a847a]">{row.reading}</div>
-            </button>
-          );
-        })}
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {data.map((row) => {
+            const label = TYPE_LABEL[row.type] || { zh: row.type, en: row.type };
+            return (
+              <button
+                key={row.id}
+                type="button"
+                onClick={() => setActive(row)}
+                className="card-premium p-4 text-left"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[14px] font-semibold text-[#1f1a14]">
+                    {lang === "zh" ? label.zh : label.en}
+                  </span>
+                  <span className="text-[11px] text-[#8a847a]">
+                    {new Date(row.created_at).toLocaleString()}
+                  </span>
+                </div>
+                {row.question && (
+                  <div className="mt-2 truncate text-[12px] text-[#5c564c]">{row.question}</div>
+                )}
+                <div className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-[#8a847a]">
+                  {row.reading}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <Dialog open={Boolean(active)} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {active
@@ -83,13 +92,14 @@ export default function HistoryPage() {
                   {t("问题", "Question")}: {active.question}
                 </div>
               )}
-              <pre className="overflow-x-auto rounded-lg bg-[#f4f3ee] p-2 text-[11px] text-[#5c564c]">
+              <pre className="overflow-x-auto rounded-lg bg-[#f4f3ee] p-3 text-[11px] text-[#5c564c]">
                 {JSON.stringify(active.payload, null, 2)}
               </pre>
-              <p className="leading-relaxed whitespace-pre-wrap text-[#1f1a14]">{active.reading}</p>
+              <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-[#1f1a14]">
+                {active.reading}
+              </p>
               <Button
                 variant="destructive"
-                className="w-full"
                 onClick={async () => {
                   await del.mutateAsync(active.id);
                   setActive(null);

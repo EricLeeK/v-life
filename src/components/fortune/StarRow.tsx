@@ -3,11 +3,24 @@ export function starsText(n: number): string {
   return "★".repeat(v) + "☆".repeat(5 - v);
 }
 
-export function StarRow({ value, label }: { value: number; label: string }) {
+export function MetricStarCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: number;
+  hint?: string;
+}) {
   return (
-    <div className="flex-1 rounded-lg bg-[#f4f3ee] px-2 py-2 text-center text-[11px] text-[#5c564c]">
-      <div>{label}</div>
-      <div className="mt-0.5 font-semibold text-[#1f1a14]">{starsText(value)}</div>
+    <div className="card-premium min-w-0 p-4">
+      <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">{label}</p>
+      <p className="mt-1 font-mono-data text-[22px] font-semibold tracking-tight text-[#1f1a14] sm:text-[28px]">
+        {value}
+        <span className="ml-1 text-[12px] font-normal text-[#8a847a]">/5</span>
+      </p>
+      <p className="mt-1 text-[12px] text-[#c49840]">{starsText(value)}</p>
+      {hint && <p className="mt-1 text-[11px] text-[#8a847a]">{hint}</p>}
     </div>
   );
 }
