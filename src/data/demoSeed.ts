@@ -92,6 +92,7 @@ export const demoSettings = {
   day_start_hour: 0,
   custom_thought_tags: null,
   hidden_features: [] as string[],
+  fortune_profile: null as Record<string, unknown> | null,
   created_at: "2026-04-01T00:00:00+09:00",
   updated_at: "2026-05-08T00:00:00+09:00",
 };

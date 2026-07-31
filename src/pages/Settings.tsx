@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSettings, useUpdateSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Download, Save } from "lucide-react";
+import { Upload, Download, Save, ChevronDown } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+import { zodiacFromBirthDate, ZODIAC_LABELS, ZODIAC_SIGNS } from "@/lib/fortune/zodiac";
+import { shengxiaoFromBirthDate, SHENGXIAO_LABELS, SHENGXIAO_ORDER } from "@/lib/fortune/shengxiao";
+import type { FortuneProfile, Shengxiao, ZodiacSign } from "@/lib/fortune/types";
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
 
@@ -193,6 +197,110 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Fortune profile — collapsed by default */}
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CardHeader className="py-3">
+              <CollapsibleTrigger asChild>
+                <button type="button" className="flex w-full items-center justify-between text-left">
+                  <CardTitle className="text-base">{t("运势档案", "Fortune Profile")}</CardTitle>
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {t("展开", "Expand")}
+                    <ChevronDown className="h-4 w-4" />
+                  </span>
+                </button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                {(() => {
+                  const fp = (draft.fortune_profile || {}) as FortuneProfile;
+                  const setFp = (next: FortuneProfile) => update("fortune_profile", next);
+                  return (
+                    <>
+                      <div>
+                        <Label>{t("生日（公历）", "Birthday (Gregorian)")}</Label>
+                        <Input
+                          type="date"
+                          value={fp.birth_date || ""}
+                          onChange={(e) => {
+                            const birth_date = e.target.value;
+                            setFp({
+                              ...fp,
+                              birth_date,
+                              zodiac_sign: birth_date ? zodiacFromBirthDate(birth_date) : fp.zodiac_sign,
+                              shengxiao: birth_date ? shengxiaoFromBirthDate(birth_date) : fp.shengxiao,
+                            });
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label>{t("出生时辰（可选）", "Birth hour (optional)")}</Label>
+                        <Select
+                          value={fp.birth_hour == null ? "none" : String(fp.birth_hour)}
+                          onValueChange={(v) =>
+                            setFp({ ...fp, birth_hour: v === "none" ? null : Number(v) })
+                          }
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t("未知", "Unknown")}</SelectItem>
+                            {Array.from({ length: 24 }, (_, h) => (
+                              <SelectItem key={h} value={String(h)}>
+                                {String(h).padStart(2, "0")}:00
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>{t("出生地（备注）", "Birth place (note)")}</Label>
+                        <Input
+                          value={fp.birth_place || ""}
+                          onChange={(e) => setFp({ ...fp, birth_place: e.target.value })}
+                          placeholder={t("可选", "Optional")}
+                        />
+                      </div>
+                      <div>
+                        <Label>{t("星座", "Zodiac")}</Label>
+                        <Select
+                          value={fp.zodiac_sign || ""}
+                          onValueChange={(v) => setFp({ ...fp, zodiac_sign: v as ZodiacSign })}
+                        >
+                          <SelectTrigger><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
+                          <SelectContent>
+                            {ZODIAC_SIGNS.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {lang === "zh" ? ZODIAC_LABELS[s].zh : ZODIAC_LABELS[s].en}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>{t("生肖", "Shengxiao")}</Label>
+                        <Select
+                          value={fp.shengxiao || ""}
+                          onValueChange={(v) => setFp({ ...fp, shengxiao: v as Shengxiao })}
+                        >
+                          <SelectTrigger><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
+                          <SelectContent>
+                            {SHENGXIAO_ORDER.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {lang === "zh" ? SHENGXIAO_LABELS[s].zh : SHENGXIAO_LABELS[s].en}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
         {/* AI Configuration */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("AI 配置", "AI Configuration")}</CardTitle></CardHeader>
@@ -293,6 +401,7 @@ export default function SettingsPage() {
                 { id: "thoughts", name: t("随想", "Thoughts") },
                 { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
                 { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
+                { id: "fortune", name: t("运势", "Fortune") },
               ].map((feature) => {
                 const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);
                 return (

@@ -16,6 +16,7 @@ import {
   BookOpen,
   ShoppingBag,
   Compass,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { LangToggle } from "@/components/LangToggle";
@@ -62,6 +63,7 @@ export function AppSidebar() {
     { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
+    { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
   ];
 
   const visibleItems = mainItems.filter((item) => {

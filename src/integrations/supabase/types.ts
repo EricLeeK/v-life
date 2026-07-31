@@ -279,6 +279,63 @@ export type Database = {
         }
         Relationships: []
       }
+      fortune_daily_cache: {
+        Row: {
+          cache_date: string
+          created_at: string
+          id: string
+          payload: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cache_date: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cache_date?: string
+          created_at?: string
+          id?: string
+          payload?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fortune_readings: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          question: string | null
+          reading: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          question?: string | null
+          reading?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          question?: string | null
+          reading?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -688,6 +745,7 @@ export type Database = {
           target_weight: number | null
           hidden_features: string[] | null
           day_start_hour: number | null
+          fortune_profile: Json | null
           updated_at: string
           user_id: string | null
         }
@@ -710,6 +768,7 @@ export type Database = {
           target_weight?: number | null
           hidden_features?: string[] | null
           day_start_hour?: number | null
+          fortune_profile?: Json | null
           updated_at?: string
           user_id?: string | null
         }
@@ -732,6 +791,7 @@ export type Database = {
           target_weight?: number | null
           hidden_features?: string[] | null
           day_start_hour?: number | null
+          fortune_profile?: Json | null
           updated_at?: string
           user_id?: string | null
         }

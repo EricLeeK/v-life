@@ -190,19 +190,26 @@ delete: { module: "project_task", action: "delete", data: { match: { title?: str
 
 再次强调：你的回复只能是纯 JSON，不能有任何其他内容。`;
 
+const FORTUNE_SYSTEM_PROMPT = `你是温柔的生活向运势助手。根据用户给出的结构化事实（牌面/卦象/星级/宜忌等）写简短鼓励向解读。
+禁止恐吓、诅咒、绝对化断言。不做医疗或投资建议。用用户消息指定的语言回复。
+结尾可加「仅供娱乐」或 “For entertainment only”。
+只输出纯文本解读，不要 JSON，不要 markdown 代码块。`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, session_id } = await req.json();
+    const { messages, session_id, mode } = await req.json();
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const isFortune = mode === "fortune";
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -264,18 +271,23 @@ serve(async (req) => {
       return m;
     });
 
+    const systemPrompt = isFortune ? FORTUNE_SYSTEM_PROMPT : SYSTEM_PROMPT;
+    const body: Record<string, unknown> = {
+      model,
+      messages: [{ role: "system", content: systemPrompt }, ...enrichedMessages],
+      temperature: isFortune ? 0.7 : 0.1,
+    };
+    if (!isFortune) {
+      body.response_format = { type: "json_object" };
+    }
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...enrichedMessages],
-        temperature: 0.1,
-        response_format: { type: "json_object" },
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -289,6 +301,12 @@ serve(async (req) => {
 
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
+
+    if (isFortune) {
+      return new Response(JSON.stringify({ content, mode: "fortune" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     let parsed: any = null;
     try {

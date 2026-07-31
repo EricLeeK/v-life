@@ -29,6 +29,14 @@ const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
+const FortuneHome = lazy(() => import("./pages/fortune/FortuneHome"));
+const TarotPage = lazy(() => import("./pages/fortune/TarotPage"));
+const ZodiacPage = lazy(() => import("./pages/fortune/ZodiacPage"));
+const ShengxiaoPage = lazy(() => import("./pages/fortune/ShengxiaoPage"));
+const IchingPage = lazy(() => import("./pages/fortune/IchingPage"));
+const LotPage = lazy(() => import("./pages/fortune/LotPage"));
+const BaziPage = lazy(() => import("./pages/fortune/BaziPage"));
+const FortuneHistoryPage = lazy(() => import("./pages/fortune/HistoryPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,6 +85,14 @@ function AppRoutes() {
           <Route path="/learning-notes" element={<ProtectedRoute><LearningNotesPage /></ProtectedRoute>} />
           <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
           <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+          <Route path="/fortune" element={<ProtectedRoute><FortuneHome /></ProtectedRoute>} />
+          <Route path="/fortune/tarot" element={<ProtectedRoute><TarotPage /></ProtectedRoute>} />
+          <Route path="/fortune/zodiac" element={<ProtectedRoute><ZodiacPage /></ProtectedRoute>} />
+          <Route path="/fortune/shengxiao" element={<ProtectedRoute><ShengxiaoPage /></ProtectedRoute>} />
+          <Route path="/fortune/iching" element={<ProtectedRoute><IchingPage /></ProtectedRoute>} />
+          <Route path="/fortune/lot" element={<ProtectedRoute><LotPage /></ProtectedRoute>} />
+          <Route path="/fortune/bazi" element={<ProtectedRoute><BaziPage /></ProtectedRoute>} />
+          <Route path="/fortune/history" element={<ProtectedRoute><FortuneHistoryPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
