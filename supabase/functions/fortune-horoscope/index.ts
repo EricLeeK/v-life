@@ -1,4 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  adminClient,
+  countForDate,
+  HOROSCOPE_SIGNS,
+  ingestHoroscopeDay,
+  shanghaiDate,
+} from "../_shared/horoscopeDaily.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,37 +13,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SIGNS = new Set([
-  "aries",
-  "taurus",
-  "gemini",
-  "cancer",
-  "leo",
-  "virgo",
-  "libra",
-  "scorpio",
-  "sagittarius",
-  "capricorn",
-  "aquarius",
-  "pisces",
-]);
-
-/** FNV-1a → stars 1–5, stable per sign+date+text */
-function starsFromText(sign: string, date: string, text: string): number {
-  const input = `${sign}|${date}|${text}`;
-  let h = 2166136261;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0) % 5 + 1;
-}
-
-function dimStars(overall: number, salt: string, sign: string, date: string, text: string): number {
-  const n = starsFromText(sign, date, `${salt}:${text}`);
-  const raw = overall * 0.7 + n * 0.3;
-  return Math.min(5, Math.max(1, Math.round(raw)));
-}
+const SIGN_SET = new Set<string>(HOROSCOPE_SIGNS);
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -46,44 +23,75 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
     const sign = String(body.sign || "").toLowerCase();
-    if (!SIGNS.has(sign)) {
+    const lang = String(body.lang || "en").toLowerCase().startsWith("zh") ? "zh" : "en";
+    const cacheDate = String(body.date || shanghaiDate());
+
+    if (!SIGN_SET.has(sign)) {
       return new Response(JSON.stringify({ error: "invalid sign" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const upstream = await fetch(`https://ohmanda.com/api/horoscope/${sign}/`, {
-      headers: { Accept: "application/json" },
-    });
-    if (!upstream.ok) {
-      return new Response(
-        JSON.stringify({ error: `upstream ${upstream.status}`, source: "ohmanda.com" }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    const sb = adminClient();
+    let { data: row, error } = await sb
+      .from("fortune_horoscope_daily")
+      .select("*")
+      .eq("cache_date", cacheDate)
+      .eq("sign", sign)
+      .maybeSingle();
+    if (error) throw error;
+
+    // First visitor of the day (or incomplete cache): site pulls all 12 once and stores.
+    if (!row || (lang === "zh" && !String(row.text_zh || "").trim())) {
+      const n = await countForDate(cacheDate);
+      if (n < 12 || (row && lang === "zh" && !String(row.text_zh || "").trim())) {
+        await ingestHoroscopeDay(cacheDate);
+        const again = await sb
+          .from("fortune_horoscope_daily")
+          .select("*")
+          .eq("cache_date", cacheDate)
+          .eq("sign", sign)
+          .maybeSingle();
+        if (again.error) throw again.error;
+        row = again.data;
+      }
     }
-    const data = await upstream.json();
-    const text = String(data.horoscope || data.description || "").trim();
-    const date = String(data.date || new Date().toISOString().slice(0, 10));
+
+    if (!row) {
+      return new Response(JSON.stringify({ error: "horoscope not ready", date: cacheDate, sign }), {
+        status: 503,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const textEn = String(row.text_en || "").trim();
+    const textZh = String(row.text_zh || "").trim();
+    const text = lang === "zh" ? textZh || textEn : textEn;
     if (!text) {
-      return new Response(JSON.stringify({ error: "empty horoscope", source: "ohmanda.com" }), {
+      return new Response(JSON.stringify({ error: "empty horoscope row" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const overall = starsFromText(sign, date, text);
+    const stars = (row.stars || {}) as Record<string, number>;
     const payload = {
       sign,
-      date,
+      date: cacheDate,
+      lang,
       text,
+      text_en: textEn,
+      text_zh: textZh,
+      translated: Boolean(textZh),
       stars: {
-        overall,
-        love: dimStars(overall, "love", sign, date, text),
-        career: dimStars(overall, "career", sign, date, text),
-        wealth: dimStars(overall, "wealth", sign, date, text),
+        overall: Number(stars.overall) || 3,
+        love: Number(stars.love) || Number(stars.overall) || 3,
+        career: Number(stars.career) || Number(stars.overall) || 3,
+        wealth: Number(stars.wealth) || Number(stars.overall) || 3,
       },
-      source: "ohmanda.com/api/horoscope",
+      source: String(row.source || "ohmanda.com/api/horoscope"),
+      cached: true,
     };
 
     return new Response(JSON.stringify(payload), {

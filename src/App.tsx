@@ -9,6 +9,7 @@ import { DemoBanner } from "@/components/DemoBanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LangProvider } from "@/contexts/LanguageContext";
 import { DemoModeProvider, useDemoMode } from "@/contexts/DemoModeContext";
+import { useSettings } from "@/hooks/useData";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,8 @@ const ThoughtsPage = lazy(() => import("./pages/Thoughts"));
 const LearningNotesPage = lazy(() => import("./pages/LearningNotes"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
 const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
+const CivilServiceHome = lazy(() => import("./pages/civil-service/CivilServiceHome"));
+const CivilServiceGroup = lazy(() => import("./pages/civil-service/CivilServiceGroup"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
@@ -63,6 +66,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function FocusHomeRedirect({ children }: { children: React.ReactNode }) {
+  const { data: settings } = useSettings();
+  const focusMode = (settings as any)?.app_focus_mode || "full";
+  if (focusMode === "civil_service") {
+    return <Navigate to="/civil-service" replace />;
+  }
+  return <>{children}</>;
+}
+
 function AppRoutes() {
   return (
     <>
@@ -71,7 +83,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><FocusHomeRedirect><Index /></FocusHomeRedirect></ProtectedRoute>} />
           <Route path="/pantry" element={<ProtectedRoute><PantryPage /></ProtectedRoute>} />
           <Route path="/belongings" element={<ProtectedRoute><BelongingsPage /></ProtectedRoute>} />
           <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
@@ -84,6 +96,8 @@ function AppRoutes() {
           <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
           <Route path="/learning-notes" element={<ProtectedRoute><LearningNotesPage /></ProtectedRoute>} />
           <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
+          <Route path="/civil-service" element={<ProtectedRoute><CivilServiceHome /></ProtectedRoute>} />
+          <Route path="/civil-service/:group" element={<ProtectedRoute><CivilServiceGroup /></ProtectedRoute>} />
           <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
           <Route path="/fortune" element={<ProtectedRoute><FortuneHome /></ProtectedRoute>} />
           <Route path="/fortune/tarot" element={<ProtectedRoute><TarotPage /></ProtectedRoute>} />

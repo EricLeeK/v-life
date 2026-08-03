@@ -59,7 +59,7 @@ export default function BaziPage() {
       <div className="space-y-8">
         <FortunePageHeader
           title={t("八字日柱", "BaZi Day Pillar")}
-          subtitle={t("日柱与纳音对齐 lunar-javascript", "Day pillar & nayin via lunar-javascript")}
+          subtitle={t("日柱与纳音", "Day pillar & nayin")}
           backLabel={t("返回运势", "Back to Fortune")}
         />
 
@@ -111,9 +111,6 @@ export default function BaziPage() {
               <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void remind()} disabled={loading}>
                 {loading ? t("生成中…", "Working…") : t("今日提醒", "Today's note")}
               </Button>
-              {birthBundle?.source && (
-                <p className="text-[10px] text-[#b0aaa0]">{birthBundle.source}</p>
-              )}
             </div>
 
             <div className="card-premium min-h-[280px] p-6">

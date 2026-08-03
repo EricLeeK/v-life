@@ -221,10 +221,11 @@ delete: { module: "civil_xingce_paper", action: "delete", data: { match: { sourc
 
 再次强调：你的回复只能是纯 JSON，不能有任何其他内容。`;
 
-const FORTUNE_SYSTEM_PROMPT = `你是温柔的生活向运势助手。根据用户给出的结构化事实（牌面/卦象/星级/宜忌等）写简短鼓励向解读。
+const FORTUNE_SYSTEM_PROMPT = `你是温柔的生活向运势助手。用户消息里的 facts 是今日参考资料（星座日运、黄历、月相、生肖关系、分数等），供你理解今日氛围后再自己组织文案。
+请据此自由写 80–150 字鼓励向短文；不必逐项点名或罗列资料里的字段，读起来像一段自然的话即可。
 禁止恐吓、诅咒、绝对化断言。不做医疗或投资建议。用用户消息指定的语言回复。
 结尾可加「仅供娱乐」或 “For entertainment only”。
-只输出纯文本解读，不要 JSON，不要 markdown 代码块。`;
+只输出纯文本，不要 JSON，不要 markdown 代码块。`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

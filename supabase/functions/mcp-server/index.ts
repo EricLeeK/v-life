@@ -209,6 +209,98 @@ const TABLES: Record<string, TableDef> = {
       { name: "notes", type: "string", description: "备注" },
     ],
   },
+  civil_exam: {
+    table: "civil_exams", label: "考公考试",
+    listColumns: ["name", "exam_date", "exam_type", "is_primary"],
+    searchColumns: ["name", "exam_type", "notes"],
+    createFields: [
+      { name: "name", type: "string", required: true, description: "考试名称" },
+      { name: "exam_date", type: "string", required: true, description: "考试日 YYYY-MM-DD" },
+      { name: "exam_type", type: "string", description: "国考/省考/事业编/自定义" },
+      { name: "is_primary", type: "boolean", description: "是否主目标" },
+      { name: "notes", type: "string", description: "备注" },
+      { name: "user_id", type: "string", required: true, description: "用户UUID" },
+    ],
+  },
+  civil_plan: {
+    table: "civil_plan_items", label: "考公计划",
+    listColumns: ["title", "plan_date", "subject_group", "is_completed"],
+    searchColumns: ["title", "detail", "subject_tag"],
+    listFilters: [
+      { name: "plan_date", type: "string", description: "日期 YYYY-MM-DD" },
+      { name: "subject_group", type: "string", description: "xingce/shenlun/mianshi/general" },
+    ],
+    createFields: [
+      { name: "title", type: "string", required: true, description: "标题" },
+      { name: "plan_date", type: "string", required: true, description: "计划日期" },
+      { name: "subject_group", type: "string", description: "xingce/shenlun/mianshi/general" },
+      { name: "subject_tag", type: "string", description: "细分标签" },
+      { name: "detail", type: "string", description: "备注" },
+      { name: "user_id", type: "string", required: true, description: "用户UUID" },
+    ],
+  },
+  civil_checkin: {
+    table: "civil_checkins", label: "考公打卡",
+    listColumns: ["date", "studied_minutes"],
+    searchColumns: ["date", "note"],
+    createFields: [
+      { name: "date", type: "string", required: true, description: "日期" },
+      { name: "studied_minutes", type: "number", required: true, description: "学习分钟" },
+      { name: "note", type: "string", description: "备注" },
+      { name: "user_id", type: "string", required: true, description: "用户UUID" },
+    ],
+  },
+  civil_wrong: {
+    table: "civil_wrong_answers", label: "考公错题",
+    listColumns: ["title", "subject_group", "review_status", "source_date", "next_review_date"],
+    searchColumns: ["title", "content", "knowledge_point", "wrong_reason"],
+    listFilters: [
+      { name: "subject_group", type: "string", description: "xingce/shenlun/mianshi" },
+      { name: "review_status", type: "string", description: "pending/mastered" },
+    ],
+    createFields: [
+      { name: "title", type: "string", required: true, description: "标题" },
+      { name: "subject_group", type: "string", required: true, description: "xingce/shenlun/mianshi" },
+      { name: "subject_tag", type: "string", description: "细分" },
+      { name: "content", type: "string", description: "题干" },
+      { name: "wrong_reason", type: "string", description: "错因" },
+      { name: "knowledge_point", type: "string", description: "知识点" },
+      { name: "user_id", type: "string", required: true, description: "用户UUID" },
+    ],
+  },
+  civil_xingce_paper: {
+    table: "civil_xingce_papers", label: "行测套卷",
+    listColumns: ["taken_date", "source", "is_mock", "total_score", "beat_rate"],
+    searchColumns: ["source", "notes", "taken_date"],
+    listFilters: [
+      { name: "is_mock", type: "boolean", description: "是否模考" },
+      { name: "taken_date", type: "string", description: "日期 YYYY-MM-DD" },
+    ],
+    createFields: [
+      { name: "taken_date", type: "string", required: true, description: "做题日期" },
+      { name: "source", type: "string", required: true, description: "套题来源" },
+      { name: "is_mock", type: "boolean", description: "是否正式模考" },
+      { name: "verbal_total", type: "number", description: "言语题量" },
+      { name: "verbal_correct", type: "number", description: "言语正确" },
+      { name: "data_total", type: "number", description: "资料题量" },
+      { name: "data_correct", type: "number", description: "资料正确" },
+      { name: "graphic_total", type: "number", description: "图推题量" },
+      { name: "graphic_correct", type: "number", description: "图推正确" },
+      { name: "logic_total", type: "number", description: "逻辑题量" },
+      { name: "logic_correct", type: "number", description: "逻辑正确" },
+      { name: "analogy_total", type: "number", description: "定义类比题量" },
+      { name: "analogy_correct", type: "number", description: "定义类比正确" },
+      { name: "quantity_total", type: "number", description: "数量题量" },
+      { name: "quantity_correct", type: "number", description: "数量正确" },
+      { name: "common_total", type: "number", description: "常识题量" },
+      { name: "common_correct", type: "number", description: "常识正确" },
+      { name: "duration_minutes", type: "number", description: "用时分钟" },
+      { name: "total_score", type: "number", description: "总分" },
+      { name: "beat_rate", type: "number", description: "击败率" },
+      { name: "notes", type: "string", description: "备注" },
+      { name: "user_id", type: "string", required: true, description: "用户UUID" },
+    ],
+  },
   goals: {
     table: "goals", label: "目标",
     listColumns: ["title", "type", "period_start", "is_completed"],
@@ -376,7 +468,7 @@ mcpServer.tool("finance_summary", {
 
 // ─── Data Export / Import ───
 
-const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "learning_courses", "learning_notes", "settings", "goals", "weight_records", "measurement_records"];
+const ALL_TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "learning_courses", "learning_notes", "settings", "goals", "weight_records", "measurement_records", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers"];
 
 mcpServer.tool("data_export", {
   description: "导出全量数据为JSON",

@@ -17,6 +17,7 @@ import {
   BookOpen,
   ShoppingBag,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState } from "react";
@@ -31,13 +32,19 @@ export function MobileNav() {
   const { t, lang, toggleLang } = useLang();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
+  const focusMode = (settings as any)?.app_focus_mode || "full";
 
-  const primaryItems = [
-    { title: t("首页", "Home"), url: "/", icon: LayoutDashboard },
-    { title: t("日程", "Schedule"), url: "/schedule", icon: CalendarDays },
-    { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
-    { title: t("待办", "To-Do"), url: "/todos", icon: CheckSquare },
-  ];
+  const primaryItems = focusMode === "civil_service"
+    ? [
+        { title: t("考公", "Civil"), url: "/civil-service", icon: GraduationCap },
+        { title: t("设置", "Settings"), url: "/settings", icon: Settings },
+      ]
+    : [
+        { title: t("首页", "Home"), url: "/", icon: LayoutDashboard },
+        { title: t("日程", "Schedule"), url: "/schedule", icon: CalendarDays },
+        { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
+        { title: t("待办", "To-Do"), url: "/todos", icon: CheckSquare },
+      ];
 
   const moreItems = [
     { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
@@ -48,17 +55,22 @@ export function MobileNav() {
     { title: t("今日待办", "Today"), url: "/today", icon: CalendarCheck },
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
+    { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
     { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
     { title: t("商店", "Shop"), url: "/shop", icon: ShoppingBag },
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
   ];
 
   const visiblePrimaryItems = primaryItems.filter((item) => {
+    if (focusMode === "civil_service") return true;
     const key = item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });
 
   const visibleMoreItems = moreItems.filter((item) => {
+    if (focusMode === "civil_service") {
+      return item.url === "/civil-service" || item.url === "/settings";
+    }
     const key = item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });

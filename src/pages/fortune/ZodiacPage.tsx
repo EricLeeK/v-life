@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
 import { SaveReadingButton } from "@/components/fortune/SaveReadingButton";
-import { MetricStarCard } from "@/components/fortune/StarRow";
+import { MetricPercentCard } from "@/components/fortune/StarRow";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLang } from "@/contexts/LanguageContext";
@@ -10,10 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useFortuneProfile, localDateString } from "@/hooks/useFortune";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
 import { fetchHoroscope, zodiacFactorFromStars, type HoroscopeDay } from "@/lib/fortune/horoscope";
+import { scoresToPercents } from "@/lib/fortune/percentScore";
 import { dailyScores } from "@/lib/fortune/scores";
 import { ZODIAC_LABELS, ZODIAC_SIGNS } from "@/lib/fortune/zodiac";
 import type { ZodiacSign } from "@/lib/fortune/types";
 import { buildDailyRuleCopy } from "@/lib/fortune/ruleCopy";
+import { weekdayLabel } from "@/lib/fortune/lunarLabel";
 
 export default function ZodiacPage() {
   const { t, lang } = useLang();
@@ -33,7 +35,7 @@ export default function ZodiacPage() {
     setLoadError(null);
     setHoroscope(null);
     setReading("");
-    void fetchHoroscope(sign).then((res) => {
+    void fetchHoroscope(sign, lang).then((res) => {
       if (cancelled) return;
       setLoadingHoro(false);
       if (res.ok) setHoroscope(res.data);
@@ -49,7 +51,7 @@ export default function ZodiacPage() {
     return () => {
       cancelled = true;
     };
-  }, [sign]);
+  }, [sign, lang]);
 
   const scores = horoscope?.stars
     ?? dailyScores({
@@ -58,13 +60,14 @@ export default function ZodiacPage() {
       shengxiao: profile?.shengxiao,
       zodiacFactor: null,
     });
+  const percents = scoresToPercents(scores, `${date}|${sign}`);
   const rule = buildDailyRuleCopy({
     date,
     scores,
     profile: { birth_date: profile?.birth_date || "2000-01-01", zodiac_sign: sign },
     lang,
   });
-  const body = reading || horoscope?.text || (loadError ? rule.body : rule.body);
+  const body = reading || horoscope?.text || rule.body;
 
   async function polish() {
     setLoading(true);
@@ -75,10 +78,10 @@ export default function ZodiacPage() {
         lang,
         facts: {
           date,
+          weekday: weekdayLabel(date, lang),
           sign,
-          scores,
+          percents,
           horoscope: horoscope?.text,
-          source: horoscope?.source,
           draft: horoscope?.text || rule.body,
           zodiacFactor: horoscope ? zodiacFactorFromStars(horoscope.stars.overall) : undefined,
         },
@@ -97,7 +100,7 @@ export default function ZodiacPage() {
       <div className="space-y-8">
         <FortunePageHeader
           title={t("星座详解", "Zodiac")}
-          subtitle={t("网上日运（按星座），可切换浏览", "Live daily horoscope by sign")}
+          subtitle={t("每日日运（百分制）", "Daily horoscope (percent)")}
           backLabel={t("返回运势", "Back to Fortune")}
           actions={
             <Select value={sign} onValueChange={(v) => setSign(v as ZodiacSign)}>
@@ -116,10 +119,10 @@ export default function ZodiacPage() {
         />
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MetricStarCard label={t("整体", "Overall")} value={scores.overall} />
-          <MetricStarCard label={t("爱情", "Love")} value={scores.love} />
-          <MetricStarCard label={t("事业", "Career")} value={scores.career} />
-          <MetricStarCard label={t("财运", "Wealth")} value={scores.wealth} />
+          <MetricPercentCard label={t("整体", "Overall")} value={percents.overall} />
+          <MetricPercentCard label={t("爱情", "Love")} value={percents.love} />
+          <MetricPercentCard label={t("事业", "Career")} value={percents.career} />
+          <MetricPercentCard label={t("财运", "Wealth")} value={percents.wealth} />
         </div>
 
         <div className="card-premium p-6">
@@ -129,20 +132,17 @@ export default function ZodiacPage() {
           </p>
           {loadError && !horoscope && (
             <p className="mb-3 text-[13px] text-[#d17847]">
-              {t("未能拉取网上日运，以下为本地底稿（非网络数据）", "Could not fetch live horoscope — local draft only")}
+              {t("未能拉取网上日运，以下为本地底稿", "Could not fetch live horoscope — draft shown")}
             </p>
           )}
           <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c]">{body}</p>
-          {horoscope?.source && (
-            <p className="mt-3 text-[10px] text-[#b0aaa0]">{horoscope.source} · {horoscope.date}</p>
-          )}
           <div className="mt-5 flex flex-wrap gap-2">
             <Button className="bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void polish()} disabled={loading || loadingHoro}>
               {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}
             </Button>
             <SaveReadingButton
               type="zodiac"
-              payload={{ sign, scores, source: horoscope?.source, horoscopeDate: horoscope?.date }}
+              payload={{ sign, percents, horoscopeDate: horoscope?.date }}
               reading={body}
             />
           </div>

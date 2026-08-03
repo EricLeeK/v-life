@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSettings, useUpdateSettings } from "@/hooks/useData";
+import { useHostedAiStatus } from "@/hooks/useHostedAiStatus";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download, Save, ChevronDown } from "lucide-react";
@@ -44,6 +45,7 @@ function hasChanges(local: Record<string, any>, server: Record<string, any>): bo
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
+  const { data: hostedAi } = useHostedAiStatus();
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
   const { t, lang } = useLang();
@@ -337,9 +339,39 @@ export default function SettingsPage() {
           </Card>
         </Collapsible>
 
+        {/* Hosted AI status */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("托管 AI", "Hosted AI")}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {hostedAi?.active ? (
+              <>
+                <p className="text-sm">
+                  {t("状态：已开通", "Status: Active")}
+                  {hostedAi.entitlement?.expires_at
+                    ? ` · ${t("到期", "Expires")} ${new Date(hostedAi.entitlement.expires_at).toLocaleDateString()}`
+                    : ""}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("本月用量", "Monthly usage")}: {hostedAi.monthlyUsed.toLocaleString()} / {(hostedAi.entitlement?.monthly_token_limit ?? 0).toLocaleString()} tokens
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("今日请求", "Today's requests")}: {hostedAi.dailyUsed} / {hostedAi.entitlement?.daily_request_limit ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("开通后优先使用平台模型；超额不会自动改用你自己的 Key。", "Hosted model is used first when active; over-quota does not auto-fall back to your own key.")}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {t("未开通 · 可使用下方自带 Key", "Not active · use your own API key below")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
         {/* AI Configuration */}
         <Card>
-          <CardHeader><CardTitle className="text-base">{t("AI 配置", "AI Configuration")}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("AI 配置（自带 Key）", "AI Configuration (BYOK)")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Label>{t("API 平台", "API Platform")}</Label>
@@ -420,6 +452,29 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2 pb-2 border-b border-[#e4e1d7]">
+              <Label className="font-medium text-sm text-[#1f1a14]">
+                {t("专注模式", "Focus mode")}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  "「仅考公」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
+                  "Civil-only hides main modules and sync UI; data is kept. Switch back anytime."
+                )}
+              </p>
+              <Select
+                value={(draft.app_focus_mode as string) || "full"}
+                onValueChange={(v) => update("app_focus_mode", v)}
+              >
+                <SelectTrigger className="max-w-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">{t("全功能", "Full app")}</SelectItem>
+                  <SelectItem value="civil_service">{t("仅考公", "Civil service only")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <p className="text-xs text-muted-foreground">
               {t(
                 "在此选择要在侧边栏和手机导航中显示的非核心模块。关闭某个模块仅做视觉隐藏，您存过的历史数据不会受到任何影响。",
@@ -437,6 +492,7 @@ export default function SettingsPage() {
                 { id: "thoughts", name: t("随想", "Thoughts") },
                 { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
                 { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
+                { id: "civil-service", name: t("考公", "Civil Service") },
                 { id: "fortune", name: t("运势", "Fortune") },
               ].map((feature) => {
                 const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);

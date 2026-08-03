@@ -6,15 +6,20 @@ export interface HoroscopeDay {
   sign: ZodiacSign;
   date: string;
   text: string;
+  text_en?: string;
+  text_zh?: string;
+  translated?: boolean;
   stars: DailyScores;
   source: string;
+  cached?: boolean;
 }
 
-export async function fetchHoroscope(sign: ZodiacSign): Promise<
-  { ok: true; data: HoroscopeDay } | { ok: false; error: string }
-> {
+export async function fetchHoroscope(
+  sign: ZodiacSign,
+  lang: "zh" | "en" = "en",
+): Promise<{ ok: true; data: HoroscopeDay } | { ok: false; error: string }> {
   const { data, error } = await supabase.functions.invoke("fortune-horoscope", {
-    body: { sign },
+    body: { sign, lang },
   });
 
   if (error) {
@@ -31,8 +36,12 @@ export async function fetchHoroscope(sign: ZodiacSign): Promise<
     sign?: string;
     date?: string;
     text?: string;
+    text_en?: string;
+    text_zh?: string;
+    translated?: boolean;
     stars?: Partial<DailyScores>;
     source?: string;
+    cached?: boolean;
   } | null;
 
   const text = String(row?.text || "").trim();
@@ -45,6 +54,9 @@ export async function fetchHoroscope(sign: ZodiacSign): Promise<
       sign,
       date: String(row?.date || ""),
       text,
+      text_en: row?.text_en,
+      text_zh: row?.text_zh,
+      translated: row?.translated,
       stars: {
         overall,
         love: Number(row?.stars?.love) || overall,
@@ -52,6 +64,7 @@ export async function fetchHoroscope(sign: ZodiacSign): Promise<
         wealth: Number(row?.stars?.wealth) || overall,
       },
       source: String(row?.source || FORTUNE_RULE_SOURCES.horoscopeApi),
+      cached: Boolean(row?.cached),
     },
   };
 }

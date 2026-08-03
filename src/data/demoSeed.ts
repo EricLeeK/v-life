@@ -93,6 +93,7 @@ export const demoSettings = {
   custom_thought_tags: null,
   hidden_features: [] as string[],
   fortune_profile: null as Record<string, unknown> | null,
+  app_focus_mode: "full",
   created_at: "2026-04-01T00:00:00+09:00",
   updated_at: "2026-05-08T00:00:00+09:00",
 };
@@ -597,6 +598,162 @@ export const demoProjectTasks = [
 
 // ============ Habit Logs (dynamic — last 14 days) ============
 export const demoHabitLogs: Array<{ id: string; task_id: string; log_date: string; completed_at: string | null }> = [];
+
+// ============ Civil Service ============
+const CIVIL_EXAM_1 = "demo-cs-exam-0000-0000-0000-000000000001";
+const CIVIL_PLAN_1 = "demo-cs-plan-0000-0000-0000-000000000001";
+const CIVIL_PLAN_2 = "demo-cs-plan-0000-0000-0000-000000000002";
+const CIVIL_WRONG_1 = "demo-cs-wrong-000-0000-0000-000000000001";
+
+function civilToday(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+function civilExamDate(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 5);
+  return d.toISOString().split("T")[0];
+}
+
+export const demoCivilExams = [
+  {
+    id: CIVIL_EXAM_1,
+    user_id: DEMO_USER,
+    name: "2027国考",
+    exam_date: civilExamDate(),
+    exam_type: "国考",
+    is_primary: true,
+    is_archived: false,
+    notes: "目标岗位：综合管理",
+    created_at: "2026-05-01T00:00:00+09:00",
+    updated_at: "2026-05-01T00:00:00+09:00",
+  },
+];
+
+export const demoCivilPlanItems = [
+  {
+    id: CIVIL_PLAN_1,
+    user_id: DEMO_USER,
+    title: "言语理解刷题 20 道",
+    detail: "重点看主旨概括",
+    plan_date: civilToday(),
+    subject_group: "xingce",
+    subject_tag: "言语理解",
+    start_time: null as string | null,
+    end_time: null as string | null,
+    source: "plan",
+    is_completed: false,
+    completed_at: null as string | null,
+    synced_schedule_id: null as string | null,
+    synced_todo_id: null as string | null,
+    sort_order: 0,
+    created_at: "2026-05-01T00:00:00+09:00",
+    updated_at: "2026-05-01T00:00:00+09:00",
+  },
+  {
+    id: CIVIL_PLAN_2,
+    user_id: DEMO_USER,
+    title: "申论素材整理",
+    detail: null as string | null,
+    plan_date: civilToday(),
+    subject_group: "shenlun",
+    subject_tag: "申论",
+    start_time: null as string | null,
+    end_time: null as string | null,
+    source: "plan",
+    is_completed: true,
+    completed_at: "2026-05-08T10:00:00+09:00",
+    synced_schedule_id: null as string | null,
+    synced_todo_id: null as string | null,
+    sort_order: 1,
+    created_at: "2026-05-01T00:00:00+09:00",
+    updated_at: "2026-05-08T10:00:00+09:00",
+  },
+];
+
+export const demoCivilCheckins = [
+  {
+    id: "demo-cs-check-000-0000-0000-000000000001",
+    user_id: DEMO_USER,
+    date: civilToday(),
+    studied_minutes: 90,
+    note: null as string | null,
+    created_at: "2026-05-08T00:00:00+09:00",
+    updated_at: "2026-05-08T00:00:00+09:00",
+  },
+];
+
+export const demoCivilWrongAnswers = [
+  {
+    id: CIVIL_WRONG_1,
+    user_id: DEMO_USER,
+    subject_group: "xingce",
+    subject_tag: "资料分析",
+    title: "增长率比较易错",
+    content: "两期增长量比较时忽略基期差异",
+    wrong_reason: "只看分子未看分母",
+    knowledge_point: "增长率比较",
+    image_url: null as string | null,
+    review_status: "pending",
+    source_date: civilToday(),
+    next_review_date: civilToday(),
+    review_interval_days: 1,
+    last_reviewed_at: null as string | null,
+    ai_draft_meta: null as any,
+    created_at: "2026-05-08T00:00:00+09:00",
+    updated_at: "2026-05-08T00:00:00+09:00",
+  },
+];
+
+function civilDaysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split("T")[0];
+}
+
+export const demoCivilXingcePapers = [
+  {
+    id: "demo-cs-paper-000-0000-0000-000000000001",
+    user_id: DEMO_USER,
+    taken_date: civilDaysAgo(14),
+    source: "粉笔模考 01",
+    is_mock: true,
+    verbal_total: 40, verbal_correct: 32,
+    data_total: 20, data_correct: 14,
+    graphic_total: 10, graphic_correct: 7,
+    logic_total: 10, logic_correct: 6,
+    analogy_total: 10, analogy_correct: 8,
+    quantity_total: 15, quantity_correct: 8,
+    common_total: 20, common_correct: 15,
+    duration_minutes: 120,
+    total_score: 68.5,
+    beat_rate: 55,
+    notes: "资料和数量偏弱",
+    created_at: "2026-05-01T00:00:00+09:00",
+    updated_at: "2026-05-01T00:00:00+09:00",
+  },
+  {
+    id: "demo-cs-paper-000-0000-0000-000000000002",
+    user_id: DEMO_USER,
+    taken_date: civilDaysAgo(3),
+    source: "粉笔模考 02",
+    is_mock: true,
+    verbal_total: 40, verbal_correct: 34,
+    data_total: 20, data_correct: 16,
+    graphic_total: 10, graphic_correct: 8,
+    logic_total: 10, logic_correct: 7,
+    analogy_total: 10, analogy_correct: 8,
+    quantity_total: 15, quantity_correct: 9,
+    common_total: 20, common_correct: 16,
+    duration_minutes: 115,
+    total_score: 72.2,
+    beat_rate: 62,
+    notes: "数量有进步",
+    created_at: "2026-05-08T00:00:00+09:00",
+    updated_at: "2026-05-08T00:00:00+09:00",
+  },
+];
+
 (function generateHabitLogs() {
   let logIdx = 0;
   const habits = [HABIT_GYM, HABIT_EARLY, HABIT_READ];
@@ -645,6 +802,11 @@ export interface DemoDataStore {
   shop_items: typeof demoShopItems;
   user_inventory: typeof demoUserInventory;
   gacha_pity: typeof demoGachaPity;
+  civil_exams: typeof demoCivilExams;
+  civil_plan_items: typeof demoCivilPlanItems;
+  civil_checkins: typeof demoCivilCheckins;
+  civil_wrong_answers: typeof demoCivilWrongAnswers;
+  civil_xingce_papers: typeof demoCivilXingcePapers;
 }
 
 export function createDemoDataStore(): DemoDataStore {
@@ -672,5 +834,10 @@ export function createDemoDataStore(): DemoDataStore {
     shop_items: [...demoShopItems],
     user_inventory: [...demoUserInventory],
     gacha_pity: [...demoGachaPity],
+    civil_exams: [...demoCivilExams],
+    civil_plan_items: [...demoCivilPlanItems],
+    civil_checkins: [...demoCivilCheckins],
+    civil_wrong_answers: [...demoCivilWrongAnswers],
+    civil_xingce_papers: [...demoCivilXingcePapers],
   };
 }

@@ -9,6 +9,7 @@ import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2
 import { format } from "date-fns";
 import { useSettings } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
+import { messageFromAiInvoke } from "@/lib/aiErrors";
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
@@ -43,6 +44,11 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   project_task: "project_tasks",
   learning_course: "learning_courses",
   learning_note: "learning_notes",
+  civil_exam: "civil_exams",
+  civil_plan: "civil_plan_items",
+  civil_checkin: "civil_checkins",
+  civil_wrong: "civil_wrong_answers",
+  civil_xingce_paper: "civil_xingce_papers",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -61,6 +67,11 @@ const MODULE_LABELS: Record<string, string> = {
   project_task: "项目任务",
   learning_course: "课程",
   learning_note: "学习笔记",
+  civil_exam: "考公考试",
+  civil_plan: "考公计划",
+  civil_checkin: "考公打卡",
+  civil_wrong: "考公错题",
+  civil_xingce_paper: "行测套卷",
 };
 
 const getModuleLabels = (t: (zh: string, en: string) => string) => ({
@@ -70,6 +81,9 @@ const getModuleLabels = (t: (zh: string, en: string) => string) => ({
   weight: t("体重", "Weight"), measurement: t("围度", "Measurement"),
   goal: t("目标", "Goal"), project: t("项目", "Project"), project_task: t("项目任务", "Task"),
   learning_course: t("课程", "Course"), learning_note: t("学习笔记", "Learning Note"),
+  civil_exam: t("考公考试", "Civil Exam"), civil_plan: t("考公计划", "Civil Plan"),
+  civil_checkin: t("考公打卡", "Civil Check-in"), civil_wrong: t("考公错题", "Civil Wrong"),
+  civil_xingce_paper: t("行测套卷", "Xingce Paper"),
 });
 
 const MAX_SESSIONS = 30;
@@ -211,6 +225,90 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         content: data.content || "",
         tags: data.tags || [],
         note_date: data.note_date || today,
+      };
+    case "civil_exam":
+      return {
+        name: data.name || "未命名考试",
+        exam_date: data.exam_date || today,
+        exam_type: data.exam_type || "自定义",
+        is_primary: !!data.is_primary,
+        is_archived: !!data.is_archived,
+        notes: data.notes || null,
+      };
+    case "civil_plan":
+      return {
+        title: data.title || "未命名计划",
+        detail: data.detail || null,
+        plan_date: data.plan_date || today,
+        subject_group: data.subject_group || "xingce",
+        subject_tag: data.subject_tag || null,
+        start_time: data.start_time || null,
+        end_time: data.end_time || null,
+        source: data.source || "plan",
+        is_completed: !!data.is_completed,
+        completed_at: data.is_completed ? new Date().toISOString() : null,
+      };
+    case "civil_checkin":
+      return {
+        date: data.date || today,
+        studied_minutes: Number(data.studied_minutes) || 0,
+        note: data.note || null,
+      };
+    case "civil_wrong": {
+      const sourceDate = data.source_date || today;
+      const status = data.review_status || "pending";
+      const review =
+        status === "mastered"
+          ? { review_status: "mastered", next_review_date: null, review_interval_days: 1, last_reviewed_at: null }
+          : {
+              review_status: "pending",
+              review_interval_days: 1,
+              next_review_date: sourceDate, // client will still work; better set +1 day
+              last_reviewed_at: null,
+            };
+      // next day review
+      try {
+        const d = new Date(sourceDate + "T00:00:00");
+        d.setDate(d.getDate() + 1);
+        if (status !== "mastered") {
+          review.next_review_date = format(d, "yyyy-MM-dd");
+        }
+      } catch { /* keep */ }
+      return {
+        title: data.title || "未命名错题",
+        content: data.content || null,
+        wrong_reason: data.wrong_reason || null,
+        knowledge_point: data.knowledge_point || null,
+        subject_group: data.subject_group || "xingce",
+        subject_tag: data.subject_tag || null,
+        source_date: sourceDate,
+        image_url: data.image_url || null,
+        ...review,
+      };
+    }
+    case "civil_xingce_paper":
+      return {
+        taken_date: data.taken_date || today,
+        source: data.source || "未命名套卷",
+        is_mock: data.is_mock !== false,
+        verbal_total: Number(data.verbal_total) || 0,
+        verbal_correct: Number(data.verbal_correct) || 0,
+        data_total: Number(data.data_total) || 0,
+        data_correct: Number(data.data_correct) || 0,
+        graphic_total: Number(data.graphic_total) || 0,
+        graphic_correct: Number(data.graphic_correct) || 0,
+        logic_total: Number(data.logic_total) || 0,
+        logic_correct: Number(data.logic_correct) || 0,
+        analogy_total: Number(data.analogy_total) || 0,
+        analogy_correct: Number(data.analogy_correct) || 0,
+        quantity_total: Number(data.quantity_total) || 0,
+        quantity_correct: Number(data.quantity_correct) || 0,
+        common_total: Number(data.common_total) || 0,
+        common_correct: Number(data.common_correct) || 0,
+        duration_minutes: data.duration_minutes != null ? Number(data.duration_minutes) : null,
+        total_score: data.total_score != null ? Number(data.total_score) : null,
+        beat_rate: data.beat_rate != null ? Number(data.beat_rate) : null,
+        notes: data.notes || null,
       };
     default:
       return data;
@@ -400,10 +498,17 @@ export function AIChatPanel() {
           if (op.action === "create") {
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
 
-            if (op.module === "project" || op.module === "learning_course") {
+            if (op.module === "project" || op.module === "learning_course" || op.module === "civil_exam" || op.module === "civil_plan" || op.module === "civil_checkin" || op.module === "civil_wrong" || op.module === "civil_xingce_paper") {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) throw new Error("未登录");
               row.user_id = user.id;
+            }
+
+            if (op.module === "civil_exam" && row.is_primary) {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from("civil_exams").update({ is_primary: false }).eq("user_id", user.id);
+              }
             }
 
             if (op.module === "project_task") {
@@ -418,7 +523,7 @@ export function AIChatPanel() {
               row.project_id = proj.id;
             }
 
-            const useUpsert = op.module === "weight" || op.module === "measurement";
+            const useUpsert = op.module === "weight" || op.module === "measurement" || op.module === "civil_checkin";
             const { data: inserted, error } = useUpsert
               ? await (supabase.from as any)(table).upsert(row, { onConflict: "user_id,date" }).select().single()
               : await (supabase.from as any)(table).insert(row).select().single();
@@ -508,7 +613,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks", "learning_courses", "learning_notes"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks", "learning_courses", "learning_notes", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       qc.invalidateQueries({ queryKey: ["schedule", "today"] });
@@ -526,7 +631,7 @@ export function AIChatPanel() {
     for (const { table, id } of recentlyCreatedIds) {
       await (supabase.from as any)(table).delete().eq("id", id);
     }
-    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks", "learning_courses", "learning_notes"]) {
+    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks", "learning_courses", "learning_notes", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers"]) {
       qc.invalidateQueries({ queryKey: [key] });
     }
     setRecentlyCreatedIds([]);
@@ -580,8 +685,8 @@ export function AIChatPanel() {
         },
       });
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      const invokeMsg = await messageFromAiInvoke(data, error);
+      if (invokeMsg) throw new Error(invokeMsg);
 
       const result = data?.result;
       const operations: Operation[] = result?.operations || [];

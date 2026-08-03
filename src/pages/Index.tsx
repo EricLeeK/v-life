@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
   Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
-  ChevronRight, ArrowRight, ChevronDown, CheckCircle2, Clock,
+  ChevronRight, ArrowRight, ChevronDown, CheckCircle2, Clock, GraduationCap,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
@@ -14,7 +14,8 @@ import {
   usePendingTodos, useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
   useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks, calorieHooks, scheduleHooks,
 } from "@/hooks/useData";
-import { format, subDays, startOfWeek } from "date-fns";
+import { usePrimaryExam, useTodayCivilPlans } from "@/hooks/useCivilService";
+import { differenceInCalendarDays, parseISO, format, subDays, startOfWeek } from "date-fns";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 
@@ -146,6 +147,8 @@ export default function DashboardPage() {
   const { data: recentThoughts = [] } = useRecentThoughts();
   const { data: weekGoals = [] } = useCurrentWeekGoals();
   const { data: weightTrend = [] } = useRecentWeightTrend();
+  const { data: primaryExam } = usePrimaryExam();
+  const { data: todayCivilPlans = [] } = useTodayCivilPlans();
   const { data: allProjects = [] } = useProjects();
   const { data: allCalorieRecords = [] } = calorieHooks.useList();
   const { data: weekScheduleEvents = [] } = scheduleHooks.useList();
@@ -236,6 +239,11 @@ export default function DashboardPage() {
   const weightDiff = weightTrend.length >= 2
     ? Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight)
     : null;
+
+  const civilDaysLeft = primaryExam
+    ? differenceInCalendarDays(parseISO(primaryExam.exam_date), now)
+    : null;
+  const civilPlanDone = todayCivilPlans.filter((p) => p.is_completed).length;
 
   // Expiring pantry count
   const expiringSoonCount = expiringPantry.filter((item: any) => {
@@ -480,6 +488,18 @@ export default function DashboardPage() {
               status={weightDiff !== null ? `${weightDiff > 0 ? "+" : ""}${weightDiff.toFixed(1)}` : undefined}
               statusColor={weightDiff !== null && weightDiff <= 0 ? "teal" : "orange"}
               onClick={() => navigate("/weight-loss")}
+            />
+            <FeatureCard
+              icon={<GraduationCap className="h-4 w-4 text-[#d17847]" />}
+              title={t("考公", "Civil Service")}
+              description={
+                primaryExam
+                  ? `${primaryExam.name} · ${t("今日计划", "Today")} ${civilPlanDone}/${todayCivilPlans.length}`
+                  : t("添加考试倒计时", "Add exam countdown")
+              }
+              status={civilDaysLeft !== null ? `${Math.max(civilDaysLeft, 0)}${t("天", "d")}` : undefined}
+              statusColor="orange"
+              onClick={() => navigate("/civil-service")}
             />
             <FeatureCard
               icon={<Lightbulb className="h-4 w-4 text-[#8b7bb8]" />}

@@ -389,14 +389,15 @@ export default function TodayTodoPage() {
     }
   };
 
-  const handleComplete = async (task: any) => {
+  const handleComplete = (task: any) => {
     const isNowCompleted = !task.is_completed;
-    await completeTask.mutateAsync({ id: task.id, is_completed: isNowCompleted });
-    
+    // Optimistic UI via useCompleteDailyTask.onMutate — same pattern as Todos
+    completeTask.mutate({ id: task.id, is_completed: isNowCompleted });
+
     if (isNowCompleted) {
-      const newCompletedCount = todayTasks.filter((t: any) => t.id === task.id ? true : t.is_completed).length;
+      const newCompletedCount = todayTasks.filter((t: any) => (t.id === task.id ? true : t.is_completed)).length;
       const newProgressPct = totalCount > 0 ? (newCompletedCount / totalCount) * 100 : 0;
-      
+
       if (totalCount > 0 && newCompletedCount === totalCount && totalCount >= 2) {
         setRewardTier("gold");
       } else if (newCompletedCount >= 1 && newProgressPct >= 80) {
@@ -407,8 +408,8 @@ export default function TodayTodoPage() {
     }
   };
 
-  const handleRemove = async (id: string) => {
-    await removeFromToday.mutateAsync(id);
+  const handleRemove = (id: string) => {
+    removeFromToday.mutate(id);
   };
 
   const streak = userPoints?.current_streak || 0;

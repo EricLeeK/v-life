@@ -13,4 +13,14 @@ describe("buildFortuneUserPrompt", () => {
     expect(p).toContain("今日指引");
     expect(p).toContain('"cards":3');
   });
+
+  it("daily prompt treats facts as reference for free writing", () => {
+    const p = buildFortuneUserPrompt({
+      kind: "daily",
+      facts: { moon: { phase: "亏凸月" }, almanac: { yi: ["祭祀"] } },
+      lang: "zh",
+    });
+    expect(p).toContain("仅供参考");
+    expect(p).toContain("自己写");
+  });
 });

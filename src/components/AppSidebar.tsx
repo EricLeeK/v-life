@@ -17,6 +17,7 @@ import {
   ShoppingBag,
   Compass,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { LangToggle } from "@/components/LangToggle";
@@ -48,6 +49,7 @@ export function AppSidebar() {
   const { t } = useLang();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
+  const focusMode = (settings as any)?.app_focus_mode || "full";
 
   const mainItems = [
     { title: t("首页概览", "Dashboard"), url: "/", icon: LayoutDashboard },
@@ -63,10 +65,14 @@ export function AppSidebar() {
     { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
+    { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
     { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
   ];
 
   const visibleItems = mainItems.filter((item) => {
+    if (focusMode === "civil_service") {
+      return item.url === "/civil-service";
+    }
     const key = item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });
@@ -111,16 +117,18 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
-              <NavLink
-                to="/shop"
-                className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
-                activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
-              >
-                <ShoppingBag className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{t("商店", "Shop")}</span>}
-              </NavLink>
-            </SidebarMenuButton>
+            {focusMode !== "civil_service" && (
+              <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
+                <NavLink
+                  to="/shop"
+                  className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
+                  activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
+                >
+                  <ShoppingBag className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>{t("商店", "Shop")}</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
           <SidebarMenuItem>
             <LangToggle collapsed={collapsed} />

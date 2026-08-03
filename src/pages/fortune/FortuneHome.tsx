@@ -3,9 +3,10 @@ import { AppLayout } from "@/components/AppLayout";
 import { AlmanacCard } from "@/components/fortune/AlmanacCard";
 import { DailyHero } from "@/components/fortune/DailyHero";
 import { MoonCard } from "@/components/fortune/MoonCard";
-import { MetricStarCard } from "@/components/fortune/StarRow";
+import { MetricPercentCard } from "@/components/fortune/StarRow";
 import { ToolGrid } from "@/components/fortune/ToolGrid";
 import { useLang } from "@/contexts/LanguageContext";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import {
   localDateString,
   useFortuneDailyCache,
@@ -13,10 +14,17 @@ import {
   useUpsertFortuneDailyCache,
 } from "@/hooks/useFortune";
 import { getAlmanacForDate } from "@/lib/fortune/almanac";
+import { buildDailyFortuneFacts } from "@/lib/fortune/dailyFacts";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
+import {
+  pickCachedDailyAi,
+  writeLocalDailyAi,
+  type DailyAiByLang,
+} from "@/lib/fortune/dailyAiCache";
 import { fetchHoroscope, zodiacFactorFromStars, type HoroscopeDay } from "@/lib/fortune/horoscope";
-import { lunarLabelForDate } from "@/lib/fortune/lunarLabel";
+import { lunarLabelForDate, weekdayLabel } from "@/lib/fortune/lunarLabel";
 import { getMoonPhase } from "@/lib/fortune/moon";
+import { scoresToPercents } from "@/lib/fortune/percentScore";
 import { buildDailyRuleCopy } from "@/lib/fortune/ruleCopy";
 import { FORTUNE_RULE_VERSION } from "@/lib/fortune/ruleVersion";
 import { dailyScores } from "@/lib/fortune/scores";
@@ -25,11 +33,12 @@ import { SHENGXIAO_LABELS } from "@/lib/fortune/shengxiao";
 
 export default function FortuneHome() {
   const { t, lang } = useLang();
+  const { isDemo } = useDemoMode();
   const date = localDateString();
   const { profile, hasBirthDate } = useFortuneProfile();
-  const { data: cache } = useFortuneDailyCache(date);
+  const { data: cache, isFetched: cacheFetched, isLoading: cacheLoading } = useFortuneDailyCache(date);
   const upsert = useUpsertFortuneDailyCache();
-  const requested = useRef(false);
+  const generating = useRef(false);
   const [aiBody, setAiBody] = useState<string | null>(null);
   const [horoscope, setHoroscope] = useState<HoroscopeDay | null>(null);
   const [horoscopeReady, setHoroscopeReady] = useState(!profile?.zodiac_sign);
@@ -39,8 +48,18 @@ export default function FortuneHome() {
     body?: string;
     meta?: string;
     aiBody?: string;
+    aiLang?: string;
+    aiByLang?: DailyAiByLang;
     horoscope?: HoroscopeDay;
+    ruleVersion?: string;
+    lunar?: { weekday?: string };
   } | null;
+
+  // Reset in-memory AI when calendar day or UI language changes
+  useEffect(() => {
+    setAiBody(null);
+    generating.current = false;
+  }, [date, lang]);
 
   useEffect(() => {
     if (cachePayload?.horoscope?.text && cachePayload.horoscope.sign === profile?.zodiac_sign) {
@@ -55,7 +74,7 @@ export default function FortuneHome() {
     }
     setHoroscopeReady(false);
     let cancelled = false;
-    void fetchHoroscope(profile.zodiac_sign).then((res) => {
+    void fetchHoroscope(profile.zodiac_sign, lang).then((res) => {
       if (cancelled) return;
       if (res.ok) setHoroscope(res.data);
       else setHoroscope(null);
@@ -64,7 +83,7 @@ export default function FortuneHome() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.zodiac_sign, cachePayload?.horoscope]);
+  }, [profile?.zodiac_sign, cachePayload?.horoscope, lang]);
 
   const scores = useMemo(
     () =>
@@ -76,22 +95,27 @@ export default function FortuneHome() {
       }),
     [date, profile?.zodiac_sign, profile?.shengxiao, horoscope],
   );
+  const percents = useMemo(
+    () =>
+      scoresToPercents(
+        scores,
+        `${date}|${profile?.zodiac_sign || "g"}|${profile?.shengxiao || "g"}`,
+      ),
+    [scores, date, profile?.zodiac_sign, profile?.shengxiao],
+  );
 
   const rule = buildDailyRuleCopy({
     date,
     scores,
     profile: hasBirthDate ? profile : null,
     lang,
+    overallPercent: percents.overall,
   });
   const almanac = getAlmanacForDate(date);
   const moon = getMoonPhase(date);
 
-  const body =
-    aiBody ||
-    cachePayload?.aiBody ||
-    horoscope?.text ||
-    cachePayload?.body ||
-    rule.body;
+  const cachedAi = pickCachedDailyAi(cachePayload, lang, date);
+  const body = aiBody || cachedAi || rule.body;
 
   const tags = [
     lang === "zh" ? "黄历" : "Almanac",
@@ -102,42 +126,46 @@ export default function FortuneHome() {
     lang === "zh" ? "求签" : "Lot",
   ];
 
+  // Generate at most once per date+lang; prefer DB / localStorage cache.
   useEffect(() => {
-    if (requested.current) return;
-    if (cachePayload?.aiBody) {
-      setAiBody(cachePayload.aiBody);
-      requested.current = true;
+    if (aiBody || cachedAi) {
+      if (cachedAi && !aiBody) setAiBody(cachedAi);
       return;
     }
+    // Logged-in: wait until today's row is loaded (or known empty)
+    if (!isDemo && cacheLoading) return;
+    if (!isDemo && !cacheFetched) return;
     if (!horoscopeReady) return;
-    requested.current = true;
+    if (generating.current) return;
+    generating.current = true;
+
+    const facts = buildDailyFortuneFacts({
+      date,
+      lang,
+      scores,
+      profile: hasBirthDate ? profile : null,
+      almanac,
+      moon,
+      horoscope,
+      ruleBody: rule.body,
+    });
     const prompt = buildFortuneUserPrompt({
       kind: "daily",
       lang,
-      facts: {
-        date,
-        scores,
-        zodiac: profile?.zodiac_sign,
-        shengxiao: profile?.shengxiao,
-        almanac: {
-          yi: almanac.yi.slice(0, 8),
-          ji: almanac.ji.slice(0, 6),
-          chongsha: almanac.chongsha,
-          zhiXing: almanac.zhiXing,
-          dayPillar: almanac.dayPillar,
-          source: almanac.source,
-        },
-        moon: moon.phaseZh,
-        horoscope: horoscope
-          ? { text: horoscope.text, stars: horoscope.stars, source: horoscope.source }
-          : null,
-        ruleBody: rule.body,
-        ruleVersion: FORTUNE_RULE_VERSION,
-      },
+      facts,
     });
+
     void requestFortuneReading(prompt).then((res) => {
-      if (!res.ok) return;
+      if (!res.ok) {
+        generating.current = false;
+        return;
+      }
       setAiBody(res.text);
+      writeLocalDailyAi(date, lang, res.text);
+
+      const prevByLang: DailyAiByLang = { ...(cachePayload?.aiByLang || {}) };
+      prevByLang[lang] = res.text;
+
       void upsert.mutateAsync({
         cache_date: date,
         payload: {
@@ -145,20 +173,23 @@ export default function FortuneHome() {
           body: rule.body,
           meta: rule.meta,
           aiBody: res.text,
+          aiLang: lang,
+          aiByLang: prevByLang,
           scores,
+          percents,
           horoscope: horoscope || undefined,
           lunar: {
             dayPillar: almanac.dayPillar,
             chongsha: almanac.chongsha,
             zhiXing: almanac.zhiXing,
-            source: almanac.source,
+            weekday: weekdayLabel(date, lang),
           },
           ruleVersion: FORTUNE_RULE_VERSION,
         },
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, lang, horoscope, horoscopeReady, profile?.zodiac_sign]);
+  }, [date, lang, horoscopeReady, cacheLoading, cacheFetched, cachedAi, aiBody]);
 
   return (
     <AppLayout title={t("运势", "Fortune")}>
@@ -199,14 +230,14 @@ export default function FortuneHome() {
 
         <section>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricStarCard
+            <MetricPercentCard
               label={t("整体", "Overall")}
-              value={scores.overall}
+              value={percents.overall}
               hint={cachePayload?.meta || rule.meta}
             />
-            <MetricStarCard label={t("爱情", "Love")} value={scores.love} />
-            <MetricStarCard label={t("事业", "Career")} value={scores.career} />
-            <MetricStarCard label={t("财运", "Wealth")} value={scores.wealth} />
+            <MetricPercentCard label={t("爱情", "Love")} value={percents.love} />
+            <MetricPercentCard label={t("事业", "Career")} value={percents.career} />
+            <MetricPercentCard label={t("财运", "Wealth")} value={percents.wealth} />
           </div>
         </section>
 
@@ -220,7 +251,7 @@ export default function FortuneHome() {
                 {t("今日解读", "Today's Reading")}
               </h2>
               <p className="mt-1 text-[12px] text-[#8a847a]">
-                {t("黄历 + 生肖冲合 + 星座日运", "Almanac + shengxiao + live horoscope")}
+                {t("当日生成一次，刷新沿用", "Generated once per day")}
               </p>
             </div>
           </div>
@@ -228,7 +259,7 @@ export default function FortuneHome() {
             meta={cachePayload?.meta || rule.meta}
             headline={cachePayload?.headline || rule.headline}
             body={body}
-            scores={scores}
+            overallPercent={percents.overall}
             lang={lang}
             needsProfile={!hasBirthDate}
           />

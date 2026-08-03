@@ -1,17 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  jsonError,
+  recordHostedUsage,
+  resolveAiCredentials,
+} from "../_shared/hostedAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-};
-
-const PLATFORM_URLS: Record<string, string> = {
-  gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
-  openai: "https://api.openai.com/v1",
-  deepseek: "https://api.deepseek.com/v1",
-  custom: "",
 };
 
 const SYSTEM_PROMPT = `【Role｜角色设定】
@@ -118,19 +116,13 @@ serve(async (req) => {
       .select("*")
       .eq("user_id", user.id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (!settings?.ai_api_key) {
-      return new Response(
-        JSON.stringify({ error: "No AI API key configured" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const resolved = await resolveAiCredentials(adminSb, user.id, settings);
+    if (!resolved.ok) {
+      return jsonError(resolved.code, resolved.message, resolved.status, corsHeaders);
     }
-
-    const platform = settings.ai_platform || "gemini";
-    const model = settings.ai_model || "gemini-2.5-flash";
-    const baseUrl = settings.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.openai;
-    const apiKey = settings.ai_api_key;
+    const { apiKey, model, baseUrl } = resolved.creds;
 
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
@@ -152,10 +144,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errText = await response.text();
       console.error("LLM API error:", response.status, errText);
-      return new Response(
-        JSON.stringify({ error: `AI call failed (${response.status})` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("UPSTREAM_ERROR", `AI 服务暂时不可用 (${response.status})`, 502, corsHeaders);
     }
 
     const result = await response.json();
@@ -174,10 +163,17 @@ serve(async (req) => {
     }
 
     if (!parsed?.results || !Array.isArray(parsed.results)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid LLM response", raw: content }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return jsonError("UPSTREAM_ERROR", "AI 返回格式无效", 502, corsHeaders);
+    }
+
+    if (resolved.creds.mode === "hosted") {
+      await recordHostedUsage(adminSb, {
+        userId: user.id,
+        functionName: "estimate-difficulty",
+        model,
+        usage: result.usage,
+        estimateFrom: content,
+      });
     }
 
     return new Response(JSON.stringify(parsed), {

@@ -1379,26 +1379,20 @@ export function useAddToToday() {
 }
 
 export function useCompleteDailyTask() {
-  const { isDemo, demoData } = useDemoMode();
+  const { isDemo, demoData, updateRecord } = useDemoMode();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, is_completed, base_points, metadata }: { id: string; is_completed?: boolean; base_points?: number; metadata?: any }) => {
       if (isDemo) {
-        const task = demoData.daily_tasks.find((t: any) => t.id === id);
-        if (task) {
-          if (is_completed !== undefined) {
-            task.is_completed = is_completed;
-            task.completed_at = is_completed ? new Date().toISOString() : null;
-          }
-          if (base_points !== undefined) {
-            task.base_points = base_points;
-          }
-          if (metadata !== undefined) {
-            task.metadata = metadata;
-          }
-          task.updated_at = new Date().toISOString();
+        const updates: any = { updated_at: new Date().toISOString() };
+        if (is_completed !== undefined) {
+          updates.is_completed = is_completed;
+          updates.completed_at = is_completed ? new Date().toISOString() : null;
         }
-        return task;
+        if (base_points !== undefined) updates.base_points = base_points;
+        if (metadata !== undefined) updates.metadata = metadata;
+        updateRecord("daily_tasks", id, updates);
+        return { id, ...updates };
       }
       const updates: any = {};
       if (is_completed !== undefined) {
@@ -1420,27 +1414,67 @@ export function useCompleteDailyTask() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onMutate: async ({ id, is_completed, base_points, metadata }) => {
+      await queryClient.cancelQueries({ queryKey: ["daily_tasks"] });
+      const queries = queryClient.getQueriesData<any[]>({ queryKey: ["daily_tasks"] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      const patch: any = {};
+      if (is_completed !== undefined) {
+        patch.is_completed = is_completed;
+        patch.completed_at = is_completed ? new Date().toISOString() : null;
+      }
+      if (base_points !== undefined) patch.base_points = base_points;
+      if (metadata !== undefined) patch.metadata = metadata;
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          queryClient.setQueryData(
+            key,
+            data.map((item: any) => (item.id === id ? { ...item, ...patch } : item))
+          );
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+    },
+    // Align with todos: settle in background; do not refetch user_points on every toggle
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["daily_tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["user_points"] });
     },
   });
 }
 
 export function useRemoveFromToday() {
-  const { isDemo, demoData } = useDemoMode();
+  const { isDemo, demoData, deleteRecord } = useDemoMode();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
       if (isDemo) {
-        demoData.daily_tasks = demoData.daily_tasks.filter((t: any) => t.id !== id);
+        deleteRecord("daily_tasks", id);
         return id;
       }
       const { error } = await supabase.from("daily_tasks").delete().eq("id", id);
       if (error) throw error;
       return id;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["daily_tasks"] }); },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["daily_tasks"] });
+      const queries = queryClient.getQueriesData<any[]>({ queryKey: ["daily_tasks"] });
+      const snapshots = queries.map(([key, data]) => [key, data] as const);
+      queries.forEach(([key, data]) => {
+        if (Array.isArray(data)) {
+          queryClient.setQueryData(key, data.filter((item: any) => item.id !== id));
+        }
+      });
+      return { snapshots };
+    },
+    onError: (_err, _vars, context) => {
+      context?.snapshots?.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily_tasks"] });
+    },
   });
 }
 
