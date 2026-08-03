@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0.0",
+  "layers": {
+    "calendar_facts": {
+      "required_fields": [
+        "gregorian",
+        "timezone",
+        "lunar_year",
+        "lunar_month",
+        "lunar_day",
+        "is_leap_month",
+        "day_pillar",
+        "solar_term"
+      ],
+      "authority": "HKO conversion tables + day-pillar modular arithmetic from verified 甲子 anchor"
+    },
+    "declared_tradition": {
+      "optional_fields": [
+        "jianchu",
+        "clash_branch",
+        "harmony_notes"
+      ],
+      "note": "Only include when algorithm and table are declared with sources; clash_branch MUST derive from day zhi opposition, never random animal pick."
+    },
+    "almanac_lite_product": {
+      "fields": [
+        "yi",
+        "ji",
+        "tone",
+        "rule_version"
+      ],
+      "traditional_system_claim": false,
+      "selection": "Deterministic pick from vocabulary pools using seed(date, profile_hash, rule_version); filter by soft tags (gentle, encouraging); never invent death/disease/disaster claims."
+    }
+  },
+  "output_contract_example": {
+    "date": "2026-01-01",
+    "lunar_label_zh": "农历十一月十三",
+    "day_pillar_zh": "乙亥",
+    "solar_term_zh": null,
+    "clash_branch_zh": "巳",
+    "clash_shengxiao_zh": "蛇",
+    "yi": [
+      "整理书桌",
+      "温和运动",
+      "联系朋友"
+    ],
+    "ji": [
+      "冲动消费",
+      "熬夜争执"
+    ],
+    "provenance": {
+      "calendar": "hko_T2026c",
+      "day_pillar": "anchor_1984-01-31",
+      "yi_ji": "vlife_almanac_lite@1.0.0"
+    }
+  }
+}

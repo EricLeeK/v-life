@@ -1,0 +1,308 @@
+{
+  "schema_version": "1.0.0",
+  "sample_month": "2026-01",
+  "provenance": {
+    "calendar_facts": {
+      "source": "Hong Kong Observatory Gregorian–Lunar Calendar Conversion Table 2026",
+      "url": "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2026c.txt",
+      "en_url": "https://www.hko.gov.hk/en/gts/time/calendar/text/files/T2026e.txt",
+      "retrieved": "2026-08-03",
+      "month_bootstrap_note": "File begins mid lunar-month; January 1–18 tracked as 十一月 based on subsequent 十二月 header on 2026-01-19 (also matches English '12th Lunar Month' row).",
+      "includes": [
+        "lunar month/day",
+        "solar terms printed on civil date"
+      ],
+      "does_not_include": [
+        "宜忌",
+        "建除",
+        "day stem-branch"
+      ]
+    },
+    "yi_ji_layer": {
+      "status": "product_almanac_lite",
+      "traditional_system_claim": false,
+      "note": "Do not scrape commercial tongshu yi/ji text."
+    }
+  },
+  "days": [
+    {
+      "gregorian": "2026-01-01",
+      "weekday_zh": "星期四",
+      "lunar_month": 11,
+      "lunar_day": 13,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-02",
+      "weekday_zh": "星期五",
+      "lunar_month": 11,
+      "lunar_day": 14,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-03",
+      "weekday_zh": "星期六",
+      "lunar_month": 11,
+      "lunar_day": 15,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-04",
+      "weekday_zh": "星期日",
+      "lunar_month": 11,
+      "lunar_day": 16,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-05",
+      "weekday_zh": "星期一",
+      "lunar_month": 11,
+      "lunar_day": 17,
+      "is_leap_month": false,
+      "solar_term_zh": "小寒",
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-06",
+      "weekday_zh": "星期二",
+      "lunar_month": 11,
+      "lunar_day": 18,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-07",
+      "weekday_zh": "星期三",
+      "lunar_month": 11,
+      "lunar_day": 19,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-08",
+      "weekday_zh": "星期四",
+      "lunar_month": 11,
+      "lunar_day": 20,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-09",
+      "weekday_zh": "星期五",
+      "lunar_month": 11,
+      "lunar_day": 21,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-10",
+      "weekday_zh": "星期六",
+      "lunar_month": 11,
+      "lunar_day": 22,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-11",
+      "weekday_zh": "星期日",
+      "lunar_month": 11,
+      "lunar_day": 23,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-12",
+      "weekday_zh": "星期一",
+      "lunar_month": 11,
+      "lunar_day": 24,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-13",
+      "weekday_zh": "星期二",
+      "lunar_month": 11,
+      "lunar_day": 25,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-14",
+      "weekday_zh": "星期三",
+      "lunar_month": 11,
+      "lunar_day": 26,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-15",
+      "weekday_zh": "星期四",
+      "lunar_month": 11,
+      "lunar_day": 27,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-16",
+      "weekday_zh": "星期五",
+      "lunar_month": 11,
+      "lunar_day": 28,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-17",
+      "weekday_zh": "星期六",
+      "lunar_month": 11,
+      "lunar_day": 29,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-18",
+      "weekday_zh": "星期日",
+      "lunar_month": 11,
+      "lunar_day": 30,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-19",
+      "weekday_zh": "星期一",
+      "lunar_month": 12,
+      "lunar_day": 1,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-20",
+      "weekday_zh": "星期二",
+      "lunar_month": 12,
+      "lunar_day": 2,
+      "is_leap_month": false,
+      "solar_term_zh": "大寒",
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-21",
+      "weekday_zh": "星期三",
+      "lunar_month": 12,
+      "lunar_day": 3,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-22",
+      "weekday_zh": "星期四",
+      "lunar_month": 12,
+      "lunar_day": 4,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-23",
+      "weekday_zh": "星期五",
+      "lunar_month": 12,
+      "lunar_day": 5,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-24",
+      "weekday_zh": "星期六",
+      "lunar_month": 12,
+      "lunar_day": 6,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-25",
+      "weekday_zh": "星期日",
+      "lunar_month": 12,
+      "lunar_day": 7,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-26",
+      "weekday_zh": "星期一",
+      "lunar_month": 12,
+      "lunar_day": 8,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-27",
+      "weekday_zh": "星期二",
+      "lunar_month": 12,
+      "lunar_day": 9,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-28",
+      "weekday_zh": "星期三",
+      "lunar_month": 12,
+      "lunar_day": 10,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-29",
+      "weekday_zh": "星期四",
+      "lunar_month": 12,
+      "lunar_day": 11,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-30",
+      "weekday_zh": "星期五",
+      "lunar_month": 12,
+      "lunar_day": 12,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    },
+    {
+      "gregorian": "2026-01-31",
+      "weekday_zh": "星期六",
+      "lunar_month": 12,
+      "lunar_day": 13,
+      "is_leap_month": false,
+      "solar_term_zh": null,
+      "source": "hko_T2026c"
+    }
+  ]
+}

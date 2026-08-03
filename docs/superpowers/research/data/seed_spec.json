@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": {
+    "hash": "SHA-256",
+    "prng": "mulberry32 or splitmix32 — pin one in code + vector tests",
+    "string_format": "v1|{user_id}|{local_date}|{tool}|{rule_version}|{extra}"
+  },
+  "examples": [
+    {
+      "user_id": "demo-user",
+      "local_date": "2026-01-01",
+      "tool": "tarot",
+      "rule_version": "fortune-rules@1.0.0",
+      "extra": "spread=past_present_advice",
+      "seed_string": "v1|demo-user|2026-01-01|tarot|fortune-rules@1.0.0|spread=past_present_advice",
+      "sha256": "2034d7057e8ff1204e302b6b2a3b3091821450e1d5c9aee915e1df3a463c8eeb"
+    },
+    {
+      "user_id": "demo-user",
+      "local_date": "2026-01-01",
+      "tool": "iching",
+      "rule_version": "fortune-rules@1.0.0",
+      "extra": "",
+      "seed_string": "v1|demo-user|2026-01-01|iching|fortune-rules@1.0.0|",
+      "sha256": "aac97e2dd7bc45f72634a11e8a1ad14576bf892410dc8cc21603f898a9da67db"
+    },
+    {
+      "user_id": "demo-user",
+      "local_date": "2026-01-01",
+      "tool": "lot",
+      "rule_version": "fortune-rules@1.0.0",
+      "extra": "",
+      "seed_string": "v1|demo-user|2026-01-01|lot|fortune-rules@1.0.0|",
+      "sha256": "8a0fcb72aaf4b5773d1fc05181cc2b26d761c38aefa93159d0c348559c2c6d37"
+    }
+  ],
+  "cache_key": "same as seed_string for tool results that must be stable per day",
+  "history_payload_must_include": [
+    "seed_string",
+    "rule_version",
+    "tool",
+    "local_date"
+  ]
+}

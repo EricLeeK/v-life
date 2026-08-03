@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "fields": {
+    "display_name": {
+      "type": "string",
+      "optional": true
+    },
+    "birth_date": {
+      "type": "date",
+      "required_for_personalization": true,
+      "timezone_note": "Interpret with profile.timezone or client local date for 'today'."
+    },
+    "birth_time": {
+      "type": "time|null",
+      "optional": true,
+      "used_for": [
+        "cusp_resolution",
+        "optional_hour_pillar_P1"
+      ]
+    },
+    "timezone": {
+      "type": "iana_timezone",
+      "default": "Asia/Shanghai"
+    },
+    "shengxiao_boundary": {
+      "const": "chinese_new_year",
+      "source": "shengxiao_cny.json"
+    },
+    "bazi_year_pillar_boundary": {
+      "type": "null|lichun",
+      "default": null,
+      "note": "Keep separate from shengxiao; null means not computing year pillar yet."
+    },
+    "day_boundary_mode": {
+      "enum": [
+        "civil_midnight",
+        "zi_23"
+      ],
+      "default": "civil_midnight",
+      "source": "bazi_fixtures.json provenance"
+    },
+    "zodiac_system": {
+      "enum": [
+        "tropical"
+      ],
+      "default": "tropical"
+    },
+    "locale": {
+      "enum": [
+        "zh-CN",
+        "en"
+      ],
+      "default": "zh-CN"
+    }
+  },
+  "derived": {
+    "shengxiao": "from birth_date via CNY boundaries",
+    "zodiac": "from birth_date via zodiac_boundaries (cusp_sensitive if on boundary)",
+    "day_pillar_today": "not a profile field; computed per evaluation date"
+  }
+}

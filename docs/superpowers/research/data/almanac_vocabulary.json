@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0.0",
+  "traditional_system_claim": false,
+  "provenance": {
+    "note": "Activity phrases are V-Life product vocabulary for almanac-lite entertainment. Not copied from commercial tongshu. Inspired by common benign daily-life categories only.",
+    "safety_lint": [
+      "no_death",
+      "no_disease",
+      "no_disaster",
+      "no_guaranteed_loss",
+      "no_curses"
+    ]
+  },
+  "yi_pool": [
+    {
+      "id": "tidy",
+      "zh": "整理空间",
+      "en": "tidy a small space",
+      "tags": [
+        "home",
+        "gentle"
+      ]
+    },
+    {
+      "id": "walk",
+      "zh": "散步放松",
+      "en": "take a gentle walk",
+      "tags": [
+        "body",
+        "gentle"
+      ]
+    },
+    {
+      "id": "read",
+      "zh": "阅读充电",
+      "en": "read something nourishing",
+      "tags": [
+        "mind",
+        "gentle"
+      ]
+    },
+    {
+      "id": "hydrate",
+      "zh": "补水休息",
+      "en": "hydrate and rest",
+      "tags": [
+        "body",
+        "gentle"
+      ]
+    },
+    {
+      "id": "message",
+      "zh": "问候亲友",
+      "en": "send a kind message",
+      "tags": [
+        "social",
+        "gentle"
+      ]
+    },
+    {
+      "id": "plan",
+      "zh": "写下小计划",
+      "en": "write a small plan",
+      "tags": [
+        "work",
+        "gentle"
+      ]
+    },
+    {
+      "id": "cook",
+      "zh": "做一顿简单餐",
+      "en": "cook a simple meal",
+      "tags": [
+        "home",
+        "gentle"
+      ]
+    },
+    {
+      "id": "journal",
+      "zh": "记录心情",
+      "en": "journal briefly",
+      "tags": [
+        "mind",
+        "gentle"
+      ]
+    },
+    {
+      "id": "stretch",
+      "zh": "伸展放松",
+      "en": "stretch gently",
+      "tags": [
+        "body",
+        "gentle"
+      ]
+    },
+    {
+      "id": "music",
+      "zh": "听舒缓音乐",
+      "en": "listen to calming music",
+      "tags": [
+        "mind",
+        "gentle"
+      ]
+    },
+    {
+      "id": "gratitude",
+      "zh": "写下三件感谢",
+      "en": "note three gratitudes",
+      "tags": [
+        "mind",
+        "gentle"
+      ]
+    },
+    {
+      "id": "learn",
+      "zh": "学一点新知识",
+      "en": "learn one small thing",
+      "tags": [
+        "mind",
+        "work"
+      ]
+    }
+  ],
+  "ji_pool": [
+    {
+      "id": "impulse_buy",
+      "zh": "冲动大额消费",
+      "en": "impulse large purchases",
+      "tags": [
+        "money"
+      ]
+    },
+    {
+      "id": "all_nighter",
+      "zh": "通宵硬撑",
+      "en": "pull an all-nighter",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "argue",
+      "zh": "升级争执",
+      "en": "escalate arguments",
+      "tags": [
+        "social"
+      ]
+    },
+    {
+      "id": "overpromise",
+      "zh": "过度承诺",
+      "en": "over-promise",
+      "tags": [
+        "work"
+      ]
+    },
+    {
+      "id": "skip_meal",
+      "zh": "长时间不吃饭",
+      "en": "skip meals for long",
+      "tags": [
+        "body"
+      ]
+    },
+    {
+      "id": "doomscroll",
+      "zh": "无尽刷资讯",
+      "en": "endless doomscrolling",
+      "tags": [
+        "mind"
+      ]
+    },
+    {
+      "id": "compare",
+      "zh": "苛刻比较自己",
+      "en": "harsh self-comparison",
+      "tags": [
+        "mind"
+      ]
+    },
+    {
+      "id": "multitask",
+      "zh": "同时开太多线",
+      "en": "start too many threads at once",
+      "tags": [
+        "work"
+      ]
+    }
+  ],
+  "selection_rule": {
+    "yi_count": 3,
+    "ji_count": 2,
+    "algorithm": "seeded_shuffle(pool, seed=hash(date|profile|rule_version)) then take first N",
+    "seed_spec_ref": "seed_spec.json"
+  }
+}

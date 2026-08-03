@@ -1,0 +1,106 @@
+{
+  "provenance": {
+    "method": "Constructed from Wikipedia lookup encoding declared above",
+    "retrieved": "2026-08-03"
+  },
+  "cases": [
+    {
+      "lines_bottom_to_top_yang": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "binary": "000000",
+      "king_wen": 2,
+      "name_zh": "坤"
+    },
+    {
+      "lines_bottom_to_top_yang": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "binary": "111111",
+      "king_wen": 1,
+      "name_zh": "乾"
+    },
+    {
+      "lines_bottom_to_top_yang": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "binary": "100000",
+      "king_wen": 24,
+      "name_zh": "复"
+    },
+    {
+      "lines_bottom_to_top_yang": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "binary": "010000",
+      "king_wen": 7,
+      "name_zh": "师"
+    },
+    {
+      "lines_bottom_to_top_yang": [
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "binary": "110000",
+      "king_wen": 19,
+      "name_zh": "临"
+    },
+    {
+      "coin_sums_bottom_to_top": [
+        7,
+        7,
+        7,
+        7,
+        7,
+        7
+      ],
+      "primary_binary": "111111",
+      "primary_king_wen": 1,
+      "changing_lines": [],
+      "relating_king_wen": null,
+      "note": "All young yang — Qian, no change"
+    },
+    {
+      "coin_sums_bottom_to_top": [
+        9,
+        8,
+        8,
+        8,
+        8,
+        8
+      ],
+      "primary_binary": "100000",
+      "primary_king_wen": 24,
+      "changing_lines": [
+        1
+      ],
+      "relating_binary": "000000",
+      "relating_king_wen": 2,
+      "note": "Old yang at bottom → Fu changing to Kun"
+    }
+  ]
+}

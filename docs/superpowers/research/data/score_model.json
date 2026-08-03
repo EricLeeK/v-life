@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "traditional_system_claim": false,
+  "provenance": {
+    "note": "Composite entertainment score. Factors reuse sourced calendar/astro facts; weights are product-authored and must be versioned.",
+    "forbids": "Pure hash of date as sole score without disclosed factors."
+  },
+  "output": {
+    "stars_min": 1,
+    "stars_max": 5,
+    "precision": "integer_after_rounding"
+  },
+  "factors": [
+    {
+      "id": "shengxiao_day_relation",
+      "weight": 0.28,
+      "inputs": [
+        "profile.shengxiao",
+        "day_branch"
+      ],
+      "mapping": {
+        "six_harmony": 1.0,
+        "three_harmony": 0.7,
+        "neutral": 0.0,
+        "clash": -0.8
+      },
+      "source_of_relation_table": "shengxiao_cny.json#branch_relations"
+    },
+    {
+      "id": "moon_phase_soft",
+      "weight": 0.18,
+      "inputs": [
+        "moon.phase_id"
+      ],
+      "mapping": {
+        "full": 0.4,
+        "waxing_gibbous": 0.3,
+        "first_quarter": 0.2,
+        "waxing_crescent": 0.1,
+        "new": 0.0,
+        "waning_crescent": -0.1,
+        "last_quarter": -0.1,
+        "waning_gibbous": 0.0
+      },
+      "note": "Soft product mapping; phase itself from moon_phases.json / ephemeris."
+    },
+    {
+      "id": "zodiac_element_day_tone",
+      "weight": 0.18,
+      "inputs": [
+        "profile.zodiac.element",
+        "weekday"
+      ],
+      "note": "Product table only; do not claim classical essential dignities without full chart."
+    },
+    {
+      "id": "almanac_lite_balance",
+      "weight": 0.16,
+      "inputs": [
+        "yi_count",
+        "ji_count"
+      ],
+      "formula": "clamp((yi_count - ji_count) / 5, -1, 1)"
+    },
+    {
+      "id": "seed_texture",
+      "weight": 0.2,
+      "inputs": [
+        "seed"
+      ],
+      "formula": "unit_interval_from_seed * 2 - 1  # small texture ±1, never dominates",
+      "max_abs_contribution_stars": 0.4
+    }
+  ],
+  "combine": {
+    "formula": "stars = round(clamp(3 + sum(weight_i * score_i), 1, 5))",
+    "baseline": 3
+  },
+  "copy_rules": {
+    "tone": "warm_encouraging",
+    "forbid": [
+      "absolute_predictions",
+      "medical",
+      "investment",
+      "curses"
+    ]
+  }
+}
