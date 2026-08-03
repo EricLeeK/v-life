@@ -1,17 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useSettings } from "@/hooks/useData";
 import { supabase } from "@/integrations/supabase/client";
 import type { FortuneProfile, FortuneReadingType } from "@/lib/fortune/types";
-import { zodiacFromBirthDate } from "@/lib/fortune/zodiac";
+import { zodiacFromBirthDate, zodiacFromSunLongitude } from "@/lib/fortune/zodiac";
 import { shengxiaoFromBirthDate } from "@/lib/fortune/shengxiao";
 import type { Json } from "@/integrations/supabase/types";
 
 function parseProfile(raw: unknown): FortuneProfile | null {
   if (!raw || typeof raw !== "object") return null;
   return raw as FortuneProfile;
+}
+
+function deriveZodiac(birthDate: string, birthHour?: number | null) {
+  if (birthHour != null && birthHour >= 0) {
+    return zodiacFromSunLongitude(birthDate, birthHour).sign;
+  }
+  return zodiacFromBirthDate(birthDate);
 }
 
 export function useFortuneProfile() {
@@ -21,7 +28,7 @@ export function useFortuneProfile() {
     if (!p?.birth_date) return p;
     return {
       ...p,
-      zodiac_sign: p.zodiac_sign || zodiacFromBirthDate(p.birth_date),
+      zodiac_sign: p.zodiac_sign || deriveZodiac(p.birth_date, p.birth_hour),
       shengxiao: p.shengxiao || shengxiaoFromBirthDate(p.birth_date),
     };
   }, [settings]);
@@ -89,12 +96,15 @@ export interface FortuneReadingRow {
 export function useFortuneReadings() {
   const { user } = useAuth();
   const { isDemo } = useDemoMode();
-  const [demoRows, setDemoRows] = useState<FortuneReadingRow[]>([]);
+  const qc = useQueryClient();
 
-  const query = useQuery({
+  return useQuery({
     queryKey: ["fortune_readings"],
-    enabled: !isDemo && Boolean(user),
+    enabled: isDemo || Boolean(user),
     queryFn: async () => {
+      if (isDemo) {
+        return (qc.getQueryData(["fortune_readings"]) as FortuneReadingRow[] | undefined) || [];
+      }
       const { data, error } = await supabase
         .from("fortune_readings")
         .select("*")
@@ -103,18 +113,8 @@ export function useFortuneReadings() {
       if (error) throw error;
       return data as FortuneReadingRow[];
     },
+    initialData: isDemo ? [] : undefined,
   });
-
-  if (isDemo) {
-    return {
-      data: demoRows,
-      isLoading: false,
-      error: null,
-      refetch: async () => ({ data: demoRows }),
-      _setDemoRows: setDemoRows,
-    } as typeof query & { _setDemoRows: typeof setDemoRows };
-  }
-  return query;
 }
 
 export function useSaveFortuneReading() {
@@ -157,7 +157,9 @@ export function useSaveFortuneReading() {
       if (error) throw error;
       return data as FortuneReadingRow;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["fortune_readings"] }),
+    onSuccess: () => {
+      if (!isDemo) qc.invalidateQueries({ queryKey: ["fortune_readings"] });
+    },
   });
 }
 
@@ -177,7 +179,9 @@ export function useDeleteFortuneReading() {
       const { error } = await supabase.from("fortune_readings").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["fortune_readings"] }),
+    onSuccess: () => {
+      if (!isDemo) qc.invalidateQueries({ queryKey: ["fortune_readings"] });
+    },
   });
 }
 

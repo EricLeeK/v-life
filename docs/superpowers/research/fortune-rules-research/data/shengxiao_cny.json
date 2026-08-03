@@ -1,0 +1,450 @@
+{
+  "schema_version": "1.0.0",
+  "rule": {
+    "boundary": "chinese_new_year",
+    "definition": "Shengxiao for a civil birth date is the animal of the lunar year whose first day (正月初一) is on or before that date, and before the next CNY.",
+    "urls": [
+      "https://www.hko.gov.hk/tc/gts/time/conversion.htm",
+      "https://www.hko.gov.hk/en/Observatorys-Blog/109092/No-Lunar-New-Year%E2%80%99s-Eve-on-the-30th-Day-for-Five-Consecutive-Years"
+    ],
+    "retrieved": "2026-08-03"
+  },
+  "branch_relations": {
+    "note": "Classical earthly-branch relation sets used in popular almanac pedagogy; product P0 uses six-harmonies, three-harmonies, and clashes only.",
+    "six_harmonies": [
+      [
+        "rat",
+        "ox"
+      ],
+      [
+        "tiger",
+        "pig"
+      ],
+      [
+        "rabbit",
+        "dog"
+      ],
+      [
+        "dragon",
+        "rooster"
+      ],
+      [
+        "snake",
+        "monkey"
+      ],
+      [
+        "horse",
+        "goat"
+      ]
+    ],
+    "three_harmonies": [
+      [
+        "monkey",
+        "rat",
+        "dragon"
+      ],
+      [
+        "pig",
+        "rabbit",
+        "goat"
+      ],
+      [
+        "tiger",
+        "horse",
+        "dog"
+      ],
+      [
+        "snake",
+        "rooster",
+        "ox"
+      ]
+    ],
+    "clashes": [
+      [
+        "rat",
+        "horse"
+      ],
+      [
+        "ox",
+        "goat"
+      ],
+      [
+        "tiger",
+        "monkey"
+      ],
+      [
+        "rabbit",
+        "rooster"
+      ],
+      [
+        "dragon",
+        "dog"
+      ],
+      [
+        "snake",
+        "pig"
+      ]
+    ],
+    "relation_sources": [
+      "Standard 地支六合/三合/六冲 tables as taught in Chinese almanac pedagogy; not a single imperial statute."
+    ]
+  },
+  "boundaries": [
+    {
+      "gregorian_year_of_cny": 2010,
+      "cny_date": "2010-02-14",
+      "shengxiao_en": "tiger",
+      "shengxiao_zh": "虎",
+      "source_tier": "hko_T2010c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2010c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2011,
+      "cny_date": "2011-02-03",
+      "shengxiao_en": "rabbit",
+      "shengxiao_zh": "兔",
+      "source_tier": "hko_T2011c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2011c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2012,
+      "cny_date": "2012-01-23",
+      "shengxiao_en": "dragon",
+      "shengxiao_zh": "龙",
+      "source_tier": "hko_T2012c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2012c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2013,
+      "cny_date": "2013-02-10",
+      "shengxiao_en": "snake",
+      "shengxiao_zh": "蛇",
+      "source_tier": "hko_T2013c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2013c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2014,
+      "cny_date": "2014-01-31",
+      "shengxiao_en": "horse",
+      "shengxiao_zh": "马",
+      "source_tier": "hko_T2014c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2014c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2015,
+      "cny_date": "2015-02-19",
+      "shengxiao_en": "goat",
+      "shengxiao_zh": "羊",
+      "source_tier": "hko_T2015c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2015c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2016,
+      "cny_date": "2016-02-08",
+      "shengxiao_en": "monkey",
+      "shengxiao_zh": "猴",
+      "source_tier": "hko_T2016c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2016c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2017,
+      "cny_date": "2017-01-28",
+      "shengxiao_en": "rooster",
+      "shengxiao_zh": "鸡",
+      "source_tier": "hko_T2017c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2017c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2018,
+      "cny_date": "2018-02-16",
+      "shengxiao_en": "dog",
+      "shengxiao_zh": "狗",
+      "source_tier": "hko_T2018c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2018c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2019,
+      "cny_date": "2019-02-05",
+      "shengxiao_en": "pig",
+      "shengxiao_zh": "猪",
+      "source_tier": "hko_T2019c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2019c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2020,
+      "cny_date": "2020-01-25",
+      "shengxiao_en": "rat",
+      "shengxiao_zh": "鼠",
+      "source_tier": "hko_T2020c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2020c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2021,
+      "cny_date": "2021-02-12",
+      "shengxiao_en": "ox",
+      "shengxiao_zh": "牛",
+      "source_tier": "hko_T2021c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2021c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2022,
+      "cny_date": "2022-02-01",
+      "shengxiao_en": "tiger",
+      "shengxiao_zh": "虎",
+      "source_tier": "hko_T2022c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2022c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2023,
+      "cny_date": "2023-01-22",
+      "shengxiao_en": "rabbit",
+      "shengxiao_zh": "兔",
+      "source_tier": "hko_T2023c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2023c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2024,
+      "cny_date": "2024-02-10",
+      "shengxiao_en": "dragon",
+      "shengxiao_zh": "龙",
+      "source_tier": "hko_T2024c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2024c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2025,
+      "cny_date": "2025-01-29",
+      "shengxiao_en": "snake",
+      "shengxiao_zh": "蛇",
+      "source_tier": "hko_T2025c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2025c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2026,
+      "cny_date": "2026-02-17",
+      "shengxiao_en": "horse",
+      "shengxiao_zh": "马",
+      "source_tier": "hko_T2026c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2026c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2027,
+      "cny_date": "2027-02-06",
+      "shengxiao_en": "goat",
+      "shengxiao_zh": "羊",
+      "source_tier": "hko_T2027c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2027c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2028,
+      "cny_date": "2028-01-26",
+      "shengxiao_en": "monkey",
+      "shengxiao_zh": "猴",
+      "source_tier": "hko_T2028c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2028c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2029,
+      "cny_date": "2029-02-13",
+      "shengxiao_en": "rooster",
+      "shengxiao_zh": "鸡",
+      "source_tier": "hko_T2029c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2029c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2030,
+      "cny_date": "2030-02-03",
+      "shengxiao_en": "dog",
+      "shengxiao_zh": "狗",
+      "source_tier": "hko_T2030c",
+      "source_urls": [
+        "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2030c.txt",
+        "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+      ]
+    },
+    {
+      "gregorian_year_of_cny": 2031,
+      "cny_date": "2031-01-23",
+      "shengxiao_en": "pig",
+      "shengxiao_zh": "猪",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    },
+    {
+      "gregorian_year_of_cny": 2032,
+      "cny_date": "2032-02-11",
+      "shengxiao_en": "rat",
+      "shengxiao_zh": "鼠",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    },
+    {
+      "gregorian_year_of_cny": 2033,
+      "cny_date": "2033-01-31",
+      "shengxiao_en": "ox",
+      "shengxiao_zh": "牛",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    },
+    {
+      "gregorian_year_of_cny": 2034,
+      "cny_date": "2034-02-19",
+      "shengxiao_en": "tiger",
+      "shengxiao_zh": "虎",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    },
+    {
+      "gregorian_year_of_cny": 2035,
+      "cny_date": "2035-02-08",
+      "shengxiao_en": "rabbit",
+      "shengxiao_zh": "兔",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    },
+    {
+      "gregorian_year_of_cny": 2036,
+      "cny_date": "2036-01-28",
+      "shengxiao_en": "dragon",
+      "shengxiao_zh": "龙",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    },
+    {
+      "gregorian_year_of_cny": 2037,
+      "cny_date": "2037-02-15",
+      "shengxiao_en": "snake",
+      "shengxiao_zh": "蛇",
+      "source_tier": "wikipedia_chinese_new_year_table",
+      "source_urls": [
+        "https://en.wikipedia.org/wiki/Chinese_New_Year"
+      ],
+      "verification_note": "Pending HKO text file cross-check before treating as CI golden data"
+    }
+  ],
+  "extension_policy": {
+    "range_target": "1901-2100",
+    "method": "Generate CNY dates from a version-pinned calendar engine; CI must fail if any date differs from HKO conversion tables for 1901-2100.",
+    "hko_caveat": "HKO notes far-future new moons/solar terms near midnight may differ by one day.",
+    "hko_caveat_url": "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+  },
+  "crosscheck_examples": [
+    {
+      "date": "2010-02-13",
+      "expect_shengxiao": "ox",
+      "reason": "day before HKO CNY 2010-02-14 (Tiger)"
+    },
+    {
+      "date": "2010-02-14",
+      "expect_shengxiao": "tiger",
+      "reason": "HKO T2010c.txt 正月"
+    },
+    {
+      "date": "2024-02-09",
+      "expect_shengxiao": "rabbit",
+      "reason": "day before CNY 2024-02-10"
+    },
+    {
+      "date": "2024-02-10",
+      "expect_shengxiao": "dragon",
+      "reason": "HKO T2024c.txt 正月"
+    },
+    {
+      "date": "2025-01-28",
+      "expect_shengxiao": "dragon",
+      "reason": "day before CNY 2025-01-29"
+    },
+    {
+      "date": "2025-01-29",
+      "expect_shengxiao": "snake",
+      "reason": "HKO T2025c.txt 正月"
+    },
+    {
+      "date": "2026-02-16",
+      "expect_shengxiao": "snake",
+      "reason": "day before CNY 2026-02-17"
+    },
+    {
+      "date": "2026-02-17",
+      "expect_shengxiao": "horse",
+      "reason": "HKO T2026c.txt 正月"
+    }
+  ]
+}

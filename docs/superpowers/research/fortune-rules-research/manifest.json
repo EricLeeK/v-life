@@ -1,0 +1,87 @@
+{
+  "package": "fortune-rules-research",
+  "version": "1.0.0",
+  "created": "2026-08-03",
+  "principle": "Only sourced calendar/astro facts and declared product layers; no invented traditional claims.",
+  "layers": {
+    "calendar_astro_facts": [
+      "shengxiao_cny.json",
+      "bazi_fixtures.json",
+      "almanac_2026_01.sample.json",
+      "moon_phases.json",
+      "zodiac_boundaries.json",
+      "iching_64.json"
+    ],
+    "declared_tradition": [
+      "iching_64.json",
+      "iching_fixtures.json",
+      "tarot_rws_78.json#celtic_cross_waite",
+      "shengxiao_cny.json#branch_relations"
+    ],
+    "product_authored": [
+      "almanac_vocabulary.json",
+      "lots_vlife_100.json",
+      "score_model.json",
+      "tarot_rws_78.json#three_card_vlife"
+    ]
+  },
+  "files": [
+    "data/almanac_2026_01.sample.json",
+    "data/almanac_schema.json",
+    "data/almanac_vocabulary.json",
+    "data/bazi_fixtures.json",
+    "data/iching_64.json",
+    "data/iching_fixtures.json",
+    "data/lots_vlife_100.json",
+    "data/moon_phases.json",
+    "data/profile_schema.json",
+    "data/score_model.json",
+    "data/seed_spec.json",
+    "data/shengxiao_cny.json",
+    "data/tarot_rws_78.json",
+    "data/zodiac_boundaries.json",
+    "fixtures/crosscheck.md"
+  ],
+  "primary_sources": [
+    {
+      "id": "hko_conversion",
+      "url": "https://www.hko.gov.hk/tc/gts/time/conversion.htm"
+    },
+    {
+      "id": "hko_2026",
+      "url": "https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2026c.txt"
+    },
+    {
+      "id": "wikipedia_hexagram",
+      "url": "https://en.wikipedia.org/wiki/Hexagram_(I_Ching)"
+    },
+    {
+      "id": "oeis_a102241",
+      "url": "https://oeis.org/A102241"
+    },
+    {
+      "id": "usno_moon",
+      "url": "https://aa.usno.navy.mil/faq/moon_phases"
+    },
+    {
+      "id": "nasa_moon",
+      "url": "https://science.nasa.gov/moon/moon-phases/"
+    },
+    {
+      "id": "wikipedia_zodiac",
+      "url": "https://en.wikipedia.org/wiki/Astrological_sign"
+    },
+    {
+      "id": "wikipedia_cny",
+      "url": "https://en.wikipedia.org/wiki/Chinese_New_Year"
+    },
+    {
+      "id": "gutenberg_tarot_key",
+      "url": "https://www.gutenberg.org/ebooks/43548"
+    },
+    {
+      "id": "wikipedia_rws",
+      "url": "https://en.wikipedia.org/wiki/Rider%E2%80%93Waite_Tarot"
+    }
+  ]
+}

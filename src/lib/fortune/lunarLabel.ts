@@ -1,24 +1,38 @@
-import { hashStringToSeed, mulberry32 } from "./seededRandom";
+import { getLunarDayBundle } from "./lunarDay";
+import { dayPillarFromDate } from "./bazi";
 
-const GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
-const ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const WEEKDAYS_ZH = ["日", "一", "二", "三", "四", "五", "六"];
 const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-/** Lightweight 干支日 label (entertainment approx, not professional calendar). */
+function weekdayIndex(isoDate: string): number {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/**
+ * Compact lunar + day-pillar label for the hub date strip.
+ * Lunar month/day and day pillar from lunar-javascript via lunarDay bundle.
+ */
 export function lunarLabelForDate(isoDate: string, lang: "zh" | "en" = "zh"): string {
-  const d = new Date(`${isoDate}T12:00:00`);
-  const wd = d.getDay();
-  const dayIndex = Math.floor(d.getTime() / 86400000);
-  const ganzhi = `${GAN[((dayIndex % 10) + 10) % 10]}${ZHI[((dayIndex % 12) + 12) % 12]}`;
+  const wd = weekdayIndex(isoDate);
+  const bundle = getLunarDayBundle(isoDate);
+  const pillar = bundle?.dayPillar || dayPillarFromDate(isoDate).label;
+
   if (lang === "en") {
-    return `${WEEKDAYS_EN[wd]} · ${ganzhi}`;
+    if (!bundle) return `${WEEKDAYS_EN[wd]} · ${pillar}`;
+    const leap = bundle.isLeapMonth ? "leap " : "";
+    return `${WEEKDAYS_EN[wd]} · lunar ${leap}${bundle.lunarMonthZh} ${bundle.lunarDayZh} · ${pillar}`;
   }
-  return `星期${WEEKDAYS_ZH[wd]} · ${ganzhi}日`;
+
+  if (!bundle) return `星期${WEEKDAYS_ZH[wd]} · ${pillar}日`;
+  return `${bundle.lunarLabelZh} · ${pillar}日`;
 }
 
 export function festiveHint(isoDate: string): string {
-  const rng = mulberry32(hashStringToSeed(`fest:${isoDate}`));
+  const bundle = getLunarDayBundle(isoDate);
   const hints = ["宜静心", "宜小成", "宜温柔", "宜专注"];
-  return hints[Math.floor(rng() * hints.length)];
+  const idx = bundle?.dayPillar
+    ? Array.from(bundle.dayPillar).reduce((a, c) => a + c.charCodeAt(0), 0)
+    : dayPillarFromDate(isoDate).index0;
+  return hints[idx % hints.length];
 }

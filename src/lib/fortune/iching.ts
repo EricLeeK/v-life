@@ -1,6 +1,6 @@
 import { hashStringToSeed, mulberry32 } from "./seededRandom";
 
-/** King Wen sequence names (1-64), zh/en short. */
+/** King Wen sequence names (1-64). */
 export const HEXAGRAM_NAMES: Array<{ n: number; zh: string; en: string }> = [
   { n: 1, zh: "乾", en: "Qian" }, { n: 2, zh: "坤", en: "Kun" },
   { n: 3, zh: "屯", en: "Zhun" }, { n: 4, zh: "蒙", en: "Meng" },
@@ -36,8 +36,18 @@ export const HEXAGRAM_NAMES: Array<{ n: number; zh: string; en: string }> = [
   { n: 63, zh: "既济", en: "Ji Ji" }, { n: 64, zh: "未济", en: "Wei Ji" },
 ];
 
+/**
+ * binary_int (bit0 = bottom line, yang=1) → King Wen number.
+ * Source: Wikipedia Hexagram (I Ching) lookup; OEIS A102241.
+ */
+export const BINARY_INT_TO_KING_WEN: readonly number[] = [
+  2, 24, 7, 19, 15, 36, 46, 11, 16, 51, 40, 54, 62, 55, 32, 34, 8, 3, 29, 60, 39, 63, 48, 5, 45, 17,
+  47, 58, 31, 49, 28, 43, 23, 27, 4, 41, 52, 22, 18, 26, 35, 21, 64, 38, 56, 30, 50, 14, 20, 42, 59,
+  61, 53, 37, 57, 9, 12, 25, 6, 10, 33, 13, 44, 1,
+];
+
 export interface IchingLine {
-  /** 6=old yang changing, 7=young yang, 8=young yin, 9=old yin changing */
+  /** 6=old yin changing, 7=young yang, 8=young yin, 9=old yang changing */
   value: 6 | 7 | 8 | 9;
   yang: boolean;
   changing: boolean;
@@ -50,28 +60,32 @@ export interface IchingCast {
   nameZh: string;
   nameEn: string;
   changingLines: number[];
+  relatingHexagramNumber: number | null;
+  relatingNameZh: string | null;
+  relatingNameEn: string | null;
+  binaryBottomToTop: string;
 }
 
-/** Map binary bottom→top (yang=1) to King Wen number via lookup of binary patterns. */
-const BINARY_TO_KW: Record<string, number> = (() => {
-  // Simplified: use hash of 6-bit pattern into 1..64 stably for entertainment.
-  // Real King Wen mapping is complex; we still return 1..64 deterministically.
-  const map: Record<string, number> = {};
-  for (let i = 0; i < 64; i++) {
-    const bits = i.toString(2).padStart(6, "0");
-    map[bits] = i + 1;
+export function binaryIntFromYangFlags(yangBottomToTop: boolean[]): number {
+  let v = 0;
+  for (let i = 0; i < 6; i++) {
+    if (yangBottomToTop[i]) v |= 1 << i;
   }
-  return map;
-})();
+  return v;
+}
+
+export function kingWenFromYangFlags(yangBottomToTop: boolean[]): number {
+  return BINARY_INT_TO_KING_WEN[binaryIntFromYangFlags(yangBottomToTop)] ?? 1;
+}
 
 function coinLine(rng: () => number): IchingLine {
-  // three coins: heads=3 tails=2 → sum 6..9
+  // three coins: heads=3 tails=2 → sum 6..9 (product convention)
   const sum =
     (rng() < 0.5 ? 2 : 3) +
     (rng() < 0.5 ? 2 : 3) +
     (rng() < 0.5 ? 2 : 3);
   const value = sum as 6 | 7 | 8 | 9;
-  const yang = value === 7 || value === 6;
+  const yang = value === 7 || value === 9;
   const changing = value === 6 || value === 9;
   return { value, yang, changing };
 }
@@ -80,28 +94,46 @@ export function castHexagram(seed: string): IchingCast {
   const rng = mulberry32(hashStringToSeed(`iching:${seed}`));
   const lines: IchingLine[] = [];
   for (let i = 0; i < 6; i++) lines.push(coinLine(rng));
-  const bits = lines.map((l) => (l.yang ? "1" : "0")).join("");
-  const hexagramNumber = BINARY_TO_KW[bits] || 1;
+
+  const primaryFlags = lines.map((l) => l.yang);
+  const hexagramNumber = kingWenFromYangFlags(primaryFlags);
   const meta = HEXAGRAM_NAMES[hexagramNumber - 1];
+  const changingLines = lines.map((l, i) => (l.changing ? i + 1 : 0)).filter(Boolean);
+
+  let relatingHexagramNumber: number | null = null;
+  let relatingNameZh: string | null = null;
+  let relatingNameEn: string | null = null;
+  if (changingLines.length > 0) {
+    const relatingFlags = lines.map((l) => (l.changing ? !l.yang : l.yang));
+    relatingHexagramNumber = kingWenFromYangFlags(relatingFlags);
+    const rmeta = HEXAGRAM_NAMES[relatingHexagramNumber - 1];
+    relatingNameZh = rmeta.zh;
+    relatingNameEn = rmeta.en;
+  }
+
   return {
     seed,
     lines,
     hexagramNumber,
     nameZh: meta.zh,
     nameEn: meta.en,
-    changingLines: lines
-      .map((l, i) => (l.changing ? i + 1 : 0))
-      .filter(Boolean),
+    changingLines,
+    relatingHexagramNumber,
+    relatingNameZh,
+    relatingNameEn,
+    binaryBottomToTop: primaryFlags.map((y) => (y ? "1" : "0")).join(""),
   };
 }
 
 export function ichingRuleBlurb(cast: IchingCast, lang: "zh" | "en"): string {
   if (lang === "en") {
+    const rel = cast.relatingNameEn ? ` Relating: ${cast.relatingNameEn}.` : "";
     return `Hexagram ${cast.hexagramNumber} ${cast.nameEn}. Changing lines: ${
       cast.changingLines.join(", ") || "none"
-    }. Stay patient and take one clear step.`;
+    }.${rel} Stay patient and take one clear step.`;
   }
+  const rel = cast.relatingNameZh ? `之卦：${cast.relatingNameZh}。` : "";
   return `得卦：${cast.nameZh}（第 ${cast.hexagramNumber} 卦）。变爻：${
     cast.changingLines.length ? cast.changingLines.join("、") : "无"
-  }。先稳住呼吸，把眼前一步做清楚。`;
+  }。${rel}先稳住呼吸，把眼前一步做清楚。`;
 }

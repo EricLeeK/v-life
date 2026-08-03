@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { AlmanacCard } from "@/components/fortune/AlmanacCard";
 import { DailyHero } from "@/components/fortune/DailyHero";
@@ -14,9 +14,11 @@ import {
 } from "@/hooks/useFortune";
 import { getAlmanacForDate } from "@/lib/fortune/almanac";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
+import { fetchHoroscope, zodiacFactorFromStars, type HoroscopeDay } from "@/lib/fortune/horoscope";
 import { lunarLabelForDate } from "@/lib/fortune/lunarLabel";
 import { getMoonPhase } from "@/lib/fortune/moon";
 import { buildDailyRuleCopy } from "@/lib/fortune/ruleCopy";
+import { FORTUNE_RULE_VERSION } from "@/lib/fortune/ruleVersion";
 import { dailyScores } from "@/lib/fortune/scores";
 import { ZODIAC_LABELS } from "@/lib/fortune/zodiac";
 import { SHENGXIAO_LABELS } from "@/lib/fortune/shengxiao";
@@ -29,12 +31,52 @@ export default function FortuneHome() {
   const upsert = useUpsertFortuneDailyCache();
   const requested = useRef(false);
   const [aiBody, setAiBody] = useState<string | null>(null);
+  const [horoscope, setHoroscope] = useState<HoroscopeDay | null>(null);
+  const [horoscopeReady, setHoroscopeReady] = useState(!profile?.zodiac_sign);
 
-  const scores = dailyScores({
-    date,
-    zodiac: profile?.zodiac_sign,
-    shengxiao: profile?.shengxiao,
-  });
+  const cachePayload = (cache?.payload || null) as {
+    headline?: string;
+    body?: string;
+    meta?: string;
+    aiBody?: string;
+    horoscope?: HoroscopeDay;
+  } | null;
+
+  useEffect(() => {
+    if (cachePayload?.horoscope?.text && cachePayload.horoscope.sign === profile?.zodiac_sign) {
+      setHoroscope(cachePayload.horoscope);
+      setHoroscopeReady(true);
+      return;
+    }
+    if (!profile?.zodiac_sign) {
+      setHoroscope(null);
+      setHoroscopeReady(true);
+      return;
+    }
+    setHoroscopeReady(false);
+    let cancelled = false;
+    void fetchHoroscope(profile.zodiac_sign).then((res) => {
+      if (cancelled) return;
+      if (res.ok) setHoroscope(res.data);
+      else setHoroscope(null);
+      setHoroscopeReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.zodiac_sign, cachePayload?.horoscope]);
+
+  const scores = useMemo(
+    () =>
+      dailyScores({
+        date,
+        zodiac: profile?.zodiac_sign,
+        shengxiao: profile?.shengxiao,
+        zodiacFactor: horoscope ? zodiacFactorFromStars(horoscope.stars.overall) : null,
+      }),
+    [date, profile?.zodiac_sign, profile?.shengxiao, horoscope],
+  );
+
   const rule = buildDailyRuleCopy({
     date,
     scores,
@@ -44,14 +86,12 @@ export default function FortuneHome() {
   const almanac = getAlmanacForDate(date);
   const moon = getMoonPhase(date);
 
-  const cachePayload = (cache?.payload || null) as {
-    headline?: string;
-    body?: string;
-    meta?: string;
-    aiBody?: string;
-  } | null;
-
-  const body = aiBody || cachePayload?.aiBody || cachePayload?.body || rule.body;
+  const body =
+    aiBody ||
+    cachePayload?.aiBody ||
+    horoscope?.text ||
+    cachePayload?.body ||
+    rule.body;
 
   const tags = [
     lang === "zh" ? "黄历" : "Almanac",
@@ -66,8 +106,10 @@ export default function FortuneHome() {
     if (requested.current) return;
     if (cachePayload?.aiBody) {
       setAiBody(cachePayload.aiBody);
+      requested.current = true;
       return;
     }
+    if (!horoscopeReady) return;
     requested.current = true;
     const prompt = buildFortuneUserPrompt({
       kind: "daily",
@@ -77,9 +119,20 @@ export default function FortuneHome() {
         scores,
         zodiac: profile?.zodiac_sign,
         shengxiao: profile?.shengxiao,
-        almanac,
+        almanac: {
+          yi: almanac.yi.slice(0, 8),
+          ji: almanac.ji.slice(0, 6),
+          chongsha: almanac.chongsha,
+          zhiXing: almanac.zhiXing,
+          dayPillar: almanac.dayPillar,
+          source: almanac.source,
+        },
         moon: moon.phaseZh,
+        horoscope: horoscope
+          ? { text: horoscope.text, stars: horoscope.stars, source: horoscope.source }
+          : null,
         ruleBody: rule.body,
+        ruleVersion: FORTUNE_RULE_VERSION,
       },
     });
     void requestFortuneReading(prompt).then((res) => {
@@ -93,16 +146,23 @@ export default function FortuneHome() {
           meta: rule.meta,
           aiBody: res.text,
           scores,
+          horoscope: horoscope || undefined,
+          lunar: {
+            dayPillar: almanac.dayPillar,
+            chongsha: almanac.chongsha,
+            zhiXing: almanac.zhiXing,
+            source: almanac.source,
+          },
+          ruleVersion: FORTUNE_RULE_VERSION,
         },
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, lang]);
+  }, [date, lang, horoscope, horoscopeReady, profile?.zodiac_sign]);
 
   return (
     <AppLayout title={t("运势", "Fortune")}>
       <div className="space-y-10">
-        {/* Hero — same rhythm as dashboard */}
         <section>
           <h1
             className="font-bold leading-[1.1] tracking-tight text-[#1f1a14] heading-font"
@@ -137,7 +197,6 @@ export default function FortuneHome() {
           </div>
         </section>
 
-        {/* Metric strip */}
         <section>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricStarCard
@@ -151,7 +210,6 @@ export default function FortuneHome() {
           </div>
         </section>
 
-        {/* Reading + calendar cards */}
         <section className="space-y-4">
           <div className="flex items-baseline justify-between">
             <div>
@@ -162,7 +220,7 @@ export default function FortuneHome() {
                 {t("今日解读", "Today's Reading")}
               </h2>
               <p className="mt-1 text-[12px] text-[#8a847a]">
-                {t("规则底稿 + AI 润色", "Rule base + AI polish")}
+                {t("黄历 + 生肖冲合 + 星座日运", "Almanac + shengxiao + live horoscope")}
               </p>
             </div>
           </div>

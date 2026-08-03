@@ -1,0 +1,231 @@
+{
+  "schema_version": "1.0.0",
+  "provenance": {
+    "system": "tropical_western",
+    "source": "Wikipedia Astrological sign — Western astrology approximate Sun sign dates and ecliptic longitude intervals",
+    "url": "https://en.wikipedia.org/wiki/Astrological_sign",
+    "retrieved": "2026-08-03",
+    "notes": [
+      "Aries begins at the First Point of Aries (March equinox). Exact civil cusp dates vary by year (equinox typically 19–21 March).",
+      "Longitude intervals are closed at start and open at end (e.g. 30° is first point of Taurus).",
+      "Sidereal / Vedic systems are out of scope for V-Life default; do not mix without an explicit profile flag."
+    ]
+  },
+  "default_mode": "tropical_civil_date_table",
+  "precision_modes": {
+    "tropical_civil_date_table": "Use Wikipedia approximate start/end civil dates; mark cusp days (±1 of boundary) as cusp_sensitive.",
+    "tropical_ecliptic_longitude": "P1: compute Sun ecliptic longitude λ; map with a≤λ<b bands below (requires Astronomy Engine or equivalent)."
+  },
+  "signs": [
+    {
+      "id": "aries",
+      "zh": "白羊座",
+      "en": "Aries",
+      "symbol": "♈",
+      "approx_start": "03-21",
+      "approx_end": "04-20",
+      "longitude_a_deg": 0,
+      "longitude_b_deg": 30,
+      "polarity": "positive",
+      "element": "fire",
+      "modality": "cardinal",
+      "modern_ruler": "Mars",
+      "classic_ruler": "Mars"
+    },
+    {
+      "id": "taurus",
+      "zh": "金牛座",
+      "en": "Taurus",
+      "symbol": "♉",
+      "approx_start": "04-21",
+      "approx_end": "05-21",
+      "longitude_a_deg": 30,
+      "longitude_b_deg": 60,
+      "polarity": "negative",
+      "element": "earth",
+      "modality": "fixed",
+      "modern_ruler": "Venus",
+      "classic_ruler": "Venus"
+    },
+    {
+      "id": "gemini",
+      "zh": "双子座",
+      "en": "Gemini",
+      "symbol": "♊",
+      "approx_start": "05-22",
+      "approx_end": "06-21",
+      "longitude_a_deg": 60,
+      "longitude_b_deg": 90,
+      "polarity": "positive",
+      "element": "air",
+      "modality": "mutable",
+      "modern_ruler": "Mercury",
+      "classic_ruler": "Mercury"
+    },
+    {
+      "id": "cancer",
+      "zh": "巨蟹座",
+      "en": "Cancer",
+      "symbol": "♋",
+      "approx_start": "06-22",
+      "approx_end": "07-23",
+      "longitude_a_deg": 90,
+      "longitude_b_deg": 120,
+      "polarity": "negative",
+      "element": "water",
+      "modality": "cardinal",
+      "modern_ruler": "Moon",
+      "classic_ruler": "Moon"
+    },
+    {
+      "id": "leo",
+      "zh": "狮子座",
+      "en": "Leo",
+      "symbol": "♌",
+      "approx_start": "07-24",
+      "approx_end": "08-23",
+      "longitude_a_deg": 120,
+      "longitude_b_deg": 150,
+      "polarity": "positive",
+      "element": "fire",
+      "modality": "fixed",
+      "modern_ruler": "Sun",
+      "classic_ruler": "Sun"
+    },
+    {
+      "id": "virgo",
+      "zh": "处女座",
+      "en": "Virgo",
+      "symbol": "♍",
+      "approx_start": "08-24",
+      "approx_end": "09-23",
+      "longitude_a_deg": 150,
+      "longitude_b_deg": 180,
+      "polarity": "negative",
+      "element": "earth",
+      "modality": "mutable",
+      "modern_ruler": "Mercury",
+      "classic_ruler": "Mercury"
+    },
+    {
+      "id": "libra",
+      "zh": "天秤座",
+      "en": "Libra",
+      "symbol": "♎",
+      "approx_start": "09-24",
+      "approx_end": "10-23",
+      "longitude_a_deg": 180,
+      "longitude_b_deg": 210,
+      "polarity": "positive",
+      "element": "air",
+      "modality": "cardinal",
+      "modern_ruler": "Venus",
+      "classic_ruler": "Venus"
+    },
+    {
+      "id": "scorpio",
+      "zh": "天蝎座",
+      "en": "Scorpio",
+      "symbol": "♏",
+      "approx_start": "10-24",
+      "approx_end": "11-22",
+      "longitude_a_deg": 210,
+      "longitude_b_deg": 240,
+      "polarity": "negative",
+      "element": "water",
+      "modality": "fixed",
+      "modern_ruler": "Pluto",
+      "classic_ruler": "Mars"
+    },
+    {
+      "id": "sagittarius",
+      "zh": "射手座",
+      "en": "Sagittarius",
+      "symbol": "♐",
+      "approx_start": "11-23",
+      "approx_end": "12-21",
+      "longitude_a_deg": 240,
+      "longitude_b_deg": 270,
+      "polarity": "positive",
+      "element": "fire",
+      "modality": "mutable",
+      "modern_ruler": "Jupiter",
+      "classic_ruler": "Jupiter"
+    },
+    {
+      "id": "capricorn",
+      "zh": "摩羯座",
+      "en": "Capricorn",
+      "symbol": "♑",
+      "approx_start": "12-22",
+      "approx_end": "01-20",
+      "longitude_a_deg": 270,
+      "longitude_b_deg": 300,
+      "polarity": "negative",
+      "element": "earth",
+      "modality": "cardinal",
+      "modern_ruler": "Saturn",
+      "classic_ruler": "Saturn"
+    },
+    {
+      "id": "aquarius",
+      "zh": "水瓶座",
+      "en": "Aquarius",
+      "symbol": "♒",
+      "approx_start": "01-21",
+      "approx_end": "02-19",
+      "longitude_a_deg": 300,
+      "longitude_b_deg": 330,
+      "polarity": "positive",
+      "element": "air",
+      "modality": "fixed",
+      "modern_ruler": "Uranus",
+      "classic_ruler": "Saturn"
+    },
+    {
+      "id": "pisces",
+      "zh": "双鱼座",
+      "en": "Pisces",
+      "symbol": "♓",
+      "approx_start": "02-20",
+      "approx_end": "03-20",
+      "longitude_a_deg": 330,
+      "longitude_b_deg": 360,
+      "polarity": "negative",
+      "element": "water",
+      "modality": "mutable",
+      "modern_ruler": "Neptune",
+      "classic_ruler": "Jupiter"
+    }
+  ],
+  "oppositions": [
+    [
+      "aries",
+      "libra"
+    ],
+    [
+      "taurus",
+      "scorpio"
+    ],
+    [
+      "gemini",
+      "sagittarius"
+    ],
+    [
+      "cancer",
+      "capricorn"
+    ],
+    [
+      "leo",
+      "aquarius"
+    ],
+    [
+      "virgo",
+      "pisces"
+    ]
+  ],
+  "cusp_policy": {
+    "civil_date_mode": "If birth date equals approx_start or approx_end of a sign, mark cusp_sensitive=true and prefer ecliptic mode when birth time is available.",
+    "source": "Wikipedia notes equinox date variance implies civil cusps are approximate."
+  }
+}

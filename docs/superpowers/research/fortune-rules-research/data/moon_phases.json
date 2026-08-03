@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0.0",
+  "provenance": {
+    "definitions": [
+      {
+        "source": "USNO Astronomical Applications — Phases of the Moon and Percent Illuminated",
+        "url": "https://aa.usno.navy.mil/faq/moon_phases",
+        "retrieved": "2026-08-03",
+        "primary_phases_definition": "New/First Quarter/Full/Last Quarter occur when excess of Moon ecliptic longitude over Sun is 0°, 90°, 180°, 270° respectively."
+      },
+      {
+        "source": "NASA Science — Moon Phases",
+        "url": "https://science.nasa.gov/moon/moon-phases/",
+        "retrieved": "2026-08-03",
+        "eight_phases": [
+          "new Moon",
+          "waxing crescent",
+          "first quarter",
+          "waxing gibbous",
+          "full Moon",
+          "waning gibbous",
+          "third quarter",
+          "waning crescent"
+        ],
+        "synodic_month_approx_days": 29.5
+      }
+    ],
+    "implementation_recommendation": "P1: compute elongation from Astronomy Engine (or USNO algorithm). Do NOT use a fixed synodic-month hash from a single epoch as product truth."
+  },
+  "phase_ids": [
+    {
+      "id": "new",
+      "zh": "新月",
+      "en": "New Moon",
+      "elongation_deg": 0,
+      "illumination_pct": 0,
+      "kind": "primary"
+    },
+    {
+      "id": "waxing_crescent",
+      "zh": "蛾眉月（盈）",
+      "en": "Waxing Crescent",
+      "elongation_range_deg": [
+        0,
+        90
+      ],
+      "illumination_range_pct": [
+        0,
+        50
+      ],
+      "waxing": true,
+      "kind": "intermediate"
+    },
+    {
+      "id": "first_quarter",
+      "zh": "上弦月",
+      "en": "First Quarter",
+      "elongation_deg": 90,
+      "illumination_pct": 50,
+      "kind": "primary"
+    },
+    {
+      "id": "waxing_gibbous",
+      "zh": "盈凸月",
+      "en": "Waxing Gibbous",
+      "elongation_range_deg": [
+        90,
+        180
+      ],
+      "illumination_range_pct": [
+        50,
+        100
+      ],
+      "waxing": true,
+      "kind": "intermediate"
+    },
+    {
+      "id": "full",
+      "zh": "满月",
+      "en": "Full Moon",
+      "elongation_deg": 180,
+      "illumination_pct": 100,
+      "kind": "primary"
+    },
+    {
+      "id": "waning_gibbous",
+      "zh": "亏凸月",
+      "en": "Waning Gibbous",
+      "elongation_range_deg": [
+        180,
+        270
+      ],
+      "illumination_range_pct": [
+        50,
+        100
+      ],
+      "waxing": false,
+      "kind": "intermediate"
+    },
+    {
+      "id": "last_quarter",
+      "zh": "下弦月",
+      "en": "Last Quarter (Third Quarter)",
+      "elongation_deg": 270,
+      "illumination_pct": 50,
+      "kind": "primary"
+    },
+    {
+      "id": "waning_crescent",
+      "zh": "残月（亏）",
+      "en": "Waning Crescent",
+      "elongation_range_deg": [
+        270,
+        360
+      ],
+      "illumination_range_pct": [
+        0,
+        50
+      ],
+      "waxing": false,
+      "kind": "intermediate"
+    }
+  ],
+  "display_binning_rule": {
+    "note": "For continuous elongation δ∈[0,360): assign nearest primary within tolerance, else intermediate by quadrant.",
+    "primary_tolerance_deg": 7.5,
+    "source": "Product convention for UI binning; primary instants themselves follow USNO longitude-difference definition."
+  },
+  "forbidden": {
+    "fixed_synodic_only": "Do not treat a single 2000-01-06 new-moon epoch + constant 29.530588 period as authoritative phase for a civil day without stating approximation_error."
+  }
+}

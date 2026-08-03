@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
-import { drawTarotSpread, tarotRuleBlurb, type DrawnCard } from "@/lib/fortune/tarot";
+import { cardKeywords, drawTarotSpread, tarotRuleBlurb, type DrawnCard } from "@/lib/fortune/tarot";
 
 const TOPICS = [
   { id: "love", zh: "感情", en: "Love" },
@@ -54,7 +54,10 @@ export default function TarotPage() {
           position: c.position,
           name: lang === "zh" ? c.card.nameZh : c.card.nameEn,
           upright: c.upright,
+          keywords: cardKeywords(c.card, c.upright, lang),
         })),
+        ruleVersion: spread.ruleVersion,
+        meaningSource: "Waite/de Laurence PD keywords + soft ZH stubs",
       },
     });
     const res = await requestFortuneReading(prompt);
@@ -141,6 +144,9 @@ export default function TarotPage() {
                           : lang === "zh"
                             ? "逆位"
                             : "Reversed"}
+                      </p>
+                      <p className="mt-2 text-[12px] leading-snug text-[#5c564c]">
+                        {cardKeywords(c.card, c.upright, lang)}
                       </p>
                     </div>
                   ))}

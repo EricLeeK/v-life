@@ -1,0 +1,1967 @@
+{
+  "schema_version": "1.0.0",
+  "deck": "rider_waite_smith",
+  "provenance": {
+    "structure": {
+      "source": "Wikipedia Rider–Waite Tarot / Major Arcana",
+      "urls": [
+        "https://en.wikipedia.org/wiki/Rider%E2%80%93Waite_Tarot",
+        "https://en.wikipedia.org/wiki/Major_Arcana"
+      ],
+      "notes": "78 cards; RWS numbering places Strength as VIII and Justice as XI (Waite list labels Strength as Fortitude)."
+    },
+    "divinatory_meanings": {
+      "source": "The Illustrated Key to the Tarot (L. W. de Laurence) — Project Gutenberg #43548; text reproduces A. E. Waite, The Pictorial Key to the Tarot (1911) divinatory meanings",
+      "url": "https://www.gutenberg.org/ebooks/43548",
+      "copyright_status_usa": "Public domain in the USA per Project Gutenberg listing",
+      "retrieved": "2026-08-03",
+      "usage": "source_text_en is the PD divinatory excerpt; keywords_en are short condensations of that excerpt. Chinese product copy must be original paraphrase."
+    },
+    "images": {
+      "note": "Original 1909 Smith art PD in US/UK per Wikipedia; modern editions may add copyrighted material. Prefer Wikimedia Commons PD scans.",
+      "url": "https://en.wikipedia.org/wiki/Rider%E2%80%93Waite_Tarot"
+    }
+  },
+  "draw_rules": {
+    "shuffle": "seeded_fisher_yates",
+    "reversal_probability": 0.5,
+    "default_spread": "past_present_advice",
+    "seed_spec_ref": "seed_spec.json"
+  },
+  "spreads": {
+    "three_card_vlife": {
+      "id": "past_present_advice",
+      "traditional_system_claim": false,
+      "positions": [
+        {
+          "index": 0,
+          "id": "past",
+          "en": "Past influence",
+          "zh": "过去影响"
+        },
+        {
+          "index": 1,
+          "id": "present",
+          "en": "Present situation",
+          "zh": "当下状态"
+        },
+        {
+          "index": 2,
+          "id": "advice",
+          "en": "Advice",
+          "zh": "建议"
+        }
+      ]
+    },
+    "celtic_cross_waite": {
+      "id": "ancient_celtic_method",
+      "traditional_system_claim": true,
+      "source": "Waite/de Laurence Pictorial Key — An Ancient Celtic Method of Divination",
+      "source_url": "https://www.gutenberg.org/ebooks/43548",
+      "positions": [
+        {
+          "index": 1,
+          "en": "This covers him",
+          "zh": "覆盖（总体氛围）"
+        },
+        {
+          "index": 2,
+          "en": "This crosses him",
+          "zh": "穿越（阻碍）"
+        },
+        {
+          "index": 3,
+          "en": "This crowns him",
+          "zh": "冠上（目标/理想）"
+        },
+        {
+          "index": 4,
+          "en": "This is beneath him",
+          "zh": "根基（已成事实）"
+        },
+        {
+          "index": 5,
+          "en": "This is behind him",
+          "zh": "背后（刚过去）"
+        },
+        {
+          "index": 6,
+          "en": "This is before him",
+          "zh": "前方（将到来）"
+        },
+        {
+          "index": 7,
+          "en": "Himself",
+          "zh": "自身态度"
+        },
+        {
+          "index": 8,
+          "en": "His house",
+          "zh": "环境"
+        },
+        {
+          "index": 9,
+          "en": "His hopes or fears",
+          "zh": "希望或恐惧"
+        },
+        {
+          "index": 10,
+          "en": "What will come",
+          "zh": "结果"
+        }
+      ]
+    }
+  },
+  "cards": [
+    {
+      "id": "fool",
+      "arcana": "major",
+      "number": 0,
+      "name_en": "The Fool",
+      "name_zh": "愚者",
+      "waite_label": "The Fool",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "folly mania extravagance intoxication delirium"
+        ],
+        "source_text_en": "Folly, mania, extravagance, intoxication, delirium, frenzy, bewrayment."
+      },
+      "reversed": {
+        "keywords_en": [
+          "negligence absence distribution carelessness apathy"
+        ],
+        "source_text_en": "Negligence, absence, distribution, carelessness, apathy, nullity, vanity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "magician",
+      "arcana": "major",
+      "number": 1,
+      "name_en": "The Magician",
+      "name_zh": "魔术师",
+      "waite_label": "The Magician",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "skill diplomacy address subtlety",
+          "sickness pain loss disaster snares",
+          "self confidence will",
+          "the querent if male"
+        ],
+        "source_text_en": "Skill, diplomacy, address, subtlety; sickness, pain, loss, disaster, snares of enemies; self-confidence, will; the Querent, if male."
+      },
+      "reversed": {
+        "keywords_en": [
+          "physician magus mental disease disgrace"
+        ],
+        "source_text_en": "Physician, Magus, mental disease, disgrace, disquiet."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "high_priestess",
+      "arcana": "major",
+      "number": 2,
+      "name_en": "The High Priestess",
+      "name_zh": "女祭司",
+      "waite_label": "The High Priestess",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "secrets mystery the future as",
+          "the woman who interests the",
+          "the querent herself if female",
+          "silence tenacity",
+          "mystery wisdom science"
+        ],
+        "source_text_en": "Secrets, mystery, the future as yet unrevealed; the woman who interests the Querent, if male; the Querent herself, if female; silence, tenacity; mystery, wisdom, science."
+      },
+      "reversed": {
+        "keywords_en": [
+          "passion moral or physical ardor"
+        ],
+        "source_text_en": "Passion, moral or physical ardor, conceit, surface knowledge."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "empress",
+      "arcana": "major",
+      "number": 3,
+      "name_en": "The Empress",
+      "name_zh": "女皇",
+      "waite_label": "The Empress",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "fruitfulness action initiative length of",
+          "the unknown clandestine",
+          "also difficulty doubt ignorance"
+        ],
+        "source_text_en": "Fruitfulness, action, initiative, length of days; the unknown, clandestine; also difficulty, doubt, ignorance."
+      },
+      "reversed": {
+        "keywords_en": [
+          "light truth the unravelling of",
+          "according to another reading vacillation"
+        ],
+        "source_text_en": "Light, truth, the unravelling of involved matters, public rejoicings; according to another reading, vacillation."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "emperor",
+      "arcana": "major",
+      "number": 4,
+      "name_en": "The Emperor",
+      "name_zh": "皇帝",
+      "waite_label": "The Emperor",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "stability power protection realization",
+          "a great person",
+          "aid reason conviction",
+          "also authority and will"
+        ],
+        "source_text_en": "Stability, power, protection, realization; a great person; aid, reason, conviction; also authority and will."
+      },
+      "reversed": {
+        "keywords_en": [
+          "benevolence compassion credit",
+          "also confusion to enemies obstruction"
+        ],
+        "source_text_en": "Benevolence, compassion, credit; also confusion to enemies, obstruction, immaturity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "hierophant",
+      "arcana": "major",
+      "number": 5,
+      "name_en": "The Hierophant",
+      "name_zh": "教皇",
+      "waite_label": "The Hierophant",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "marriage alliance captivity servitude",
+          "by another account mercy and",
+          "inspiration",
+          "the man to whom the"
+        ],
+        "source_text_en": "Marriage, alliance, captivity, servitude; by another account, mercy and goodness; inspiration; the man to whom the Querent has recourse."
+      },
+      "reversed": {
+        "keywords_en": [
+          "society good understanding concord over"
+        ],
+        "source_text_en": "Society, good understanding, concord, over-kindness, weakness."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "lovers",
+      "arcana": "major",
+      "number": 6,
+      "name_en": "The Lovers",
+      "name_zh": "恋人",
+      "waite_label": "The Lovers",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "attraction love beauty trials overcome"
+        ],
+        "source_text_en": "Attraction, love, beauty, trials overcome."
+      },
+      "reversed": {
+        "keywords_en": [
+          "failure foolish designs another account"
+        ],
+        "source_text_en": "Failure, foolish designs. Another account speaks of marriage frustrated and contrarieties of all kinds."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "chariot",
+      "arcana": "major",
+      "number": 7,
+      "name_en": "The Chariot",
+      "name_zh": "战车",
+      "waite_label": "The Chariot",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "succor providence",
+          "also war triumph presumption vengeance"
+        ],
+        "source_text_en": "Succor, providence; also war, triumph, presumption, vengeance, trouble."
+      },
+      "reversed": {
+        "keywords_en": [
+          "riot quarrel dispute litigation defeat"
+        ],
+        "source_text_en": "Riot, quarrel, dispute, litigation, defeat."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "strength",
+      "arcana": "major",
+      "number": 8,
+      "name_en": "Strength",
+      "name_zh": "力量",
+      "waite_label": "Fortitude",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "power energy action courage magnanimity",
+          "also complete success and honors"
+        ],
+        "source_text_en": "Power, energy, action, courage, magnanimity; also complete success and honors."
+      },
+      "reversed": {
+        "keywords_en": [
+          "despotism abuse of power weakness"
+        ],
+        "source_text_en": "Despotism, abuse of power, weakness, discord, sometimes even disgrace."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "hermit",
+      "arcana": "major",
+      "number": 9,
+      "name_en": "The Hermit",
+      "name_zh": "隐者",
+      "waite_label": "The Hermit",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "prudence circumspection",
+          "also and especially treason dissimulation"
+        ],
+        "source_text_en": "Prudence, circumspection; also and especially treason, dissimulation, roguery, corruption."
+      },
+      "reversed": {
+        "keywords_en": [
+          "concealment disguise policy fear unreasoned"
+        ],
+        "source_text_en": "Concealment, disguise, policy, fear, unreasoned caution."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wheel_of_fortune",
+      "arcana": "major",
+      "number": 10,
+      "name_en": "Wheel of Fortune",
+      "name_zh": "命运之轮",
+      "waite_label": "Wheel of Fortune",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "destiny fortune success elevation luck"
+        ],
+        "source_text_en": "Destiny, fortune, success, elevation, luck, felicity."
+      },
+      "reversed": {
+        "keywords_en": [
+          "increase abundance superfluity"
+        ],
+        "source_text_en": "Increase, abundance, superfluity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "justice",
+      "arcana": "major",
+      "number": 11,
+      "name_en": "Justice",
+      "name_zh": "正义",
+      "waite_label": "Justice",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "equity rightness probity executive",
+          "triumph of the deserving side"
+        ],
+        "source_text_en": "Equity, rightness, probity, executive; triumph of the deserving side in law."
+      },
+      "reversed": {
+        "keywords_en": [
+          "law in all its departments"
+        ],
+        "source_text_en": "Law in all its departments, legal complications, bigotry, bias, excessive severity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "hanged_man",
+      "arcana": "major",
+      "number": 12,
+      "name_en": "The Hanged Man",
+      "name_zh": "倒吊人",
+      "waite_label": "The Hanged Man",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "wisdom circumspection discernment trials sacrifice"
+        ],
+        "source_text_en": "Wisdom, circumspection, discernment, trials, sacrifice, intuition, divination, prophecy."
+      },
+      "reversed": {
+        "keywords_en": [
+          "selfishness the crowd body politic"
+        ],
+        "source_text_en": "Selfishness, the crowd, body politic."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "death",
+      "arcana": "major",
+      "number": 13,
+      "name_en": "Death",
+      "name_zh": "死神",
+      "waite_label": "Death",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "end mortality destruction corruption",
+          "also for a man the",
+          "for a woman many contrarieties",
+          "for a maid failure of"
+        ],
+        "source_text_en": "End, mortality, destruction, corruption; also, for a man, the loss of a benefactor; for a woman, many contrarieties; for a maid, failure of marriage projects."
+      },
+      "reversed": {
+        "keywords_en": [
+          "inertia sleep lethargy petrifaction somnambulism",
+          "hope destroyed"
+        ],
+        "source_text_en": "Inertia, sleep, lethargy, petrifaction, somnambulism; hope destroyed."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "temperance",
+      "arcana": "major",
+      "number": 14,
+      "name_en": "Temperance",
+      "name_zh": "节制",
+      "waite_label": "Temperance",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "economy moderation frugality management accommodation"
+        ],
+        "source_text_en": "Economy, moderation, frugality, management, accommodation."
+      },
+      "reversed": {
+        "keywords_en": [
+          "things connected with churches religions",
+          "also disunion unfortunate combinations competing"
+        ],
+        "source_text_en": "Things connected with churches, religions, sects, the priesthood, sometimes even the priest who will marry the Querent; also disunion, unfortunate combinations, competing interests."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "devil",
+      "arcana": "major",
+      "number": 15,
+      "name_en": "The Devil",
+      "name_zh": "恶魔",
+      "waite_label": "The Devil",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "ravage violence vehemence extraordinary efforts",
+          "that which is predestined but"
+        ],
+        "source_text_en": "Ravage, violence, vehemence, extraordinary efforts, force, fatality; that which is predestined but is not for this reason evil."
+      },
+      "reversed": {
+        "keywords_en": [
+          "evil fatality weakness pettiness blindness"
+        ],
+        "source_text_en": "Evil fatality, weakness, pettiness, blindness."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "tower",
+      "arcana": "major",
+      "number": 16,
+      "name_en": "The Tower",
+      "name_zh": "高塔",
+      "waite_label": "The Tower",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "misery distress indigence adversity calamity"
+        ],
+        "source_text_en": "Misery, distress, indigence, adversity, calamity, disgrace, deception, ruin. It is a card in particular of unforeseen catastrophe."
+      },
+      "reversed": {
+        "keywords_en": [
+          "according to one account the",
+          "also oppression imprisonment tyranny"
+        ],
+        "source_text_en": "According to one account, the same in a lesser degree; also oppression, imprisonment, tyranny."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "star",
+      "arcana": "major",
+      "number": 17,
+      "name_en": "The Star",
+      "name_zh": "星星",
+      "waite_label": "The Star",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "loss theft privation abandonment",
+          "another reading says",
+          "hope and bright prospects"
+        ],
+        "source_text_en": "Loss, theft, privation, abandonment; another reading says—hope and bright prospects."
+      },
+      "reversed": {
+        "keywords_en": [
+          "arrogance haughtiness impotence"
+        ],
+        "source_text_en": "Arrogance, haughtiness, impotence."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "moon",
+      "arcana": "major",
+      "number": 18,
+      "name_en": "The Moon",
+      "name_zh": "月亮",
+      "waite_label": "The Moon",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "hidden enemies danger calumny darkness"
+        ],
+        "source_text_en": "Hidden enemies, danger, calumny, darkness, terror, deception, occult forces, error."
+      },
+      "reversed": {
+        "keywords_en": [
+          "instability inconstancy silence lesser degrees"
+        ],
+        "source_text_en": "Instability, inconstancy, silence, lesser degrees of deception and error."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "sun",
+      "arcana": "major",
+      "number": 19,
+      "name_en": "The Sun",
+      "name_zh": "太阳",
+      "waite_label": "The Sun",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "material happiness fortunate marriage contentment"
+        ],
+        "source_text_en": "Material happiness, fortunate marriage, contentment."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the same in a lesser"
+        ],
+        "source_text_en": "The same in a lesser sense."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "judgement",
+      "arcana": "major",
+      "number": 20,
+      "name_en": "Judgement",
+      "name_zh": "审判",
+      "waite_label": "The Last Judgment",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "change of position renewal outcome"
+        ],
+        "source_text_en": "Change of position, renewal, outcome. Another account specifies total loss through lawsuit."
+      },
+      "reversed": {
+        "keywords_en": [
+          "weakness pusillanimity simplicity",
+          "also deliberation decision sentence"
+        ],
+        "source_text_en": "Weakness, pusillanimity, simplicity; also deliberation, decision, sentence."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "world",
+      "arcana": "major",
+      "number": 21,
+      "name_en": "The World",
+      "name_zh": "世界",
+      "waite_label": "The World",
+      "rws_strength_justice_numbering": true,
+      "upright": {
+        "keywords_en": [
+          "assured success recompense voyage route"
+        ],
+        "source_text_en": "Assured success, recompense, voyage, route, emigration, flight, change of place."
+      },
+      "reversed": {
+        "keywords_en": [
+          "inertia fixity stagnation permanence it"
+        ],
+        "source_text_en": "Inertia, fixity, stagnation, permanence. It will be seen that, except where there is an irresistible suggestion conveyed by the surface meaning, that which is extracted from the Trumps Major by the divinatory art is at once artificial and arbitrary, as it seems to me, in the highest degree. But of one order are the mysteries of light and of another are those of fantasy. The allocation of a fortune-telling aspect to these cards is the story of a prolonged impertinence."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_ace",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "ace",
+      "rank_order": 1,
+      "name_en": "Ace of Wands",
+      "name_zh": "权杖王牌",
+      "upright": {
+        "keywords_en": [
+          "creation invention enterprise the powers",
+          "principle beginning source",
+          "birth family origin and in",
+          "the starting point of enterprises",
+          "according to another account money"
+        ],
+        "source_text_en": "Creation, invention, enterprise, the powers which result in these; principle, beginning, source; birth, family, origin, and in a sense the virility which is behind them; the starting point of enterprises; according to another account, money, fortune, inheritance."
+      },
+      "reversed": {
+        "keywords_en": [
+          "fall decadence ruin perdition to",
+          "also a certain clouded joy"
+        ],
+        "source_text_en": "Fall, decadence, ruin, perdition, to perish; also a certain clouded joy."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_two",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "two",
+      "rank_order": 2,
+      "name_en": "Two of Wands",
+      "name_zh": "权杖二",
+      "upright": {
+        "keywords_en": [
+          "between the alternative readings there",
+          "on the one hand riches",
+          "on the other physical suffering",
+          "here is a lord overlooking",
+          "it looks like the malady"
+        ],
+        "source_text_en": "Between the alternative readings there is no marriage possible; on the one hand, riches, fortune, magnificence; on the other, physical suffering, disease, chagrin, sadness, mortification. The design gives one suggestion; here is a lord overlooking his dominion and alternately contemplating a globe; it looks like the malady, the mortification, the sadness of Alexander amidst the grandeur of this world's wealth."
+      },
+      "reversed": {
+        "keywords_en": [
+          "surprise wonder enchantment emotion trouble"
+        ],
+        "source_text_en": "Surprise, wonder, enchantment, emotion, trouble, fear."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_three",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "three",
+      "rank_order": 3,
+      "name_en": "Three of Wands",
+      "name_zh": "权杖三",
+      "upright": {
+        "keywords_en": [
+          "he symbolizes established strength enterprise",
+          "those are his ships bearing"
+        ],
+        "source_text_en": "He symbolizes established strength, enterprise, effort, trade, commerce, discovery; those are his ships, bearing his merchandise, which are sailing over the sea. The card also signifies able co-operation in business, as if the successful merchant prince were looking from his side towards yours with a view to help you."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the end of troubles suspension"
+        ],
+        "source_text_en": "The end of troubles, suspension or cessation of adversity, toil and disappointment."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_four",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "four",
+      "rank_order": 4,
+      "name_en": "Four of Wands",
+      "name_zh": "权杖四",
+      "upright": {
+        "keywords_en": [
+          "they are for once almost",
+          "country life haven of refuge"
+        ],
+        "source_text_en": "They are for once almost on the surface—country life, haven of refuge, a species of domestic harvest-home, repose, concord, harmony, prosperity, peace, and the perfected work of these."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the meaning remains unaltered",
+          "it is prosperity increase felicity"
+        ],
+        "source_text_en": "The meaning remains unaltered; it is prosperity, increase, felicity, beauty, embellishment."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_five",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "five",
+      "rank_order": 5,
+      "name_en": "Five of Wands",
+      "name_zh": "权杖五",
+      "upright": {
+        "keywords_en": [
+          "imitation as for example sham"
+        ],
+        "source_text_en": "Imitation, as, for example, sham fight, but also the strenuous competition and struggle of the search after riches and fortune. In this sense it connects with the battle of life. Hence some attributions say that it is a card of gold, gain, opulence."
+      },
+      "reversed": {
+        "keywords_en": [
+          "litigation disputes trickery contradiction"
+        ],
+        "source_text_en": "Litigation, disputes, trickery, contradiction."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_six",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "six",
+      "rank_order": 6,
+      "name_en": "Six of Wands",
+      "name_zh": "权杖六",
+      "upright": {
+        "keywords_en": [
+          "the card has been so",
+          "on the surface it is",
+          "it is expectation crowned with"
+        ],
+        "source_text_en": "The card has been so designed that it can cover several significations; on the surface, it is a victor triumphing, but it is also great news, such as might be carried in state by the King's courier; it is expectation crowned with its own desire, the crown of hope, and so forth."
+      },
+      "reversed": {
+        "keywords_en": [
+          "apprehension fear as of a",
+          "treachery disloyalty as of gates",
+          "also indefinite delay"
+        ],
+        "source_text_en": "Apprehension, fear, as of a victorious enemy at the gate; treachery, disloyalty, as of gates being opened to the enemy; also indefinite delay."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_seven",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "seven",
+      "rank_order": 7,
+      "name_en": "Seven of Wands",
+      "name_zh": "权杖七",
+      "upright": {
+        "keywords_en": [
+          "it is a card of",
+          "in business",
+          "negotiations war of trade barter"
+        ],
+        "source_text_en": "It is a card of valor, for, on the surface, six are attacking one, who has, however, the vantage position. On the intellectual plane, it signifies discussion, wordy strife; in business—negotiations, war of trade, barter, competition. It is further a card of success, for the combatant is on the top and his enemies may be unable to reach him."
+      },
+      "reversed": {
+        "keywords_en": [
+          "perplexity embarrassments anxiety it is"
+        ],
+        "source_text_en": "Perplexity, embarrassments, anxiety. It is also a caution against indecision."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_eight",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "eight",
+      "rank_order": 8,
+      "name_en": "Eight of Wands",
+      "name_zh": "权杖八",
+      "upright": {
+        "keywords_en": [
+          "activity in undertakings the path",
+          "great haste great hope speed",
+          "generally that which is on",
+          "also the arrows of love"
+        ],
+        "source_text_en": "Activity in undertakings, the path of such activity, swiftness, as that of an express messenger; great haste, great hope, speed towards an end which promises assured felicity; generally, that which is on the move; also the arrows of love."
+      },
+      "reversed": {
+        "keywords_en": [
+          "arrows of jealousy internal dispute",
+          "and domestic disputes for persons"
+        ],
+        "source_text_en": "Arrows of jealousy, internal dispute, stingings of conscience, quarrels; and domestic disputes for persons who are married."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_nine",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "nine",
+      "rank_order": 9,
+      "name_en": "Nine of Wands",
+      "name_zh": "权杖九",
+      "upright": {
+        "keywords_en": [
+          "the card signifies strength in",
+          "and his build shows that",
+          "delay suspension adjournment"
+        ],
+        "source_text_en": "The card signifies strength in opposition. If attacked, the person will meet an onslaught boldly; and his build shows that he may prove a formidable antagonist. With this main significance there are all its possible adjuncts—delay, suspension, adjournment."
+      },
+      "reversed": {
+        "keywords_en": [
+          "obstacles adversity calamity"
+        ],
+        "source_text_en": "Obstacles, adversity, calamity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_ten",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "ten",
+      "rank_order": 10,
+      "name_en": "Ten of Wands",
+      "name_zh": "权杖十",
+      "upright": {
+        "keywords_en": [
+          "a card of many significances"
+        ],
+        "source_text_en": "A card of many significances, and some of the readings cannot be harmonized. I set aside that which connects it with honor and good faith. The chief meaning is oppression simply, but it is also fortune, gain, any kind of success, and then it is the oppression of these things. It is also a card of false-seeming, disguise, perfidy. The place which the figure is approaching may suffer from the rods that he carries. Success is stultified if the Nine of Swords follows, and if it is a question of a lawsuit, there will be certain loss."
+      },
+      "reversed": {
+        "keywords_en": [
+          "contrarieties difficulties intrigues and their"
+        ],
+        "source_text_en": "Contrarieties, difficulties, intrigues, and their analogies."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_page",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "page",
+      "rank_order": 11,
+      "name_en": "Page of Wands",
+      "name_zh": "权杖侍从",
+      "upright": {
+        "keywords_en": [
+          "dark young man faithful a"
+        ],
+        "source_text_en": "Dark young man, faithful, a lover, an envoy, a postman. Beside a man, he will bear favorable testimony concerning him. A dangerous rival, if followed by the Page of Cups. Has the chief qualities of his suit. He may signify family intelligence."
+      },
+      "reversed": {
+        "keywords_en": [
+          "anecdotes announcements evil news also"
+        ],
+        "source_text_en": "Anecdotes, announcements, evil news. Also indecision and the instability which accompanies it."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_knight",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "knight",
+      "rank_order": 12,
+      "name_en": "Knight of Wands",
+      "name_zh": "权杖骑士",
+      "upright": {
+        "keywords_en": [
+          "departure absence flight emigration a"
+        ],
+        "source_text_en": "Departure, absence, flight, emigration. A dark young man, friendly. Change of residence."
+      },
+      "reversed": {
+        "keywords_en": [
+          "rupture division interruption discord"
+        ],
+        "source_text_en": "Rupture, division, interruption, discord."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_queen",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "queen",
+      "rank_order": 13,
+      "name_en": "Queen of Wands",
+      "name_zh": "权杖王后",
+      "upright": {
+        "keywords_en": [
+          "a dark woman country woman",
+          "if a woman she is"
+        ],
+        "source_text_en": "A dark woman, country-woman, friendly, chaste, loving, honorable. If the card beside her signifies a man, she is well disposed towards him; if a woman, she is interested in the Querent. Also, love of money, or a certain success in business."
+      },
+      "reversed": {
+        "keywords_en": [
+          "good economical obliging serviceable signifies",
+          "but in certain positions and",
+          "opposition jealousy even deceit and"
+        ],
+        "source_text_en": "Good, economical, obliging, serviceable. Signifies also—but in certain positions and in the neighborhood of other cards tending in such directions—opposition, jealousy, even deceit and infidelity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "wands_king",
+      "arcana": "minor",
+      "suit": "wands",
+      "rank": "king",
+      "rank_order": 14,
+      "name_en": "King of Wands",
+      "name_zh": "权杖国王",
+      "upright": {
+        "keywords_en": [
+          "dark man friendly countryman generally"
+        ],
+        "source_text_en": "Dark man, friendly, countryman, generally married, honest and conscientious. The card always signifies honesty, and may mean news concerning an unexpected heritage to fall in before very long."
+      },
+      "reversed": {
+        "keywords_en": [
+          "good but severe",
+          "austere yet tolerant"
+        ],
+        "source_text_en": "Good, but severe; austere, yet tolerant."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_ace",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "ace",
+      "rank_order": 1,
+      "name_en": "Ace of Cups",
+      "name_zh": "圣杯王牌",
+      "upright": {
+        "keywords_en": [
+          "house of the true heart",
+          "holy table felicity hereof"
+        ],
+        "source_text_en": "House of the true heart, joy, content, abode, nourishment, abundance, fertility; Holy Table, felicity hereof."
+      },
+      "reversed": {
+        "keywords_en": [
+          "house of the false heart"
+        ],
+        "source_text_en": "House of the false heart, mutation, instability, revolution."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_two",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "two",
+      "rank_order": 2,
+      "name_en": "Two of Cups",
+      "name_zh": "圣杯二",
+      "upright": {
+        "keywords_en": [
+          "love",
+          "passion",
+          "friendship",
+          "affinity",
+          "union"
+        ],
+        "source_text_en": "Love, passion, friendship, affinity, union, concord, sympathy, the inter-relation of the sexes, and—as a suggestion apart from all offices of divination—that desire which is not in Nature, but by which Nature is sanctified."
+      },
+      "reversed": {
+        "keywords_en": [],
+        "source_text_en": "",
+        "note": "Waite/de Laurence lesser-arcana entry for Cups Two omits a separate Reversed paragraph in this edition."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_three",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "three",
+      "rank_order": 3,
+      "name_en": "Three of Cups",
+      "name_zh": "圣杯三",
+      "upright": {
+        "keywords_en": [
+          "the conclusion of any matter",
+          "happy issue victory fulfilment solace"
+        ],
+        "source_text_en": "The conclusion of any matter in plenty, perfection and merriment; happy issue, victory, fulfilment, solace, healing."
+      },
+      "reversed": {
+        "keywords_en": [
+          "expedition dispatch achievement end it"
+        ],
+        "source_text_en": "Expedition, dispatch, achievement, end. It signifies also the side of excess in physical"
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_four",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "four",
+      "rank_order": 4,
+      "name_en": "Four of Cups",
+      "name_zh": "圣杯四",
+      "upright": {
+        "keywords_en": [
+          "weariness disgust aversion imaginary vexations",
+          "another wine as if a"
+        ],
+        "source_text_en": "Weariness, disgust, aversion, imaginary vexations, as if the wine of this world had caused satiety only; another wine, as if a fairy gift, is now offered the wastrel, but he sees no consolation therein. This is also a card of blended pleasure."
+      },
+      "reversed": {
+        "keywords_en": [
+          "novelty presage new instruction new"
+        ],
+        "source_text_en": "Novelty, presage, new instruction, new relations."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_five",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "five",
+      "rank_order": 5,
+      "name_en": "Five of Cups",
+      "name_zh": "圣杯五",
+      "upright": {
+        "keywords_en": [
+          "it is a card of",
+          "three have been taken but",
+          "with some interpreters it is"
+        ],
+        "source_text_en": "It is a card of loss, but something remains over; three have been taken, but two are left; it is a card of inheritance, patrimony, transmission, but not corresponding to expectations; with some interpreters it is a card of marriage, but not without bitterness or frustration."
+      },
+      "reversed": {
+        "keywords_en": [
+          "news alliances affinity consanguinity ancestry"
+        ],
+        "source_text_en": "News, alliances, affinity, consanguinity, ancestry, return, false projects."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_six",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "six",
+      "rank_order": 6,
+      "name_en": "Six of Cups",
+      "name_zh": "圣杯六",
+      "upright": {
+        "keywords_en": [
+          "a card of the past",
+          "for example",
+          "on childhood",
+          "happiness enjoyment but coming rather",
+          "things that have vanished another"
+        ],
+        "source_text_en": "A card of the past and of memories, looking back, as—for example—on childhood; happiness, enjoyment, but coming rather from the past; things that have vanished. Another reading reverses this, giving new relations, new knowledge, new environment, and then the children are disporting in an unfamiliar precinct."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the future renewal that which"
+        ],
+        "source_text_en": "The future, renewal, that which will come to pass presently."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_seven",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "seven",
+      "rank_order": 7,
+      "name_en": "Seven of Cups",
+      "name_zh": "圣杯七",
+      "upright": {
+        "keywords_en": [
+          "fairy favors images of reflection",
+          "some attainment in these degrees"
+        ],
+        "source_text_en": "Fairy favors, images of reflection, sentiment, imagination, things seen in the glass of contemplation; some attainment in these degrees, but nothing permanent or substantial is suggested."
+      },
+      "reversed": {
+        "keywords_en": [
+          "desire will determination project"
+        ],
+        "source_text_en": "Desire, will, determination, project."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_eight",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "eight",
+      "rank_order": 8,
+      "name_en": "Eight of Cups",
+      "name_zh": "圣杯八",
+      "upright": {
+        "keywords_en": [
+          "the card speaks for itself",
+          "giving joy mildness timidity honor",
+          "either for good or evil"
+        ],
+        "source_text_en": "The card speaks for itself on the surface, but other readings are entirely antithetical—giving joy, mildness, timidity, honor, modesty. In practice, it is usually found that the card shows the decline of a matter, or that a matter which has been thought to be important is really of slight consequence—either for good or evil."
+      },
+      "reversed": {
+        "keywords_en": [
+          "great joy happiness feasting"
+        ],
+        "source_text_en": "Great joy, happiness, feasting."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_nine",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "nine",
+      "rank_order": 9,
+      "name_en": "Nine of Cups",
+      "name_zh": "圣杯九",
+      "upright": {
+        "keywords_en": [
+          "concord contentment physical bien tre",
+          "also victory success advantage",
+          "satisfaction for the querent or"
+        ],
+        "source_text_en": "Concord, contentment, physical bien-être; also victory, success, advantage; satisfaction for the Querent or person for whom the consultation is made."
+      },
+      "reversed": {
+        "keywords_en": [
+          "truth loyalty liberty",
+          "but the readings vary and"
+        ],
+        "source_text_en": "Truth, loyalty, liberty; but the readings vary and include mistakes, imperfections, etc."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_ten",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "ten",
+      "rank_order": 10,
+      "name_en": "Ten of Cups",
+      "name_zh": "圣杯十",
+      "upright": {
+        "keywords_en": [
+          "contentment repose of the entire",
+          "the perfection of that state",
+          "also perfection of human love",
+          "if with several picture cards",
+          "also the town village or"
+        ],
+        "source_text_en": "Contentment, repose of the entire heart; the perfection of that state; also perfection of human love and friendship; if with several picture-cards, a person who is taking charge of the Querent's interests; also the town, village or country inhabited by the Querent."
+      },
+      "reversed": {
+        "keywords_en": [
+          "repose of the false heart"
+        ],
+        "source_text_en": "Repose of the false heart, indignation, violence."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_page",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "page",
+      "rank_order": 11,
+      "name_en": "Page of Cups",
+      "name_zh": "圣杯侍从",
+      "upright": {
+        "keywords_en": [
+          "fair young man one impelled",
+          "a studious youth",
+          "news message",
+          "application reflection meditation",
+          "also these things directed to"
+        ],
+        "source_text_en": "Fair young man, one impelled to render service and with whom the Querent will be connected; a studious youth; news, message; application, reflection, meditation; also these things directed to business."
+      },
+      "reversed": {
+        "keywords_en": [
+          "taste inclination attachment seduction deception"
+        ],
+        "source_text_en": "Taste, inclination, attachment, seduction, deception, artifice."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_knight",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "knight",
+      "rank_order": 12,
+      "name_en": "Knight of Cups",
+      "name_zh": "圣杯骑士",
+      "upright": {
+        "keywords_en": [
+          "arrival approach",
+          "sometimes that of a messenger",
+          "advances proposition demeanor invitation incitement"
+        ],
+        "source_text_en": "Arrival, approach—sometimes that of a messenger; advances, proposition, demeanor, invitation, incitement."
+      },
+      "reversed": {
+        "keywords_en": [
+          "trickery artifice subtlety swindling duplicity"
+        ],
+        "source_text_en": "Trickery, artifice, subtlety, swindling, duplicity, fraud."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_queen",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "queen",
+      "rank_order": 13,
+      "name_en": "Queen of Cups",
+      "name_zh": "圣杯王后",
+      "upright": {
+        "keywords_en": [
+          "good fair woman",
+          "honest devoted woman who will",
+          "loving intelligence and hence the",
+          "success happiness pleasure",
+          "also wisdom virtue"
+        ],
+        "source_text_en": "Good, fair woman; honest, devoted woman, who will do service to the Querent; loving intelligence, and hence the gift of vision; success, happiness, pleasure; also wisdom, virtue; a perfect spouse and a good mother."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the accounts vary",
+          "good woman",
+          "otherwise distinguished woman but one",
+          "perverse woman",
+          "vice dishonor depravity"
+        ],
+        "source_text_en": "The accounts vary; good woman; otherwise, distinguished woman but one not to be trusted; perverse woman; vice, dishonor, depravity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "cups_king",
+      "arcana": "minor",
+      "suit": "cups",
+      "rank": "king",
+      "rank_order": 14,
+      "name_en": "King of Cups",
+      "name_zh": "圣杯国王",
+      "upright": {
+        "keywords_en": [
+          "fair man man of business",
+          "responsible disposed to oblige the",
+          "also equity art and science",
+          "creative intelligence"
+        ],
+        "source_text_en": "Fair man, man of business, law, or divinity; responsible, disposed to oblige the Querent; also equity, art and science, including those who profess science, law and art; creative intelligence."
+      },
+      "reversed": {
+        "keywords_en": [
+          "dishonest double dealing man",
+          "roguery exaction injustice vice scandal"
+        ],
+        "source_text_en": "Dishonest, double-dealing man; roguery, exaction, injustice, vice, scandal, pillage, considerable loss."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_ace",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "ace",
+      "rank_order": 1,
+      "name_en": "Ace of Swords",
+      "name_zh": "宝剑王牌",
+      "upright": {
+        "keywords_en": [
+          "triumph the excessive degree in"
+        ],
+        "source_text_en": "Triumph, the excessive degree in everything, conquest, triumph of force. It is a card of great force, in love as well as in hatred. The crown may carry a much higher significance than comes usually within the sphere of fortune-telling."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the same but the results",
+          "another account says",
+          "conception",
+          "childbirth augmentation multiplicity"
+        ],
+        "source_text_en": "The same, but the results are disastrous; another account says—conception—childbirth, augmentation, multiplicity."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_two",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "two",
+      "rank_order": 2,
+      "name_en": "Two of Swords",
+      "name_zh": "宝剑二",
+      "upright": {
+        "keywords_en": [
+          "conformity and the equipoise which",
+          "another reading gives tenderness affection"
+        ],
+        "source_text_en": "Conformity and the equipoise which it suggests, courage, friendship, concord in a state of arms; another reading gives tenderness, affection, intimacy. The suggestion of harmony and other favorable readings must be considered in a qualified manner, as Swords generally are not symbolical of beneficent forces in human affairs."
+      },
+      "reversed": {
+        "keywords_en": [
+          "imposture falsehood duplicity disloyalty"
+        ],
+        "source_text_en": "Imposture, falsehood, duplicity, disloyalty."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_three",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "three",
+      "rank_order": 3,
+      "name_en": "Three of Swords",
+      "name_zh": "宝剑三",
+      "upright": {
+        "keywords_en": [
+          "removal absence delay division rupture"
+        ],
+        "source_text_en": "Removal, absence, delay, division, rupture, dispersion, and all that the design signifies naturally, being too simple and obvious to call for specific enumeration."
+      },
+      "reversed": {
+        "keywords_en": [
+          "mental alienation error loss distraction"
+        ],
+        "source_text_en": "Mental alienation, error, loss, distraction, disorder, confusion."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_four",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "four",
+      "rank_order": 4,
+      "name_en": "Four of Swords",
+      "name_zh": "宝剑四",
+      "upright": {
+        "keywords_en": [
+          "vigilance retreat solitude hermit's repose"
+        ],
+        "source_text_en": "Vigilance, retreat, solitude, hermit's repose, exile, tomb and coffin. It is these last that have suggested the design."
+      },
+      "reversed": {
+        "keywords_en": [
+          "wise administration circumspection economy avarice"
+        ],
+        "source_text_en": "Wise administration, circumspection, economy, avarice, precaution, testament."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_five",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "five",
+      "rank_order": 5,
+      "name_en": "Five of Swords",
+      "name_zh": "宝剑五",
+      "upright": {
+        "keywords_en": [
+          "degradation destruction revocation infamy dishonor"
+        ],
+        "source_text_en": "Degradation, destruction, revocation, infamy, dishonor, loss, with the variants and analogues of these."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the same",
+          "burial and obsequies"
+        ],
+        "source_text_en": "The same; burial and obsequies."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_six",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "six",
+      "rank_order": 6,
+      "name_en": "Six of Swords",
+      "name_zh": "宝剑六",
+      "upright": {
+        "keywords_en": [
+          "journey by water route way"
+        ],
+        "source_text_en": "Journey by water, route, way, envoy, commissionary, expedient."
+      },
+      "reversed": {
+        "keywords_en": [
+          "declaration confession publicity",
+          "one account says that it"
+        ],
+        "source_text_en": "Declaration, confession, publicity; one account says that it is a proposal of love."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_seven",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "seven",
+      "rank_order": 7,
+      "name_en": "Seven of Swords",
+      "name_zh": "宝剑七",
+      "upright": {
+        "keywords_en": [
+          "design attempt wish hope confidence",
+          "also quarrelling a plan that"
+        ],
+        "source_text_en": "Design, attempt, wish, hope, confidence; also quarrelling, a plan that may fail, annoyance. The design is uncertain in its import, because the significations are widely at variance with each other."
+      },
+      "reversed": {
+        "keywords_en": [
+          "good advice counsel instruction slander"
+        ],
+        "source_text_en": "Good advice, counsel, instruction, slander, babbling."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_eight",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "eight",
+      "rank_order": 8,
+      "name_en": "Eight of Swords",
+      "name_zh": "宝剑八",
+      "upright": {
+        "keywords_en": [
+          "bad news violent chagrin crisis",
+          "also sickness"
+        ],
+        "source_text_en": "Bad news, violent chagrin, crisis, censure, power in trammels, conflict, calumny; also sickness."
+      },
+      "reversed": {
+        "keywords_en": [
+          "disquiet difficulty opposition accident treachery",
+          "what is unforeseen",
+          "fatality"
+        ],
+        "source_text_en": "Disquiet, difficulty, opposition, accident, treachery; what is unforeseen; fatality."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_nine",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "nine",
+      "rank_order": 9,
+      "name_en": "Nine of Swords",
+      "name_zh": "宝剑九",
+      "upright": {
+        "keywords_en": [
+          "death failure miscarriage delay deception"
+        ],
+        "source_text_en": "Death, failure, miscarriage, delay, deception, disappointment, despair."
+      },
+      "reversed": {
+        "keywords_en": [
+          "imprisonment suspicion doubt reasonable fear"
+        ],
+        "source_text_en": "Imprisonment, suspicion, doubt, reasonable fear, shame."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_ten",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "ten",
+      "rank_order": 10,
+      "name_en": "Ten of Swords",
+      "name_zh": "宝剑十",
+      "upright": {
+        "keywords_en": [
+          "whatsoever is intimated by the",
+          "also pain affliction tears sadness"
+        ],
+        "source_text_en": "Whatsoever is intimated by the design; also pain, affliction, tears, sadness, desolation. It is not especially a card of violent death."
+      },
+      "reversed": {
+        "keywords_en": [
+          "advantage profit success favor but",
+          "also power and authority"
+        ],
+        "source_text_en": "Advantage, profit, success, favor, but none of these are permanent; also power and authority."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_page",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "page",
+      "rank_order": 11,
+      "name_en": "Page of Swords",
+      "name_zh": "宝剑侍从",
+      "upright": {
+        "keywords_en": [
+          "authority overseeing secret service vigilance"
+        ],
+        "source_text_en": "Authority, overseeing, secret service, vigilance, spying, examination, and the qualities thereto belonging."
+      },
+      "reversed": {
+        "keywords_en": [
+          "more evil side of these",
+          "what is unforeseen unprepared state",
+          "sickness is also intimated"
+        ],
+        "source_text_en": "More evil side of these qualities; what is unforeseen, unprepared state; sickness is also intimated."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_knight",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "knight",
+      "rank_order": 12,
+      "name_en": "Knight of Swords",
+      "name_zh": "宝剑骑士",
+      "upright": {
+        "keywords_en": [
+          "skill bravery capacity defense address"
+        ],
+        "source_text_en": "Skill, bravery, capacity, defense, address, enmity, wrath, war, destruction, opposition, resistance, ruin. There is therefore a sense in which the card signifies death, but it carries this meaning only in its proximity to other cards of fatality."
+      },
+      "reversed": {
+        "keywords_en": [
+          "imprudence incapacity extravagance"
+        ],
+        "source_text_en": "Imprudence, incapacity, extravagance."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_queen",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "queen",
+      "rank_order": 13,
+      "name_en": "Queen of Swords",
+      "name_zh": "宝剑王后",
+      "upright": {
+        "keywords_en": [
+          "widowhood female sadness and embarrassment"
+        ],
+        "source_text_en": "Widowhood, female sadness and embarrassment, absence, sterility, mourning, privation, separation."
+      },
+      "reversed": {
+        "keywords_en": [
+          "malice bigotry artifice prudery bale"
+        ],
+        "source_text_en": "Malice, bigotry, artifice, prudery, bale, deceit."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "swords_king",
+      "arcana": "minor",
+      "suit": "swords",
+      "rank": "king",
+      "rank_order": 14,
+      "name_en": "King of Swords",
+      "name_zh": "宝剑国王",
+      "upright": {
+        "keywords_en": [
+          "whatsoever arises out of the",
+          "power command authority militant intelligence"
+        ],
+        "source_text_en": "Whatsoever arises out of the idea of judgment and all its connections—power, command, authority, militant intelligence, law, offices of the crown, and so forth."
+      },
+      "reversed": {
+        "keywords_en": [
+          "cruelty perversity barbarity perfidy evil"
+        ],
+        "source_text_en": "Cruelty, perversity, barbarity, perfidy, evil intention."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_ace",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "ace",
+      "rank_order": 1,
+      "name_en": "Ace of Pentacles",
+      "name_zh": "星币王牌",
+      "upright": {
+        "keywords_en": [
+          "perfect contentment felicity ecstasy",
+          "also speedy intelligence",
+          "gold"
+        ],
+        "source_text_en": "Perfect contentment, felicity, ecstasy; also speedy intelligence; gold."
+      },
+      "reversed": {
+        "keywords_en": [
+          "the evil side of wealth",
+          "also great riches in any"
+        ],
+        "source_text_en": "The evil side of wealth, bad intelligence; also great riches. In any case it shows prosperity, comfortable material conditions, but whether these are of advantage to the possessor will depend on whether the card is reversed or not."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_two",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "two",
+      "rank_order": 2,
+      "name_en": "Two of Pentacles",
+      "name_zh": "星币二",
+      "upright": {
+        "keywords_en": [
+          "on the one hand it",
+          "but it is read also"
+        ],
+        "source_text_en": "On the one hand it is represented as a card of gaiety, recreation and its connections, which is the subject of the design; but it is read also as news and messages in writing, as obstacles, agitation, trouble, embroilment."
+      },
+      "reversed": {
+        "keywords_en": [
+          "enforced gaiety simulated enjoyment literal"
+        ],
+        "source_text_en": "Enforced gaiety, simulated enjoyment, literal sense, handwriting, composition, letters of exchange."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_three",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "three",
+      "rank_order": 3,
+      "name_en": "Three of Pentacles",
+      "name_zh": "星币三",
+      "upright": {
+        "keywords_en": [
+          "m tier trade skilled labor",
+          "usually however regarded as a"
+        ],
+        "source_text_en": "Métier, trade, skilled labor; usually, however, regarded as a card of nobility, aristocracy, renown, glory."
+      },
+      "reversed": {
+        "keywords_en": [
+          "mediocrity in work and otherwise"
+        ],
+        "source_text_en": "Mediocrity, in work and otherwise, puerility, pettiness, weakness."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_four",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "four",
+      "rank_order": 4,
+      "name_en": "Four of Pentacles",
+      "name_zh": "星币四",
+      "upright": {
+        "keywords_en": [
+          "the surety of possessions cleaving"
+        ],
+        "source_text_en": "The surety of possessions, cleaving to that which one has, gift, legacy, inheritance."
+      },
+      "reversed": {
+        "keywords_en": [
+          "suspense delay opposition"
+        ],
+        "source_text_en": "Suspense, delay, opposition."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_five",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "five",
+      "rank_order": 5,
+      "name_en": "Five of Pentacles",
+      "name_zh": "星币五",
+      "upright": {
+        "keywords_en": [
+          "the card foretells material trouble",
+          "that is destitution",
+          "or otherwise for some cartomancists",
+          "wife husband friend mistress",
+          "also concordance affinities these alternatives"
+        ],
+        "source_text_en": "The card foretells material trouble above all, whether in the form illustrated—that is, destitution—or otherwise. For some cartomancists, it is a card of love and lovers—wife, husband, friend, mistress; also concordance, affinities. These alternatives cannot be harmonized."
+      },
+      "reversed": {
+        "keywords_en": [
+          "disorder chaos ruin discord profligacy"
+        ],
+        "source_text_en": "Disorder, chaos, ruin, discord, profligacy."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_six",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "six",
+      "rank_order": 6,
+      "name_en": "Six of Pentacles",
+      "name_zh": "星币六",
+      "upright": {
+        "keywords_en": [
+          "presents gifts gratification",
+          "another account says attention vigilance",
+          "now is the accepted time"
+        ],
+        "source_text_en": "Presents, gifts, gratification; another account says attention, vigilance; now is the accepted time, present prosperity, etc."
+      },
+      "reversed": {
+        "keywords_en": [
+          "desire cupidity envy jealousy illusion"
+        ],
+        "source_text_en": "Desire, cupidity, envy, jealousy, illusion."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_seven",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "seven",
+      "rank_order": 7,
+      "name_en": "Seven of Pentacles",
+      "name_zh": "星币七",
+      "upright": {
+        "keywords_en": [
+          "these are exceedingly contradictory",
+          "in the main it is",
+          "but one reading gives altercation",
+          "and another innocence ingenuity purgation"
+        ],
+        "source_text_en": "These are exceedingly contradictory; in the main, it is a card of money, business, barter; but one reading gives altercation, quarrel—and another innocence, ingenuity, purgation."
+      },
+      "reversed": {
+        "keywords_en": [
+          "cause for anxiety regarding money"
+        ],
+        "source_text_en": "Cause for anxiety regarding money which it may be proposed to lend."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_eight",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "eight",
+      "rank_order": 8,
+      "name_en": "Eight of Pentacles",
+      "name_zh": "星币八",
+      "upright": {
+        "keywords_en": [
+          "work employment commission craftsmanship skill"
+        ],
+        "source_text_en": "Work, employment, commission, craftsmanship, skill in craft and business, perhaps in the preparatory stage."
+      },
+      "reversed": {
+        "keywords_en": [
+          "voided ambition vanity cupidity exaction"
+        ],
+        "source_text_en": "Voided ambition, vanity, cupidity, exaction, usury. It may also signify the possession of skill, in the sense of the ingenious mind turned to cunning and intrigue."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_nine",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "nine",
+      "rank_order": 9,
+      "name_en": "Nine of Pentacles",
+      "name_zh": "星币九",
+      "upright": {
+        "keywords_en": [
+          "prudence safety success accomplishment certitude"
+        ],
+        "source_text_en": "Prudence, safety, success, accomplishment, certitude, discernment."
+      },
+      "reversed": {
+        "keywords_en": [
+          "roguery deception voided project bad"
+        ],
+        "source_text_en": "Roguery, deception, voided project, bad faith."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_ten",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "ten",
+      "rank_order": 10,
+      "name_en": "Ten of Pentacles",
+      "name_zh": "星币十",
+      "upright": {
+        "keywords_en": [
+          "gain riches",
+          "family matters archives extraction the"
+        ],
+        "source_text_en": "Gain, riches; family matters, archives, extraction, the abode of a family."
+      },
+      "reversed": {
+        "keywords_en": [
+          "chance fatality loss robbery games",
+          "sometimes gift dowry pension"
+        ],
+        "source_text_en": "Chance, fatality, loss, robbery, games of hazard; sometimes gift, dowry, pension."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_page",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "page",
+      "rank_order": 11,
+      "name_en": "Page of Pentacles",
+      "name_zh": "星币侍从",
+      "upright": {
+        "keywords_en": [
+          "application study scholarship reflection",
+          "another reading says news messages",
+          "also rule management"
+        ],
+        "source_text_en": "Application, study, scholarship, reflection; another reading says news, messages and the bringer thereof; also rule, management."
+      },
+      "reversed": {
+        "keywords_en": [
+          "prodigality dissipation liberality luxury unfavorable"
+        ],
+        "source_text_en": "Prodigality, dissipation, liberality, luxury, unfavorable news."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_knight",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "knight",
+      "rank_order": 12,
+      "name_en": "Knight of Pentacles",
+      "name_zh": "星币骑士",
+      "upright": {
+        "keywords_en": [
+          "utility serviceableness interest responsibility rectitude",
+          "all on the normal and"
+        ],
+        "source_text_en": "Utility, serviceableness, interest, responsibility, rectitude—all on the normal and external plane."
+      },
+      "reversed": {
+        "keywords_en": [
+          "inertia idleness repose of that",
+          "also placidity discouragement carelessness"
+        ],
+        "source_text_en": "Inertia, idleness, repose of that kind, stagnation; also placidity, discouragement, carelessness."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_queen",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "queen",
+      "rank_order": 13,
+      "name_en": "Queen of Pentacles",
+      "name_zh": "星币王后",
+      "upright": {
+        "keywords_en": [
+          "opulence generosity magnificence security liberty"
+        ],
+        "source_text_en": "Opulence, generosity, magnificence, security, liberty."
+      },
+      "reversed": {
+        "keywords_en": [
+          "evil suspicion suspense fear mistrust"
+        ],
+        "source_text_en": "Evil, suspicion, suspense, fear, mistrust."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    },
+    {
+      "id": "pentacles_king",
+      "arcana": "minor",
+      "suit": "pentacles",
+      "rank": "king",
+      "rank_order": 14,
+      "name_en": "King of Pentacles",
+      "name_zh": "星币国王",
+      "upright": {
+        "keywords_en": [
+          "valor intelligence business mathematical gifts"
+        ],
+        "source_text_en": "Valor, intelligence, business, mathematical gifts, and success in these paths."
+      },
+      "reversed": {
+        "keywords_en": [
+          "vice weakness perversity peril"
+        ],
+        "source_text_en": "Vice, weakness, perversity, peril."
+      },
+      "product_soft_zh_status": "needs_editorial_paraphrase"
+    }
+  ]
+}

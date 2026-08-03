@@ -9,10 +9,12 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { useFortuneProfile, localDateString } from "@/hooks/useFortune";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
-import { dailyScores } from "@/lib/fortune/scores";
+import { getAlmanacForDate } from "@/lib/fortune/almanac";
+import { dailyScores, shengxiaoRelationScore } from "@/lib/fortune/scores";
 import { SHENGXIAO_LABELS, SHENGXIAO_ORDER } from "@/lib/fortune/shengxiao";
 import type { Shengxiao } from "@/lib/fortune/types";
 import { buildDailyRuleCopy } from "@/lib/fortune/ruleCopy";
+import { dayPillarFromDate } from "@/lib/fortune/bazi";
 
 export default function ShengxiaoPage() {
   const { t, lang } = useLang();
@@ -22,6 +24,16 @@ export default function ShengxiaoPage() {
   const [animal, setAnimal] = useState<Shengxiao>(profile?.shengxiao || "tiger");
   const [reading, setReading] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const almanac = getAlmanacForDate(date);
+  const pillar = dayPillarFromDate(date);
+  const relation = shengxiaoRelationScore(animal, pillar.zhiZh);
+  const relationLabel =
+    relation < 0
+      ? t("与今日日支相冲", "Clashes with today's branch")
+      : relation > 0
+        ? t("与今日日支六合", "Six-harmony with today's branch")
+        : t("与今日日支平和", "Neutral vs today's branch");
 
   const scores = dailyScores({ date, zodiac: profile?.zodiac_sign, shengxiao: animal });
   const rule = buildDailyRuleCopy({
@@ -38,7 +50,15 @@ export default function ShengxiaoPage() {
       buildFortuneUserPrompt({
         kind: "shengxiao",
         lang,
-        facts: { date, animal, scores, draft: rule.body },
+        facts: {
+          date,
+          animal,
+          scores,
+          relation: relationLabel,
+          dayPillar: almanac.dayPillar,
+          chongsha: almanac.chongsha,
+          draft: rule.body,
+        },
       }),
     );
     setLoading(false);
@@ -54,7 +74,7 @@ export default function ShengxiaoPage() {
       <div className="space-y-8">
         <FortunePageHeader
           title={t("生肖运势", "Shengxiao")}
-          subtitle={t("可切换属相浏览，不改动档案", "Browse any animal without changing your profile")}
+          subtitle={t("按当日日支冲合计算，可切换属相", "Based on today's earthly branch")}
           backLabel={t("返回运势", "Back to Fortune")}
           actions={
             <Select value={animal} onValueChange={(v) => setAnimal(v as Shengxiao)}>
@@ -71,6 +91,10 @@ export default function ShengxiaoPage() {
             </Select>
           }
         />
+
+        <p className="text-[13px] text-[#8a847a]">
+          {almanac.dayPillar} · {almanac.chongsha} · {relationLabel}
+        </p>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <MetricStarCard label={t("整体", "Overall")} value={scores.overall} />
@@ -90,7 +114,7 @@ export default function ShengxiaoPage() {
             <Button className="bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void polish()} disabled={loading}>
               {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}
             </Button>
-            <SaveReadingButton type="shengxiao" payload={{ animal, scores }} reading={reading || rule.body} />
+            <SaveReadingButton type="shengxiao" payload={{ animal, scores, relation }} reading={reading || rule.body} />
           </div>
         </div>
       </div>

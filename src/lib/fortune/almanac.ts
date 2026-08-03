@@ -1,37 +1,48 @@
-import { hashStringToSeed, mulberry32, pickN } from "./seededRandom";
-
-const YI = [
-  "学习", "会友", "整理", "运动", "写作", "规划", "散步", "烹饪",
-  "休息", "阅读", "沟通", "小憩", "复盘", "理财记账", "早睡", "喝茶",
-  "散步晒太阳", "整理桌面", "温和表达", "专注一件事",
-];
-
-const JI = [
-  "冲动决策", "熬夜", "过度比较", "空耗刷手机", "逞强争论",
-  "大额冲动消费", "拖延关键事", "忽视休息", "闷着不说", "同时开太多任务",
-];
+import { getLunarDayBundle, LUNAR_JS_SOURCE } from "./lunarDay";
+import { FORTUNE_RULE_VERSION } from "./ruleVersion";
 
 export interface AlmanacDay {
   yi: string[];
   ji: string[];
   chongsha: string;
+  dayPillar: string;
+  clashZhi: string;
+  zhiXing: string;
+  pengZu: string[];
+  ruleVersion: string;
+  source: string;
+  /** Still false: folk library, not an imperial tongshu claim. */
+  traditionalSystemClaim: false;
 }
 
+const EMPTY: AlmanacDay = {
+  yi: ["平日行事"],
+  ji: ["无"],
+  chongsha: "",
+  dayPillar: "",
+  clashZhi: "",
+  zhiXing: "",
+  pengZu: [],
+  ruleVersion: FORTUNE_RULE_VERSION,
+  source: LUNAR_JS_SOURCE,
+  traditionalSystemClaim: false,
+};
+
+/** Daily almanac from lunar-javascript (aligned with common Chinese almanac apps). */
 export function getAlmanacForDate(isoDate: string): AlmanacDay {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
-    return { yi: ["平日行事"], ji: ["无"], chongsha: "" };
-  }
-  const rng = mulberry32(hashStringToSeed(`almanac:${isoDate}`));
-  const yiCount = 2 + Math.floor(rng() * 2);
-  const jiCount = 1 + Math.floor(rng() * 2);
-  const yi = pickN(YI, yiCount, rng);
-  const ji = pickN(JI, jiCount, rng);
-  if (yi.length === 0) return { yi: ["平日行事"], ji: ["无"], chongsha: "" };
-  const animals = ["鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪"];
-  const chong = animals[Math.floor(rng() * animals.length)];
+  const bundle = getLunarDayBundle(isoDate);
+  if (!bundle) return { ...EMPTY };
+
   return {
-    yi,
-    ji,
-    chongsha: `冲${chong}`,
+    yi: bundle.yi.length ? bundle.yi : ["平日行事"],
+    ji: bundle.ji.length ? bundle.ji : ["无"],
+    chongsha: bundle.chongsha,
+    dayPillar: bundle.dayPillar,
+    clashZhi: bundle.clashZhi,
+    zhiXing: bundle.zhiXing,
+    pengZu: bundle.pengZu,
+    ruleVersion: bundle.ruleVersion,
+    source: bundle.source,
+    traditionalSystemClaim: false,
   };
 }

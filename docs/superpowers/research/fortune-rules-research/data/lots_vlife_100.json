@@ -1,0 +1,1031 @@
+{
+  "schema_version": "1.0.0",
+  "traditional_system_claim": false,
+  "system_name": "vlife_lots_100",
+  "provenance": {
+    "note": "Entirely V-Life product corpus for entertainment. NOT Guanyin, Yue Lao, or temple lots. Do not claim temple lineage.",
+    "grade_distribution": {
+      "上上": 15,
+      "上吉": 25,
+      "中吉": 35,
+      "中平": 15,
+      "下平": 10,
+      "rationale": "Product design favoring gently encouraging middle outcomes; not a historical temple distribution."
+    },
+    "safety_lint": [
+      "no_death",
+      "no_disease",
+      "no_disaster",
+      "no_absolute_fate",
+      "no_curses"
+    ],
+    "editorial_status": "draft_verses_require_human_bilingual_polish_before_ship"
+  },
+  "draw_rules": {
+    "method": "seeded_uniform_1_to_100",
+    "seed_spec_ref": "seed_spec.json",
+    "replacement": false
+  },
+  "lots": [
+    {
+      "number": 1,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "启程",
+      "verse_zh": "第1签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 1 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 2,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "耐心",
+      "verse_zh": "第2签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 2 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 3,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "沟通",
+      "verse_zh": "第3签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 3 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 4,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "休息",
+      "verse_zh": "第4签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 4 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 5,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "信任",
+      "verse_zh": "第5签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 5 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 6,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "整理",
+      "verse_zh": "第6签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 6 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 7,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "学习",
+      "verse_zh": "第7签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 7 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 8,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "边界",
+      "verse_zh": "第8签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 8 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 9,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "感恩",
+      "verse_zh": "第9签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 9 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 10,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "勇气",
+      "verse_zh": "第10签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 10 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 11,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "启程",
+      "verse_zh": "第11签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 11 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 12,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "耐心",
+      "verse_zh": "第12签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 12 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 13,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "沟通",
+      "verse_zh": "第13签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 13 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 14,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "休息",
+      "verse_zh": "第14签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 14 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 15,
+      "grade_zh": "上上",
+      "grade_en": "excellent",
+      "theme_zh": "信任",
+      "verse_zh": "第15签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 15 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 16,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "整理",
+      "verse_zh": "第16签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 16 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 17,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "学习",
+      "verse_zh": "第17签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 17 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 18,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "边界",
+      "verse_zh": "第18签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 18 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 19,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "感恩",
+      "verse_zh": "第19签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 19 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 20,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "勇气",
+      "verse_zh": "第20签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 20 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 21,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "启程",
+      "verse_zh": "第21签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 21 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 22,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "耐心",
+      "verse_zh": "第22签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 22 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 23,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "沟通",
+      "verse_zh": "第23签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 23 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 24,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "休息",
+      "verse_zh": "第24签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 24 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 25,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "信任",
+      "verse_zh": "第25签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 25 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 26,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "整理",
+      "verse_zh": "第26签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 26 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 27,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "学习",
+      "verse_zh": "第27签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 27 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 28,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "边界",
+      "verse_zh": "第28签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 28 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 29,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "感恩",
+      "verse_zh": "第29签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 29 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 30,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "勇气",
+      "verse_zh": "第30签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 30 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 31,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "启程",
+      "verse_zh": "第31签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 31 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 32,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "耐心",
+      "verse_zh": "第32签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 32 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 33,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "沟通",
+      "verse_zh": "第33签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 33 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 34,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "休息",
+      "verse_zh": "第34签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 34 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 35,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "信任",
+      "verse_zh": "第35签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 35 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 36,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "整理",
+      "verse_zh": "第36签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 36 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 37,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "学习",
+      "verse_zh": "第37签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 37 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 38,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "边界",
+      "verse_zh": "第38签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 38 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 39,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "感恩",
+      "verse_zh": "第39签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 39 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 40,
+      "grade_zh": "上吉",
+      "grade_en": "good",
+      "theme_zh": "勇气",
+      "verse_zh": "第40签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 40 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 41,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "启程",
+      "verse_zh": "第41签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 41 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 42,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "耐心",
+      "verse_zh": "第42签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 42 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 43,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "沟通",
+      "verse_zh": "第43签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 43 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 44,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "休息",
+      "verse_zh": "第44签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 44 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 45,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "信任",
+      "verse_zh": "第45签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 45 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 46,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "整理",
+      "verse_zh": "第46签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 46 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 47,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "学习",
+      "verse_zh": "第47签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 47 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 48,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "边界",
+      "verse_zh": "第48签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 48 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 49,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "感恩",
+      "verse_zh": "第49签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 49 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 50,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "勇气",
+      "verse_zh": "第50签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 50 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 51,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "启程",
+      "verse_zh": "第51签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 51 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 52,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "耐心",
+      "verse_zh": "第52签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 52 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 53,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "沟通",
+      "verse_zh": "第53签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 53 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 54,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "休息",
+      "verse_zh": "第54签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 54 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 55,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "信任",
+      "verse_zh": "第55签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 55 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 56,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "整理",
+      "verse_zh": "第56签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 56 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 57,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "学习",
+      "verse_zh": "第57签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 57 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 58,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "边界",
+      "verse_zh": "第58签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 58 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 59,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "感恩",
+      "verse_zh": "第59签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 59 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 60,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "勇气",
+      "verse_zh": "第60签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 60 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 61,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "启程",
+      "verse_zh": "第61签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 61 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 62,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "耐心",
+      "verse_zh": "第62签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 62 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 63,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "沟通",
+      "verse_zh": "第63签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 63 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 64,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "休息",
+      "verse_zh": "第64签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 64 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 65,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "信任",
+      "verse_zh": "第65签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 65 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 66,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "整理",
+      "verse_zh": "第66签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 66 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 67,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "学习",
+      "verse_zh": "第67签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 67 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 68,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "边界",
+      "verse_zh": "第68签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 68 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 69,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "感恩",
+      "verse_zh": "第69签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 69 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 70,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "勇气",
+      "verse_zh": "第70签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 70 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 71,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "启程",
+      "verse_zh": "第71签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 71 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 72,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "耐心",
+      "verse_zh": "第72签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 72 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 73,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "沟通",
+      "verse_zh": "第73签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 73 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 74,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "休息",
+      "verse_zh": "第74签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 74 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 75,
+      "grade_zh": "中吉",
+      "grade_en": "fair",
+      "theme_zh": "信任",
+      "verse_zh": "第75签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 75 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 76,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "整理",
+      "verse_zh": "第76签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 76 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 77,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "学习",
+      "verse_zh": "第77签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 77 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 78,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "边界",
+      "verse_zh": "第78签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 78 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 79,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "感恩",
+      "verse_zh": "第79签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 79 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 80,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "勇气",
+      "verse_zh": "第80签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 80 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 81,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "启程",
+      "verse_zh": "第81签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 81 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 82,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "耐心",
+      "verse_zh": "第82签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 82 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 83,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "沟通",
+      "verse_zh": "第83签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 83 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 84,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "休息",
+      "verse_zh": "第84签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 84 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 85,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "信任",
+      "verse_zh": "第85签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 85 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 86,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "整理",
+      "verse_zh": "第86签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 86 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 87,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "学习",
+      "verse_zh": "第87签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 87 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 88,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "边界",
+      "verse_zh": "第88签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 88 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 89,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "感恩",
+      "verse_zh": "第89签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 89 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 90,
+      "grade_zh": "中平",
+      "grade_en": "mixed",
+      "theme_zh": "勇气",
+      "verse_zh": "第90签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 90 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 91,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "启程",
+      "verse_zh": "第91签·启程：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 91 · 启程: A door opens when you take the first quiet step.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 92,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "耐心",
+      "verse_zh": "第92签·耐心：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 92 · 耐心: What ripens slowly often keeps its sweetness.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 93,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "沟通",
+      "verse_zh": "第93签·沟通：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 93 · 沟通: A soft word today can clear a long fog.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 94,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "休息",
+      "verse_zh": "第94签·休息：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 94 · 休息: Rest is not retreat; it prepares tomorrow's strength.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 95,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "信任",
+      "verse_zh": "第95签·信任：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 95 · 信任: Trust yourself enough to ask for a little help.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 96,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "整理",
+      "verse_zh": "第96签·整理：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 96 · 整理: Clear one small corner and the room feels larger.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 97,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "学习",
+      "verse_zh": "第97签·学习：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 97 · 学习: Curiosity is a lantern; keep it lit.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 98,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "边界",
+      "verse_zh": "第98签·边界：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 98 · 边界: A kind boundary protects both hearts.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 99,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "感恩",
+      "verse_zh": "第99签·感恩：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 99 · 感恩: Name one ordinary gift and the day brightens.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    },
+    {
+      "number": 100,
+      "grade_zh": "下平",
+      "grade_en": "gentle_caution",
+      "theme_zh": "勇气",
+      "verse_zh": "第100签·勇气：愿你以温柔的步子靠近今日的光。",
+      "verse_en": "Lot 100 · 勇气: Courage can be as small as sending the message.",
+      "advice_zh": "把注意力放回可控的一小步，不必一次走完全程。",
+      "advice_en": "Return attention to one controllable step; you need not finish the whole path today."
+    }
+  ]
+}

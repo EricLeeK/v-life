@@ -10,10 +10,43 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
+      ai_entitlements: {
+        Row: {
+          created_at: string
+          daily_request_limit: number
+          expires_at: string | null
+          monthly_token_limit: number
+          per_minute_limit: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_request_limit?: number
+          expires_at?: string | null
+          monthly_token_limit?: number
+          per_minute_limit?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_request_limit?: number
+          expires_at?: string | null
+          monthly_token_limit?: number
+          per_minute_limit?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_messages: {
         Row: {
           actions: Json | null
@@ -73,6 +106,45 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_usage_logs: {
+        Row: {
+          created_at: string
+          function_name: string
+          id: string
+          input_tokens: number
+          model: string | null
+          output_tokens: number
+          source: string
+          token_estimate: boolean
+          total_tokens: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          function_name: string
+          id?: string
+          input_tokens?: number
+          model?: string | null
+          output_tokens?: number
+          source?: string
+          token_estimate?: boolean
+          total_tokens?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          function_name?: string
+          id?: string
+          input_tokens?: number
+          model?: string | null
+          output_tokens?: number
+          source?: string
+          token_estimate?: boolean
+          total_tokens?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -184,44 +256,317 @@ export type Database = {
         }
         Relationships: []
       }
-      daily_tasks: {
+      civil_checkins: {
         Row: {
-          base_points: number
-          completed_at: string | null
-          created_at: string
-          difficulty: string | null
+          created_at: string | null
+          date: string
           id: string
-          is_completed: boolean
-          metadata: Json
-          task_date: string
-          todo_id: string
-          updated_at: string
+          note: string | null
+          studied_minutes: number
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          base_points?: number
-          completed_at?: string | null
-          created_at?: string
-          difficulty?: string | null
+          created_at?: string | null
+          date: string
           id?: string
-          is_completed?: boolean
-          metadata?: Json
-          task_date?: string
-          todo_id: string
-          updated_at?: string
+          note?: string | null
+          studied_minutes?: number
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          base_points?: number
+          created_at?: string | null
+          date?: string
+          id?: string
+          note?: string | null
+          studied_minutes?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      civil_exams: {
+        Row: {
+          created_at: string | null
+          exam_date: string
+          exam_type: string
+          id: string
+          is_archived: boolean
+          is_primary: boolean
+          name: string
+          notes: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          exam_date: string
+          exam_type?: string
+          id?: string
+          is_archived?: boolean
+          is_primary?: boolean
+          name: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          exam_date?: string
+          exam_type?: string
+          id?: string
+          is_archived?: boolean
+          is_primary?: boolean
+          name?: string
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      civil_plan_items: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          detail: string | null
+          end_time: string | null
+          id: string
+          is_completed: boolean
+          plan_date: string
+          sort_order: number
+          source: string
+          start_time: string | null
+          subject_group: string
+          subject_tag: string | null
+          synced_schedule_id: string | null
+          synced_todo_id: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
           completed_at?: string | null
-          created_at?: string
-          difficulty?: string | null
+          created_at?: string | null
+          detail?: string | null
+          end_time?: string | null
           id?: string
           is_completed?: boolean
-          metadata?: Json
+          plan_date: string
+          sort_order?: number
+          source?: string
+          start_time?: string | null
+          subject_group?: string
+          subject_tag?: string | null
+          synced_schedule_id?: string | null
+          synced_todo_id?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          detail?: string | null
+          end_time?: string | null
+          id?: string
+          is_completed?: boolean
+          plan_date?: string
+          sort_order?: number
+          source?: string
+          start_time?: string | null
+          subject_group?: string
+          subject_tag?: string | null
+          synced_schedule_id?: string | null
+          synced_todo_id?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      civil_wrong_answers: {
+        Row: {
+          ai_draft_meta: Json | null
+          content: string | null
+          created_at: string | null
+          id: string
+          image_url: string | null
+          knowledge_point: string | null
+          last_reviewed_at: string | null
+          next_review_date: string | null
+          review_interval_days: number
+          review_status: string
+          source_date: string
+          subject_group: string
+          subject_tag: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          wrong_reason: string | null
+        }
+        Insert: {
+          ai_draft_meta?: Json | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          knowledge_point?: string | null
+          last_reviewed_at?: string | null
+          next_review_date?: string | null
+          review_interval_days?: number
+          review_status?: string
+          source_date?: string
+          subject_group: string
+          subject_tag?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          wrong_reason?: string | null
+        }
+        Update: {
+          ai_draft_meta?: Json | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          knowledge_point?: string | null
+          last_reviewed_at?: string | null
+          next_review_date?: string | null
+          review_interval_days?: number
+          review_status?: string
+          source_date?: string
+          subject_group?: string
+          subject_tag?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          wrong_reason?: string | null
+        }
+        Relationships: []
+      }
+      civil_xingce_papers: {
+        Row: {
+          analogy_correct: number
+          analogy_total: number
+          beat_rate: number | null
+          common_correct: number
+          common_total: number
+          created_at: string | null
+          data_correct: number
+          data_total: number
+          duration_minutes: number | null
+          graphic_correct: number
+          graphic_total: number
+          id: string
+          is_mock: boolean
+          logic_correct: number
+          logic_total: number
+          notes: string | null
+          quantity_correct: number
+          quantity_total: number
+          source: string
+          taken_date: string
+          total_score: number | null
+          updated_at: string | null
+          user_id: string
+          verbal_correct: number
+          verbal_total: number
+        }
+        Insert: {
+          analogy_correct?: number
+          analogy_total?: number
+          beat_rate?: number | null
+          common_correct?: number
+          common_total?: number
+          created_at?: string | null
+          data_correct?: number
+          data_total?: number
+          duration_minutes?: number | null
+          graphic_correct?: number
+          graphic_total?: number
+          id?: string
+          is_mock?: boolean
+          logic_correct?: number
+          logic_total?: number
+          notes?: string | null
+          quantity_correct?: number
+          quantity_total?: number
+          source?: string
+          taken_date: string
+          total_score?: number | null
+          updated_at?: string | null
+          user_id: string
+          verbal_correct?: number
+          verbal_total?: number
+        }
+        Update: {
+          analogy_correct?: number
+          analogy_total?: number
+          beat_rate?: number | null
+          common_correct?: number
+          common_total?: number
+          created_at?: string | null
+          data_correct?: number
+          data_total?: number
+          duration_minutes?: number | null
+          graphic_correct?: number
+          graphic_total?: number
+          id?: string
+          is_mock?: boolean
+          logic_correct?: number
+          logic_total?: number
+          notes?: string | null
+          quantity_correct?: number
+          quantity_total?: number
+          source?: string
+          taken_date?: string
+          total_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+          verbal_correct?: number
+          verbal_total?: number
+        }
+        Relationships: []
+      }
+      daily_tasks: {
+        Row: {
+          base_points: number | null
+          completed_at: string | null
+          created_at: string | null
+          difficulty: string | null
+          id: string
+          is_completed: boolean | null
+          metadata: Json | null
+          task_date: string
+          todo_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          base_points?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          is_completed?: boolean | null
+          metadata?: Json | null
+          task_date?: string
+          todo_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          base_points?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          id?: string
+          is_completed?: boolean | null
+          metadata?: Json | null
           task_date?: string
           todo_id?: string
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -332,6 +677,33 @@ export type Database = {
           question?: string | null
           reading?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gacha_pity: {
+        Row: {
+          created_at: string | null
+          id: string
+          pulls_since_legendary: number | null
+          total_pulls: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pulls_since_legendary?: number | null
+          total_pulls?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pulls_since_legendary?: number | null
+          total_pulls?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -732,20 +1104,22 @@ export type Database = {
           ai_mode: string | null
           ai_model: string | null
           ai_platform: string | null
+          app_focus_mode: string
           calorie_target: number | null
           created_at: string
           custom_thought_tags: Json | null
+          display_name: string | null
           exchange_rate_jpy_to_cny: number | null
           exchange_rate_updated_at: string | null
           fasting_start_hour: number | null
           fasting_start_minute: number | null
+          fortune_profile: Json | null
+          hidden_features: string[] | null
           id: string
           monthly_budget: number | null
           show_goals_in_schedule: boolean | null
           target_weight: number | null
-          hidden_features: string[] | null
-          day_start_hour: number | null
-          fortune_profile: Json | null
+          timezone: string | null
           updated_at: string
           user_id: string | null
         }
@@ -755,20 +1129,22 @@ export type Database = {
           ai_mode?: string | null
           ai_model?: string | null
           ai_platform?: string | null
+          app_focus_mode?: string
           calorie_target?: number | null
           created_at?: string
           custom_thought_tags?: Json | null
+          display_name?: string | null
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
           fasting_start_hour?: number | null
           fasting_start_minute?: number | null
+          fortune_profile?: Json | null
+          hidden_features?: string[] | null
           id?: string
           monthly_budget?: number | null
           show_goals_in_schedule?: boolean | null
           target_weight?: number | null
-          hidden_features?: string[] | null
-          day_start_hour?: number | null
-          fortune_profile?: Json | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -778,22 +1154,63 @@ export type Database = {
           ai_mode?: string | null
           ai_model?: string | null
           ai_platform?: string | null
+          app_focus_mode?: string
           calorie_target?: number | null
           created_at?: string
           custom_thought_tags?: Json | null
+          display_name?: string | null
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
           fasting_start_hour?: number | null
           fasting_start_minute?: number | null
+          fortune_profile?: Json | null
+          hidden_features?: string[] | null
           id?: string
           monthly_budget?: number | null
           show_goals_in_schedule?: boolean | null
           target_weight?: number | null
-          hidden_features?: string[] | null
-          day_start_hour?: number | null
-          fortune_profile?: Json | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      shop_items: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          item_type: string
+          metadata: Json | null
+          name: string
+          price: number | null
+          rarity: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          item_type: string
+          metadata?: Json | null
+          name: string
+          price?: number | null
+          rarity: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          item_type?: string
+          metadata?: Json | null
+          name?: string
+          price?: number | null
+          rarity?: string
         }
         Relationships: []
       }
@@ -866,7 +1283,7 @@ export type Database = {
           detail: string | null
           id: string
           importance: string
-          is_archived: boolean
+          is_archived: boolean | null
           is_completed: boolean
           parent_id: string | null
           title: string
@@ -879,7 +1296,7 @@ export type Database = {
           detail?: string | null
           id?: string
           importance?: string
-          is_archived?: boolean
+          is_archived?: boolean | null
           is_completed?: boolean
           parent_id?: string | null
           title: string
@@ -892,7 +1309,7 @@ export type Database = {
           detail?: string | null
           id?: string
           importance?: string
-          is_archived?: boolean
+          is_archived?: boolean | null
           is_completed?: boolean
           parent_id?: string | null
           title?: string
@@ -903,49 +1320,88 @@ export type Database = {
           {
             foreignKeyName: "todos_parent_id_fkey"
             columns: ["parent_id"]
+            isOneToOne: false
             referencedRelation: "todos"
             referencedColumns: ["id"]
-          }
+          },
+        ]
+      }
+      user_inventory: {
+        Row: {
+          id: string
+          is_equipped: boolean | null
+          is_used: boolean | null
+          item_id: string
+          purchased_at: string | null
+          source: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_equipped?: boolean | null
+          is_used?: boolean | null
+          item_id: string
+          purchased_at?: string | null
+          source: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_equipped?: boolean | null
+          is_used?: boolean | null
+          item_id?: string
+          purchased_at?: string | null
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "shop_items"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_points: {
         Row: {
-          best_streak: number
-          created_at: string
-          current_streak: number
+          best_streak: number | null
+          created_at: string | null
+          current_streak: number | null
           id: string
           last_active_date: string | null
           rest_day_date: string | null
-          skip_chore_active: boolean
+          skip_chore_active: boolean | null
           sleep_in_date: string | null
-          total_points: number
-          updated_at: string
+          total_points: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          best_streak?: number
-          created_at?: string
-          current_streak?: number
+          best_streak?: number | null
+          created_at?: string | null
+          current_streak?: number | null
           id?: string
           last_active_date?: string | null
           rest_day_date?: string | null
-          skip_chore_active?: boolean
+          skip_chore_active?: boolean | null
           sleep_in_date?: string | null
-          total_points?: number
-          updated_at?: string
+          total_points?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          best_streak?: number
-          created_at?: string
-          current_streak?: number
+          best_streak?: number | null
+          created_at?: string | null
+          current_streak?: number | null
           id?: string
           last_active_date?: string | null
           rest_day_date?: string | null
-          skip_chore_active?: boolean
+          skip_chore_active?: boolean | null
           sleep_in_date?: string | null
-          total_points?: number
-          updated_at?: string
+          total_points?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -977,110 +1433,6 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           weight?: number
-        }
-        Relationships: []
-      }
-      shop_items: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          image_url: string | null
-          is_active: boolean
-          item_type: string
-          metadata: Json
-          name: string
-          price: number | null
-          rarity: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          item_type: string
-          metadata?: Json
-          name: string
-          price?: number | null
-          rarity: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          item_type?: string
-          metadata?: Json
-          name?: string
-          price?: number | null
-          rarity?: string
-        }
-        Relationships: []
-      }
-      user_inventory: {
-        Row: {
-          id: string
-          is_equipped: boolean
-          is_used: boolean
-          item_id: string
-          purchased_at: string
-          source: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          is_equipped?: boolean
-          is_used?: boolean
-          item_id: string
-          purchased_at?: string
-          source: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          is_equipped?: boolean
-          is_used?: boolean
-          item_id?: string
-          purchased_at?: string
-          source?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_inventory_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "shop_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      gacha_pity: {
-        Row: {
-          created_at: string
-          id: string
-          pulls_since_legendary: number
-          total_pulls: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          pulls_since_legendary?: number
-          total_pulls?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          pulls_since_legendary?: number
-          total_pulls?: number
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }

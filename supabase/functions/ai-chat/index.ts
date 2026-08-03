@@ -1,17 +1,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  jsonError,
+  recordHostedUsage,
+  resolveAiCredentials,
+} from "../_shared/hostedAi.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
-const PLATFORM_URLS: Record<string, string> = {
-  gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
-  openai: "https://api.openai.com/v1",
-  deepseek: "https://api.deepseek.com/v1",
-  custom: "",
 };
 
 const SYSTEM_PROMPT = `你是 V-Life Manager 的数据操作助手。你的唯一职责是将用户的自然语言转换为结构化 JSON 操作指令。
@@ -54,7 +52,7 @@ update: { module: "schedule", action: "update", data: { match: { title?: string,
 delete: { module: "schedule", action: "delete", data: { match: { title?: string, date?: string } } }
 
 ### 4. todo（待办事项）
-create: { module: "todo", action: "create", data: { title: string, category?: "工作"|"学习"|"学业"|"生活"|"健康"|"未分类", importance?: "紧急"|"重要"|"普通"|"低", detail?: string } }
+create: { module: "todo", action: "create", data: { title: string, category?: "工作"|"学习"|"学业"|"生活"|"健康"|"考公"|"未分类", importance?: "紧急"|"重要"|"普通"|"低", detail?: string } }
 update: { module: "todo", action: "update", data: { match: { title?: string }, update: { is_completed?: boolean, title?: string, importance?: string, category?: string, detail?: string } } }
 delete: { module: "todo", action: "delete", data: { match: { title?: string } } }
 
@@ -108,6 +106,37 @@ delete: { module: "project_task", action: "delete", data: { match: { title?: str
 
 **project_task 必须通过 project_name 关联到一个已存在的项目。type 可以是 task(任务)、habit(习惯)、milestone(里程碑)，默认 task。status 可以是 todo(待办)、this_week(本周)、in_progress(进行中)、waiting(等待中)、done(已完成)，默认 todo。weight 是权重(影响项目进度计算)，默认 1。**
 
+### 14. civil_exam（考公考试倒计时）
+create: { module: "civil_exam", action: "create", data: { name: string, exam_date: "YYYY-MM-DD", exam_type?: "国考"|"省考"|"事业编"|"自定义", is_primary?: boolean, notes?: string } }
+update: { module: "civil_exam", action: "update", data: { match: { name?: string }, update: { name?: string, exam_date?: string, exam_type?: string, is_primary?: boolean, is_archived?: boolean, notes?: string } } }
+delete: { module: "civil_exam", action: "delete", data: { match: { name?: string } } }
+
+### 15. civil_plan（考公学习计划）
+create: { module: "civil_plan", action: "create", data: { title: string, plan_date?: "YYYY-MM-DD", subject_group?: "xingce"|"shenlun"|"mianshi"|"general", subject_tag?: string, detail?: string, start_time?: "ISO8601", end_time?: "ISO8601", source?: "plan"|"daily_extra" } }
+update: { module: "civil_plan", action: "update", data: { match: { title?: string, plan_date?: string }, update: { title?: string, is_completed?: boolean, plan_date?: string, subject_group?: string, subject_tag?: string, detail?: string, start_time?: string, end_time?: string } } }
+delete: { module: "civil_plan", action: "delete", data: { match: { title?: string, plan_date?: string } } }
+
+**subject_tag 常用：套卷、言语理解、资料分析、图形推理、定义类比、逻辑推理、数量关系、时政常识、综应、申论、理论学习、素材积累、热点剖析。**
+
+### 16. civil_checkin（考公每日打卡）
+create: { module: "civil_checkin", action: "create", data: { studied_minutes: number, date?: "YYYY-MM-DD", note?: string } }
+
+**同一天重复打卡会覆盖（upsert）。**
+
+### 17. civil_wrong（考公错题）
+create: { module: "civil_wrong", action: "create", data: { title: string, subject_group: "xingce"|"shenlun"|"mianshi", subject_tag?: string, content?: string, wrong_reason?: string, knowledge_point?: string, source_date?: "YYYY-MM-DD", review_status?: "pending"|"mastered" } }
+update: { module: "civil_wrong", action: "update", data: { match: { title?: string }, update: { title?: string, review_status?: string, wrong_reason?: string, knowledge_point?: string, subject_tag?: string } } }
+delete: { module: "civil_wrong", action: "delete", data: { match: { title?: string } } }
+
+**识别错题图片时，用 civil_wrong create 返回草稿字段；用户确认后再落库。新建 pending 错题会自动安排复习日期。**
+
+### 18. civil_xingce_paper（行测套卷）
+create: { module: "civil_xingce_paper", action: "create", data: { taken_date?: "YYYY-MM-DD", source: string, is_mock?: boolean, verbal_total?: number, verbal_correct?: number, data_total?: number, data_correct?: number, graphic_total?: number, graphic_correct?: number, logic_total?: number, logic_correct?: number, analogy_total?: number, analogy_correct?: number, quantity_total?: number, quantity_correct?: number, common_total?: number, common_correct?: number, duration_minutes?: number, total_score?: number, beat_rate?: number, notes?: string } }
+update: { module: "civil_xingce_paper", action: "update", data: { match: { source?: string, taken_date?: string }, update: { source?: string, total_score?: number, beat_rate?: number, notes?: string, is_mock?: boolean } } }
+delete: { module: "civil_xingce_paper", action: "delete", data: { match: { source?: string, taken_date?: string } } }
+
+**言语=verbal，资料=data，图推=graphic，逻辑=logic，定义类比=analogy，数量=quantity，常识=common。*_total 为题量，*_correct 为正确数。**
+
 ## 默认值规则
 - 日期缺失 → 使用今天（当前日期会附加在用户消息中）
 - 币种缺失 → 默认 CNY
@@ -118,6 +147,8 @@ delete: { module: "project_task", action: "delete", data: { match: { title?: str
 - 运动：如果用户提到了运动但没说消耗多少，根据运动类型和时长自行估算消耗热量
 - 项目 status 缺失 → 默认 "planning"，priority 缺失 → 默认 "medium"
 - 项目子任务 type 缺失 → 默认 "task"，status 缺失 → 默认 "todo"
+- civil_plan subject_group 缺失 → 默认 "xingce"；civil_checkin 同一天 upsert
+- civil_wrong review_status 缺失 → 默认 "pending"
 
 ## 跨模块识别
 一条消息可能涉及多个模块，你必须拆分为多条操作。例如「吃拉面花了30元600大卡」→ finance + calories 两条操作。
@@ -231,26 +262,20 @@ serve(async (req) => {
       );
     }
 
-    // Use service role to read settings (so API key never needs to go to client)
+    // Use service role to read settings / entitlements (API keys never go to client)
     const adminSb = createClient(supabaseUrl, supabaseServiceKey);
     const { data: settings } = await adminSb
       .from("settings")
       .select("*")
       .eq("user_id", user.id)
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (!settings?.ai_api_key) {
-      return new Response(
-        JSON.stringify({ error: "请先在设置页面配置 AI API Key" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const resolved = await resolveAiCredentials(adminSb, user.id, settings);
+    if (!resolved.ok) {
+      return jsonError(resolved.code, resolved.message, resolved.status, corsHeaders);
     }
-
-    const platform = settings.ai_platform || "gemini";
-    const model = settings.ai_model || "gemini-2.5-flash";
-    const baseUrl = settings.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.openai;
-    const apiKey = settings.ai_api_key;
+    const { apiKey, model, baseUrl } = resolved.creds;
 
     // Inject today's date into the last user message for context
     const today = new Date().toISOString().split("T")[0];
@@ -293,14 +318,26 @@ serve(async (req) => {
     if (!response.ok) {
       const errText = await response.text();
       console.error("LLM API error:", response.status, errText);
-      return new Response(
-        JSON.stringify({ error: `AI 调用失败 (${response.status}): ${errText.slice(0, 200)}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      return jsonError(
+        "UPSTREAM_ERROR",
+        `AI 服务暂时不可用 (${response.status})`,
+        502,
+        corsHeaders,
       );
     }
 
     const result = await response.json();
     const content = result.choices?.[0]?.message?.content || "";
+
+    if (resolved.creds.mode === "hosted") {
+      await recordHostedUsage(adminSb, {
+        userId: user.id,
+        functionName: isFortune ? "ai-chat-fortune" : "ai-chat",
+        model,
+        usage: result.usage,
+        estimateFrom: content,
+      });
+    }
 
     if (isFortune) {
       return new Response(JSON.stringify({ content, mode: "fortune" }), {

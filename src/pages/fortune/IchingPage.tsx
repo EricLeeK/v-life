@@ -8,6 +8,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
 import { castHexagram, ichingRuleBlurb, type IchingCast } from "@/lib/fortune/iching";
+import { FORTUNE_RULE_VERSION } from "@/lib/fortune/ruleVersion";
 
 export default function IchingPage() {
   const { t, lang } = useLang();
@@ -34,7 +35,11 @@ export default function IchingPage() {
           nameZh: result.nameZh,
           nameEn: result.nameEn,
           changingLines: result.changingLines,
+          relatingHexagram: result.relatingHexagramNumber,
+          relatingNameZh: result.relatingNameZh,
+          relatingNameEn: result.relatingNameEn,
           lines: result.lines,
+          ruleVersion: FORTUNE_RULE_VERSION,
         },
       }),
     );
@@ -78,6 +83,13 @@ export default function IchingPage() {
                   <p className="mt-1 text-[12px] text-[#8a847a]">
                     {lang === "zh" ? `第 ${cast.hexagramNumber} 卦` : `Hexagram #${cast.hexagramNumber}`}
                   </p>
+                  {cast.relatingNameZh && (
+                    <p className="mt-1 text-[12px] text-[#8a847a]">
+                      {lang === "zh"
+                        ? `之卦：${cast.relatingNameZh}（第 ${cast.relatingHexagramNumber} 卦）`
+                        : `Relating: ${cast.relatingNameEn} (#${cast.relatingHexagramNumber})`}
+                    </p>
+                  )}
                   <div className="mt-4 flex flex-col-reverse gap-1.5">
                     {cast.lines.map((line, i) => (
                       <div key={i} className="flex items-center gap-2 text-[12px] text-[#5c564c]">

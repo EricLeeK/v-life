@@ -12,9 +12,22 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, Download, Save, ChevronDown } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
-import { zodiacFromBirthDate, ZODIAC_LABELS, ZODIAC_SIGNS } from "@/lib/fortune/zodiac";
+import {
+  zodiacDetailsFromBirthDate,
+  zodiacFromBirthDate,
+  zodiacFromSunLongitude,
+  ZODIAC_LABELS,
+  ZODIAC_SIGNS,
+} from "@/lib/fortune/zodiac";
 import { shengxiaoFromBirthDate, SHENGXIAO_LABELS, SHENGXIAO_ORDER } from "@/lib/fortune/shengxiao";
 import type { FortuneProfile, Shengxiao, ZodiacSign } from "@/lib/fortune/types";
+
+function deriveZodiacSign(birthDate: string, birthHour?: number | null): ZodiacSign {
+  if (birthHour != null && birthHour >= 0) {
+    return zodiacFromSunLongitude(birthDate, birthHour).sign;
+  }
+  return zodiacFromBirthDate(birthDate);
+}
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
 
@@ -216,6 +229,12 @@ export default function SettingsPage() {
                 {(() => {
                   const fp = (draft.fortune_profile || {}) as FortuneProfile;
                   const setFp = (next: FortuneProfile) => update("fortune_profile", next);
+                  const cusp =
+                    fp.birth_date != null && fp.birth_date !== ""
+                      ? fp.birth_hour != null && fp.birth_hour >= 0
+                        ? zodiacFromSunLongitude(fp.birth_date, fp.birth_hour)
+                        : zodiacDetailsFromBirthDate(fp.birth_date)
+                      : null;
                   return (
                     <>
                       <div>
@@ -228,7 +247,9 @@ export default function SettingsPage() {
                             setFp({
                               ...fp,
                               birth_date,
-                              zodiac_sign: birth_date ? zodiacFromBirthDate(birth_date) : fp.zodiac_sign,
+                              zodiac_sign: birth_date
+                                ? deriveZodiacSign(birth_date, fp.birth_hour)
+                                : fp.zodiac_sign,
                               shengxiao: birth_date ? shengxiaoFromBirthDate(birth_date) : fp.shengxiao,
                             });
                           }}
@@ -238,9 +259,16 @@ export default function SettingsPage() {
                         <Label>{t("出生时辰（可选）", "Birth hour (optional)")}</Label>
                         <Select
                           value={fp.birth_hour == null ? "none" : String(fp.birth_hour)}
-                          onValueChange={(v) =>
-                            setFp({ ...fp, birth_hour: v === "none" ? null : Number(v) })
-                          }
+                          onValueChange={(v) => {
+                            const birth_hour = v === "none" ? null : Number(v);
+                            setFp({
+                              ...fp,
+                              birth_hour,
+                              zodiac_sign: fp.birth_date
+                                ? deriveZodiacSign(fp.birth_date, birth_hour)
+                                : fp.zodiac_sign,
+                            });
+                          }}
                         >
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -276,6 +304,14 @@ export default function SettingsPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                        {cusp?.cuspSensitive && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {t(
+                              "交界日：填写出生时辰可用太阳黄经更精确判定。",
+                              "Cusp day: add birth hour for Sun-longitude precision.",
+                            )}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <Label>{t("生肖", "Shengxiao")}</Label>

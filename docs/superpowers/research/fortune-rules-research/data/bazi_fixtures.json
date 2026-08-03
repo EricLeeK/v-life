@@ -1,0 +1,227 @@
+{
+  "schema_version": "1.0.0",
+  "provenance": {
+    "anchor": {
+      "date": "1984-01-31",
+      "day_pillar": "甲子",
+      "sources": [
+        {
+          "url": "https://ximizi.net/huangli/1984/1984-1-31.html",
+          "quote": "今日歲次：癸亥年 乙丑月 甲子日"
+        },
+        {
+          "url": "http://www.chenggong8.com/huangli/1984/1984_1_31.html",
+          "quote": "干支日期：癸亥年 乙丑月 甲子日"
+        }
+      ],
+      "note": "Multiple independent Chinese calendar pages list 1984-01-31 as 甲子日. DO NOT use 1984-02-02 as 甲子."
+    },
+    "algorithm": "index = (civil_date - 1984-01-31).days mod 60; gan=index%10, zhi=index%12",
+    "cross_check": {
+      "2026-01-01": "乙亥",
+      "method": "Computed from verified anchor; HKO lunar text confirms lunar date 十三 but does not print stem-branch in T2026c.txt"
+    },
+    "zi_hour": {
+      "modes": [
+        "civil_midnight",
+        "zi_23"
+      ],
+      "default": "civil_midnight",
+      "note": "Two traditions exist; product must declare mode. Default civil_midnight aligns with displayed civil date."
+    }
+  },
+  "fixtures": [
+    {
+      "date": "1984-01-31",
+      "index0": 0,
+      "gan_zh": "甲",
+      "zhi_zh": "子",
+      "label_zh": "甲子",
+      "gan_en": "jia",
+      "zhi_en": "zi",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "wood",
+        "branch_principal_element": "water",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "1984-02-01",
+      "index0": 1,
+      "gan_zh": "乙",
+      "zhi_zh": "丑",
+      "label_zh": "乙丑",
+      "gan_en": "yi",
+      "zhi_en": "chou",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "wood",
+        "branch_principal_element": "earth",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "1984-02-02",
+      "index0": 2,
+      "gan_zh": "丙",
+      "zhi_zh": "寅",
+      "label_zh": "丙寅",
+      "gan_en": "bing",
+      "zhi_en": "yin",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "fire",
+        "branch_principal_element": "wood",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2019-01-27",
+      "index0": 0,
+      "gan_zh": "甲",
+      "zhi_zh": "子",
+      "label_zh": "甲子",
+      "gan_en": "jia",
+      "zhi_en": "zi",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "wood",
+        "branch_principal_element": "water",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2026-01-01",
+      "index0": 11,
+      "gan_zh": "乙",
+      "zhi_zh": "亥",
+      "label_zh": "乙亥",
+      "gan_en": "yi",
+      "zhi_en": "hai",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "wood",
+        "branch_principal_element": "water",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2000-01-01",
+      "index0": 54,
+      "gan_zh": "戊",
+      "zhi_zh": "午",
+      "label_zh": "戊午",
+      "gan_en": "wu",
+      "zhi_en": "wu",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "earth",
+        "branch_principal_element": "fire",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2024-02-10",
+      "index0": 40,
+      "gan_zh": "甲",
+      "zhi_zh": "辰",
+      "label_zh": "甲辰",
+      "gan_en": "jia",
+      "zhi_en": "chen",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "wood",
+        "branch_principal_element": "earth",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2025-01-29",
+      "index0": 34,
+      "gan_zh": "戊",
+      "zhi_zh": "戌",
+      "label_zh": "戊戌",
+      "gan_en": "wu",
+      "zhi_en": "xu",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "earth",
+        "branch_principal_element": "earth",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "1998-08-20",
+      "index0": 35,
+      "gan_zh": "己",
+      "zhi_zh": "亥",
+      "label_zh": "己亥",
+      "gan_en": "ji",
+      "zhi_en": "hai",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "earth",
+        "branch_principal_element": "water",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "1990-01-01",
+      "index0": 2,
+      "gan_zh": "丙",
+      "zhi_zh": "寅",
+      "label_zh": "丙寅",
+      "gan_en": "bing",
+      "zhi_en": "yin",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "fire",
+        "branch_principal_element": "wood",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2020-01-25",
+      "index0": 3,
+      "gan_zh": "丁",
+      "zhi_zh": "卯",
+      "label_zh": "丁卯",
+      "gan_en": "ding",
+      "zhi_en": "mao",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "fire",
+        "branch_principal_element": "wood",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    },
+    {
+      "date": "2030-02-03",
+      "index0": 5,
+      "gan_zh": "己",
+      "zhi_zh": "巳",
+      "label_zh": "己巳",
+      "gan_en": "ji",
+      "zhi_en": "si",
+      "day_boundary_mode": "civil_midnight",
+      "wuxing_simple_visible": {
+        "stem_element": "earth",
+        "branch_principal_element": "fire",
+        "method": "simple_visible",
+        "scope": "descriptive_not_strength_analysis"
+      }
+    }
+  ]
+}

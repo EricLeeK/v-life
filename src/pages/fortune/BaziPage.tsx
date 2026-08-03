@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useFortuneProfile, localDateString } from "@/hooks/useFortune";
 import { buildFortuneUserPrompt, requestFortuneReading } from "@/lib/fortune/aiReading";
 import { baziRuleBlurb, dayPillarFromDate } from "@/lib/fortune/bazi";
+import { getLunarDayBundle } from "@/lib/fortune/lunarDay";
 
 export default function BaziPage() {
   const { t, lang } = useLang();
@@ -17,6 +18,9 @@ export default function BaziPage() {
   const [reading, setReading] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const today = localDateString();
+  const todayBundle = getLunarDayBundle(today);
+  const birthBundle = hasBirthDate ? getLunarDayBundle(profile!.birth_date!) : null;
   const pillar = hasBirthDate
     ? dayPillarFromDate(profile!.birth_date!, profile?.birth_hour)
     : null;
@@ -32,10 +36,16 @@ export default function BaziPage() {
         kind: "bazi",
         lang,
         facts: {
-          today: localDateString(),
+          today,
+          todayPillar: todayBundle?.dayPillar,
+          todayChongsha: todayBundle?.chongsha,
+          todayNaYin: todayBundle?.naYin,
           pillar,
+          birthPillarLunar: birthBundle?.dayPillar,
+          birthNaYin: birthBundle?.naYin,
           birth_date: profile?.birth_date,
           birth_hour: profile?.birth_hour,
+          source: birthBundle?.source,
         },
       }),
     );
@@ -49,7 +59,7 @@ export default function BaziPage() {
       <div className="space-y-8">
         <FortunePageHeader
           title={t("八字日柱", "BaZi Day Pillar")}
-          subtitle={t("轻量日柱与五行，不做恐吓向细盘", "A gentle day-pillar snapshot — not a full chart")}
+          subtitle={t("日柱与纳音对齐 lunar-javascript", "Day pillar & nayin via lunar-javascript")}
           backLabel={t("返回运势", "Back to Fortune")}
         />
 
@@ -70,11 +80,19 @@ export default function BaziPage() {
             <div className="card-premium space-y-5 p-5">
               <div>
                 <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
-                  {t("日柱", "Day pillar")}
+                  {t("生日日柱", "Birth day pillar")}
                 </p>
                 <p className="mt-1 font-mono-data text-[40px] font-semibold text-[#1f1a14]">
-                  {pillar!.label}
+                  {birthBundle?.dayPillar || pillar!.label}
                 </p>
+                {birthBundle?.naYin && (
+                  <p className="mt-1 text-[13px] text-[#8a847a]">
+                    {t("纳音", "Nayin")} · {birthBundle.naYin}
+                  </p>
+                )}
+              </div>
+              <div className="rounded-lg bg-[#f4f3ee] px-3 py-2 text-[12px] text-[#5c564c]">
+                {t("今日", "Today")} {todayBundle?.dayPillar} · {todayBundle?.chongsha} · {todayBundle?.zhiXing}
               </div>
               <div className="space-y-2.5">
                 {pillar!.wuxing.map((w) => (
@@ -93,6 +111,9 @@ export default function BaziPage() {
               <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void remind()} disabled={loading}>
                 {loading ? t("生成中…", "Working…") : t("今日提醒", "Today's note")}
               </Button>
+              {birthBundle?.source && (
+                <p className="text-[10px] text-[#b0aaa0]">{birthBundle.source}</p>
+              )}
             </div>
 
             <div className="card-premium min-h-[280px] p-6">
@@ -110,7 +131,12 @@ export default function BaziPage() {
                   </p>
                   <SaveReadingButton
                     type="bazi"
-                    payload={{ pillar, birth_date: profile?.birth_date }}
+                    payload={{
+                      pillar,
+                      birth_date: profile?.birth_date,
+                      birthNaYin: birthBundle?.naYin,
+                      todayPillar: todayBundle?.dayPillar,
+                    }}
                     reading={reading}
                   />
                 </div>
