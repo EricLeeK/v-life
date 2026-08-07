@@ -389,12 +389,16 @@ export type Database = {
         Row: {
           ai_draft_meta: Json | null
           content: string | null
+          correct_answer: string | null
           created_at: string | null
           id: string
+          image_required: boolean | null
           image_url: string | null
           knowledge_point: string | null
           last_reviewed_at: string | null
           next_review_date: string | null
+          options: Json | null
+          question_type: string | null
           review_interval_days: number
           review_status: string
           source_date: string
@@ -402,18 +406,23 @@ export type Database = {
           subject_tag: string | null
           title: string
           updated_at: string | null
+          user_answer: string | null
           user_id: string
           wrong_reason: string | null
         }
         Insert: {
           ai_draft_meta?: Json | null
           content?: string | null
+          correct_answer?: string | null
           created_at?: string | null
           id?: string
+          image_required?: boolean | null
           image_url?: string | null
           knowledge_point?: string | null
           last_reviewed_at?: string | null
           next_review_date?: string | null
+          options?: Json | null
+          question_type?: string | null
           review_interval_days?: number
           review_status?: string
           source_date?: string
@@ -421,18 +430,23 @@ export type Database = {
           subject_tag?: string | null
           title: string
           updated_at?: string | null
+          user_answer?: string | null
           user_id: string
           wrong_reason?: string | null
         }
         Update: {
           ai_draft_meta?: Json | null
           content?: string | null
+          correct_answer?: string | null
           created_at?: string | null
           id?: string
+          image_required?: boolean | null
           image_url?: string | null
           knowledge_point?: string | null
           last_reviewed_at?: string | null
           next_review_date?: string | null
+          options?: Json | null
+          question_type?: string | null
           review_interval_days?: number
           review_status?: string
           source_date?: string
@@ -440,6 +454,7 @@ export type Database = {
           subject_tag?: string | null
           title?: string
           updated_at?: string | null
+          user_answer?: string | null
           user_id?: string
           wrong_reason?: string | null
         }

@@ -124,11 +124,11 @@ create: { module: "civil_checkin", action: "create", data: { studied_minutes: nu
 **同一天重复打卡会覆盖（upsert）。**
 
 ### 17. civil_wrong（考公错题）
-create: { module: "civil_wrong", action: "create", data: { title: string, subject_group: "xingce"|"shenlun"|"mianshi", subject_tag?: string, content?: string, wrong_reason?: string, knowledge_point?: string, source_date?: "YYYY-MM-DD", review_status?: "pending"|"mastered" } }
-update: { module: "civil_wrong", action: "update", data: { match: { title?: string }, update: { title?: string, review_status?: string, wrong_reason?: string, knowledge_point?: string, subject_tag?: string } } }
+create: { module: "civil_wrong", action: "create", data: { title: string, subject_group: "xingce"|"shenlun"|"mianshi", subject_tag?: string, content?: string（题干，可含 LaTeX）, wrong_reason?: string, knowledge_point?: string, source_date?: "YYYY-MM-DD", review_status?: "pending"|"mastered", question_type?: "choice"|"judgement"|"text", options?: [{key: string, text: string}], correct_answer?: string, user_answer?: string, image_required?: boolean } }
+update: { module: "civil_wrong", action: "update", data: { match: { title?: string }, update: { title?: string, review_status?: string, wrong_reason?: string, knowledge_point?: string, subject_tag?: string, question_type?: string, options?: [{key: string, text: string}], correct_answer?: string, user_answer?: string, image_required?: boolean } } }
 delete: { module: "civil_wrong", action: "delete", data: { match: { title?: string } } }
 
-**识别错题图片时，用 civil_wrong create 返回草稿字段；用户确认后再落库。新建 pending 错题会自动安排复习日期。**
+**识别错题图片时，用 civil_wrong create 返回草稿字段（含 question_type/options/correct_answer/user_answer/image_required）；用户确认后再落库。新建 pending 错题会自动安排复习日期。image_required=true 表示图形推理/带图题等必须看图；纯文字题给 false。**
 
 ### 18. civil_xingce_paper（行测套卷）
 create: { module: "civil_xingce_paper", action: "create", data: { taken_date?: "YYYY-MM-DD", source: string, is_mock?: boolean, verbal_total?: number, verbal_correct?: number, data_total?: number, data_correct?: number, graphic_total?: number, graphic_correct?: number, logic_total?: number, logic_correct?: number, analogy_total?: number, analogy_correct?: number, quantity_total?: number, quantity_correct?: number, common_total?: number, common_correct?: number, duration_minutes?: number, total_score?: number, beat_rate?: number, notes?: string } }

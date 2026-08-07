@@ -1,0 +1,6 @@
+ALTER TABLE public.civil_wrong_answers
+  ADD COLUMN IF NOT EXISTS question_type TEXT,
+  ADD COLUMN IF NOT EXISTS options JSONB,
+  ADD COLUMN IF NOT EXISTS correct_answer TEXT,
+  ADD COLUMN IF NOT EXISTS user_answer TEXT,
+  ADD COLUMN IF NOT EXISTS image_required BOOLEAN DEFAULT FALSE;

@@ -4,7 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { GroupPlanList } from "@/components/civil-service/GroupPlanList";
 import { WrongAnswerList } from "@/components/civil-service/WrongAnswerList";
-import { CivilStatsCharts } from "@/components/civil-service/CivilStatsCharts";
+import { WrongAnswerStatsPanel } from "@/components/civil-service/WrongAnswerStatsPanel";
 import { XingcePaperList } from "@/components/civil-service/XingcePaperList";
 import { XingceScoreCharts } from "@/components/civil-service/XingceScoreCharts";
 import { SUBJECT_GROUP_LABELS, SUBJECT_TAGS, isSubjectGroup, type SubjectGroup } from "@/lib/civilServiceSubjects";
@@ -47,7 +47,7 @@ export default function CivilServiceGroup() {
         )}
         <GroupPlanList subjectGroup={subjectGroup} />
         <WrongAnswerList subjectGroup={subjectGroup} />
-        <CivilStatsCharts subjectGroup={subjectGroup} />
+        <WrongAnswerStatsPanel subjectGroup={subjectGroup} />
       </div>
     </AppLayout>
   );

@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { useSettings } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
+import { useClipboardImagePaste } from "@/hooks/useClipboardImagePaste";
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
@@ -456,14 +457,7 @@ export function AIChatPanel() {
     e.target.value = "";
   };
 
-  const handlePaste = useCallback((e: React.ClipboardEvent) => {
-    const items = Array.from(e.clipboardData.items);
-    const imageItems = items.filter(item => item.type.startsWith("image/"));
-    if (imageItems.length === 0) return;
-    e.preventDefault();
-    const files = imageItems.map(item => item.getAsFile()).filter(Boolean) as File[];
-    addImageFiles(files);
-  }, [addImageFiles]);
+  const handlePaste = useClipboardImagePaste(addImageFiles);
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index));

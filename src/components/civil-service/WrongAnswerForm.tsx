@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   SUBJECT_GROUP_LABELS,
   SUBJECT_GROUPS,
@@ -18,7 +19,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
-import { Camera, Loader2, Sparkles } from "lucide-react";
+import { useClipboardImagePaste } from "@/hooks/useClipboardImagePaste";
+import type { WrongOption } from "./WrongAnswerCard";
+import { Camera, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 
 export type WrongAnswerFormValues = {
   title: string;
@@ -30,8 +33,20 @@ export type WrongAnswerFormValues = {
   source_date: string;
   review_status: string;
   image_url: string | null;
+  question_type: string | null;
+  options: WrongOption[] | null;
+  correct_answer: string | null;
+  user_answer: string | null;
+  image_required: boolean;
   ai_draft_meta?: Record<string, unknown> | null;
 };
+
+function parseOptionsFromItem(raw: CivilWrongAnswer["options"]): WrongOption[] {
+  if (!raw || !Array.isArray(raw)) return [];
+  return raw
+    .filter((o): o is WrongOption => typeof o === "object" && o !== null && "key" in o && "text" in o)
+    .map((o) => ({ key: String(o.key), text: String(o.text) }));
+}
 
 export function WrongAnswerForm({
   initial,
@@ -58,6 +73,11 @@ export function WrongAnswerForm({
   const [sourceDate, setSourceDate] = useState(initial?.source_date || format(new Date(), "yyyy-MM-dd"));
   const [reviewStatus, setReviewStatus] = useState(initial?.review_status || "pending");
   const [imageUrl, setImageUrl] = useState(initial?.image_url || "");
+  const [questionType, setQuestionType] = useState<string>(initial?.question_type || "");
+  const [options, setOptions] = useState<WrongOption[]>(parseOptionsFromItem(initial?.options));
+  const [correctAnswer, setCorrectAnswer] = useState(initial?.correct_answer || "");
+  const [userAnswer, setUserAnswer] = useState(initial?.user_answer || "");
+  const [imageRequired, setImageRequired] = useState(initial?.image_required ?? false);
   const [aiMeta, setAiMeta] = useState<Record<string, unknown> | null>((initial?.ai_draft_meta as any) || null);
   const [uploading, setUploading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -90,6 +110,37 @@ export function WrongAnswerForm({
     }
   };
 
+  const handlePasteFiles = useCallback(
+    (files: File[]) => {
+      if (files[0]) handleFile(files[0]);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [user?.id],
+  );
+  const handlePaste = useClipboardImagePaste(handlePasteFiles);
+
+  const applyAiDraft = (d: Record<string, any>) => {
+    if (d.title) setTitle(d.title);
+    if (d.content) setContent(d.content);
+    if (d.wrong_reason) setWrongReason(d.wrong_reason);
+    if (d.knowledge_point) setKnowledgePoint(d.knowledge_point);
+    if (d.subject_group && ["xingce", "shenlun", "mianshi", "general"].includes(d.subject_group)) {
+      setGroup(d.subject_group);
+    }
+    if (d.subject_tag) setTag(d.subject_tag);
+    if (d.question_type) setQuestionType(d.question_type);
+    if (Array.isArray(d.options)) {
+      setOptions(
+        d.options
+          .filter((o: any) => o?.key && o?.text)
+          .map((o: any) => ({ key: String(o.key), text: String(o.text) })),
+      );
+    }
+    if (d.correct_answer) setCorrectAnswer(String(d.correct_answer));
+    if (d.user_answer) setUserAnswer(String(d.user_answer));
+    if (typeof d.image_required === "boolean") setImageRequired(d.image_required);
+  };
+
   const handleAiDraft = async () => {
     const img = previewDataUrl || imageUrl;
     if (!img) {
@@ -100,7 +151,12 @@ export function WrongAnswerForm({
     try {
       const prompt =
         `请识别这张考公错题图片，用一条 civil_wrong create 操作返回草稿（不要假设已保存）。` +
-        `data 需含：title, content, wrong_reason, knowledge_point, subject_group(xingce|shenlun|mianshi), subject_tag。` +
+        `data 需含：title, content（题干，可含 LaTeX 公式如 $x^2$）, wrong_reason, knowledge_point, ` +
+        `subject_group(xingce|shenlun|mianshi), subject_tag, ` +
+        `question_type(choice|judgement|text), ` +
+        `options（数组 [{key:"A", text:"..."}]，文字题留空数组）, ` +
+        `correct_answer（如 A / AB / 对 / 自由文本）, user_answer（用户当时选的，若可识别）, ` +
+        `image_required（boolean：图形推理/带图数量题等必须看图的给 true；纯文字给 false）。` +
         `subject_tag 尽量用：言语理解/资料分析/图形推理/定义类比/逻辑推理/数量关系/时政常识/综应/申论/理论学习/素材积累/热点剖析/套卷。`;
 
       const { data, error } = await supabase.functions.invoke("ai-chat", {
@@ -122,14 +178,7 @@ export function WrongAnswerForm({
       const ops = data?.result?.operations || [];
       const draftOp = ops.find((o: any) => o.module === "civil_wrong" && o.action === "create") || ops[0];
       const d = draftOp?.data || {};
-      if (d.title) setTitle(d.title);
-      if (d.content) setContent(d.content);
-      if (d.wrong_reason) setWrongReason(d.wrong_reason);
-      if (d.knowledge_point) setKnowledgePoint(d.knowledge_point);
-      if (d.subject_group && ["xingce", "shenlun", "mianshi", "general"].includes(d.subject_group)) {
-        setGroup(d.subject_group);
-      }
-      if (d.subject_tag) setTag(d.subject_tag);
+      applyAiDraft(d);
       setAiMeta({ raw: d, summary: data?.result?.summary });
       toast({ title: t("已填入 AI 草稿，请确认后保存", "AI draft filled — confirm then save") });
     } catch (e: any) {
@@ -153,6 +202,11 @@ export function WrongAnswerForm({
         source_date: sourceDate,
         review_status: reviewStatus,
         image_url: imageUrl || null,
+        question_type: questionType || null,
+        options: options.length ? options : null,
+        correct_answer: correctAnswer.trim() || null,
+        user_answer: userAnswer.trim() || null,
+        image_required: imageRequired,
         ai_draft_meta: aiMeta,
       });
     } finally {
@@ -160,8 +214,15 @@ export function WrongAnswerForm({
     }
   };
 
+  const addOption = () => {
+    const keys = ["A", "B", "C", "D", "E", "F"];
+    const used = new Set(options.map((o) => o.key));
+    const nextKey = keys.find((k) => !used.has(k)) || String(options.length + 1);
+    setOptions([...options, { key: nextKey, text: "" }]);
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" onPaste={handlePaste}>
       <div className="space-y-2">
         <Label>{t("拍照 / 图片", "Photo")}</Label>
         <div className="flex flex-wrap gap-2">
@@ -185,6 +246,7 @@ export function WrongAnswerForm({
             {t("AI 识图填草稿", "AI draft")}
           </Button>
         </div>
+        <p className="text-[11px] text-[#8a847a]">{t("支持 Ctrl+V 粘贴图片", "Ctrl+V to paste image")}</p>
         {(previewDataUrl || imageUrl) && (
           <img src={previewDataUrl || imageUrl} alt="" className="mt-2 max-h-40 rounded-md border border-[#e4e1d7] object-contain" />
         )}
@@ -196,8 +258,87 @@ export function WrongAnswerForm({
       </div>
       <div className="space-y-2">
         <Label>{t("题干 / 摘录", "Content")}</Label>
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} />
+        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder={t("支持 LaTeX，如 $\\\\frac{a}{b}$", "LaTeX supported, e.g. $\\\\frac{a}{b}$")} />
       </div>
+
+      <div className="rounded-lg border border-[#e4e1d7] p-3 space-y-3">
+        <p className="text-[13px] font-medium text-[#1f1a14]">{t("题型与选项", "Question type & options")}</p>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <Label>{t("题型", "Type")}</Label>
+            <Select value={questionType || "__none"} onValueChange={(v) => setQuestionType(v === "__none" ? "" : v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">{t("未指定", "Unspecified")}</SelectItem>
+                <SelectItem value="choice">{t("选择题", "Choice")}</SelectItem>
+                <SelectItem value="judgement">{t("判断题", "Judgement")}</SelectItem>
+                <SelectItem value="text">{t("文字题", "Text")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>{t("默认展示图", "Show image inline")}</Label>
+            <div className="flex items-center gap-2 h-9">
+              <Switch checked={imageRequired} onCheckedChange={setImageRequired} />
+              <span className="text-[12px] text-[#8a847a]">{imageRequired ? t("是", "Yes") : t("否", "No")}</span>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
+            <Label>{t("正确答案", "Correct answer")}</Label>
+            <Input value={correctAnswer} onChange={(e) => setCorrectAnswer(e.target.value)} placeholder="A / AB / 对" />
+          </div>
+          <div className="space-y-2">
+            <Label>{t("你的选择", "Your answer")}</Label>
+            <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+          </div>
+        </div>
+        {(questionType === "choice" || options.length > 0) && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>{t("选项", "Options")}</Label>
+              <Button type="button" variant="ghost" size="sm" className="h-7 text-[12px]" onClick={addOption}>
+                <Plus className="h-3 w-3 mr-1" />
+                {t("添加", "Add")}
+              </Button>
+            </div>
+            {options.map((opt, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <Input
+                  className="w-12 shrink-0"
+                  value={opt.key}
+                  onChange={(e) => {
+                    const next = [...options];
+                    next[idx] = { ...next[idx], key: e.target.value };
+                    setOptions(next);
+                  }}
+                />
+                <Input
+                  className="flex-1"
+                  value={opt.text}
+                  placeholder={t("选项内容", "Option text")}
+                  onChange={(e) => {
+                    const next = [...options];
+                    next[idx] = { ...next[idx], text: e.target.value };
+                    setOptions(next);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 text-red-600"
+                  onClick={() => setOptions(options.filter((_, i) => i !== idx))}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <Label>{t("科目", "Subject")}</Label>

@@ -604,6 +604,7 @@ const CIVIL_EXAM_1 = "demo-cs-exam-0000-0000-0000-000000000001";
 const CIVIL_PLAN_1 = "demo-cs-plan-0000-0000-0000-000000000001";
 const CIVIL_PLAN_2 = "demo-cs-plan-0000-0000-0000-000000000002";
 const CIVIL_WRONG_1 = "demo-cs-wrong-000-0000-0000-000000000001";
+const CIVIL_WRONG_2 = "demo-cs-wrong-000-0000-0000-000000000002";
 
 function civilToday(): string {
   return new Date().toISOString().split("T")[0];
@@ -694,6 +695,40 @@ export const demoCivilWrongAnswers = [
     wrong_reason: "只看分子未看分母",
     knowledge_point: "增长率比较",
     image_url: null as string | null,
+    question_type: null as string | null,
+    options: null as any,
+    correct_answer: null as string | null,
+    user_answer: null as string | null,
+    image_required: false,
+    review_status: "pending",
+    source_date: civilToday(),
+    next_review_date: civilToday(),
+    review_interval_days: 1,
+    last_reviewed_at: null as string | null,
+    ai_draft_meta: null as any,
+    created_at: "2026-05-08T00:00:00+09:00",
+    updated_at: "2026-05-08T00:00:00+09:00",
+  },
+  {
+    id: CIVIL_WRONG_2,
+    user_id: DEMO_USER,
+    subject_group: "xingce",
+    subject_tag: "数量关系",
+    title: "等差数列求和",
+    content: "已知等差数列 $\\{a_n\\}$ 中 $a_1=3$，公差 $d=2$，求前 10 项之和 $S_{10}$。",
+    wrong_reason: "误用等比数列求和公式 $S_n=\\frac{a_1(1-q^n)}{1-q}$",
+    knowledge_point: "等差数列求和",
+    image_url: null as string | null,
+    question_type: "choice",
+    options: [
+      { key: "A", text: "$S_{10}=120$" },
+      { key: "B", text: "$S_{10}=110$" },
+      { key: "C", text: "$S_{10}=100$" },
+      { key: "D", text: "$S_{10}=90$" },
+    ],
+    correct_answer: "A",
+    user_answer: "C",
+    image_required: false,
     review_status: "pending",
     source_date: civilToday(),
     next_review_date: civilToday(),
