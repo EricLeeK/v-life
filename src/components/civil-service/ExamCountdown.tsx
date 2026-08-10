@@ -23,38 +23,93 @@ import { useToast } from "@/hooks/use-toast";
 export function ExamCountdown() {
   const { t } = useLang();
   const { data: exams = [] } = useCivilExams(false);
-  const primary = exams.find((e) => e.is_primary) || exams[0] || null;
   const [manageOpen, setManageOpen] = useState(false);
-
-  const daysLeft = primary
-    ? differenceInCalendarDays(parseISO(primary.exam_date), new Date())
-    : null;
+  const today = new Date();
+  const countdowns = exams
+    .map((exam) => ({
+      exam,
+      daysLeft: differenceInCalendarDays(parseISO(exam.exam_date), today),
+    }))
+    .sort((a, b) => {
+      const aUpcoming = a.daysLeft >= 0;
+      const bUpcoming = b.daysLeft >= 0;
+      if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+      return aUpcoming ? a.daysLeft - b.daysLeft : b.daysLeft - a.daysLeft;
+    });
+  const nearest = countdowns[0] ?? null;
+  const laterTargets = countdowns.slice(1);
 
   return (
     <>
       <Card className="border-[#e4e1d7] bg-white overflow-hidden">
-        <CardContent className="p-6">
-          {primary ? (
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div>
-                <p className="text-[13px] text-[#8a847a] mb-1">{primary.name}</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="heading-font text-5xl sm:text-6xl font-semibold text-[#1f1a14] tracking-tight">
-                    {daysLeft !== null && daysLeft >= 0 ? daysLeft : daysLeft !== null ? 0 : "—"}
-                  </span>
-                  <span className="text-lg text-[#8a847a]">{t("天", "days")}</span>
-                </div>
-                <p className="text-[13px] text-[#8a847a] mt-2">
-                  {t("考试日", "Exam date")} {format(parseISO(primary.exam_date), "yyyy-MM-dd")}
-                  {daysLeft !== null && daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
+        <CardContent className="p-0">
+          {nearest ? (
+            <>
+              <div className="flex items-center justify-between gap-3 border-b border-[#eeeae1] px-5 py-3.5">
+                <p className="heading-font text-base font-medium text-[#1f1a14]">
+                  {t("考试倒计时", "Exam countdown")}
                 </p>
+                <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="border-[#e4e1d7]">
+                  {t("管理考试", "Manage exams")}
+                </Button>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="border-[#e4e1d7]">
-                {t("管理考试", "Manage exams")}
-              </Button>
-            </div>
+              <div className={laterTargets.length > 0 ? "grid lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,1fr)]" : ""}>
+                <div
+                  data-countdown-size="primary"
+                  className="bg-gradient-to-br from-[#fffaf5] to-white p-6 sm:p-7"
+                >
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="rounded-full bg-[#d17847]/10 px-2 py-0.5 text-[11px] font-medium text-[#b85f32]">
+                      {t("最近目标", "Nearest target")}
+                    </span>
+                    {nearest.exam.is_primary ? (
+                      <Star className="h-3.5 w-3.5 fill-[#d17847] text-[#d17847]" aria-label={t("重点目标", "Priority target")} />
+                    ) : null}
+                  </div>
+                  <p className="text-sm font-medium text-[#5d574f]">{nearest.exam.name}</p>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="heading-font text-5xl font-semibold tracking-tight text-[#1f1a14] sm:text-6xl">
+                      {Math.max(nearest.daysLeft, 0)}
+                    </span>
+                    <span className="text-lg text-[#8a847a]">{t("天", "days")}</span>
+                  </div>
+                  <p className="mt-2 text-[13px] text-[#8a847a]">
+                    {t("考试日", "Exam date")} {format(parseISO(nearest.exam.exam_date), "yyyy-MM-dd")}
+                    {nearest.daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
+                  </p>
+                </div>
+                {laterTargets.length > 0 ? (
+                  <div className="grid gap-2 border-t border-[#eeeae1] bg-[#faf9f6] p-3 sm:grid-cols-2 lg:grid-cols-1 lg:border-l lg:border-t-0">
+                    {laterTargets.map(({ exam, daysLeft }) => (
+                      <div
+                        key={exam.id}
+                        data-countdown-size="secondary"
+                        className="flex items-center justify-between gap-4 rounded-lg border border-[#e8e4db] bg-white px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            {exam.is_primary ? (
+                              <Star className="h-3 w-3 shrink-0 fill-[#d17847] text-[#d17847]" aria-label={t("重点目标", "Priority target")} />
+                            ) : null}
+                            <p className="truncate text-[13px] font-medium text-[#4d473f]">{exam.name}</p>
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#9a948a]">
+                            {format(parseISO(exam.exam_date), "yyyy-MM-dd")}
+                            {daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 items-baseline gap-1">
+                          <span className="heading-font text-2xl font-semibold text-[#5d574f]">{Math.max(daysLeft, 0)}</span>
+                          <span className="text-xs text-[#9a948a]">{t("天", "days")}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </>
           ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="heading-font text-xl text-[#1f1a14]">{t("还没有考试倒计时", "No exam countdown yet")}</p>
                 <p className="text-[13px] text-[#8a847a] mt-1">{t("添加国考 / 省考 / 事业编目标", "Add national / provincial / public institution exams")}</p>
@@ -132,7 +187,7 @@ function ExamManageDialog({
                     size="icon"
                     variant="ghost"
                     className="h-8 w-8"
-                    title={t("设为主目标", "Set primary")}
+                    title={t("标记为重点目标", "Mark as priority")}
                     onClick={() => updateExam.mutate({ id: exam.id, is_primary: true })}
                   >
                     <Star className="h-3.5 w-3.5" />
@@ -191,7 +246,7 @@ function ExamManageDialog({
           </div>
           <label className="flex items-center gap-2 text-sm text-[#1f1a14]">
             <Checkbox checked={form.is_primary} onCheckedChange={(v) => setForm({ ...form, is_primary: !!v })} />
-            {t("设为主目标（置顶倒计时）", "Set as primary countdown")}
+            {t("标记为重点目标", "Mark as priority target")}
           </label>
         </div>
 
