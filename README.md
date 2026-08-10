@@ -1,243 +1,179 @@
-<div align="center">
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="V-Life：把日程、财务、健康、项目和学习数据汇聚到一个 AI 可读写的个人生活中枢">
+</p>
 
-# 🌿 V-Life
+<p align="center">
+  <a href="#-快速体验">快速体验</a> ·
+  <a href="#-生活数据一处联动">功能地图</a> ·
+  <a href="#-让-ai-读写你的生活数据">AI 接入</a> ·
+  <a href="#-本地部署">本地部署</a>
+</p>
 
-**AI 辅助的一站式个人生活管理**
+<p align="center">
+  <img alt="React 18" src="https://img.shields.io/badge/React-18-20201A?logo=react&logoColor=61DAFB">
+  <img alt="TypeScript 5" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white">
+  <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge-3ECF8E?logo=supabase&logoColor=white">
+  <img alt="Vite 5" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white">
+</p>
 
-记录吃、住、用、想、赚、花、动、瘦、做。一处管理，AI 联动。
+V-Life 是一个 AI 辅助的个人生活管理 Web 应用。它把原本散落在不同工具里的日程、财务、健康、项目、学习与灵感整理成结构化数据，再通过内置对话、MCP Server 和 CLI 交给 AI 查询与更新。
 
-[![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-Radix-000000)](https://ui.shadcn.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](#-许可证)
+> 从“记下生活”到“让生活数据参与决策”：同一份上下文，同一个首页，同一套可读写接口。
 
-</div>
+## 👀 先看真实界面
 
----
+<p align="center">
+  <img src="./assets/readme/dashboard.png" width="100%" alt="V-Life 游客模式首页，集中展示项目、日程、学习、财务和健康状态">
+</p>
 
-## ✨ 项目简介
+<p align="center">
+  <img src="./assets/readme/ai-assistant.png" width="49%" alt="V-Life 内置 AI 助手面板">
+  <img src="./assets/readme/projects.png" width="49%" alt="V-Life 项目管理看板">
+</p>
 
-**V-Life** 是一个现代化的 **个人生活管理 Web 应用**，把日常零散的信息——日程、记账、热量、待办、目标、食材、用品、随想、减肥——统一收进同一个视图。前端基于 React + Vite + Tailwind + shadcn/ui，后端跑在 Supabase（Postgres + Edge Functions）。**所有模块共享同一份 AI 上下文**：内置对话面板、Supabase 上的 MCP Server，以及独立的 CLI 工具，可让 Claude / Cursor / Codex 直接读写你的生活数据。
+以上截图来自仓库当前版本的本地 Guest Tour，不依赖真实个人数据。
 
-> 不只是数据看板，更是一个能让 AI 真正“帮你过日子”的工作台。
+## ✨ 为什么是 V-Life
 
----
+- **一个首页看全局**：把当天日程、任务、项目、学习、财务与健康状态压缩成可行动的概览。
+- **模块之间共享上下文**：日程、待办、目标、项目和生活记录不是信息孤岛，AI 可以跨模块理解。
+- **先参观，再配置**：Guest Tour 内置完整示例数据，无需 Supabase 账号即可浏览主要流程。
+- **不只是在网页里使用 AI**：内置对话、Supabase MCP Server 与 Node.js CLI 共用结构化数据。
+- **适合长期自托管**：Supabase 提供 Postgres、Auth、RLS 与 Edge Functions，数据边界由你控制。
 
-## 🧩 核心功能
+## 🧭 生活数据一处联动
 
-| 模块 | 用途 | 亮点 |
-|---|---|---|
-| 🏠 **首页概览** | 今天一眼看完 | 10 张实时卡片：日程 / 热量 / 支出 / 待办 / 目标 / 体重 / 16+8 断食 / 食材 / 用品 / 随想 |
-| 🥕 **食材管理** | 厨房库存 | 6 大分类、过期预警、保质期排序 |
-| 📦 **用品管理** | 日用 + 耐用品 | 自动计算「每日成本」「已省金额」，识别**超值用品** |
-| 🗓 **日程计划** | 3 天 / 周 / 月视图 | 支持**重复日程数据库实例化**（外部 API 直接可查） |
-| 🔥 **热量记录** | 一日三餐 + 加餐 | 与每日目标 / 进食窗口联动 |
-| 💴 **记账** | 多币种 (CNY / JPY) | 自动汇率换算 + 月度预算 + 分类统计 |
-| ✅ **待办事项** | GTD 风格 | 按重要性 / 分类筛选，紧急事项一目了然 |
-| 🎯 **目标** | 周 / 月 / 季 / 年 | 进度追踪 + 看板式呈现 |
-| 💡 **随想** | 灵感速记 | 标签 + 图标，可被 AI 检索 |
-| ⚖️ **减肥专项** | 体重曲线 + 断食 | 16+8 进食窗口实时计算 |
+| 场景 | 能力 |
+| --- | --- |
+| **今天** | 首页概览、今日日程、待办与积分商店 |
+| **组织** | 项目看板、周期目标、灵感随想、学习笔记 |
+| **生活** | 食材保质期、用品成本、热量、体重与围度、16:8 进食窗口 |
+| **财务** | CNY / JPY 记账、汇率换算、月度预算与分类统计 |
+| **备考** | 考试倒计时、计划、打卡、错题与行测套题 |
+| **探索** | 塔罗、星座、生肖、周易、抽签、八字与历史记录 |
 
----
+侧栏当前包含 15 个主要入口，另有商店和设置；页面按路由懒加载。你也可以在设置中隐藏不需要的模块，或切换到考公专注模式。
 
-## 🏗️ 技术栈
+## 🚀 快速体验
 
-| 分层 | 技术选型 |
-|---|---|
-| **前端框架** | React 18 + TypeScript 5 + Vite 5 |
-| **UI 体系** | Tailwind CSS 3 + shadcn/ui（Radix UI + lucide-react） |
-| **数据请求** | TanStack React Query 5 |
-| **表单 / 校验** | React Hook Form + Zod |
-| **路由** | React Router DOM 6 |
-| **图表** | Recharts |
-| **后端** | Supabase（Postgres + Auth + Edge Functions） |
-| **AI 适配** | 通用 OpenAI 协议（默认 Gemini，可切换 GPT / Claude / 自定义 Endpoint） |
-| **测试** | Vitest + Testing Library + Playwright |
-| **包管理** | npm（亦兼容 bun） |
-
----
-
-## 🚀 快速开始
-
-### 1. 克隆 & 安装
+只想先看看产品时，不需要创建 Supabase 项目：
 
 ```bash
 git clone https://github.com/EricLeeK/v-life.git
 cd v-life
 npm install
+npm run dev
 ```
 
-### 2. 配置环境变量
+打开 `http://localhost:8080`，在登录页点击 **游客参观 / Guest Tour**。示例数据保存在浏览器内存中，不会写入后端。
 
-复制 `.env.example` 或参考 `.env`，填入 Supabase 项目信息：
+## 🤖 让 AI 读写你的生活数据
 
-```bash
-VITE_SUPABASE_URL="https://<your-project>.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY="<anon-key>"
-VITE_SUPABASE_PROJECT_ID="<your-project-id>"
-```
+V-Life 提供三条入口，适合不同使用方式。
 
-> 仅前端 `anon key`（受 RLS 保护）；服务端 `service role key` 仅用于 CLI / MCP，不要写进前端。
+### 1. 内置 AI 对话
 
-### 3. 初始化数据库
+右下角对话面板支持 OpenAI 兼容接口，可配置 Gemini、GPT、Claude 或自定义 Endpoint。它提供确认执行、直接执行和仅对话三种模式，并通过结构化 `actions` 完成 CRUD。
 
-```bash
-# 安装 Supabase CLI 后
-supabase link --project-ref <your-project-id>
-supabase db push
-```
+### 2. Supabase MCP Server
 
-迁移文件位于 `supabase/migrations/`，按顺序执行后会自动建表 + 索引 + RLS。
-
-### 4. 启动开发服务器
-
-```bash
-npm run dev          # 默认 http://localhost:8080
-```
-
----
-
-## 🗂️ 项目结构
-
-```
-v-life/
-├── src/
-│   ├── pages/             # 11 个核心页面（Index、Schedule、Finance…）
-│   ├── components/
-│   │   ├── ui/            # shadcn/ui 组件
-│   │   ├── schedule/      # 日程视图组件（DayColumn / MonthView…）
-│   │   ├── AIChatPanel.tsx
-│   │   ├── AppLayout.tsx
-│   │   ├── AppSidebar.tsx
-│   │   └── MobileNav.tsx
-│   ├── hooks/
-│   │   ├── useData.ts     # 全模块数据 hooks（Query / Mutation）
-│   │   ├── useTheme.ts
-│   │   └── use-mobile.tsx
-│   ├── contexts/          # AuthContext
-│   ├── integrations/
-│   │   └── supabase/      # 自动生成的 Supabase 客户端 & 类型
-│   └── test/              # Vitest 单测
-├── supabase/
-│   ├── migrations/        # 12 个迁移脚本
-│   └── functions/
-│       ├── ai-chat/       # AI 对话 Edge Function
-│       ├── auto-backup/   # 自动备份
-│       └── mcp-server/    # MCP Server（暴露 CRUD Tools）
-├── cli/                   # vlife.mjs：命令行工具
-├── docs/                  # 设计文档与历史 plan
-└── tests/e2e/             # Playwright（可选）
-```
-
----
-
-## 🤖 AI 集成
-
-V-Life 把生活数据变成 AI 可读写的一等结构，提供**三种**接入方式。
-
-### 1️⃣ 内置 AI 对话面板
-
-右下角悬浮的 `AIChatPanel`：
-
-- 直接对接你在「设置」中配置的模型（默认 Gemini，亦支持任何 OpenAI 兼容协议）
-- 三种执行模式：`确认模式` / `直接执行` / `仅对话`
-- 通过 `actions` 字段把建议的 CRUD 落库
-
-### 2️⃣ Supabase MCP Server
-
-部署在 `supabase/functions/mcp-server/index.ts`，让 Claude Desktop / Cursor 直接接入：
+部署 `supabase/functions/mcp-server` 后，可让支持远程 MCP 的客户端访问 V-Life：
 
 ```json
 {
   "mcpServers": {
     "vlife": {
-      "url": "https://<your-project>.supabase.co/functions/v1/mcp-server"
+      "url": "https://<project-ref>.supabase.co/functions/v1/mcp-server"
     }
   }
 }
 ```
 
-暴露能力：
-- 所有模块的 CRUD **Tools**（`pantry_create` / `finance_list` / `schedule_create` …）
-- Dashboard / Finance / Calories 的统计 **Resources**
+Server 暴露各生活模块的 CRUD Tools，以及 Dashboard、Finance、Calories 等统计 Resources。
 
-### 3️⃣ V-Life CLI
+### 3. V-Life CLI
 
-`cli/vlife.mjs` —— 用 Node 18+ 直接通过 Supabase REST API 操作数据：
+Node.js 18+ 可直接通过 Supabase REST API 操作或备份数据：
 
 ```bash
-export VLIFE_SUPABASE_URL="https://<your-project>.supabase.co"
+export VLIFE_SUPABASE_URL="https://<project-ref>.supabase.co"
 export VLIFE_SUPABASE_KEY="<service-role-key>"
 
 node cli/vlife.mjs dashboard summary
 node cli/vlife.mjs finance create --name="午饭" --amount=850 --currency=JPY --category="餐饮"
-node cli/vlife.mjs schedule list --start_date=2026-05-01 --end_date=2026-05-07
 node cli/vlife.mjs data export --output=./backup.json
 ```
 
-完整命令参见 [`cli/README.md`](./cli/README.md)。
+完整参数见 [`cli/README.md`](./cli/README.md)。`service-role key` 只能放在可信环境中，不能暴露到前端。
 
----
+## 🛠️ 本地部署
 
-## 🗄️ 数据模型
+### 1. 配置环境变量
 
-14 张核心表，全部启用 **Row Level Security**：
+复制 `.env.example`（如仓库版本提供）或创建 `.env.local`：
 
-| 表 | 用途 |
-|---|---|
-| `settings` | 全局设置（预算、目标、AI 配置、断食窗口、汇率） |
-| `pantry_items` | 食材库存 |
-| `belongings_daily` / `belongings_durable` | 日用品 / 耐用品 |
-| `schedule_events` | 日程（含 `parent_event_id` 实现重复实例化） |
-| `calorie_records` | 热量 |
-| `finance_records` | 收支（含 `amount_cny` 自动换算字段） |
-| `todos` | 待办 |
-| `goals` | 目标（周 / 月 / 季 / 年） |
-| `thoughts` | 随想（标签数组 + GIN 索引） |
-| `weight_records` / `measurement_records` | 体重 / 三围 |
-| `ai_sessions` / `ai_messages` | AI 会话历史 |
+```bash
+VITE_SUPABASE_URL="https://<project-ref>.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="<anon-key>"
+VITE_SUPABASE_PROJECT_ID="<project-ref>"
+```
 
----
+前端只使用受 RLS 保护的 `anon key`。
 
-## 🛠️ 开发命令
+### 2. 初始化数据库
 
-| 命令 | 说明 |
-|---|---|
-| `npm run dev` | 启动开发服务器（端口 8080） |
-| `npm run build` | 生产构建 |
-| `npm run build:dev` | 开发模式构建（保留 sourcemap） |
-| `npm run preview` | 预览生产构建 |
-| `npm run lint` | ESLint 检查 |
-| `npm run test` | Vitest 单测 |
-| `npm run test:watch` | Vitest 监听模式 |
+```bash
+supabase link --project-ref <project-ref>
+supabase db push
+```
 
----
+迁移文件位于 `supabase/migrations/`，包含核心生活数据、项目、学习、备考、商店、运势与 AI 用量等表及其权限策略。
 
-## 📱 体验亮点
+### 3. 启动与检查
 
-- 🌙 **暗黑模式优先**：默认深色主题，符合长时间阅读
-- 📱 **响应式 + 移动端导航**：桌面侧栏 / 移动底栏自动切换
-- ⚡ **乐观更新**：所有 mutation 走 React Query 乐观策略，操作零延迟
-- 🔁 **重复日程真实落库**：未来 12 个月实例化进表，外部 API 也能查得到
-- 💾 **一键导入 / 导出**：CLI `data export` / `data import` 全量备份
-- ⏱ **16+8 断食实时态**：根据用户设定的进食窗口实时显示「断食中 / 进食中」
+```bash
+npm run dev       # http://localhost:8080
+npm run build     # 生产构建
+npm run test      # Vitest
+npm run lint      # ESLint
+```
 
----
+## 🧱 技术结构
 
-## 🤝 贡献
+| 层 | 主要技术 |
+| --- | --- |
+| 前端 | React 18、TypeScript 5、Vite 5、React Router 6 |
+| UI | Tailwind CSS 3、shadcn/ui、Radix UI、Recharts |
+| 状态与校验 | TanStack Query、React Hook Form、Zod |
+| 后端 | Supabase Postgres、Auth、RLS、Edge Functions |
+| AI | OpenAI 兼容接口、MCP Server、Node.js CLI |
+| 质量 | Vitest、Testing Library、Playwright |
 
-欢迎 Issue / PR！
+```text
+v-life/
+├── src/
+│   ├── pages/             # 生活、项目、学习、备考与运势页面
+│   ├── components/        # 布局、业务组件与 shadcn/ui
+│   ├── contexts/          # 登录、语言与 Guest Tour
+│   ├── hooks/             # Supabase 查询与 mutation
+│   └── data/demoSeed.ts   # 游客模式示例数据
+├── supabase/
+│   ├── migrations/        # 数据表、索引与 RLS
+│   └── functions/         # AI Chat、MCP 与自动备份
+├── cli/                   # vlife.mjs 命令行客户端
+└── tests/e2e/             # Playwright 场景
+```
 
-1. Fork & clone
-2. 新分支命名：`feature/<topic>` 或 `fix/<topic>`
-3. 提交遵循 [Conventional Commits](https://www.conventionalcommits.org/)：`feat: ...` / `fix: ...` / `refactor: ...`
-4. 通过 `npm run lint && npm run test` 后再提 PR
+## 🤝 参与开发
 
----
+Issue 和 PR 都欢迎。建议从小而清晰的改动开始，并在提交前运行：
 
-## 📜 许可证
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
-MIT © [EricLeeK](https://github.com/EricLeeK)
+## 📄 License
+
+当前仓库尚未包含可识别的开源许可证文件。在许可证明确前，默认保留所有权利；如计划复用或分发代码，请先联系仓库维护者。

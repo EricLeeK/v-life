@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-labelledby="title desc">
+  <title id="title">V-Life — AI 辅助的个人生活数据中枢</title>
+  <desc id="desc">把日程、财务、健康、项目和学习数据汇聚到同一个首页，并通过内置对话、MCP 和 CLI 交给 AI 读写。</desc>
+  <rect width="1200" height="390" rx="28" fill="#F4F1E8"/>
+  <path d="M0 310C210 267 344 342 536 302C732 262 890 199 1200 232V390H0Z" fill="#E9E1D3" opacity=".72"/>
+
+  <g id="title-block" transform="translate(62 52)">
+    <text x="0" y="0" fill="#9A704E" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" font-weight="700" letter-spacing="2">PERSONAL LIFE OS · AI READY</text>
+    <text x="0" y="82" fill="#241F19" font-family="Georgia, Songti SC, serif" font-size="76" font-weight="700">V-Life</text>
+    <text x="0" y="130" fill="#51483F" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="26" font-weight="600">把生活数据放在一起，让 AI 真正帮你行动</text>
+    <text x="0" y="172" fill="#766B60" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="20">日程 · 财务 · 健康 · 项目 · 学习，一处记录与联动</text>
+
+    <g transform="translate(0 222)">
+      <rect width="144" height="44" rx="22" fill="#D17847"/>
+      <text x="72" y="29" text-anchor="middle" fill="#FFFDF8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="18" font-weight="700">游客参观</text>
+      <rect x="160" width="132" height="44" rx="22" fill="#FFFDF8" stroke="#CFC5B7" stroke-width="2"/>
+      <text x="226" y="29" text-anchor="middle" fill="#51483F" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17" font-weight="700">AI CHAT</text>
+      <rect x="308" width="112" height="44" rx="22" fill="#FFFDF8" stroke="#CFC5B7" stroke-width="2"/>
+      <text x="364" y="29" text-anchor="middle" fill="#51483F" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17" font-weight="700">MCP</text>
+      <rect x="436" width="112" height="44" rx="22" fill="#FFFDF8" stroke="#CFC5B7" stroke-width="2"/>
+      <text x="492" y="29" text-anchor="middle" fill="#51483F" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="17" font-weight="700">CLI</text>
+    </g>
+  </g>
+
+  <g id="life-hub" transform="translate(690 44)">
+    <rect x="8" y="10" width="428" height="292" rx="24" fill="#B8AA98" opacity=".24"/>
+    <rect width="428" height="292" rx="24" fill="#FFFDF8" stroke="#D8CFC1" stroke-width="2"/>
+    <g transform="translate(28 26)">
+      <circle cx="10" cy="10" r="6" fill="#D17847"/>
+      <text x="30" y="16" fill="#241F19" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="20" font-weight="700">今日生活中枢</text>
+      <text x="372" y="15" text-anchor="end" fill="#9B9084" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16">LIVE</text>
+    </g>
+
+    <g transform="translate(28 72)" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif">
+      <rect width="176" height="76" rx="15" fill="#F3E6D8"/>
+      <text x="18" y="29" fill="#6D4931" font-size="17" font-weight="700">日程与待办</text>
+      <text x="18" y="57" fill="#9A704E" font-size="23" font-weight="800">4 / 7</text>
+
+      <rect x="196" width="176" height="76" rx="15" fill="#E4EEE3"/>
+      <text x="214" y="29" fill="#3C5E42" font-size="17" font-weight="700">项目进度</text>
+      <rect x="214" y="47" width="138" height="9" rx="5" fill="#C8D8C7"/>
+      <rect x="214" y="47" width="94" height="9" rx="5" fill="#6E9B73"/>
+
+      <rect y="92" width="176" height="76" rx="15" fill="#E4EAF1"/>
+      <text x="18" y="121" fill="#405A70" font-size="17" font-weight="700">健康节奏</text>
+      <text x="18" y="149" fill="#5F7F98" font-size="18" font-weight="800">16:8 · 进行中</text>
+
+      <rect x="196" y="92" width="176" height="76" rx="15" fill="#F1E7EC"/>
+      <text x="214" y="121" fill="#704D5C" font-size="17" font-weight="700">本月财务</text>
+      <text x="214" y="149" fill="#97677B" font-size="18" font-weight="800">预算内 68%</text>
+    </g>
+
+    <g transform="translate(28 256)">
+      <path d="M0 0H188" stroke="#D8CFC1" stroke-width="2"/>
+      <circle cx="214" cy="0" r="16" fill="#D17847"/>
+      <path d="M208-1l4 4 8-9" fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="240" y="7" fill="#51483F" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="17" font-weight="700">AI 已连接全部模块</text>
+    </g>
+  </g>
+</svg>
