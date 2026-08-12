@@ -115,8 +115,8 @@ export default function BelongingsPage() {
 
           <TabsContent value="daily" className="space-y-1">
             {dailyItems.length === 0 ? <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无日用品记录", "No daily items")}</p> :
-              dailyItems.map((item: any) => (
-                <Card key={item.id} className="hover:border-primary/20 transition-colors">
+              dailyItems.map((item: any, i: number) => (
+                <Card key={item.id} style={{ ['--i' as any]: i }} className="enter-up hover:border-primary/20 transition-colors">
                   <CardContent className="p-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-sm">{item.name}</span>
@@ -133,10 +133,10 @@ export default function BelongingsPage() {
 
           <TabsContent value="durable" className="space-y-2">
             {durableItems.length === 0 ? <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无耐用品记录", "No durable items")}</p> :
-              durableItems.map((item: any) => {
+              durableItems.map((item: any, i: number) => {
                 const calc = calcDurable(item);
                 return (
-                  <Card key={item.id} className={`hover:border-primary/20 transition-colors ${calc.isOverdue ? "border-success/30" : ""}`}>
+                  <Card key={item.id} style={{ ['--i' as any]: i }} className={`enter-up hover:border-primary/20 transition-colors ${calc.isOverdue ? "border-success/30" : ""}`}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div>

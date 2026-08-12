@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { LangToggle } from "@/components/LangToggle";
+import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { useLang } from "@/contexts/LanguageContext";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -117,7 +118,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            {focusMode !== "civil_service" && (
+            {POINTS_FEATURE_ENABLED && focusMode !== "civil_service" && (
               <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
                 <NavLink
                   to="/shop"

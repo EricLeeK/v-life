@@ -50,6 +50,7 @@ const MODULE_TABLE_MAP: Record<string, string> = {
   civil_checkin: "civil_checkins",
   civil_wrong: "civil_wrong_answers",
   civil_xingce_paper: "civil_xingce_papers",
+  daily_task: "daily_tasks",
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -73,6 +74,7 @@ const MODULE_LABELS: Record<string, string> = {
   civil_checkin: "考公打卡",
   civil_wrong: "考公错题",
   civil_xingce_paper: "行测套卷",
+  daily_task: "今日待办",
 };
 
 const getModuleLabels = (t: (zh: string, en: string) => string) => ({
@@ -85,6 +87,7 @@ const getModuleLabels = (t: (zh: string, en: string) => string) => ({
   civil_exam: t("考公考试", "Civil Exam"), civil_plan: t("考公计划", "Civil Plan"),
   civil_checkin: t("考公打卡", "Civil Check-in"), civil_wrong: t("考公错题", "Civil Wrong"),
   civil_xingce_paper: t("行测套卷", "Xingce Paper"),
+  daily_task: t("今日待办", "Today's Todo"),
 });
 
 const MAX_SESSIONS = 30;
@@ -490,6 +493,50 @@ export function AIChatPanel() {
         const itemName = op.data.name || op.data.title || op.data.food_name || op.data.weight || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
+            // daily_task（今日待办）：按标题找/建 todo，再加入今天（带难度/XP）
+            if (op.module === "daily_task") {
+              const { data: { user: dtUser } } = await supabase.auth.getUser();
+              if (!dtUser) throw new Error("未登录");
+              const dtTitle = String(op.data.title || "").trim();
+              if (!dtTitle) throw new Error("缺少任务标题 title");
+              const dtDiff = op.data.difficulty === "easy" || op.data.difficulty === "hard" ? op.data.difficulty : "medium";
+              const dtPts = op.data.base_points != null ? Number(op.data.base_points)
+                : dtDiff === "easy" ? 10 : dtDiff === "hard" ? 30 : 20;
+              const dtToday = new Date().toISOString().split("T")[0];
+              // 找现有 todo（未完成，优先未归档）；找不到则新建
+              let { data: dtTodo } = await (supabase.from as any)("todos")
+                .select("id")
+                .eq("user_id", dtUser.id)
+                .eq("title", dtTitle)
+                .eq("is_completed", false)
+                .order("is_archived", { ascending: true })
+                .limit(1).maybeSingle();
+              if (!dtTodo) {
+                const { data: newTodo, error: te } = await (supabase.from as any)("todos").insert({
+                  user_id: dtUser.id, title: dtTitle, category: "未分类", importance: "普通",
+                  is_completed: false, is_archived: false,
+                }).select().single();
+                if (te) throw te;
+                dtTodo = newTodo;
+                if (newTodo?.id) createdIds.push({ table: "todos", id: newTodo.id });
+              }
+              // 已在今天则跳过
+              const { data: dtExist } = await (supabase.from as any)("daily_tasks")
+                .select("id").eq("todo_id", dtTodo.id).eq("task_date", dtToday).maybeSingle();
+              if (dtExist) {
+                results.push(`${label}: 「${dtTitle}」${t("已在今日待办", "already in today's list")}`);
+                continue;
+              }
+              const { data: dtRow, error: dtErr } = await (supabase.from as any)("daily_tasks").insert({
+                user_id: dtUser.id, todo_id: dtTodo.id, task_date: dtToday,
+                difficulty: dtDiff, base_points: dtPts, is_completed: false, completed_at: null, metadata: {},
+              }).select().single();
+              if (dtErr) throw dtErr;
+              if (dtRow?.id) createdIds.push({ table: "daily_tasks", id: dtRow.id });
+              results.push(`${label}: ${t("已加入今日待办", "Added to today")}「${dtTitle}」`);
+              continue;
+            }
+
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
 
             if (op.module === "project" || op.module === "learning_course" || op.module === "civil_exam" || op.module === "civil_plan" || op.module === "civil_checkin" || op.module === "civil_wrong" || op.module === "civil_xingce_paper") {
@@ -517,6 +564,13 @@ export function AIChatPanel() {
               row.project_id = proj.id;
             }
 
+            // learning_note：course_name 模糊匹配课程 → course_id
+            if (op.module === "learning_note" && op.data.course_name) {
+              const { data: course } = await (supabase.from as any)("learning_courses")
+                .select("id").ilike("name", `%${op.data.course_name}%`).limit(1).maybeSingle();
+              if (course) row.course_id = course.id;
+            }
+
             const useUpsert = op.module === "weight" || op.module === "measurement" || op.module === "civil_checkin";
             const { data: inserted, error } = useUpsert
               ? await (supabase.from as any)(table).upsert(row, { onConflict: "user_id,date" }).select().single()
@@ -525,6 +579,22 @@ export function AIChatPanel() {
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
             results.push(`${label}: ${t("已添加", "Added")}「${itemName}」`);
           } else if (op.action === "delete") {
+            // daily_task：按标题找到今天的任务并移出今日待办
+            if (op.module === "daily_task") {
+              const rmTitle = String(op.data.match?.title || op.data.title || "").trim();
+              if (!rmTitle) throw new Error("缺少任务标题 title");
+              const { data: { user: rmUser } } = await supabase.auth.getUser();
+              if (!rmUser) throw new Error("未登录");
+              const rmToday = new Date().toISOString().split("T")[0];
+              const { data: rmTodo } = await (supabase.from as any)("todos")
+                .select("id").eq("user_id", rmUser.id).eq("title", rmTitle).limit(1).maybeSingle();
+              if (!rmTodo) throw new Error(`未找到任务「${rmTitle}」`);
+              const { error: rmErr } = await (supabase.from as any)("daily_tasks")
+                .delete().eq("todo_id", rmTodo.id).eq("task_date", rmToday);
+              if (rmErr) throw rmErr;
+              results.push(`${label}: ${t("已移出今日待办", "Removed from today")}「${rmTitle}」`);
+              continue;
+            }
             const match = op.data.match || {};
             const matchEntries = Object.entries(match).filter(([_, v]) => v !== undefined && v !== null && v !== "");
 
@@ -607,7 +677,7 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks", "learning_courses", "learning_notes", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers"]) {
+      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks", "learning_courses", "learning_notes", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers", "daily_tasks"]) {
         qc.invalidateQueries({ queryKey: [key] });
       }
       qc.invalidateQueries({ queryKey: ["schedule", "today"] });
@@ -784,7 +854,17 @@ export function AIChatPanel() {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-[400px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[calc(100vh-6rem)] bg-white border border-[#e4e1d7] rounded-xl shadow-lg flex flex-col overflow-hidden">
+    <>
+      {/* 遮罩：点击外部关闭 */}
+      <div
+        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]"
+        onClick={() => setIsOpen(false)}
+      />
+      {/* 居中弹窗（尺寸放大至原来 1.8 倍：720×1008） */}
+      <div
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[720px] max-w-[calc(100vw-2rem)] h-[800px] max-h-[calc(100vh-4rem)] bg-white border border-[#e4e1d7] rounded-xl shadow-[var(--shadow-overlay)] flex flex-col overflow-hidden animate-pop-in"
+        onClick={(e) => e.stopPropagation()}
+      >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7] bg-white shrink-0">
         <div className="flex items-center gap-2">
@@ -840,14 +920,14 @@ export function AIChatPanel() {
                 <div className="space-y-1 text-xs">
                   <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"午饭吃了拉面，花了30元，大概600卡"</p>
                   <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"明天下午3点开会，大概1小时"</p>
-                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5 flex items-center gap-1.5"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</p>
+                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</p>
                 </div>
               </div>
             )}
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex animate-stream-in ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap transition-colors ${
                     msg.role === "user"
                       ? "bg-[#1f1a14] text-white"
                       : "bg-[#f4f3ee] text-[#1f1a14]"
@@ -887,9 +967,15 @@ export function AIChatPanel() {
               </div>
             ))}
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-[#f4f3ee] rounded-lg px-3 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#8a847a]" />
+              <div className="flex justify-start animate-stream-in">
+                <div className="bg-[#f4f3ee] rounded-lg px-3 py-2.5 flex items-end gap-[3px] h-8">
+                  {[0, 1, 2].map((b) => (
+                    <span
+                      key={b}
+                      className="w-[3px] rounded-full bg-[#d17847] animate-eq-bounce"
+                      style={{ height: "100%", transformOrigin: "bottom", animationDelay: `${b * 0.15}s` }}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -960,6 +1046,7 @@ export function AIChatPanel() {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </>
   );
 }

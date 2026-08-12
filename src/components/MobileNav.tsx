@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { useSettings } from "@/hooks/useData";
+import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
@@ -57,7 +58,7 @@ export function MobileNav() {
     { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
     { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
     { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
-    { title: t("商店", "Shop"), url: "/shop", icon: ShoppingBag },
+    ...(POINTS_FEATURE_ENABLED ? [{ title: t("商店", "Shop"), url: "/shop", icon: ShoppingBag }] : []),
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
   ];
 

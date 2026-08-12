@@ -233,10 +233,10 @@ export default function FinancePage() {
                     </Card>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="pl-2 space-y-1 mt-1">
-                    {group.items.map((r: any) => {
+                    {group.items.map((r: any, i: number) => {
                       const CatIcon = CATEGORY_ICON_MAP[r.category];
                       return (
-                        <Card key={r.id} className="hover:border-primary/20 transition-colors">
+                        <Card key={r.id} style={{ ['--i' as any]: i }} className="enter-up hover:border-primary/20 transition-colors">
                           <CardContent className="p-2 px-3 flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
                               {CatIcon && <CatIcon className="h-4 w-4 text-[#8a847a]" />}

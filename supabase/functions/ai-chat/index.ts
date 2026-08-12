@@ -137,6 +137,20 @@ delete: { module: "civil_xingce_paper", action: "delete", data: { match: { sourc
 
 **言语=verbal，资料=data，图推=graphic，逻辑=logic，定义类比=analogy，数量=quantity，常识=common。*_total 为题量，*_correct 为正确数。**
 
+### 19. daily_task（今日待办 — 加入"今天"的任务表，区别于 todo 待办事项）
+create: { module: "daily_task", action: "create", data: { title: string } }
+delete: { module: "daily_task", action: "delete", data: { match: { title: string } } }
+
+**【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。系统会按标题自动查找已有的 todo（找不到则自动新建一个），再把它加入今天。**
+
+### 20. learning_course（学习课程）
+create: { module: "learning_course", action: "create", data: { name: string, description?: string, color?: string } }
+
+### 21. learning_note（学习笔记）
+create: { module: "learning_note", action: "create", data: { title: string, content: string, course_name?: string, tags?: string[], note_date?: "YYYY-MM-DD" } }
+
+**course_name 用课程名称（不要填 id）；系统会自动模糊匹配已存在的课程并关联。不关联课程时省略 course_name，作为独立笔记。**
+
 ## 默认值规则
 - 日期缺失 → 使用今天（当前日期会附加在用户消息中）
 - 币种缺失 → 默认 CNY
@@ -212,6 +226,18 @@ delete: { module: "civil_xingce_paper", action: "delete", data: { match: { sourc
 用户: "把毕业论文项目里的'完成文献综述'标记为完成"
 输出:
 {"operations":[{"module":"project_task","action":"update","data":{"match":{"title":"完成文献综述","project_name":"毕业论文"},"update":{"status":"done"}}}],"summary":"将'毕业论文'项目中的'完成文献综述'标记为已完成"}
+
+用户: "把'写论文初稿'加入今天的待办"
+输出:
+{"operations":[{"module":"daily_task","action":"create","data":{"title":"写论文初稿"}}],"summary":"已把'写论文初稿'加入今日待办"}
+
+用户: "今天加一项：回个邮件，简单的事"
+输出:
+{"operations":[{"module":"daily_task","action":"create","data":{"title":"回邮件"}}],"summary":"已把'回邮件'加入今日待办"}
+
+用户: "在机器学习课程下记一条笔记：过拟合可以用正则化缓解"
+输出:
+{"operations":[{"module":"learning_note","action":"create","data":{"title":"过拟合与正则化","content":"过拟合可以用正则化缓解","course_name":"机器学习","tags":["正则化","过拟合"]}}],"summary":"在'机器学习'课程下记录了笔记'过拟合与正则化'"}
 
 用户: "你好"
 输出:

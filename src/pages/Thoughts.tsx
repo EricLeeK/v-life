@@ -157,8 +157,8 @@ export default function ThoughtsPage() {
         ) : (
           /* Masonry layout using CSS columns */
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-            {filtered.map((thought: any) => (
-              <Card key={thought.id} className="break-inside-avoid hover:border-primary/20 transition-colors overflow-hidden">
+            {filtered.map((thought: any, i: number) => (
+              <Card key={thought.id} style={{ ['--i' as any]: i }} className="enter-up break-inside-avoid hover:border-primary/20 transition-colors overflow-hidden">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2 min-w-0">

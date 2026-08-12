@@ -176,8 +176,8 @@ export default function CaloriesPage() {
                 <p className="text-xs text-muted-foreground pl-2 mb-3">{t("暂无记录", "No records")}</p>
               ) : (
                 <div className="space-y-1 mb-3">
-                  {mealRecords.map((r: any) => (
-                    <Card key={r.id} className="hover:border-primary/20 transition-colors">
+                  {mealRecords.map((r: any, i: number) => (
+                    <Card key={r.id} style={{ ['--i' as any]: i }} className="enter-up hover:border-primary/20 transition-colors">
                       <CardContent className="p-2 px-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span className="text-sm">{r.food_name}</span>

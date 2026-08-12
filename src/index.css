@@ -5,6 +5,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 列表入场关键帧（顶层定义，自包含，不依赖 Tailwind 按需生成 animate-fade-up） */
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 @layer base {
   :root {
     /* Warm Cream Theme (justhireme.ai) */
@@ -72,6 +78,38 @@
     --cat-purple-bg: 265 35% 90%;
     --cat-yellow: 40 55% 51%;
     --cat-yellow-bg: 42 70% 84%;
+
+    /* ============ Craft shadow system (Beautiful UI 工艺，暖色调) ============ */
+    /* 发丝边框色阶 —— 复用站点既有暖米色，绝不引入冷灰 */
+    --line: #e4e1d7;          /* 主发丝（= 站点 house border） */
+    --line-strong: #d4d1c7;   /* hover/强调发丝 */
+    --field-warm: #f6f4ee;    /* 字段暖底 */
+
+    /* 阴影用暖棕黑（#2a241d）低透明度，保持暖色一致性 */
+    --shadow-hairline: 0 0 0 1px var(--line);
+    --shadow-btn: 0 0 0 1px var(--line-strong), 0 1px 2px rgba(42, 36, 29, 0.05);
+    --shadow-card: 0 0 0 1px var(--line), 0 1px 2px rgba(42, 36, 29, 0.04), 0 2px 6px rgba(42, 36, 29, 0.03);
+    --shadow-raised: 0 0 0 1px var(--line-strong), 0 2px 10px rgba(42, 36, 29, 0.06);
+    --shadow-overlay: 0 0 0 1px var(--line), 0 8px 28px rgba(42, 36, 29, 0.12);
+    --shadow-inset-field: inset 0 1px 2px rgba(42, 36, 29, 0.06);
+
+    /* ============ Motion easing（Beautiful UI 动效曲线） ============ */
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1); /* 招牌：急起缓落 */
+    --ease-link: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* 尊重用户「减少动态」系统偏好 */
+    --motion-safe: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --ease-out: linear;
+      --ease-in-out: linear;
+      --ease-out-strong: linear;
+      --ease-link: linear;
+    }
   }
 
 }
@@ -130,17 +168,30 @@
     list-style: none;
   }
 
-  /* Premium card with subtle gradient + top highlight */
+  /* ============ 列表入场动效（fade-up 全量错落） ============ */
+  /* 每个条目传 --i 序号，calc 算出唯一延迟 → 任意长度都逐条错落，无 burst */
+  /* min() 封顶 30 条（1500ms），防止超长列表尾部等太久 */
+  /* 用长属性 + !important：避免和元素上并存的 Tailwind duration-* 冲突（duration-* 会把 animation-duration 压成 0.2s） */
+  /* @keyframes fade-up 定义在文件顶部（顶层），不依赖 Tailwind 按需生成 */
+  .enter-up {
+    animation-name: fade-up;
+    animation-duration: 0.5s !important;
+    animation-timing-function: var(--ease-out-strong);
+    animation-fill-mode: both;
+    animation-delay: calc(min(var(--i, 0), 30) * 50ms);
+  }
+
+  /* Premium card —— 保留暖色渐变（身份），阴影升级为暖色多层发丝投影 */
   .card-premium {
     background: linear-gradient(180deg, #ffffff 0%, #fcfbf7 100%);
-    border: 1px solid #e4e1d7;
-    border-radius: 9px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.85);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(42, 36, 29, 0.04), 0 2px 6px rgba(42, 36, 29, 0.03);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
   .card-premium:hover {
-    border-color: #d4d1c7;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.85);
+    border-color: var(--line-strong);
+    box-shadow: 0 2px 10px rgba(42, 36, 29, 0.06);
   }
 
   /* Thin scrollbar for projects page */

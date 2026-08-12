@@ -130,10 +130,10 @@ export default function PantryPage() {
             <div key={cat}>
               <h3 className="text-sm font-medium text-muted-foreground mb-2">{CATEGORY_LABELS[cat] || cat}</h3>
               <div className="space-y-1">
-                {catItems.map((item: any) => {
+                {catItems.map((item: any, i: number) => {
                   const status = getStatus(item.expiry_date);
                   return (
-                    <Card key={item.id} className="hover:border-primary/20 transition-colors">
+                    <Card key={item.id} style={{ ['--i' as any]: i }} className="enter-up hover:border-primary/20 transition-colors">
                       <CardContent className="p-3 flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="font-medium text-sm truncate">{item.name}</span>

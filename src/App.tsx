@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -98,7 +99,9 @@ function AppRoutes() {
           <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
           <Route path="/civil-service" element={<ProtectedRoute><CivilServiceHome /></ProtectedRoute>} />
           <Route path="/civil-service/:group" element={<ProtectedRoute><CivilServiceGroup /></ProtectedRoute>} />
-          <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+          {POINTS_FEATURE_ENABLED && (
+            <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
+          )}
           <Route path="/fortune" element={<ProtectedRoute><FortuneHome /></ProtectedRoute>} />
           <Route path="/fortune/tarot" element={<ProtectedRoute><TarotPage /></ProtectedRoute>} />
           <Route path="/fortune/zodiac" element={<ProtectedRoute><ZodiacPage /></ProtectedRoute>} />

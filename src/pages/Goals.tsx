@@ -184,8 +184,8 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 
   const isCurrent = (dateStr: string) => dateStr === currentPeriodStart;
 
-  const renderGoalItem = (goal: any) => (
-    <div key={goal.id} className="flex items-center gap-2 group py-1">
+  const renderGoalItem = (goal: any, i: number = 0) => (
+    <div key={goal.id} style={{ ['--i' as any]: i }} className="enter-up flex items-center gap-2 group py-1">
       <Checkbox
         checked={goal.is_completed}
         onCheckedChange={(v) => toggleMutation.mutate({ id: goal.id, is_completed: !!v })}

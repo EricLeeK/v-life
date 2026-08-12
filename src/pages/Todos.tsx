@@ -237,7 +237,7 @@ export default function TodosPage() {
     setIsManageMode(!isManageMode);
   };
 
-  const renderTodoItem = (item: any) => {
+  const renderTodoItem = (item: any, i: number = 0) => {
     const imp = IMPORTANCE_LEVELS.find((l) => l.key === item.importance);
     const itemSubtasks = childTodos.filter((t: any) => t.parent_id === item.id);
     const subtaskTitleVal = subtaskTitles[item.id] || "";
@@ -251,7 +251,7 @@ export default function TodosPage() {
     const currentDetail = change ? change.detail : (item.detail || "");
 
     return (
-      <div className="space-y-1.5 mb-2" key={item.id}>
+      <div className="enter-up space-y-1.5 mb-2" key={item.id} style={{ ['--i' as any]: i }}>
         <Card className={`transition-all duration-200 shadow-sm border border-[#e4e1d7] ${item.is_completed ? "opacity-60 bg-[#faf9f4]" : "hover:border-[#5b88b5]/40 bg-white"} ${isExpanded ? "ring-1 ring-[#5b88b5]/20 border-[#5b88b5]/30" : ""}`}>
           <CardContent className="p-3">
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
@@ -621,7 +621,7 @@ export default function TodosPage() {
                 </h3>
               )}
               <div className="space-y-1">
-                {(items as any[]).map((item) => renderTodoItem(item))}
+                {(items as any[]).map((item, i) => renderTodoItem(item, i))}
               </div>
             </div>
           ))
