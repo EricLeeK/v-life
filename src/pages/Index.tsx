@@ -38,14 +38,14 @@ function getGreetingEn(hour: number): string {
   return "Good evening";
 }
 
-// Category color config matching justhireme.ai accent palette
+// Category accents — wired to --cat-* design tokens
 const CAT = {
-  green:  { text: "text-[#5b8c44]", bg: "bg-[#dcead4]", border: "border-[#dcead4]" },
-  blue:   { text: "text-[#5b88b5]", bg: "bg-[#e1eaf4]", border: "border-[#e1eaf4]" },
-  orange: { text: "text-[#d17847]", bg: "bg-[#fce0c8]", border: "border-[#fce0c8]" },
-  teal:   { text: "text-[#5a9da8]", bg: "bg-[#cfe4df]", border: "border-[#cfe4df]" },
-  purple: { text: "text-[#8b7bb8]", bg: "bg-[#e7ddf1]", border: "border-[#e7ddf1]" },
-  yellow: { text: "text-[#c49840]", bg: "bg-[#f5e8b8]", border: "border-[#f5e8b8]" },
+  green:  { text: "text-cat-green", bg: "bg-cat-green-bg", border: "border-cat-green-bg" },
+  blue:   { text: "text-cat-blue", bg: "bg-cat-blue-bg", border: "border-cat-blue-bg" },
+  orange: { text: "text-cat-orange", bg: "bg-cat-orange-bg", border: "border-cat-orange-bg" },
+  teal:   { text: "text-cat-teal", bg: "bg-cat-teal-bg", border: "border-cat-teal-bg" },
+  purple: { text: "text-cat-purple", bg: "bg-cat-purple-bg", border: "border-cat-purple-bg" },
+  yellow: { text: "text-cat-yellow", bg: "bg-cat-yellow-bg", border: "border-cat-yellow-bg" },
 };
 
 function MetricCard({ label, value, hint, color }: {
@@ -57,12 +57,12 @@ function MetricCard({ label, value, hint, color }: {
   const c = color ? CAT[color] : null;
   return (
     <div className="card-premium p-4 min-w-0">
-      <p className="text-[12px] text-[#8a847a] font-medium tracking-wide uppercase">{label}</p>
-      <p className="text-[28px] font-semibold text-[#1f1a14] leading-tight mt-1 font-mono-data tracking-tight">
+      <p className="text-[12px] text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-[28px] font-semibold text-foreground leading-tight mt-1 font-mono-data tracking-tight">
         {value}
       </p>
       {hint && (
-        <p className={`text-[11px] mt-1 ${c ? c.text : "text-[#8a847a]"}`}>{hint}</p>
+        <p className={`text-[11px] mt-1 ${c ? c.text : "text-muted-foreground"}`}>{hint}</p>
       )}
     </div>
   );
@@ -79,24 +79,25 @@ function PipelineRow({ icon, iconColor, title, subtitle, pill, pillColor, onClic
 }) {
   const pc = pillColor ? CAT[pillColor] : null;
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-3 hover:bg-[#f4f3ee] rounded-lg transition-colors cursor-pointer group"
+    <button
+      type="button"
+      className="w-full text-left flex items-center gap-3 px-4 py-3 hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none rounded-lg transition-colors cursor-pointer group"
       onClick={onClick}
     >
       <div className={`h-8 w-8 rounded-lg ${iconColor} flex items-center justify-center shrink-0`}>
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-medium text-[#1f1a14] truncate">{title}</p>
-        {subtitle && <p className="text-[11px] text-[#8a847a] truncate">{subtitle}</p>}
+        <p className="text-[13px] font-medium text-foreground truncate">{title}</p>
+        {subtitle && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
       </div>
       {pill && pc && (
         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${pc.bg} ${pc.text} shrink-0`}>
           {pill}
         </span>
       )}
-      <ChevronRight className="h-3.5 w-3.5 text-[#e4e1d7] group-hover:text-[#8a847a] transition-colors shrink-0" />
-    </div>
+      <ChevronRight className="h-3.5 w-3.5 text-border group-hover:text-muted-foreground transition-colors shrink-0" />
+    </button>
   );
 }
 
@@ -110,12 +111,13 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
 }) {
   const sc = statusColor ? CAT[statusColor] : null;
   return (
-    <div
-      className="card-premium p-4 cursor-pointer group"
+    <button
+      type="button"
+      className="w-full text-left card-premium p-4 cursor-pointer group focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-2">
-        <div className="h-8 w-8 rounded-lg bg-[#f4f3ee] flex items-center justify-center">
+        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
           {icon}
         </div>
         {status && sc && (
@@ -124,9 +126,9 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
           </span>
         )}
       </div>
-      <p className="text-[13px] font-semibold text-[#1f1a14] mt-2">{title}</p>
-      <p className="text-[11px] text-[#8a847a] mt-0.5 leading-relaxed">{description}</p>
-    </div>
+      <p className="text-[13px] font-semibold text-foreground mt-2">{title}</p>
+      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
+    </button>
   );
 }
 
@@ -160,7 +162,7 @@ export default function DashboardPage() {
   const calorieTarget = settings?.calorie_target || 2000;
   const budget = settings?.monthly_budget || 5000;
   const totalSpending = financeSummary?.total || 0;
-  const urgentTodos = pendingTodos.filter((t: any) => t.importance === "紧急");
+  const urgentTodos = pendingTodos.filter((t: any) => t.importance === "紧急" || t.importance === "urgent");
 
   // Insights computation
   const weekCalorieRecords = (allCalorieRecords as any[]).filter((r: any) => {
@@ -259,17 +261,17 @@ export default function DashboardPage() {
         {/* ── Hero Section ── */}
         <section>
           <h1
-            className="font-bold text-[#1f1a14] leading-[1.1] tracking-tight heading-font"
+            className="font-bold text-foreground leading-[1.1] tracking-tight heading-font"
             style={{ fontSize: "clamp(34px, 4.8vw, 64px)" }}
           >
             {greeting}
           </h1>
-          <p className="text-[14px] text-[#8a847a] mt-2">{dateLabel}</p>
+          <p className="text-[14px] text-muted-foreground mt-2">{dateLabel}</p>
           <div className="flex flex-wrap gap-2 mt-3">
             {[t("日程", "Schedule"), t("记账", "Finance"), t("热量", "Calories"), t("待办", "To-Do"), t("目标", "Goals"), t("项目", "Projects")].map((tag) => (
               <span
                 key={tag}
-                className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white border border-[#e4e1d7] text-[#8a847a]"
+                className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white border border-border text-muted-foreground"
               >
                 {tag}
               </span>
@@ -324,33 +326,33 @@ export default function DashboardPage() {
           <div className="flex items-baseline justify-between mb-4">
             <div>
               <h2
-                className="font-bold text-[#1f1a14] leading-tight heading-font"
+                className="font-bold text-foreground leading-tight heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("今日概览", "Today's Overview")}
               </h2>
-              <p className="text-[12px] text-[#8a847a] mt-1">{t("日程与待办事项", "Schedule & To-Dos")}</p>
+              <p className="text-[12px] text-muted-foreground mt-1">{t("日程与待办事项", "Schedule & To-Dos")}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Today's Schedule */}
             <div className="card-premium overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-[#5b88b5]" />
-                  <span className="text-[14px] font-semibold text-[#1f1a14]">{t("今日日程", "Today's Schedule")}</span>
+                  <span className="text-[14px] font-semibold text-foreground">{t("今日日程", "Today's Schedule")}</span>
                 </div>
                 <button
                   onClick={() => navigate("/schedule")}
-                  className="text-[11px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center gap-0.5"
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
                 >
                   {t("查看全部", "View all")} <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
               <div className="py-1">
                 {todayEvents.length === 0 ? (
-                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">{t("暂无安排", "No events")}</p>
+                  <p className="text-[13px] text-muted-foreground px-4 py-6 text-center">{t("暂无安排", "No events")}</p>
                 ) : (
                   todayEvents.slice(0, 5).map((e: any) => (
                     <PipelineRow
@@ -370,21 +372,21 @@ export default function DashboardPage() {
 
             {/* Pending Todos */}
             <div className="card-premium overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <div className="flex items-center gap-2">
                   <CheckSquare className="h-4 w-4 text-[#5b8c44]" />
-                  <span className="text-[14px] font-semibold text-[#1f1a14]">{t("待办事项", "To-Dos")}</span>
+                  <span className="text-[14px] font-semibold text-foreground">{t("待办事项", "To-Dos")}</span>
                 </div>
                 <button
                   onClick={() => navigate("/todos")}
-                  className="text-[11px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center gap-0.5"
+                  className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
                 >
                   {t("查看全部", "View all")} <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
               <div className="py-1">
                 {pendingTodos.length === 0 ? (
-                  <p className="text-[13px] text-[#8a847a] px-4 py-6 text-center">{t("无待办事项", "No to-dos")}</p>
+                  <p className="text-[13px] text-muted-foreground px-4 py-6 text-center">{t("无待办事项", "No to-dos")}</p>
                 ) : (
                   pendingTodos.slice(0, 5).map((todo: any) => (
                     <PipelineRow
@@ -393,8 +395,8 @@ export default function DashboardPage() {
                       iconColor="bg-[#dcead4]"
                       title={todo.title}
                       subtitle={todo.category || undefined}
-                      pill={todo.importance === "紧急" ? t("紧急", "Urgent") : todo.importance === "重要" ? t("重要", "Important") : undefined}
-                      pillColor={todo.importance === "紧急" ? "orange" : todo.importance === "重要" ? "yellow" : undefined}
+                      pill={(todo.importance === "紧急" || todo.importance === "urgent") ? t("紧急", "Urgent") : (todo.importance === "重要" || todo.importance === "important") ? t("重要", "Important") : undefined}
+                      pillColor={(todo.importance === "紧急" || todo.importance === "urgent") ? "orange" : (todo.importance === "重要" || todo.importance === "important") ? "yellow" : undefined}
                       onClick={() => navigate("/todos")}
                     />
                   ))
@@ -409,12 +411,12 @@ export default function DashboardPage() {
           <div className="flex items-baseline justify-between mb-4">
             <div>
               <h2
-                className="font-bold text-[#1f1a14] leading-tight heading-font"
+                className="font-bold text-foreground leading-tight heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("生活模块", "Life Modules")}
               </h2>
-              <p className="text-[12px] text-[#8a847a] mt-1">{t("管理你的日常生活", "Manage your daily life")}</p>
+              <p className="text-[12px] text-muted-foreground mt-1">{t("管理你的日常生活", "Manage your daily life")}</p>
             </div>
           </div>
 
@@ -518,12 +520,12 @@ export default function DashboardPage() {
               <div className="flex items-baseline justify-between mb-4">
                 <div>
                   <h2
-                    className="font-bold text-[#1f1a14] leading-tight heading-font"
+                    className="font-bold text-foreground leading-tight heading-font"
                     style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
                   >
                     {t("数据洞察", "Data Insights")}
                   </h2>
-                  <p className="text-[12px] text-[#8a847a] mt-1">{t("关键数据一目了然", "Key metrics at a glance")}</p>
+                  <p className="text-[12px] text-muted-foreground mt-1">{t("关键数据一目了然", "Key metrics at a glance")}</p>
                 </div>
               </div>
 
@@ -535,15 +537,15 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingDown className="h-4 w-4 text-[#5a9da8]" />
-                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("体重趋势", "Weight Trend")}</span>
+                    <span className="text-[14px] font-semibold text-foreground">{t("体重趋势", "Weight Trend")}</span>
                   </div>
                   {weightTrend.length === 0 ? (
-                    <p className="text-[13px] text-[#8a847a]">{t("暂无记录", "No records")}</p>
+                    <p className="text-[13px] text-muted-foreground">{t("暂无记录", "No records")}</p>
                   ) : (
                     <div>
                       <div className="flex items-baseline justify-between">
-                        <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
-                          {latestWeight?.toFixed(1)} <span className="text-[12px] text-[#8a847a] font-normal">kg</span>
+                        <p className="text-[24px] font-semibold text-foreground font-mono-data">
+                          {latestWeight?.toFixed(1)} <span className="text-[12px] text-muted-foreground font-normal">kg</span>
                         </p>
                         {weightDiff !== null && (
                           <span className={`text-[11px] font-medium ${weightDiff <= 0 ? "text-[#5a9da8]" : "text-[#d17847]"}`}>
@@ -571,17 +573,17 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Wallet className="h-4 w-4 text-[#d17847]" />
-                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("本月支出", "Monthly Spending")}</span>
+                    <span className="text-[14px] font-semibold text-foreground">{t("本月支出", "Monthly Spending")}</span>
                   </div>
-                  <p className="text-[24px] font-semibold text-[#1f1a14] font-mono-data">
+                  <p className="text-[24px] font-semibold text-foreground font-mono-data">
                     ¥{totalSpending.toFixed(0)}
-                    <span className="text-[12px] text-[#8a847a] font-normal"> / ¥{budget.toLocaleString()}</span>
+                    <span className="text-[12px] text-muted-foreground font-normal"> / ¥{budget.toLocaleString()}</span>
                   </p>
                   <Progress
                     value={Math.min(100, (totalSpending / budget) * 100)}
                     className="h-1 mt-3"
                   />
-                  <p className="text-[11px] text-[#8a847a] mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     {Math.round((totalSpending / budget) * 100)}% {t("已使用", "used")}
                   </p>
                 </div>
@@ -593,12 +595,12 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Timer className="h-4 w-4 text-[#5a9da8]" />
-                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("16+8 断食", "16+8 Fasting")}</span>
+                    <span className="text-[14px] font-semibold text-foreground">{t("16+8 断食", "16+8 Fasting")}</span>
                   </div>
                   <p className={`text-[20px] font-semibold ${isEatingWindow ? "text-[#5b8c44]" : "text-[#d17847]"}`}>
                     {isEatingWindow ? t("进食窗口", "Eating Window") : t("断食中", "Fasting")}
                   </p>
-                  <p className="text-[11px] text-[#8a847a] mt-1">
+                  <p className="text-[11px] text-muted-foreground mt-1">
                     {t("进食:", "Eating:")} {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")} - {String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
                   </p>
                 </div>
@@ -610,10 +612,10 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-2 mb-3">
                     <Carrot className="h-4 w-4 text-[#c49840]" />
-                    <span className="text-[14px] font-semibold text-[#1f1a14]">{t("食材预警", "Pantry Alert")}</span>
+                    <span className="text-[14px] font-semibold text-foreground">{t("食材预警", "Pantry Alert")}</span>
                   </div>
                   {expiringPantry.length === 0 ? (
-                    <p className="text-[13px] text-[#8a847a]">{t("无即将过期食材", "No expiring items")}</p>
+                    <p className="text-[13px] text-muted-foreground">{t("无即将过期食材", "No expiring items")}</p>
                   ) : (
                     <div className="space-y-1.5">
                       {expiringPantry.slice(0, 3).map((item: any) => {
@@ -622,7 +624,7 @@ export default function DashboardPage() {
                           : null;
                         return (
                           <div key={item.id} className="flex items-center justify-between">
-                            <span className="text-[13px] text-[#1f1a14] truncate max-w-[70%]">{item.name}</span>
+                            <span className="text-[13px] text-foreground truncate max-w-[70%]">{item.name}</span>
                             <span className={`text-[11px] font-medium ${daysLeft !== null && daysLeft <= 1 ? "text-[#d17847]" : "text-[#c49840]"}`}>
                               {daysLeft !== null ? `${daysLeft} ${t("天", "d")}` : t("未知", "Unknown")}
                             </span>
@@ -630,7 +632,7 @@ export default function DashboardPage() {
                         );
                       })}
                       {expiringPantry.length > 3 && (
-                        <p className="text-[11px] text-[#8a847a]">+{expiringPantry.length - 3} {t("个食材", "items")}</p>
+                        <p className="text-[11px] text-muted-foreground">+{expiringPantry.length - 3} {t("个食材", "items")}</p>
                       )}
                     </div>
                   )}
@@ -641,7 +643,7 @@ export default function DashboardPage() {
               {!insightsExpanded && (
                 <button
                   onClick={() => setInsightsExpanded(true)}
-                  className="w-full mt-3 py-2 text-[12px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center justify-center gap-1"
+                  className="w-full mt-3 py-2 text-[12px] text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
                 >
                   {t("展开更多", "Show more")} <ChevronDown className="h-3 w-3" />
                 </button>
@@ -656,12 +658,12 @@ export default function DashboardPage() {
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Target className="h-4 w-4 text-[#5b8c44]" />
-                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("剩余预算", "Budget Remaining")}</span>
+                        <span className="text-[13px] font-semibold text-foreground">{t("剩余预算", "Budget Remaining")}</span>
                       </div>
                       <p className="text-[20px] font-semibold font-mono-data text-[#5b8c44]">
                         ¥{(budget - totalSpending).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                       </p>
-                      <p className="text-[11px] text-[#8a847a] mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         {((1 - totalSpending / budget) * 100).toFixed(0)}% {t("剩余", "left")}
                       </p>
                     </div>
@@ -673,12 +675,12 @@ export default function DashboardPage() {
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <CheckCircle2 className="h-4 w-4 text-[#5b88b5]" />
-                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("本周热量达标", "Calorie Target")}</span>
+                        <span className="text-[13px] font-semibold text-foreground">{t("本周热量达标", "Calorie Target")}</span>
                       </div>
-                      <p className="text-[20px] font-semibold font-mono-data text-[#1f1a14]">
+                      <p className="text-[20px] font-semibold font-mono-data text-foreground">
                         {weekCalorieDaysOnTarget}/{weekCalorieDaysTotal}
                       </p>
-                      <p className="text-[11px] text-[#8a847a] mt-1">
+                      <p className="text-[11px] text-muted-foreground mt-1">
                         {t("天达标", "days on target")}
                       </p>
                     </div>
@@ -690,9 +692,9 @@ export default function DashboardPage() {
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Flame className="h-4 w-4 text-[#8b7bb8]" />
-                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("月目标完成", "Monthly Goals")}</span>
+                        <span className="text-[13px] font-semibold text-foreground">{t("月目标完成", "Monthly Goals")}</span>
                       </div>
-                      <p className="text-[20px] font-semibold font-mono-data text-[#1f1a14]">
+                      <p className="text-[20px] font-semibold font-mono-data text-foreground">
                         {completedGoals}/{weekGoals.length}
                       </p>
                       <Progress value={weekGoals.length > 0 ? (completedGoals / weekGoals.length) * 100 : 0} className="h-1 mt-2" />
@@ -702,16 +704,16 @@ export default function DashboardPage() {
                     <div className="card-premium p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Clock className="h-4 w-4 text-[#5a9da8]" />
-                        <span className="text-[13px] font-semibold text-[#1f1a14]">{t("本周学习时间", "Study Hours")}</span>
+                        <span className="text-[13px] font-semibold text-foreground">{t("本周学习时间", "Study Hours")}</span>
                       </div>
-                      <p className="text-[20px] font-semibold font-mono-data text-[#1f1a14]">
-                        {studyHours.toFixed(1)}<span className="text-[12px] text-[#8a847a] font-normal">h</span>
+                      <p className="text-[20px] font-semibold font-mono-data text-foreground">
+                        {studyHours.toFixed(1)}<span className="text-[12px] text-muted-foreground font-normal">h</span>
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setInsightsExpanded(false)}
-                    className="w-full mt-3 py-2 text-[12px] text-[#8a847a] hover:text-[#1f1a14] transition-colors flex items-center justify-center gap-1"
+                    className="w-full mt-3 py-2 text-[12px] text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center gap-1"
                   >
                     {t("收起", "Show less")} <ChevronDown className="h-3 w-3 rotate-180" />
                   </button>
@@ -723,15 +725,15 @@ export default function DashboardPage() {
 
         {/* ── AI Assistant Promo ── */}
         <div
-          className="flex items-center gap-3 p-4 rounded-[9px] border border-[#e4e1d7] bg-white cursor-pointer hover:border-[#c8c5bb] transition-colors"
+          className="flex items-center gap-3 p-4 rounded-[9px] border border-border bg-white cursor-pointer hover:border-[#c8c5bb] transition-colors"
           onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
         >
           <div className="h-10 w-10 rounded-lg bg-[#e7ddf1] flex items-center justify-center shrink-0">
             <Sparkles className="h-5 w-5 text-[#8b7bb8]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-semibold text-[#1f1a14]">{t("AI 助手", "AI Assistant")}</p>
-            <p className="text-[11px] text-[#8a847a] truncate">
+            <p className="text-[13px] font-semibold text-foreground">{t("AI 助手", "AI Assistant")}</p>
+            <p className="text-[11px] text-muted-foreground truncate">
               {t("点击打开 AI 助手，快速记录日程、记账、添加待办...", "Open AI assistant for quick schedule, finance, and to-do entries...")}
             </p>
           </div>
