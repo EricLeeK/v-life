@@ -23,6 +23,8 @@ import {
 import { shengxiaoFromBirthDate, SHENGXIAO_LABELS, SHENGXIAO_ORDER } from "@/lib/fortune/shengxiao";
 import type { FortuneProfile, Shengxiao, ZodiacSign } from "@/lib/fortune/types";
 
+import { useTheme } from "next-themes";
+
 function deriveZodiacSign(birthDate: string, birthHour?: number | null): ZodiacSign {
   if (birthHour != null && birthHour >= 0) {
     return zodiacFromSunLongitude(birthDate, birthHour).sign;
@@ -47,6 +49,7 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const { data: hostedAi } = useHostedAiStatus();
   const updateSettings = useUpdateSettings();
+  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { t, lang } = useLang();
   const [newTag, setNewTag] = useState("");
@@ -98,16 +101,16 @@ export default function SettingsPage() {
       }
       if (Object.keys(changes).length === 0) return;
       await updateSettings.mutateAsync(changes);
-      toast({ title: t("已保存", "Saved") });
+      toast({ title: t("保存成功", "Saved successfully") });
     } catch (e: any) {
       toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleDiscard = () => {
-    setDraft({ ...settings });
-    toast({ title: t("已撤销更改", "Changes discarded") });
+    if (settings) setDraft({ ...settings });
   };
 
   const fetchExchangeRate = async () => {
@@ -140,13 +143,14 @@ export default function SettingsPage() {
     try {
       const exportData: Record<string, any> = {};
       for (const table of TABLES) {
-        const { data } = await (supabase.from as any)(table).select("*");
-        exportData[table] = data;
+        const { data, error } = await (supabase.from as any)(table).select("*");
+        if (error) throw error;
+        exportData[table] = data || [];
       }
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = `vlife-export-${new Date().toISOString().split("T")[0]}.json`;
+      a.href = url; a.download = `v-life-backup-${new Date().toISOString().split("T")[0]}.json`;
       a.click(); URL.revokeObjectURL(url);
       toast({ title: t("导出成功", "Export successful") });
     } catch (e: any) { toast({ title: t("导出失败", "Export failed"), description: e.message, variant: "destructive" }); }
@@ -158,7 +162,6 @@ export default function SettingsPage() {
     try {
       const text = await file.text();
       const importData = JSON.parse(text);
-      await saveToIndexedDB(importData);
       let importedCount = 0;
       for (const table of TABLES) {
         if (!importData[table] || !Array.isArray(importData[table])) continue;
@@ -179,13 +182,13 @@ export default function SettingsPage() {
     <AppLayout title={t("设置", "Settings")}>
       {/* Sticky save bar */}
       {dirty && (
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-white/90 backdrop-blur-md border-b border-[#e4e1d7] flex items-center justify-between">
+        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-card/90 backdrop-blur-md border-b border-border flex items-center justify-between">
           <span className="text-[13px] text-[#d17847] font-medium">{t("有未保存的更改", "Unsaved changes")}</span>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="text-[#8a847a]" onClick={handleDiscard}>
+            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleDiscard}>
               {t("撤销", "Discard")}
             </Button>
-            <Button size="sm" className="bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white gap-1.5" onClick={handleSave} disabled={saving}>
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5" onClick={handleSave} disabled={saving}>
               <Save className="h-3.5 w-3.5" />
               {saving ? t("保存中...", "Saving...") : t("保存", "Save")}
             </Button>
@@ -194,19 +197,34 @@ export default function SettingsPage() {
       )}
 
       <div className="space-y-6 mt-2">
-        {/* Account */}
+        {/* Account & Appearance */}
         <Card>
-          <CardHeader><CardTitle className="text-base">{t("账号设置", "Account")}</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("账号与外观", "Account & Appearance")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label>{t("昵称", "Display Name")}</Label>
+              <Label htmlFor="setting-display-name">{t("昵称", "Display Name")}</Label>
               <Input
+                id="setting-display-name"
                 value={draft.display_name || ""}
                 onChange={(e) => update("display_name", e.target.value)}
                 placeholder={t("输入你的昵称", "Enter your display name")}
               />
               <p className="text-xs text-muted-foreground mt-1">
                 {t("设置后会在首页问候语中显示", "Shown in the greeting on your dashboard")}
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="theme-select">{t("主题模式", "Theme Mode")}</Label>
+              <Select value={theme || "system"} onValueChange={(v) => setTheme(v)}>
+                <SelectTrigger id="theme-select" className="w-full sm:w-[200px] mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">{t("浅色 (Cream)", "Light (Cream)")}</SelectItem>
+                  <SelectItem value="dark">{t("深色 (Charcoal)", "Dark (Charcoal)")}</SelectItem>
+                  <SelectItem value="system">{t("跟随系统", "System")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("可以在浅色暖奶油与深色炭灰主题间自由切换", "Switch between Light Cream and Dark Charcoal themes")}
               </p>
             </div>
           </CardContent>
@@ -240,8 +258,9 @@ export default function SettingsPage() {
                   return (
                     <>
                       <div>
-                        <Label>{t("生日（公历）", "Birthday (Gregorian)")}</Label>
+                        <Label htmlFor="fp-birth-date">{t("生日（公历）", "Birthday (Gregorian)")}</Label>
                         <Input
+                          id="fp-birth-date"
                           type="date"
                           value={fp.birth_date || ""}
                           onChange={(e) => {
@@ -258,7 +277,7 @@ export default function SettingsPage() {
                         />
                       </div>
                       <div>
-                        <Label>{t("出生时辰（可选）", "Birth hour (optional)")}</Label>
+                        <Label htmlFor="fp-birth-hour">{t("出生时辰（可选）", "Birth hour (optional)")}</Label>
                         <Select
                           value={fp.birth_hour == null ? "none" : String(fp.birth_hour)}
                           onValueChange={(v) => {
@@ -272,7 +291,7 @@ export default function SettingsPage() {
                             });
                           }}
                         >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectTrigger id="fp-birth-hour"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">{t("未知", "Unknown")}</SelectItem>
                             {Array.from({ length: 24 }, (_, h) => (
@@ -284,20 +303,21 @@ export default function SettingsPage() {
                         </Select>
                       </div>
                       <div>
-                        <Label>{t("出生地（备注）", "Birth place (note)")}</Label>
+                        <Label htmlFor="fp-birth-place">{t("出生地（备注）", "Birth place (note)")}</Label>
                         <Input
+                          id="fp-birth-place"
                           value={fp.birth_place || ""}
                           onChange={(e) => setFp({ ...fp, birth_place: e.target.value })}
                           placeholder={t("可选", "Optional")}
                         />
                       </div>
                       <div>
-                        <Label>{t("星座", "Zodiac")}</Label>
+                        <Label htmlFor="fp-zodiac-sign">{t("星座", "Zodiac")}</Label>
                         <Select
                           value={fp.zodiac_sign || ""}
                           onValueChange={(v) => setFp({ ...fp, zodiac_sign: v as ZodiacSign })}
                         >
-                          <SelectTrigger><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
+                          <SelectTrigger id="fp-zodiac-sign"><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
                           <SelectContent>
                             {ZODIAC_SIGNS.map((s) => (
                               <SelectItem key={s} value={s}>
@@ -316,12 +336,12 @@ export default function SettingsPage() {
                         )}
                       </div>
                       <div>
-                        <Label>{t("生肖", "Shengxiao")}</Label>
+                        <Label htmlFor="fp-shengxiao">{t("生肖", "Shengxiao")}</Label>
                         <Select
                           value={fp.shengxiao || ""}
                           onValueChange={(v) => setFp({ ...fp, shengxiao: v as Shengxiao })}
                         >
-                          <SelectTrigger><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
+                          <SelectTrigger id="fp-shengxiao"><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
                           <SelectContent>
                             {SHENGXIAO_ORDER.map((s) => (
                               <SelectItem key={s} value={s}>
@@ -369,40 +389,154 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* AI Configuration */}
+        {/* AI Configuration (Dual Model BYOK Routing) */}
         <Card>
-          <CardHeader><CardTitle className="text-base">{t("AI 配置（自带 Key）", "AI Configuration (BYOK)")}</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>{t("API 平台", "API Platform")}</Label>
-              <Select value={draft.ai_platform || "gemini"} onValueChange={(v) => update("ai_platform", v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gemini">Google Gemini</SelectItem>
-                  <SelectItem value="deepseek">DeepSeek</SelectItem>
-                  <SelectItem value="siliconflow">SiliconFlow 硅基流动</SelectItem>
-                </SelectContent>
-              </Select>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>{t("AI 模型与 Key 配置", "AI Models & API Keys")}</span>
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-normal">
+                {t("智能路由 · 成本优化", "Auto Routing · Cost Saver")}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-stone-50 border border-stone-200/80 rounded-xl p-3 text-xs text-stone-600 space-y-1">
+              <p className="font-semibold text-stone-800 flex items-center gap-1">
+                💡 {t("自动模型分流说明", "Smart Model Routing")}
+              </p>
+              <p>
+                {t(
+                  "• 常规模型：用于绝大部分纯文本对话、笔记润色、格式排版与计划生成，推荐 DeepSeek（高性价比）。",
+                  "• General Model: For ordinary text chat, note polishing, and layout optimization (e.g. DeepSeek)."
+                )}
+              </p>
+              <p>
+                {t(
+                  "• 视觉模型：当上传或分析图片时自动切换使用，推荐 Google Gemini 视觉模型（如 gemini-2.5-flash）。",
+                  "• Vision Model: Auto-switched when images are uploaded or analyzed (e.g. Gemini 2.5 Flash)."
+                )}
+              </p>
             </div>
-            <div>
-              <Label>API Key</Label>
-              <Input type="password" value={draft.ai_api_key || ""} onChange={(e) => update("ai_api_key", e.target.value)} placeholder={t("输入 API Key", "Enter API Key")} autoComplete="new-password" />
-              <p className="text-xs text-muted-foreground mt-1">{t("API Key 仅在服务端使用，不会暴露到浏览器", "API Key is only used server-side, not exposed to browser")}</p>
-            </div>
-            <div>
-              <Label>{t("模型名称", "Model Name")}</Label>
-              <Input value={draft.ai_model || ""} onChange={(e) => update("ai_model", e.target.value)} placeholder="gemini-2.5-flash" />
-            </div>
-            <div>
-              <Label>API Base URL ({t("高级", "Advanced")})</Label>
-              <Input value={draft.ai_base_url || ""} onChange={(e) => update("ai_base_url", e.target.value)} placeholder={t("默认使用官方端点", "Default: official endpoint")} />
-            </div>
-            <div className="flex items-center justify-between">
+
+            {/* 1. 常规模型 */}
+            <div className="space-y-3 pt-1 border-t border-stone-100">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <h4 className="text-sm font-semibold text-foreground">
+                  {t("常规文本模型（如 DeepSeek）", "General Text Model (e.g., DeepSeek)")}
+                </h4>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="settings-api-platform" className="text-xs">{t("API 平台", "API Platform")}</Label>
+                  <Select value={draft.ai_platform || "deepseek"} onValueChange={(v) => update("ai_platform", v)}>
+                    <SelectTrigger id="settings-api-platform" className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="deepseek">DeepSeek (官方)</SelectItem>
+                      <SelectItem value="gemini">Google Gemini</SelectItem>
+                      <SelectItem value="siliconflow">SiliconFlow 硅基流动</SelectItem>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="custom">自定义 / Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="settings-ai-model" className="text-xs">{t("模型名称", "Model Name")}</Label>
+                  <Input
+                    id="settings-ai-model"
+                    value={draft.ai_model || ""}
+                    onChange={(e) => update("ai_model", e.target.value)}
+                    placeholder="deepseek-chat"
+                    className="h-9 text-xs"
+                  />
+                </div>
+              </div>
               <div>
-                <Label>{t("AI 操作模式", "AI Operation Mode")}</Label>
+                <Label htmlFor="settings-api-key" className="text-xs">{t("常规 API Key", "General API Key")}</Label>
+                <Input
+                  id="settings-api-key"
+                  type="password"
+                  value={draft.ai_api_key || ""}
+                  onChange={(e) => update("ai_api_key", e.target.value)}
+                  placeholder={t("输入 DeepSeek 或通用 API Key", "Enter General API Key")}
+                  autoComplete="new-password"
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label htmlFor="settings-api-base-url" className="text-xs">API Base URL ({t("可选高级项", "Optional Advanced")})</Label>
+                <Input
+                  id="settings-api-base-url"
+                  value={draft.ai_base_url || ""}
+                  onChange={(e) => update("ai_base_url", e.target.value)}
+                  placeholder={t("默认使用平台官方端点", "Default: official endpoint")}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* 2. 视觉模型 */}
+            <div className="space-y-3 pt-3 border-t border-stone-200/80">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-blue-500" />
+                <h4 className="text-sm font-semibold text-foreground">
+                  {t("视觉多模态模型（如 Gemini）", "Vision Multimodal Model (e.g., Gemini)")}
+                </h4>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="settings-vision-platform" className="text-xs">{t("视觉 API 平台", "Vision Platform")}</Label>
+                  <Select value={draft.ai_vision_platform || "gemini"} onValueChange={(v) => update("ai_vision_platform", v)}>
+                    <SelectTrigger id="settings-vision-platform" className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gemini">Google Gemini (推荐)</SelectItem>
+                      <SelectItem value="openai">OpenAI (gpt-4o)</SelectItem>
+                      <SelectItem value="siliconflow">SiliconFlow 硅基流动</SelectItem>
+                      <SelectItem value="custom">自定义 / Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="settings-vision-model" className="text-xs">{t("视觉模型名称", "Vision Model Name")}</Label>
+                  <Input
+                    id="settings-vision-model"
+                    value={draft.ai_vision_model || ""}
+                    onChange={(e) => update("ai_vision_model", e.target.value)}
+                    placeholder="gemini-2.5-flash"
+                    className="h-9 text-xs"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="settings-vision-api-key" className="text-xs">{t("视觉 API Key", "Vision API Key")}</Label>
+                <Input
+                  id="settings-vision-api-key"
+                  type="password"
+                  value={draft.ai_vision_api_key || ""}
+                  onChange={(e) => update("ai_vision_api_key", e.target.value)}
+                  placeholder={t("输入 Gemini 或视觉 Key (若为空则复用常规 Key)", "Enter Vision API Key")}
+                  autoComplete="new-password"
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label htmlFor="settings-vision-base-url" className="text-xs">视觉 API Base URL ({t("可选", "Optional")})</Label>
+                <Input
+                  id="settings-vision-base-url"
+                  value={draft.ai_vision_base_url || ""}
+                  onChange={(e) => update("ai_vision_base_url", e.target.value)}
+                  placeholder={t("默认使用官方端点", "Default: official endpoint")}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+              <div>
+                <Label htmlFor="settings-ai-mode">{t("AI 操作模式", "AI Operation Mode")}</Label>
                 <p className="text-xs text-muted-foreground">{t("确认模式：预览后执行 / 直接模式：自动执行+撤销", "Confirm: preview then execute / Direct: auto-execute + undo")}</p>
               </div>
-              <Switch checked={draft.ai_mode === "direct"} onCheckedChange={(v) => update("ai_mode", v ? "direct" : "confirm")} />
+              <Switch id="settings-ai-mode" checked={draft.ai_mode === "direct"} onCheckedChange={(v) => update("ai_mode", v ? "direct" : "confirm")} />
             </div>
           </CardContent>
         </Card>
@@ -413,10 +547,10 @@ export default function SettingsPage() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <Label>{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
+                <Label htmlFor="settings-show-goals-ball">{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
                 <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
               </div>
-              <Switch checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
+              <Switch id="settings-show-goals-ball" checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
             </div>
           </CardContent>
         </Card>
@@ -426,10 +560,10 @@ export default function SettingsPage() {
           <CardHeader><CardTitle className="text-base">{t("跨天结算时间", "Day Reset Time")}</CardTitle></CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
-              <Label>{t("新的一天从几点开始？", "When does a new day start?")}</Label>
+              <Label htmlFor="settings-day-start">{t("新的一天从几点开始？", "When does a new day start?")}</Label>
               <p className="text-xs text-muted-foreground">{t("如果你经常熬夜，可以设置凌晨几点才算新的一天（比如设置 2:00，那么凌晨 1 点还是算昨天）。", "If you stay up late, you can shift the start of the day (e.g., set to 2:00 AM, and 1:00 AM will still count towards yesterday).")}</p>
               <Select value={String(draft.day_start_hour || 0)} onValueChange={(v) => update("day_start_hour", Number(v))}>
-                <SelectTrigger className="w-full sm:w-[200px] mt-2"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="settings-day-start" className="w-full sm:w-[200px] mt-2"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="0">{t("午夜 00:00", "Midnight 00:00")}</SelectItem>
                   <SelectItem value="1">01:00 AM</SelectItem>
@@ -452,8 +586,8 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2 pb-2 border-b border-[#e4e1d7]">
-              <Label className="font-medium text-sm text-[#1f1a14]">
+            <div className="space-y-2 pb-2 border-b border-border">
+              <Label htmlFor="settings-focus-mode" className="font-medium text-sm text-foreground">
                 {t("专注模式", "Focus mode")}
               </Label>
               <p className="text-xs text-muted-foreground">
@@ -466,7 +600,7 @@ export default function SettingsPage() {
                 value={(draft.app_focus_mode as string) || "full"}
                 onValueChange={(v) => update("app_focus_mode", v)}
               >
-                <SelectTrigger className="max-w-xs">
+                <SelectTrigger id="settings-focus-mode" className="max-w-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -497,11 +631,12 @@ export default function SettingsPage() {
               ].map((feature) => {
                 const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);
                 return (
-                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-[#e4e1d7]/50 bg-[#fbfbfa]">
+                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-[#fbfbfa]">
                     <div>
-                      <Label className="font-medium text-sm text-[#1f1a14]">{feature.name}</Label>
+                      <Label htmlFor={`settings-feature-${feature.id}`} className="font-medium text-sm text-foreground">{feature.name}</Label>
                     </div>
                     <Switch
+                      id={`settings-feature-${feature.id}`}
                       checked={!isHidden}
                       onCheckedChange={(checked) => {
                         const current = (draft.hidden_features as string[] | null) || [];
@@ -528,17 +663,17 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label>JPY → CNY 汇率</Label>
+                <Label id="settings-exchange-rate-label">JPY → CNY 汇率</Label>
                 <p className="text-xs text-muted-foreground">
                   {t("当前:", "Current:")} 1 JPY = {draft.exchange_rate_jpy_to_cny} CNY
                   {draft.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(draft.exchange_rate_updated_at).toLocaleDateString()})`}
                 </p>
               </div>
-              <Button variant="secondary" size="sm" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
+              <Button variant="secondary" size="sm" aria-labelledby="settings-exchange-rate-label" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
             </div>
             <div>
-              <Label>{t("月度预算", "Monthly Budget")} (CNY)</Label>
-              <Input type="number" value={draft.monthly_budget || 5000} onChange={(e) => update("monthly_budget", Number(e.target.value))} />
+              <Label htmlFor="settings-budget">{t("月度预算", "Monthly Budget")} (CNY)</Label>
+              <Input id="settings-budget" type="number" value={draft.monthly_budget || 5000} onChange={(e) => update("monthly_budget", Number(e.target.value))} />
             </div>
           </CardContent>
         </Card>
@@ -547,8 +682,8 @@ export default function SettingsPage() {
         <Card>
           <CardHeader><CardTitle className="text-base">{t("热量设置", "Calorie Settings")}</CardTitle></CardHeader>
           <CardContent>
-            <Label>{t("每日热量目标", "Daily Calorie Target")} (kcal)</Label>
-            <Input type="number" value={draft.calorie_target || 2000} onChange={(e) => update("calorie_target", Number(e.target.value))} />
+            <Label htmlFor="settings-calorie-target">{t("每日热量目标", "Daily Calorie Target")} (kcal)</Label>
+            <Input id="settings-calorie-target" type="number" value={draft.calorie_target || 2000} onChange={(e) => update("calorie_target", Number(e.target.value))} />
           </CardContent>
         </Card>
 

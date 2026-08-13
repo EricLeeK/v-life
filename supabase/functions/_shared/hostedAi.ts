@@ -183,14 +183,32 @@ export async function assertHostedQuota(
   return null;
 }
 
-function byokCreds(settings: SettingsRow): ResolvedAi | null {
-  if (!settings?.ai_api_key) return null;
-  const platform = settings.ai_platform || "gemini";
-  const model = settings.ai_model || "gemini-2.5-flash";
-  const baseUrl = settings.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.openai;
+function byokCreds(settings: SettingsRow, isVision = false): ResolvedAi | null {
+  if (isVision) {
+    const apiKey = settings?.ai_vision_api_key || settings?.ai_api_key;
+    if (!apiKey) return null;
+    const platform = settings?.ai_vision_platform || settings?.ai_platform || "gemini";
+    const defaultModel = platform === "deepseek" ? "deepseek-chat" : "gemini-2.5-flash";
+    const model = settings?.ai_vision_model || settings?.ai_model || defaultModel;
+    const baseUrl = settings?.ai_vision_base_url || settings?.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.gemini;
+    return {
+      mode: "byok",
+      apiKey,
+      platform,
+      model,
+      baseUrl,
+    };
+  }
+
+  const apiKey = settings?.ai_api_key || settings?.ai_vision_api_key;
+  if (!apiKey) return null;
+  const platform = settings?.ai_platform || "deepseek";
+  const defaultModel = platform === "deepseek" ? "deepseek-chat" : "gemini-2.5-flash";
+  const model = settings?.ai_model || defaultModel;
+  const baseUrl = settings?.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.deepseek;
   return {
     mode: "byok",
-    apiKey: settings.ai_api_key,
+    apiKey,
     platform,
     model,
     baseUrl,
@@ -201,8 +219,9 @@ export async function resolveAiCredentials(
   adminSb: AdminClient,
   userId: string,
   settings: SettingsRow,
+  isVision = false,
 ): Promise<ResolveSuccess | ResolveFailure> {
-  const hosted = getHostedConfig();
+  const hosted = getHostedConfig(isVision);
   let entitlement: EntitlementRow | null = null;
 
   if (hosted.enabled) {
@@ -248,7 +267,7 @@ export async function resolveAiCredentials(
     };
   }
 
-  const byok = byokCreds(settings);
+  const byok = byokCreds(settings, isVision);
   if (byok) return { ok: true, creds: byok };
 
   if (entitlement?.status === "disabled") {

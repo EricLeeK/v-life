@@ -1119,6 +1119,10 @@ export type Database = {
           ai_mode: string | null
           ai_model: string | null
           ai_platform: string | null
+          ai_vision_api_key: string | null
+          ai_vision_base_url: string | null
+          ai_vision_model: string | null
+          ai_vision_platform: string | null
           app_focus_mode: string
           calorie_target: number | null
           created_at: string
@@ -1144,6 +1148,10 @@ export type Database = {
           ai_mode?: string | null
           ai_model?: string | null
           ai_platform?: string | null
+          ai_vision_api_key?: string | null
+          ai_vision_base_url?: string | null
+          ai_vision_model?: string | null
+          ai_vision_platform?: string | null
           app_focus_mode?: string
           calorie_target?: number | null
           created_at?: string
@@ -1169,6 +1177,10 @@ export type Database = {
           ai_mode?: string | null
           ai_model?: string | null
           ai_platform?: string | null
+          ai_vision_api_key?: string | null
+          ai_vision_base_url?: string | null
+          ai_vision_model?: string | null
+          ai_vision_platform?: string | null
           app_focus_mode?: string
           calorie_target?: number | null
           created_at?: string
