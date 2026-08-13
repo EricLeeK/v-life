@@ -26,7 +26,7 @@ const notes = [
 ];
 
 describe("LearningNotePanel", () => {
-  it("switches a course note from markdown editing to rendered preview", () => {
+  it("renders preview by default and can switch to markdown editing", () => {
     render(
       <LearningNotePanel
         course={course}
@@ -37,11 +37,12 @@ describe("LearningNotePanel", () => {
       />,
     );
 
-    expect(screen.getByDisplayValue(/Chain rule/)).toBeInTheDocument();
-
-    fireEvent.mouseDown(screen.getByRole("tab", { name: "预览" }), { button: 0, ctrlKey: false });
-
     expect(screen.getByRole("heading", { name: "Chain rule" })).toBeInTheDocument();
     expect(screen.getByText("Compute gradients")).toBeInTheDocument();
+
+    const editTab = screen.getByRole("tab", { name: /编辑/ });
+    fireEvent.mouseDown(editTab, { button: 0, ctrlKey: false });
+
+    expect(screen.getByDisplayValue(/Chain rule/)).toBeInTheDocument();
   });
 });

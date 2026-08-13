@@ -302,6 +302,21 @@ export const demoCalorieRecords = generateCalorieRecords();
 
 // ============ Todos ============
 export const demoTodos = [
+  // AI学习 Category Tasks matching screenshot
+  { id: "demo-t-ai-01", title: "Multi-agent PDE solving system - LEAP", detail: null, importance: "urgent", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-08T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-02", title: "秋招 agent 或者自动化开发", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-03", title: "粗读 UniNDM: A Unified Noise-driven Detection 论文", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-04", title: "ARIS 面试HTML", detail: null, tags: ["Agent 相关", "RAG 相关"], importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-04-sub-1", parent_id: "demo-t-ai-04", title: "Self-Evolving Agents (Ctx2Skill / Native Evolution / A²RD / Voyager / Reflexion / STaR)", detail: "核心框架与架构演进", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:05:00+09:00", updated_at: "2026-05-05T10:05:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-04-sub-2", parent_id: "demo-t-ai-04", title: "Agentic RL (AgentTuning / ToolRL / RAGEN / WebRL / SWE-RL / GRPO for tool use)", detail: "工具调用的强化学习微调", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:10:00+09:00", updated_at: "2026-05-05T10:10:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-04-sub-3", parent_id: "demo-t-ai-04", title: "Multi-Agent & Long-Horizon (CAMEL / AutoGen / MetaGPT / MoA / Debate / MemGPT / LATS)", detail: "多智能体长流程协作", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:15:00+09:00", updated_at: "2026-05-05T10:15:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-04-sub-4", parent_id: "demo-t-ai-04", title: "Agent Foundations (ReAct / MCP / A2A / SWE-bench / GAIA / OSWorld)", detail: "Agent 基准测试与通信协议", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:20:00+09:00", updated_at: "2026-05-05T10:20:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-05", title: "学习Hello Agent", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-04T10:00:00+09:00", updated_at: "2026-05-04T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-06", title: "LLM - MC wiki", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-03T10:00:00+09:00", updated_at: "2026-05-03T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-07", title: "JAX-FEM-Geo 项目", detail: null, importance: "normal", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-02T10:00:00+09:00", updated_at: "2026-05-02T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-08", title: "迭代 HTML artifacts 技能", detail: null, importance: "normal", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-01T10:00:00+09:00", updated_at: "2026-05-01T10:00:00+09:00", user_id: DEMO_USER },
+
+  // General Todos
   { id: "demo-t0000000-0000-0000-0000-000000000001", title: "提交论文初稿", detail: "第三章实验部分需要完善", importance: "urgent", category: "学习", is_completed: false, is_archived: false, created_at: "2026-04-20T10:00:00+09:00", updated_at: "2026-05-08T00:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t0000000-0000-0000-0000-000000000002", title: "买日用品", detail: "洗衣液、牙膏、纸巾", importance: "normal", category: "生活", is_completed: false, is_archived: false, created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t0000000-0000-0000-0000-000000000003", title: "预约牙医", detail: "半年一次的检查", importance: "normal", category: "生活", is_completed: false, is_archived: false, created_at: "2026-05-01T10:00:00+09:00", updated_at: "2026-05-01T10:00:00+09:00", user_id: DEMO_USER },
@@ -524,7 +539,31 @@ export const demoLearningNotes = [
     id: "demo-61000000-0000-0000-0000-000000000001",
     course_id: COURSE_DL,
     title: "反向传播与链式法则",
-    content: "## 核心想法\n\n反向传播就是在计算图上反向应用链式法则。\n\n- 前向：缓存每个中间变量\n- 反向：从 loss 对输出的梯度开始传回\n- 关键：局部梯度乘以上游梯度",
+    content: `# 反向传播与链式法则
+
+> **核心直觉**：反向传播本质上是在计算图（Computation Graph）上从后向前应用微积分链式法则。
+
+## 1. 损失函数梯度推导
+
+对于标量损失 $L$ 和复合函数 $y = f(g(x))$，设 $u = g(x)$：
+
+$$\\frac{\\partial L}{\\partial x} = \\frac{\\partial L}{\\partial y} \\cdot \\frac{\\partial y}{\\partial u} \\cdot \\frac{\\partial u}{\\partial x}$$
+
+在多维张量情形下，设权重矩阵为 $W \\in \\mathbb{R}^{m \\times n}$，前向传播：
+
+$$z = W x + b, \\quad a = \\sigma(z)$$
+
+反向传播梯度为：
+
+$$\\delta = \\frac{\\partial L}{\\partial z} = \\frac{\\partial L}{\\partial a} \\odot \\sigma'(z)$$
+
+$$\\frac{\\partial L}{\\partial W} = \\delta x^T, \\quad \\frac{\\partial L}{\\partial b} = \\delta$$
+
+## 2. 关键要点 checklist
+
+- [x] **前向阶段**：缓存中间变量 $z$ 与激活值 $a$
+- [x] **反向阶段**：由上游传入的梯度 $\\frac{\\partial L}{\\partial a}$ 计算局部 Jacobian 矩阵
+- [ ] **优化技巧**：使用梯度裁剪（Gradient Clipping）防止爆炸`,
     tags: ["lecture", "重点"],
     note_date: "2026-05-07",
     created_at: "2026-05-07T21:00:00+09:00",
@@ -533,8 +572,29 @@ export const demoLearningNotes = [
   {
     id: "demo-61000000-0000-0000-0000-000000000002",
     course_id: COURSE_DL,
-    title: "Transformer 注意力",
-    content: "## Scaled Dot-Product Attention\n\n`softmax(QK^T / sqrt(d_k))V`\n\n需要注意 mask 的位置，以及多头注意力只是把表示空间拆成多个子空间。",
+    title: "Transformer 注意力机制",
+    content: `# Scaled Dot-Product Attention
+
+> *Attention Is All You Need* 论文的核心贡献在于利用注意力机制完全取代传统的 RNN / CNN 循环网络。
+
+## 缩放点积注意力公式
+
+对于查询 $Q \\in \\mathbb{R}^{n \\times d_k}$，键 $K \\in \\mathbb{R}^{m \\times d_k}$，值 $V \\in \\mathbb{R}^{m \\times d_v}$：
+
+$$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{QK^T}{\\sqrt{d_k}}\\right)V$$
+
+### 缩放因子 $\\sqrt{d_k}$ 的作用
+
+假设 $q$ 和 $k$ 的各分量是独立同分布且均值为 0、方差为 1 的随机变量，则点积 $q \\cdot k = \\sum_{i=1}^{d_k} q_i k_i$ 的均值为 0，方差为 $d_k$。
+
+- 若不除以 $\\sqrt{d_k}$，当维度 $d_k$ 较大时，点积数值会很大。
+- 巨大的数值会导致 \`softmax\` 函数进入梯度极小的饱和区，引起**梯度消失**。
+
+## 多头注意力 (Multi-Head Attention)
+
+$$\\text{MultiHead}(Q, K, V) = \\text{Concat}(\\text{head}_1, \\dots, \\text{head}_h)W^O$$
+
+$$\\text{where } \\text{head}_i = \\text{Attention}(Q W_i^Q, K W_i^K, V W_i^V)$$`,
     tags: ["paper", "Transformer"],
     note_date: "2026-05-05",
     created_at: "2026-05-05T20:30:00+09:00",
@@ -543,8 +603,29 @@ export const demoLearningNotes = [
   {
     id: "demo-61000000-0000-0000-0000-000000000003",
     course_id: COURSE_PROB,
-    title: "贝叶斯公式",
-    content: "## 公式\n\n`P(A|B) = P(B|A)P(A) / P(B)`\n\n考试题里通常要先拆全概率公式，再代入贝叶斯公式。",
+    title: "贝叶斯公式与全概率定理",
+    content: `# 贝叶斯推断定理
+
+> 贝叶斯定理描述了已知新证据 $B$ 的情况下，对假设 $A$ 的后验概率（Posterior Probability）更新过程。
+
+## 1. 定理公式
+
+$$P(A|B) = \\frac{P(B|A) P(A)}{P(B)}$$
+
+其中：
+- $P(A)$ 为**先验概率** (Prior)
+- $P(B|A)$ 为**似然度** (Likelihood)
+- $P(B)$ 为**边际似然** (Marginal Likelihood / Evidence)
+
+## 2. 全概率公式展开
+
+若 $A_1, A_2, \\dots, A_n$ 构成样本空间的一个划分，则对于任意事件 $B$：
+
+$$P(B) = \\sum_{i=1}^{n} P(A_i) P(B|A_i)$$
+
+代入贝叶斯定理得到完整展开式：
+
+$$P(A_k|B) = \\frac{P(A_k) P(B|A_k)}{\\sum_{i=1}^{n} P(A_i) P(B|A_i)}$$`,
     tags: ["exam"],
     note_date: "2026-05-04",
     created_at: "2026-05-04T22:00:00+09:00",

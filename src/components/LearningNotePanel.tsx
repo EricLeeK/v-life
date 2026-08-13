@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { BookOpen, Edit2, Plus, Save, Trash2 } from "lucide-react";
+import remarkMath from "remark-math";
+import remarkBreaks from "remark-breaks";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+import { BookOpen, Edit2, Eye, Plus, Save, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +49,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
   const { t } = useLang();
   const [selectedNoteId, setSelectedNoteId] = useState<string | undefined>(() => notes[0]?.id);
   const [draftNoteId, setDraftNoteId] = useState<string | undefined>(() => notes[0]?.id);
+  const [activeTab, setActiveTab] = useState<"preview" | "edit">("preview");
   const [isDirty, setIsDirty] = useState(false);
   const [form, setForm] = useState(() => ({
     title: notes[0]?.title || "",
@@ -83,6 +88,11 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     }
   }, [notes, selectedNote, selectedNoteId, draftNoteId, isDirty]);
 
+  const handleSelectNote = (id: string) => {
+    setSelectedNoteId(id);
+    setActiveTab("preview");
+  };
+
   const handleCreate = async () => {
     const created = await onCreateNote({
       course_id: course.id,
@@ -101,6 +111,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
         note_date: created.note_date || todayString(),
       });
       setIsDirty(false);
+      setActiveTab("edit");
     }
   };
 
@@ -124,20 +135,21 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     setSelectedNoteId(remaining[0]?.id);
     setDraftNoteId(remaining[0]?.id);
     setIsDirty(false);
+    setActiveTab("preview");
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-[#f9f7f1]">
-      <div className="border-b border-[#e4e1d7] bg-white px-4 py-3">
+    <div className="h-full min-h-0 flex flex-col bg-background">
+      <div className="border-b border-border bg-card px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: course.color || "#5b88b5" }} />
-              <h2 className="text-lg font-semibold text-[#1f1a14] truncate">{course.name}</h2>
+              <h2 className="text-lg font-semibold text-foreground truncate">{course.name}</h2>
             </div>
-            {course.description && <p className="mt-1 text-sm text-[#8a847a]">{course.description}</p>}
+            {course.description && <p className="mt-1 text-sm text-muted-foreground">{course.description}</p>}
           </div>
-          <Button onClick={handleCreate} size="sm" className="bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+          <Button onClick={handleCreate} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="h-4 w-4 mr-1" />
             {t("新建笔记", "New Note")}
           </Button>
@@ -145,32 +157,32 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
       </div>
 
       {notes.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-[#8a847a] px-6">
+        <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground px-6">
           <BookOpen className="h-10 w-10 mb-3 opacity-60" />
-          <p className="text-sm font-medium text-[#1f1a14]">{t("这个课程还没有笔记", "No notes in this course yet")}</p>
+          <p className="text-sm font-medium text-foreground">{t("这个课程还没有笔记", "No notes in this course yet")}</p>
           <p className="text-xs mt-1">{t("添加第一条 Markdown 学习笔记。", "Add your first Markdown learning note.")}</p>
-          <Button onClick={handleCreate} size="sm" className="mt-4 bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+          <Button onClick={handleCreate} size="sm" className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="h-4 w-4 mr-1" />
             {t("新建笔记", "New Note")}
           </Button>
         </div>
       ) : (
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_1fr]">
-          <aside className="min-h-0 border-b lg:border-b-0 lg:border-r border-[#e4e1d7] bg-white">
+          <aside className="min-h-0 border-b lg:border-b-0 lg:border-r border-border bg-card">
             <div className="max-h-56 lg:max-h-none lg:h-full overflow-y-auto p-3 space-y-2">
               {notes.map((note) => (
                 <button
                   key={note.id}
                   type="button"
-                  onClick={() => setSelectedNoteId(note.id)}
+                  onClick={() => handleSelectNote(note.id)}
                   className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${
                     selectedNote?.id === note.id
-                      ? "border-[#1f1a14]/20 bg-[#f4f3ee]"
-                      : "border-[#e4e1d7] bg-white hover:bg-[#f9f7f1]"
+                      ? "border-primary/30 bg-muted"
+                      : "border-border bg-card hover:bg-muted/50"
                   }`}
                 >
-                  <span className="block text-sm font-medium text-[#1f1a14] truncate">{note.title}</span>
-                  <span className="block mt-1 text-[11px] text-[#8a847a]">
+                  <span className="block text-sm font-medium text-foreground truncate">{note.title}</span>
+                  <span className="block mt-1 text-[11px] text-muted-foreground">
                     {note.note_date ? format(new Date(`${note.note_date}T00:00:00`), "yyyy/MM/dd") : t("未设置日期", "No date")}
                   </span>
                   {(note.tags || []).length > 0 && (
@@ -188,87 +200,120 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
           </aside>
 
           <section className="min-h-0 flex flex-col p-4">
-            <Tabs defaultValue="edit" className="min-h-0 flex-1 flex flex-col">
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "preview" | "edit")} className="min-h-0 flex-1 flex flex-col">
               <div className="flex flex-wrap items-center gap-2 justify-between mb-3">
                 <TabsList>
+                  <TabsTrigger value="preview">
+                    <Eye className="h-3.5 w-3.5 mr-1" />
+                    {t("预览", "Preview")}
+                  </TabsTrigger>
                   <TabsTrigger value="edit">
                     <Edit2 className="h-3.5 w-3.5 mr-1" />
                     {t("编辑", "Edit")}
                   </TabsTrigger>
-                  <TabsTrigger value="preview">{t("预览", "Preview")}</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleDelete} className="border-[#e4e1d7] text-destructive hover:text-destructive">
+                  {activeTab === "preview" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setActiveTab("edit")}
+                      className="border-border text-foreground hover:bg-muted"
+                    >
+                      <Edit2 className="h-4 w-4 mr-1" />
+                      {t("编辑笔记", "Edit Note")}
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handleDelete} className="border-border text-destructive hover:text-destructive">
                     <Trash2 className="h-4 w-4 mr-1" />
                     {t("删除", "Delete")}
                   </Button>
-                  <Button size="sm" onClick={handleSave} className="bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+                  <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Save className="h-4 w-4 mr-1" />
                     {t("保存", "Save")}
                   </Button>
                 </div>
               </div>
 
-              <TabsContent value="edit" className="mt-0 min-h-0 flex-1">
-                <div className="h-full min-h-0 flex flex-col gap-3 rounded-2xl border border-[#e4e1d7] bg-white p-4">
-                  <div className="grid gap-3 lg:grid-cols-[1fr_160px]">
+              <TabsContent value="preview" className="mt-0 min-h-0 flex-1">
+                <div className="h-full min-h-[360px] overflow-y-auto rounded-2xl border border-border bg-card p-6">
+                  <div className="mb-6 border-b border-border pb-4 flex items-start justify-between gap-4">
                     <div>
-                      <Label className="text-[#1f1a14] text-sm">{t("标题", "Title")}</Label>
-                      <Input
-                        value={form.title}
-                        onChange={(e) => { setForm({ ...form, title: e.target.value }); setIsDirty(true); }}
-                        className="border-[#e4e1d7] text-[#1f1a14]"
-                      />
+                      <h3 className="text-2xl font-bold text-foreground tracking-tight">{form.title || t("未命名笔记", "Untitled Note")}</h3>
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        {form.note_date && <span className="font-mono bg-muted/60 px-2 py-0.5 rounded-md">{format(new Date(`${form.note_date}T00:00:00`), "yyyy/MM/dd")}</span>}
+                        {textToTags(form.tagsText).map((tag) => (
+                          <Badge key={tag} variant="secondary" className="text-[11px] px-2 py-0.5">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-[#1f1a14] text-sm">{t("日期", "Date")}</Label>
-                      <Input
-                        type="date"
-                        value={form.note_date}
-                        onChange={(e) => { setForm({ ...form, note_date: e.target.value }); setIsDirty(true); }}
-                        className="border-[#e4e1d7] text-[#1f1a14]"
-                      />
-                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setActiveTab("edit")}
+                      className="text-xs text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+                    >
+                      <Edit2 className="h-3.5 w-3.5 mr-1" />
+                      {t("编辑", "Edit")}
+                    </Button>
                   </div>
-                  <div>
-                    <Label className="text-[#1f1a14] text-sm">{t("标签（逗号分隔）", "Tags (comma separated)")}</Label>
-                    <Input
-                      value={form.tagsText}
-                      onChange={(e) => { setForm({ ...form, tagsText: e.target.value }); setIsDirty(true); }}
-                      placeholder={t("例如：lecture, 重点", "e.g. lecture, important")}
-                      className="border-[#e4e1d7] text-[#1f1a14]"
-                    />
-                  </div>
-                  <div className="min-h-0 flex-1 flex flex-col">
-                    <Label className="text-[#1f1a14] text-sm">{t("内容", "Content")} (Markdown)</Label>
-                    <Textarea
-                      value={form.content}
-                      onChange={(e) => { setForm({ ...form, content: e.target.value }); setIsDirty(true); }}
-                      className="min-h-[300px] flex-1 resize-none border-[#e4e1d7] text-[#1f1a14] font-mono text-sm"
-                    />
+                  <div className="obsidian-markdown">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
+                      rehypePlugins={[rehypeKatex]}
+                    >
+                      {form.content || t("*(尚无内容)*", "*(No content yet)*")}
+                    </ReactMarkdown>
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="preview" className="mt-0 min-h-0 flex-1">
-                <div className="h-full min-h-[360px] overflow-y-auto rounded-2xl border border-[#e4e1d7] bg-white p-5">
-                  <div className="mb-4 border-b border-[#e4e1d7] pb-3">
-                    <h3 className="text-xl font-semibold text-[#1f1a14]">{form.title || t("未命名笔记", "Untitled Note")}</h3>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[#8a847a]">
-                      {form.note_date && <span>{format(new Date(`${form.note_date}T00:00:00`), "yyyy/MM/dd")}</span>}
-                      {textToTags(form.tagsText).map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-[10px]">
-                          {tag}
-                        </Badge>
-                      ))}
+              <TabsContent value="edit" className="mt-0 min-h-0 flex-1">
+                <div className="h-full min-h-0 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+                  <div className="grid gap-3 lg:grid-cols-[1fr_160px]">
+                    <div>
+                      <Label htmlFor="learning-note-title" className="text-foreground text-sm">{t("标题", "Title")}</Label>
+                      <Input
+                        id="learning-note-title"
+                        value={form.title}
+                        onChange={(e) => { setForm({ ...form, title: e.target.value }); setIsDirty(true); }}
+                        className="border-border text-foreground"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="learning-note-date" className="text-foreground text-sm">{t("日期", "Date")}</Label>
+                      <Input
+                        id="learning-note-date"
+                        type="date"
+                        value={form.note_date}
+                        onChange={(e) => { setForm({ ...form, note_date: e.target.value }); setIsDirty(true); }}
+                        className="border-border text-foreground"
+                      />
                     </div>
                   </div>
-                  <div className="prose prose-sm max-w-none text-[#1f1a14]">
-                    {form.content.trim() ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content}</ReactMarkdown>
-                    ) : (
-                      <p className="text-sm text-[#8a847a]">{t("还没有内容。", "No content yet.")}</p>
-                    )}
+                  <div>
+                    <Label htmlFor="learning-note-tags" className="text-foreground text-sm">{t("标签（逗号分隔）", "Tags (comma separated)")}</Label>
+                    <Input
+                      id="learning-note-tags"
+                      value={form.tagsText}
+                      onChange={(e) => { setForm({ ...form, tagsText: e.target.value }); setIsDirty(true); }}
+                      placeholder={t("例如：lecture, 重点", "e.g. lecture, important")}
+                      className="border-border text-foreground"
+                    />
+                  </div>
+                  <div className="min-h-0 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between mb-1">
+                      <Label htmlFor="learning-note-content" className="text-foreground text-sm">{t("内容", "Content")} (Markdown + LaTeX)</Label>
+                      <span className="text-[11px] text-muted-foreground font-mono">支持 $E=mc^2$, $$\int f(x)dx$$, - [ ] 列表</span>
+                    </div>
+                    <Textarea
+                      id="learning-note-content"
+                      value={form.content}
+                      onChange={(e) => { setForm({ ...form, content: e.target.value }); setIsDirty(true); }}
+                      className="min-h-[300px] flex-1 resize-none border-border text-foreground font-mono text-sm leading-relaxed p-3"
+                    />
                   </div>
                 </div>
               </TabsContent>
@@ -279,3 +324,4 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     </div>
   );
 }
+
