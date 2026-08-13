@@ -255,7 +255,23 @@ export default function DashboardPage() {
   }).length;
 
   const hiddenFeatures = settings?.hidden_features || [];
-  const isVisible = (id: string) => !hiddenFeatures.includes(id);
+  const focusMode = (settings as any)?.app_focus_mode || "full";
+
+  const isVisible = (id: string) => {
+    if (focusMode === "civil_service") {
+      return id === "civil-service";
+    }
+    return !hiddenFeatures.includes(id);
+  };
+
+  const GRID_COLS: Record<number, string> = {
+    1: "lg:grid-cols-1",
+    2: "lg:grid-cols-2",
+    3: "lg:grid-cols-3",
+    4: "lg:grid-cols-4",
+    5: "lg:grid-cols-5",
+    6: "lg:grid-cols-6",
+  };
 
   // Filtered Metric Cards
   const metricCards = [
@@ -263,7 +279,7 @@ export default function DashboardPage() {
       key: "schedule",
       label: t("今日日程", "Today's Schedule"),
       value: todayEvents.length,
-      hint: nextEvent ? `${format(new Date((nextEvent as any).start_time), "HH:mm")}` : t("暂无安排", "No events"),
+      hint: nextEvent && (nextEvent as any).start_time ? `${format(new Date((nextEvent as any).start_time), "HH:mm")}` : t("暂无安排", "No events"),
       color: "blue" as const,
     },
     isVisible("finance") && {
@@ -481,7 +497,7 @@ export default function DashboardPage() {
         {/* ── Metric Strip ── */}
         {metricCards.length > 0 && (
           <section>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div className={`grid grid-cols-2 md:grid-cols-3 ${GRID_COLS[Math.min(metricCards.length, 6)] || "lg:grid-cols-6"} gap-3`}>
               {metricCards.map((mc) => (
                 <MetricCard key={mc.key} label={mc.label} value={mc.value} hint={mc.hint} color={mc.color} />
               ))}
@@ -530,7 +546,7 @@ export default function DashboardPage() {
                           icon={<CalendarDays className="h-4 w-4 text-[#5b88b5]" />}
                           iconColor="bg-[#e1eaf4]"
                           title={e.title}
-                          subtitle={format(new Date(e.start_time), "HH:mm")}
+                          subtitle={e.start_time ? format(new Date(e.start_time), "HH:mm") : ""}
                           pill={e.importance === "重要" ? t("重要", "Important") : undefined}
                           pillColor="orange"
                           onClick={() => navigate("/schedule")}
@@ -806,7 +822,7 @@ export default function DashboardPage() {
               </div>
 
               {primaryInsights.length > 0 && (
-                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(primaryInsights.length, 4)} gap-3`}>
+                <div className={`grid grid-cols-1 md:grid-cols-2 ${GRID_COLS[Math.min(primaryInsights.length, 4)] || "lg:grid-cols-4"} gap-3`}>
                   {primaryInsights.map((item) => item.content)}
                 </div>
               )}
@@ -822,7 +838,7 @@ export default function DashboardPage() {
 
               {secondaryInsights.length > 0 && insightsExpanded && (
                 <>
-                  <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-${Math.min(secondaryInsights.length, 4)} gap-3 mt-3`}>
+                  <div className={`grid grid-cols-1 md:grid-cols-2 ${GRID_COLS[Math.min(secondaryInsights.length, 4)] || "lg:grid-cols-4"} gap-3 mt-3`}>
                     {secondaryInsights.map((item) => item.content)}
                   </div>
                   <button
