@@ -55,49 +55,52 @@ export function LearningCourseModal({ open, onOpenChange, onSave, initial }: Lea
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-[#e4e1d7]">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-[#1f1a14] font-display">
+          <DialogTitle className="text-foreground font-display">
             {initial ? t("编辑课程", "Edit Course") : t("新建课程", "New Course")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("课程名称", "Course Name")} *</Label>
+            <Label htmlFor="course-name" className="text-foreground text-sm">{t("课程名称", "Course Name")} *</Label>
             <Input
+              id="course-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder={t("例如：深度学习研讨", "e.g. Deep Learning Seminar")}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("课程描述", "Description")}</Label>
+            <Label htmlFor="course-desc" className="text-foreground text-sm">{t("课程描述", "Description")}</Label>
             <Textarea
+              id="course-desc"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder={t("简要记录课程内容、目标或资料来源...", "Briefly describe the course...")}
               rows={3}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("标识颜色", "Color")}</Label>
+            <Label htmlFor="course-color" className="text-foreground text-sm">{t("标识颜色", "Color")}</Label>
             <div className="flex items-center gap-2">
               <Input
+                id="course-color"
                 type="color"
                 value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="h-10 w-14 p-1 border-[#e4e1d7]"
+                className="h-10 w-14 p-1 border-border"
               />
               <Input
                 value={form.color}
                 onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="border-[#e4e1d7] text-[#1f1a14] font-mono text-xs"
+                className="border-border text-foreground font-mono text-xs"
               />
             </div>
           </div>
-          <Button onClick={handleSave} className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+          <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {initial ? t("保存修改", "Save") : t("创建课程", "Create Course")}
           </Button>
         </div>

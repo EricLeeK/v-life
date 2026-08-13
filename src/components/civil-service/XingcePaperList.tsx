@@ -28,7 +28,7 @@ export function XingcePaperList() {
 
   return (
     <>
-      <Card className="border-[#e4e1d7] bg-white">
+      <Card className="border-border bg-white">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base heading-font">{t("行测套卷", "Xingce papers")}</CardTitle>
           <Button size="sm" className="bg-[#d17847] hover:bg-[#c06838] text-white" onClick={() => setAddOpen(true)}>
@@ -38,17 +38,17 @@ export function XingcePaperList() {
         </CardHeader>
         <CardContent className="space-y-2">
           {sorted.length === 0 && (
-            <p className="text-[13px] text-[#8a847a] text-center py-6">
+            <p className="text-[13px] text-muted-foreground text-center py-6">
               {t("还没有套卷记录", "No papers yet")}
             </p>
           )}
           {sorted.map((paper) => {
             const stats = paperTotals(paper);
             return (
-              <div key={paper.id} className="rounded-lg border border-[#e4e1d7] p-3">
+              <div key={paper.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1f1a14] truncate">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {paper.source}
                       {paper.is_mock ? (
                         <span className="ml-2 text-[10px] text-[#d17847] bg-[#fce0c8] px-1.5 py-0.5 rounded">
@@ -56,7 +56,7 @@ export function XingcePaperList() {
                         </span>
                       ) : null}
                     </p>
-                    <p className="text-[11px] text-[#8a847a] mt-0.5 font-mono-data">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 font-mono-data">
                       {paper.taken_date}
                       {" · "}
                       {stats.correct}/{stats.total}
@@ -66,7 +66,7 @@ export function XingcePaperList() {
                       {paper.duration_minutes != null ? ` · ${paper.duration_minutes}${t("分", "m")}` : ""}
                     </p>
                     {paper.notes && (
-                      <p className="text-[12px] text-[#8a847a] mt-1 line-clamp-2">{paper.notes}</p>
+                      <p className="text-[12px] text-muted-foreground mt-1 line-clamp-2">{paper.notes}</p>
                     )}
                   </div>
                   <div className="flex shrink-0">

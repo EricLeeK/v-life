@@ -54,7 +54,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
 
   return (
     <>
-      <Card className="border-[#e4e1d7] bg-white">
+      <Card className="border-border bg-white">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base heading-font">{t("错题本", "Wrong answers")}</CardTitle>
           <Button size="sm" className="bg-[#d17847] hover:bg-[#c06838] text-white" onClick={() => setAddOpen(true)}>
@@ -64,7 +64,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
         </CardHeader>
         <CardContent className="space-y-3">
           <Tabs value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setConfirmDeleteId(null); }}>
-            <TabsList className="bg-[#f4f3ee] flex-wrap h-auto">
+            <TabsList className="bg-muted flex-wrap h-auto">
               <TabsTrigger value="all">{t("全部", "All")}</TabsTrigger>
               <TabsTrigger value="due">{t("今日到期", "Due")}</TabsTrigger>
               <TabsTrigger value="pending">{t("待复习", "Review")}</TabsTrigger>
@@ -73,7 +73,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
           </Tabs>
 
           {items.length === 0 && (
-            <p className="text-[13px] text-[#8a847a] text-center py-6">{t("暂无错题", "No wrong answers yet")}</p>
+            <p className="text-[13px] text-muted-foreground text-center py-6">{t("暂无错题", "No wrong answers yet")}</p>
           )}
 
           {items.map((item) => {
@@ -81,7 +81,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
             return (
               <div
                 key={item.id}
-                className="rounded-lg border border-[#e4e1d7] overflow-hidden"
+                className="rounded-lg border border-border overflow-hidden"
               >
                 <div
                   className="p-3 cursor-pointer hover:bg-[#faf9f6]"
@@ -91,13 +91,13 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
                         {isExpanded ? (
-                          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#8a847a]" />
+                          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#8a847a]" />
+                          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                         )}
-                        <p className="text-sm font-medium text-[#1f1a14] truncate">{item.title}</p>
+                        <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                       </div>
-                      <p className="text-[11px] text-[#8a847a] mt-0.5 ml-[18px]">
+                      <p className="text-[11px] text-muted-foreground mt-0.5 ml-[18px]">
                         {item.subject_tag || item.subject_group} · {item.source_date}
                         {item.review_status === "pending"
                           ? ` · ${t("待复习", "To review")}`
@@ -112,7 +112,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-8 w-8 text-[#8a847a]"
+                        className="h-8 w-8 text-muted-foreground"
                         title={t("编辑", "Edit")}
                         onClick={() => setEditItem(item)}
                       >
@@ -136,7 +136,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-[#8a847a] hover:text-[#d17847]"
+                          className="h-8 w-8 text-muted-foreground hover:text-[#d17847]"
                           title={t("撤销掌握", "Undo mastered")}
                           onClick={async () => {
                             await review.resetPending(item);
@@ -180,7 +180,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="px-3 pb-3 border-t border-[#e4e1d7] pt-3 bg-[#faf9f6]/50">
+                  <div className="px-3 pb-3 border-t border-border pt-3 bg-[#faf9f6]/50">
                     <WrongAnswerCard item={item} />
                   </div>
                 )}

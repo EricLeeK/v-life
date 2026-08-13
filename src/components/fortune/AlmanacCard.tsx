@@ -11,7 +11,7 @@ export function AlmanacCard({ data, lang }: { data: AlmanacDay; lang: "zh" | "en
     <div className="card-premium h-full p-5">
       <div className="mb-3 flex items-center gap-2">
         <CalendarDays className="h-4 w-4 text-[#5b8c44]" />
-        <span className="text-[14px] font-semibold text-[#1f1a14]">
+        <span className="text-[14px] font-semibold text-foreground">
           {lang === "zh" ? "黄历宜忌" : "Almanac"}
         </span>
       </div>
@@ -20,15 +20,15 @@ export function AlmanacCard({ data, lang }: { data: AlmanacDay; lang: "zh" | "en
           <span className="mr-2 inline-flex rounded-full bg-[#dcead4] px-2 py-0.5 text-[10px] font-medium text-[#5b8c44]">
             {lang === "zh" ? "宜" : "Good"}
           </span>
-          <span className="text-[#1f1a14] leading-relaxed">{data.yi.join(sep)}</span>
+          <span className="text-foreground leading-relaxed">{data.yi.join(sep)}</span>
         </div>
         <div>
           <span className="mr-2 inline-flex rounded-full bg-[#fce0c8] px-2 py-0.5 text-[10px] font-medium text-[#d17847]">
             {lang === "zh" ? "忌" : "Avoid"}
           </span>
-          <span className="text-[#1f1a14] leading-relaxed">{data.ji.join(sep)}</span>
+          <span className="text-foreground leading-relaxed">{data.ji.join(sep)}</span>
         </div>
-        {meta && <p className="text-[12px] text-[#8a847a]">{meta}</p>}
+        {meta && <p className="text-[12px] text-muted-foreground">{meta}</p>}
       </div>
     </div>
   );

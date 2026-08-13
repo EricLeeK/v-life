@@ -71,20 +71,20 @@ export default function IchingPage() {
 
           <div className="card-premium min-h-[320px] p-5">
             {!cast ? (
-              <div className="flex min-h-[280px] items-center justify-center text-[14px] text-[#8a847a]">
+              <div className="flex min-h-[280px] items-center justify-center text-[14px] text-muted-foreground">
                 {t("起卦结果会显示在这里", "Your hexagram will appear here")}
               </div>
             ) : (
               <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
                 <div>
-                  <p className="font-mono-data text-[28px] font-semibold text-[#1f1a14]">
+                  <p className="font-mono-data text-[28px] font-semibold text-foreground">
                     {lang === "zh" ? cast.nameZh : cast.nameEn}
                   </p>
-                  <p className="mt-1 text-[12px] text-[#8a847a]">
+                  <p className="mt-1 text-[12px] text-muted-foreground">
                     {lang === "zh" ? `第 ${cast.hexagramNumber} 卦` : `Hexagram #${cast.hexagramNumber}`}
                   </p>
                   {cast.relatingNameZh && (
-                    <p className="mt-1 text-[12px] text-[#8a847a]">
+                    <p className="mt-1 text-[12px] text-muted-foreground">
                       {lang === "zh"
                         ? `之卦：${cast.relatingNameZh}（第 ${cast.relatingHexagramNumber} 卦）`
                         : `Relating: ${cast.relatingNameEn} (#${cast.relatingHexagramNumber})`}
@@ -103,7 +103,7 @@ export default function IchingPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("解读", "Reading")}
                   </p>
                   <p className="text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">{reading}</p>

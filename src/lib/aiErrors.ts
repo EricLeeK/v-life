@@ -10,8 +10,9 @@ const MAP: Record<string, string> = {
 };
 
 export function formatAiError(payload: { error?: string; code?: string } | null | undefined): string {
+  if (payload?.error) return payload.error;
   if (payload?.code && MAP[payload.code]) return MAP[payload.code];
-  return payload?.error || "AI 调用失败";
+  return "AI 调用失败";
 }
 
 /** Normalize supabase.functions.invoke data/error into a user-facing message. */

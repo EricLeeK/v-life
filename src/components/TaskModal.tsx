@@ -72,21 +72,21 @@ export function TaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-[#e4e1d7]">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-[#1f1a14] font-display">
+          <DialogTitle className="text-foreground font-display">
             {initial ? t("编辑工作项", "Edit Item") : t("新建工作项", "New Item")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("类型", "Type")}</Label>
+            <Label htmlFor="task-type" className="text-foreground text-sm">{t("类型", "Type")}</Label>
             <Select
               value={form.type}
               onValueChange={(v: any) => setForm({ ...form, type: v })}
               disabled={!!initial}
             >
-              <SelectTrigger className="border-[#e4e1d7] text-[#1f1a14]">
+              <SelectTrigger id="task-type" className="border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -97,32 +97,34 @@ export function TaskModal({
             </Select>
           </div>
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("标题", "Title")} *</Label>
+            <Label htmlFor="task-title" className="text-foreground text-sm">{t("标题", "Title")} *</Label>
             <Input
+              id="task-title"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder={isHabit ? (lang === "zh" ? "例如：晨跑 30 分钟" : "e.g. Morning run 30 min") : (lang === "zh" ? "例如：完成文献综述" : "e.g. Complete literature review")}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("描述", "Description")}</Label>
+            <Label htmlFor="task-desc" className="text-foreground text-sm">{t("描述", "Description")}</Label>
             <Textarea
+              id="task-desc"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
           {!isHabit && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label className="text-[#1f1a14] text-sm">{t("状态", "Status")}</Label>
+                <Label htmlFor="task-status" className="text-foreground text-sm">{t("状态", "Status")}</Label>
                 <Select
                   value={form.status}
                   onValueChange={(v) => setForm({ ...form, status: v })}
                 >
-                  <SelectTrigger className="border-[#e4e1d7] text-[#1f1a14]">
+                  <SelectTrigger id="task-status" className="border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -135,43 +137,46 @@ export function TaskModal({
                 </Select>
               </div>
               <div>
-                <Label className="text-[#1f1a14] text-sm">{t("权重", "Weight")}</Label>
+                <Label htmlFor="task-weight" className="text-foreground text-sm">{t("权重", "Weight")}</Label>
                 <Input
+                  id="task-weight"
                   type="number"
                   min={0.1}
                   step={0.1}
                   value={form.weight}
                   onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
-                  className="border-[#e4e1d7] text-[#1f1a14]"
+                  className="border-border text-foreground"
                 />
               </div>
             </div>
           )}
           {isHabit && (
             <div>
-              <Label className="text-[#1f1a14] text-sm">{t("权重", "Weight")}</Label>
+              <Label htmlFor="task-habit-weight" className="text-foreground text-sm">{t("权重", "Weight")}</Label>
               <Input
+                id="task-habit-weight"
                 type="number"
                 min={0}
                 step={0.1}
                 value={form.weight}
                 onChange={(e) => setForm({ ...form, weight: Number(e.target.value) })}
                 disabled
-                className="border-[#e4e1d7] text-[#1f1a14]"
+                className="border-border text-foreground"
               />
-              <p className="text-xs text-[#8a847a] mt-1">{t("习惯默认不计入项目进度", "Habits don't count toward project progress")}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("习惯默认不计入项目进度", "Habits don't count toward project progress")}</p>
             </div>
           )}
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("截止日期", "Due Date")}</Label>
+            <Label htmlFor="task-due-date" className="text-foreground text-sm">{t("截止日期", "Due Date")}</Label>
             <Input
+              id="task-due-date"
               type="date"
               value={form.due_date}
               onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
-          <Button onClick={handleSave} className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+          <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {initial ? t("保存修改", "Save") : t("创建工作项", "Create Item")}
           </Button>
         </div>

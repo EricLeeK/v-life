@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -378,7 +379,7 @@ export default function SettingsPage() {
                   {t("今日请求", "Today's requests")}: {hostedAi.dailyUsed} / {hostedAi.entitlement?.daily_request_limit ?? 0}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {t("开通后优先使用平台模型；超额不会自动改用你自己的 Key。", "Hosted model is used first when active; over-quota does not auto-fall back to your own key.")}
+                  {t("开通后纯文本走 DeepSeek、看图走 Gemini；超额不会自动改用你自己的 Key。", "Hosted text uses DeepSeek and vision uses Gemini; over-quota does not auto-fall back to your own key.")}
                 </p>
               </>
             ) : (

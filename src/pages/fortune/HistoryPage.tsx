@@ -36,10 +36,10 @@ export default function HistoryPage() {
           backLabel={t("返回运势", "Back to Fortune")}
         />
 
-        {isLoading && <p className="text-[13px] text-[#8a847a]">{t("加载中…", "Loading…")}</p>}
+        {isLoading && <p className="text-[13px] text-muted-foreground">{t("加载中…", "Loading…")}</p>}
 
         {!isLoading && data.length === 0 && (
-          <div className="card-premium p-10 text-center text-[14px] text-[#8a847a]">
+          <div className="card-premium p-10 text-center text-[14px] text-muted-foreground">
             {t("还没有记录，去抽一次牌吧", "No readings yet — try a draw")}
           </div>
         )}
@@ -55,17 +55,17 @@ export default function HistoryPage() {
                 className="card-premium p-4 text-left"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[14px] font-semibold text-[#1f1a14]">
+                  <span className="text-[14px] font-semibold text-foreground">
                     {lang === "zh" ? label.zh : label.en}
                   </span>
-                  <span className="text-[11px] text-[#8a847a]">
+                  <span className="text-[11px] text-muted-foreground">
                     {new Date(row.created_at).toLocaleString()}
                   </span>
                 </div>
                 {row.question && (
                   <div className="mt-2 truncate text-[12px] text-[#5c564c]">{row.question}</div>
                 )}
-                <div className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-[#8a847a]">
+                <div className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">
                   {row.reading}
                 </div>
               </button>
@@ -92,10 +92,10 @@ export default function HistoryPage() {
                   {t("问题", "Question")}: {active.question}
                 </div>
               )}
-              <pre className="overflow-x-auto rounded-lg bg-[#f4f3ee] p-3 text-[11px] text-[#5c564c]">
+              <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-[11px] text-[#5c564c]">
                 {JSON.stringify(active.payload, null, 2)}
               </pre>
-              <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-[#1f1a14]">
+              <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground">
                 {active.reading}
               </p>
               <Button

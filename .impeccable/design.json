@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-12T11:31:34Z",
+  "title": "Design System: V-Life",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Ink Charcoal",
+        "canonical": "hsl(30 25% 10%)"
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Cream Paper",
+        "canonical": "hsl(40 20% 95%)"
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted Stone",
+        "canonical": "hsl(36 12% 40%)"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e1d7"
+      },
+      "cat-orange": {
+        "role": "accent",
+        "displayName": "Clay Orange",
+        "canonical": "hsl(22 65% 55%)"
+      },
+      "cat-green": {
+        "role": "accent",
+        "displayName": "Moss Green",
+        "canonical": "hsl(100 35% 40%)"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page and section headings via Fraunces."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI copy and controls via Inter."
+      },
+      "mono": {
+        "displayName": "Mono Data",
+        "purpose": "Metrics and tabular numbers."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "var(--shadow-card)",
+        "purpose": "Default elevated panels."
+      },
+      {
+        "name": "raised",
+        "value": "var(--shadow-raised)",
+        "purpose": "Hover / emphasis elevation."
+      },
+      {
+        "name": "overlay",
+        "value": "var(--shadow-overlay)",
+        "purpose": "Dialogs and sheets."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-strong",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Signature enter and press easing."
+      },
+      {
+        "name": "enter-up",
+        "value": "fade-up 0.5s with --i stagger",
+        "purpose": "List entrance; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "767px",
+        "purpose": "AppLayout switches to MobileNav."
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink fill primary action.",
+      "html": "<button class=\"ds-btn-primary\">保存</button>",
+      "css": ".ds-btn-primary{background:hsl(30 25% 10%);color:#fff;padding:8px 16px;height:40px;border:none;border-radius:calc(0.5625rem - 2px);font:500 14px Inter,sans-serif;box-shadow:0 1px 2px rgba(42,36,29,.08);transition:transform .15s cubic-bezier(.23,1,.32,1),box-shadow .15s}.ds-btn-primary:hover{box-shadow:0 2px 6px rgba(42,36,29,.12)}.ds-btn-primary:active{transform:scale(.97)}.ds-btn-primary:focus-visible{outline:2px solid hsl(30 25% 10%);outline-offset:2px}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Hairline secondary action.",
+      "html": "<button class=\"ds-btn-outline\">取消</button>",
+      "css": ".ds-btn-outline{background:hsl(40 20% 95%);color:hsl(30 25% 10%);padding:8px 16px;height:40px;border:none;border-radius:calc(0.5625rem - 2px);font:500 14px Inter,sans-serif;box-shadow:0 0 0 1px #d4d1c7,0 1px 2px rgba(42,36,29,.05)}.ds-btn-outline:hover{background:#f6f4ee}.ds-btn-outline:focus-visible{outline:2px solid hsl(30 25% 10%);outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "description": "Warm field with hairline border.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">邮箱</span><input class=\"ds-input\" placeholder=\"you@example.com\"/></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font-family:Inter,sans-serif}.ds-label{font-size:12px;color:hsl(36 12% 40%)}.ds-input{height:40px;padding:0 12px;border:1px solid hsl(40 16% 87%);border-radius:calc(0.5625rem - 2px);background:#fff;color:hsl(30 25% 10%);font-size:16px}.ds-input:focus{outline:2px solid hsl(30 25% 10%);outline-offset:1px}"
+    },
+    {
+      "name": "Premium Card",
+      "kind": "card",
+      "refersTo": "card-premium",
+      "description": "Token gradient elevated card.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-label\">本月支出</p><p class=\"ds-card-value\">¥1,280</p></div>",
+      "css": ".ds-card{background:linear-gradient(180deg,#fff 0%,#f5f2eb 100%);border:1px solid #e4e1d7;border-radius:8px;padding:16px;box-shadow:0 1px 2px rgba(42,36,29,.04),0 2px 6px rgba(42,36,29,.03)}.ds-card-label{margin:0;font:500 12px Inter,sans-serif;color:hsl(36 12% 40%);letter-spacing:.04em;text-transform:uppercase}.ds-card-value{margin:4px 0 0;font:600 28px 'JetBrains Mono',monospace;color:hsl(30 25% 10%)}"
+    },
+    {
+      "name": "Category Chip",
+      "kind": "chip",
+      "description": "Category accent using cat tokens.",
+      "html": "<span class=\"ds-chip\">日程</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:hsl(210 44% 92%);color:hsl(207 40% 53%);font:500 12px Inter,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Warm Desk Ledger",
+    "overview": "V-Life is a bilingual personal life OS that should feel like a well-kept desk blotter: warm cream paper, ink-dark text, hairline rules, and quiet category accents. Density favors scanability for Operate-mode tasks over marketing flourish.",
+    "keyCharacteristics": [
+      "Warm cream canvas with white elevated cards",
+      "Ink primary instead of saturated brand purple",
+      "Category accents via --cat-*; charts via --chart-*",
+      "Fraunces + Inter + JetBrains Mono pairing"
+    ],
+    "rules": [
+      {
+        "name": "The One Ink Rule",
+        "body": "Primary ink is for actions and hierarchy. Accents are for category meaning, not decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces stay quiet at rest; shadow deepens on hover or modal elevation only.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use semantic tokens (bg-background, text-muted-foreground, text-cat-*).",
+      "Do keep touch targets at least 44x44px.",
+      "Do pair Label htmlFor with control ids."
+    ],
+    "donts": [
+      "Don't hard-code cream/ink hex in new UI.",
+      "Don't invent a second category color map beside --cat-*.",
+      "Don't ship icon-only controls without accessible names."
+    ]
+  }
+}

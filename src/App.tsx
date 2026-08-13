@@ -1,11 +1,11 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AIChatPanel } from "@/components/AIChatPanel";
 import { DemoBanner } from "@/components/DemoBanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LangProvider } from "@/contexts/LanguageContext";
@@ -14,6 +14,8 @@ import { useSettings } from "@/hooks/useData";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+
+const AIChatPanel = lazy(() => import("@/components/AIChatPanel").then(m => ({ default: m.AIChatPanel })));
 
 // Lazy-loaded pages — each becomes its own chunk, loaded on demand
 const Index = lazy(() => import("./pages/Index"));
@@ -50,10 +52,10 @@ const queryClient = new QueryClient({
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f3ee]">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-3">
         <div className="h-6 w-6 border-2 border-[#d17847] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[13px] text-[#8a847a] font-medium">Loading...</p>
+        <p className="text-[13px] text-muted-foreground font-medium">Loading...</p>
       </div>
     </div>
   );
@@ -119,22 +121,26 @@ function AppRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <LangProvider>
-          <DemoModeProvider>
-            <AuthProvider>
-              <AppRoutes />
-              <AIChatPanel />
-            </AuthProvider>
-          </DemoModeProvider>
-        </LangProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <LangProvider>
+            <DemoModeProvider>
+              <AuthProvider>
+                <AppRoutes />
+                <Suspense fallback={null}>
+                  <AIChatPanel />
+                </Suspense>
+              </AuthProvider>
+            </DemoModeProvider>
+          </LangProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

@@ -65,7 +65,7 @@ export default function BaziPage() {
 
         {!hasBirthDate ? (
           <div className="card-premium p-8 text-center">
-            <p className="text-[14px] text-[#8a847a]">
+            <p className="text-[14px] text-muted-foreground">
               {t("请先在设置填写生日", "Please add birthday in Settings")}
             </p>
             <Link
@@ -79,32 +79,32 @@ export default function BaziPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
             <div className="card-premium space-y-5 p-5">
               <div>
-                <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+                <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                   {t("生日日柱", "Birth day pillar")}
                 </p>
-                <p className="mt-1 font-mono-data text-[40px] font-semibold text-[#1f1a14]">
+                <p className="mt-1 font-mono-data text-[40px] font-semibold text-foreground">
                   {birthBundle?.dayPillar || pillar!.label}
                 </p>
                 {birthBundle?.naYin && (
-                  <p className="mt-1 text-[13px] text-[#8a847a]">
+                  <p className="mt-1 text-[13px] text-muted-foreground">
                     {t("纳音", "Nayin")} · {birthBundle.naYin}
                   </p>
                 )}
               </div>
-              <div className="rounded-lg bg-[#f4f3ee] px-3 py-2 text-[12px] text-[#5c564c]">
+              <div className="rounded-lg bg-muted px-3 py-2 text-[12px] text-[#5c564c]">
                 {t("今日", "Today")} {todayBundle?.dayPillar} · {todayBundle?.chongsha} · {todayBundle?.zhiXing}
               </div>
               <div className="space-y-2.5">
                 {pillar!.wuxing.map((w) => (
                   <div key={w.element} className="flex items-center gap-2 text-[12px]">
                     <span className="w-6 text-[#5c564c]">{w.element}</span>
-                    <div className="h-2 flex-1 rounded bg-[#f4f3ee]">
+                    <div className="h-2 flex-1 rounded bg-muted">
                       <div
                         className="h-2 rounded bg-[#1f1a14]"
                         style={{ width: `${(w.count / maxWx) * 100}%` }}
                       />
                     </div>
-                    <span className="w-4 font-mono-data text-[#8a847a]">{w.count}</span>
+                    <span className="w-4 font-mono-data text-muted-foreground">{w.count}</span>
                   </div>
                 ))}
               </div>
@@ -115,12 +115,12 @@ export default function BaziPage() {
 
             <div className="card-premium min-h-[280px] p-6">
               {!reading ? (
-                <div className="flex min-h-[240px] items-center justify-center text-[14px] text-[#8a847a]">
+                <div className="flex min-h-[240px] items-center justify-center text-[14px] text-muted-foreground">
                   {t("点左侧生成今日提醒", "Generate today's note on the left")}
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+                  <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("今日提醒", "Today's note")}
                   </p>
                   <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">

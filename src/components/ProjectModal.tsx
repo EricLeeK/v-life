@@ -57,37 +57,39 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-[#e4e1d7]">
+      <DialogContent className="sm:max-w-md bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="text-[#1f1a14] font-display">
+          <DialogTitle className="text-foreground font-display">
             {initial ? t("编辑项目", "Edit Project") : t("新建项目", "New Project")}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("项目名称", "Project Name")} *</Label>
+            <Label htmlFor="proj-name" className="text-foreground text-sm">{t("项目名称", "Project Name")} *</Label>
             <Input
+              id="proj-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder={t("例如：毕业论文", "e.g. Thesis")}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("项目描述", "Description")}</Label>
+            <Label htmlFor="proj-desc" className="text-foreground text-sm">{t("项目描述", "Description")}</Label>
             <Textarea
+              id="proj-desc"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder={t("简要描述项目目标...", "Brief project description...")}
               rows={3}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-[#1f1a14] text-sm">{t("状态", "Status")}</Label>
+              <Label htmlFor="proj-status" className="text-foreground text-sm">{t("状态", "Status")}</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger className="border-[#e4e1d7] text-[#1f1a14]">
+                <SelectTrigger id="proj-status" className="border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -100,9 +102,9 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
               </Select>
             </div>
             <div>
-              <Label className="text-[#1f1a14] text-sm">{t("优先级", "Priority")}</Label>
+              <Label htmlFor="proj-priority" className="text-foreground text-sm">{t("优先级", "Priority")}</Label>
               <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                <SelectTrigger className="border-[#e4e1d7] text-[#1f1a14]">
+                <SelectTrigger id="proj-priority" className="border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -114,15 +116,16 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
             </div>
           </div>
           <div>
-            <Label className="text-[#1f1a14] text-sm">{t("目标日期", "Target Date")}</Label>
+            <Label htmlFor="proj-target-date" className="text-foreground text-sm">{t("目标日期", "Target Date")}</Label>
             <Input
+              id="proj-target-date"
               type="date"
               value={form.target_date}
               onChange={(e) => setForm({ ...form, target_date: e.target.value })}
-              className="border-[#e4e1d7] text-[#1f1a14]"
+              className="border-border text-foreground"
             />
           </div>
-          <Button onClick={handleSave} className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white">
+          <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {initial ? t("保存修改", "Save") : t("创建项目", "Create Project")}
           </Button>
         </div>

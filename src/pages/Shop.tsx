@@ -129,7 +129,7 @@ function ItemCard({
               <Icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-medium text-[#1f1a14]">{item.name}</p>
+              <p className="text-sm font-medium text-foreground">{item.name}</p>
               <RarityBadge rarity={item.rarity} />
             </div>
           </div>
@@ -140,7 +140,7 @@ function ItemCard({
             </div>
           )}
         </div>
-        <p className="text-xs text-[#8a847a] mb-3">{item.description}</p>
+        <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
         {owned ? (
           equipped ? (
             <Badge className="w-full justify-center bg-green-100 text-green-700 border-green-300">
@@ -157,7 +157,7 @@ function ItemCard({
             {buying ? t("购买中...", "Buying...") : t("购买", "Buy")}
           </Button>
         ) : (
-          <Badge variant="outline" className="w-full justify-center text-[#8a847a]">
+          <Badge variant="outline" className="w-full justify-center text-muted-foreground">
             <Lock className="h-3 w-3 mr-1" />
             {t("仅限抽卡/成就", "Gacha/Milestone Only")}
           </Badge>
@@ -191,9 +191,9 @@ function GachaAnimation({ results, onClose }: { results: any[]; onClose: () => v
             <Icon className="h-10 w-10" />
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold text-[#1f1a14]">{shopItem?.name}</p>
+            <p className="text-lg font-bold text-foreground">{shopItem?.name}</p>
             <RarityBadge rarity={shopItem?.rarity || "common"} />
-            <p className="text-sm text-[#8a847a] mt-2">{shopItem?.description}</p>
+            <p className="text-sm text-muted-foreground mt-2">{shopItem?.description}</p>
           </div>
           {item.is_new && (
             <Badge className="bg-amber-100 text-amber-700 border-amber-300">
@@ -300,8 +300,8 @@ export default function ShopPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1f1a14] mb-1">{t("商店", "Shop")}</h1>
-          <p className="text-sm text-[#8a847a]">{t("用积分换取奖励", "Spend your XP on rewards")}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-1">{t("商店", "Shop")}</h1>
+          <p className="text-sm text-muted-foreground">{t("用积分换取奖励", "Spend your XP on rewards")}</p>
         </div>
 
         {/* Stats Bar */}
@@ -310,8 +310,8 @@ export default function ShopPage() {
             <CardContent className="p-3 flex items-center gap-2">
               <Star className="h-5 w-5 text-amber-500" />
               <div>
-                <p className="text-xs text-[#8a847a]">{t("可用积分", "XP Balance")}</p>
-                <p className="text-lg font-bold text-[#1f1a14]">{spendablePoints}</p>
+                <p className="text-xs text-muted-foreground">{t("可用积分", "XP Balance")}</p>
+                <p className="text-lg font-bold text-foreground">{spendablePoints}</p>
               </div>
             </CardContent>
           </Card>
@@ -319,8 +319,8 @@ export default function ShopPage() {
             <CardContent className="p-3 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-purple-500" />
               <div>
-                <p className="text-xs text-[#8a847a]">{t("传说保底", "Legend Pity")}</p>
-                <p className="text-lg font-bold text-[#1f1a14]">{pity?.pulls_since_legendary || 0}/15</p>
+                <p className="text-xs text-muted-foreground">{t("传说保底", "Legend Pity")}</p>
+                <p className="text-lg font-bold text-foreground">{pity?.pulls_since_legendary || 0}/15</p>
               </div>
             </CardContent>
           </Card>
@@ -328,8 +328,8 @@ export default function ShopPage() {
             <CardContent className="p-3 flex items-center gap-2">
               <Package className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="text-xs text-[#8a847a]">{t("收藏进度", "Collection")}</p>
-                <p className="text-lg font-bold text-[#1f1a14]">{inventory.length}/{shopItems.length}</p>
+                <p className="text-xs text-muted-foreground">{t("收藏进度", "Collection")}</p>
+                <p className="text-lg font-bold text-foreground">{inventory.length}/{shopItems.length}</p>
               </div>
             </CardContent>
           </Card>
@@ -381,12 +381,12 @@ export default function ShopPage() {
 
                 {/* Pity Progress */}
                 <div className="mb-6">
-                  <div className="flex justify-between text-xs text-[#8a847a] mb-1">
+                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
                     <span>{t("传说保底计数", "Legendary Pity Counter")}</span>
                     <span>{pity?.pulls_since_legendary || 0} / 15</span>
                   </div>
                   <Progress value={((pity?.pulls_since_legendary || 0) / 15) * 100} className="h-2" />
-                  <p className="text-[10px] text-[#8a847a] mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     {t("第15抽必出传说", "Guaranteed legendary at pull 15")}
                   </p>
                 </div>
@@ -427,8 +427,8 @@ export default function ShopPage() {
 
                 {/* Pull History */}
                 {pity?.total_pulls > 0 && (
-                  <div className="mt-6 pt-4 border-t border-[#e4e1d7]">
-                    <p className="text-xs text-[#8a847a] mb-2">
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <p className="text-xs text-muted-foreground mb-2">
                       {t("总计抽卡次数", "Total Pulls")}: {pity.total_pulls}
                     </p>
                   </div>
@@ -442,7 +442,7 @@ export default function ShopPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {directShopItems.length === 0 ? (
                 <Card className="col-span-full">
-                  <CardContent className="p-8 text-center text-[#8a847a]">
+                  <CardContent className="p-8 text-center text-muted-foreground">
                     {t("暂无可购买的商品", "No items available for purchase")}
                   </CardContent>
                 </Card>
@@ -471,8 +471,8 @@ export default function ShopPage() {
               <Card>
                 <CardContent className="p-8 text-center">
                   <Package className="h-12 w-12 mx-auto mb-3 text-[#d1c9b8]" />
-                  <p className="text-[#8a847a]">{t("背包空空如也！", "Your bag is empty!")}</p>
-                  <p className="text-xs text-[#8a847a] mt-1">
+                  <p className="text-muted-foreground">{t("背包空空如也！", "Your bag is empty!")}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {t("去抽卡或商店看看吧", "Visit the Gacha or Shop to get started")}
                   </p>
                 </CardContent>
@@ -504,17 +504,17 @@ export default function ShopPage() {
                               </div>
                             )}
                             <div>
-                              <p className="text-sm font-medium text-[#1f1a14]">{item.name}</p>
+                              <p className="text-sm font-medium text-foreground">{item.name}</p>
                               <div className="flex gap-1">
                                 <RarityBadge rarity={item.rarity} />
-                                <Badge variant="outline" className="text-[10px] text-[#8a847a]">
+                                <Badge variant="outline" className="text-[10px] text-muted-foreground">
                                   {inv.source === "gacha_pull" ? t("抽卡", "Gacha") : inv.source === "shop_purchase" ? t("直购", "Shop") : t("成就", "Milestone")}
                                 </Badge>
                               </div>
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-[#8a847a] mb-3">{item.description}</p>
+                        <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
                         {inv.is_used ? (
                           <Badge className="w-full justify-center bg-gray-100 text-gray-500">
                             <Check className="h-3 w-3 mr-1" />
@@ -557,7 +557,7 @@ export default function ShopPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-medium text-[#1f1a14]">{t(m.name, m.nameEn)}</p>
+                            <p className="text-sm font-medium text-foreground">{t(m.name, m.nameEn)}</p>
                             <RarityBadge rarity={m.rarity} />
                             {m.unlocked && (
                               <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px]">
@@ -565,10 +565,10 @@ export default function ShopPage() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-[#8a847a] mb-2">{t(m.description, m.descriptionEn)}</p>
+                          <p className="text-xs text-muted-foreground mb-2">{t(m.description, m.descriptionEn)}</p>
                           <div className="flex items-center gap-2">
                             <Progress value={m.progress} className="h-1.5 flex-1" />
-                            <span className="text-[10px] text-[#8a847a] shrink-0">
+                            <span className="text-[10px] text-muted-foreground shrink-0">
                               {m.current}/{m.target}
                             </span>
                           </div>
@@ -591,10 +591,10 @@ export default function ShopPage() {
           </DialogHeader>
           {confirmBuy && (
             <div className="py-4">
-              <p className="text-sm text-[#1f1a14] mb-2">{confirmBuy.name}</p>
-              <p className="text-xs text-[#8a847a] mb-4">{confirmBuy.description}</p>
+              <p className="text-sm text-foreground mb-2">{confirmBuy.name}</p>
+              <p className="text-xs text-muted-foreground mb-4">{confirmBuy.description}</p>
               <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
-                <span className="text-sm text-[#8a847a]">{t("花费", "Cost")}</span>
+                <span className="text-sm text-muted-foreground">{t("花费", "Cost")}</span>
                 <span className="flex items-center gap-1 font-semibold text-amber-600">
                   <Star className="h-4 w-4" /> {confirmBuy.price} XP
                 </span>

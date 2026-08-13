@@ -8,18 +8,19 @@ import {
   ResponsiveContainer, Legend,
 } from "recharts";
 import { ChartTooltip } from "./ChartTooltip";
+import { chartPalette, piePalette } from "@/lib/chartTokens";
 import { format, getDaysInMonth } from "date-fns";
 
 const COLORS = {
-  orange: "#d17847",
-  teal: "#5a9da8",
-  purple: "#8b7bb8",
-  green: "#5b8c44",
-  yellow: "#c49840",
-  blue: "#5b88b5",
+  get orange() { return chartPalette.orange(); },
+  get teal() { return chartPalette.teal(); },
+  get purple() { return chartPalette.purple(); },
+  get green() { return chartPalette.green(); },
+  get yellow() { return chartPalette.yellow(); },
+  get blue() { return chartPalette.blue(); },
 };
 
-const PIE_COLORS = [COLORS.orange, COLORS.teal, COLORS.purple, COLORS.green, COLORS.yellow, COLORS.blue];
+const PIE_COLORS = () => piePalette();
 
 interface FinanceRecord {
   date: string;
@@ -62,9 +63,9 @@ export function SpendingTrendChart({ records, budget, year, month }: {
                 <stop offset="100%" stopColor={COLORS.orange} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#8a847a" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 10, fill: "#8a847a" }} tickLine={false} axisLine={false} tickFormatter={(v) => `¥${v}`} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={(v) => `¥${v}`} />
             <Tooltip content={<ChartTooltip formatter={(v) => `¥${v.toFixed(2)}`} />} />
             <Area type="monotone" dataKey="amount" fill="url(#spendGrad)" stroke="none" />
             <Line type="monotone" dataKey="amount" stroke={COLORS.orange} strokeWidth={2} dot={false} />
@@ -105,23 +106,29 @@ export function CategoryPieChart({ categoryData }: {
           <ResponsiveContainer width={160} height={160}>
             <PieChart>
               <Pie data={chartData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" stroke="none" paddingAngle={2}>
-                {chartData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                {chartData.map((_, i) => {
+                  const colors = PIE_COLORS();
+                  return <Cell key={i} fill={colors[i % colors.length]} />;
+                })}
               </Pie>
               <Tooltip content={<ChartTooltip formatter={(v) => `¥${v.toFixed(2)}`} />} />
             </PieChart>
           </ResponsiveContainer>
           <div className="flex-1 space-y-1.5">
-            {chartData.map((item, i) => (
+            {chartData.map((item, i) => {
+              const colors = PIE_COLORS();
+              return (
               <div key={item.name} className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: colors[i % colors.length] }} />
                   <span className="truncate">{lang === "zh" ? item.name : (CATEGORY_EN[item.name] || item.name)}</span>
                 </span>
                 <span className="text-muted-foreground font-mono-data shrink-0 ml-2">
                   ¥{item.value.toFixed(0)} <span className="text-[10px]">({total > 0 ? ((item.value / total) * 100).toFixed(0) : 0}%)</span>
                 </span>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </CardContent>
@@ -146,18 +153,18 @@ export function BudgetUsageChart({ budget, totalSpent }: {
       <CardContent>
         <div className="space-y-3">
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-semibold text-[#1f1a14] font-mono-data">¥{totalSpent.toFixed(0)}</span>
+            <span className="text-lg font-semibold text-foreground font-mono-data">¥{totalSpent.toFixed(0)}</span>
             <span className="text-xs text-muted-foreground">/ ¥{budget.toLocaleString()}</span>
           </div>
-          <div className="h-4 bg-[#e4e1d7] rounded-full overflow-hidden">
+          <div className="h-4 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
-              style={{ width: `${pct}%`, background: pct > 90 ? "#ef4444" : COLORS.orange }}
+              style={{ width: `${pct}%`, background: pct > 90 ? "hsl(var(--destructive))" : COLORS.orange }}
             />
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">{pct.toFixed(0)}% {t("已使用", "used")}</span>
-            <span className="text-[#5b8c44] font-medium font-mono-data">¥{remaining.toFixed(0)} {t("剩余", "left")}</span>
+            <span className="text-cat-green font-medium font-mono-data">¥{remaining.toFixed(0)} {t("剩余", "left")}</span>
           </div>
         </div>
       </CardContent>

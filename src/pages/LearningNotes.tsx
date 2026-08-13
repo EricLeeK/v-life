@@ -124,7 +124,7 @@ export default function LearningNotesPage() {
   return (
     <AppLayout title={t("学习笔记", "Learning Notes")}>
       <div className="flex h-[calc(100vh-6rem)] flex-col md:flex-row gap-0">
-        <div className="h-64 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-[#e4e1d7]">
+        <div className="h-64 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-border">
           <LearningCourseSidebar
             courses={courses}
             selectedId={selectedId}
@@ -151,7 +151,7 @@ export default function LearningNotesPage() {
               onDeleteNote={handleDeleteNote}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-[#8a847a] text-sm">
+            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
               {t("请新建或选择一个课程", "Create or select a course")}
             </div>
           )}

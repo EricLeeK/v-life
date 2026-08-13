@@ -87,25 +87,25 @@ export default function BelongingsPage() {
                 <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("添加", "Add")} {tab === "daily" ? t("日用品", "Consumable") : t("耐用品", "Durable")}</DialogTitle></DialogHeader>
                 {tab === "daily" ? (
                   <div className="space-y-3">
-                    <div><Label>{t("名称", "Name")} *</Label><Input value={dailyForm.name} onChange={(e) => setDailyForm({ ...dailyForm, name: e.target.value })} /></div>
-                    <div><Label>{t("分类", "Category")} *</Label><Input value={dailyForm.category} onChange={(e) => setDailyForm({ ...dailyForm, category: e.target.value })} placeholder={lang === "zh" ? "如：清洁用品" : "e.g. Cleaning"} /></div>
-                    <div><Label>{t("购入日期", "Purchase Date")}</Label><Input type="date" value={dailyForm.purchase_date} onChange={(e) => setDailyForm({ ...dailyForm, purchase_date: e.target.value })} /></div>
-                    <div><Label>{t("备注", "Notes")}</Label><Input value={dailyForm.notes} onChange={(e) => setDailyForm({ ...dailyForm, notes: e.target.value })} /></div>
+                    <div><Label htmlFor="daily-name">{t("名称", "Name")} *</Label><Input id="daily-name" value={dailyForm.name} onChange={(e) => setDailyForm({ ...dailyForm, name: e.target.value })} /></div>
+                    <div><Label htmlFor="daily-category">{t("分类", "Category")} *</Label><Input id="daily-category" value={dailyForm.category} onChange={(e) => setDailyForm({ ...dailyForm, category: e.target.value })} placeholder={lang === "zh" ? "如：清洁用品" : "e.g. Cleaning"} /></div>
+                    <div><Label htmlFor="daily-purchase-date">{t("购入日期", "Purchase Date")}</Label><Input id="daily-purchase-date" type="date" value={dailyForm.purchase_date} onChange={(e) => setDailyForm({ ...dailyForm, purchase_date: e.target.value })} /></div>
+                    <div><Label htmlFor="daily-notes">{t("备注", "Notes")}</Label><Input id="daily-notes" value={dailyForm.notes} onChange={(e) => setDailyForm({ ...dailyForm, notes: e.target.value })} /></div>
                     <Button onClick={saveDailyItem} className="w-full">{t("保存", "Save")}</Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div><Label>{t("名称", "Name")} *</Label><Input value={durableForm.name} onChange={(e) => setDurableForm({ ...durableForm, name: e.target.value })} placeholder="如：MacBook Pro 14&quot;" /></div>
-                    <div><Label>{t("分类", "Category")} *</Label>
+                    <div><Label htmlFor="durable-name">{t("名称", "Name")} *</Label><Input id="durable-name" value={durableForm.name} onChange={(e) => setDurableForm({ ...durableForm, name: e.target.value })} placeholder="如：MacBook Pro 14&quot;" /></div>
+                    <div><Label htmlFor="durable-category">{t("分类", "Category")} *</Label>
                       <Select value={durableForm.category} onValueChange={(v) => setDurableForm({ ...durableForm, category: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="durable-category"><SelectValue /></SelectTrigger>
                         <SelectContent>{DURABLE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{DURABLE_CATEGORY_LABELS[c] || c}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    <div><Label>{t("购入价格", "Purchase Price")} (CNY) *</Label><Input type="number" value={durableForm.purchase_price} onChange={(e) => setDurableForm({ ...durableForm, purchase_price: e.target.value })} /></div>
-                    <div><Label>{t("购入日期", "Purchase Date")} *</Label><Input type="date" value={durableForm.purchase_date} onChange={(e) => setDurableForm({ ...durableForm, purchase_date: e.target.value })} /></div>
-                    <div><Label>{t("预期寿命", "Expected Lifespan")} ({t("天", "days")}) *</Label><Input type="number" value={durableForm.expected_lifespan_days} onChange={(e) => setDurableForm({ ...durableForm, expected_lifespan_days: e.target.value })} /></div>
-                    <div><Label>{t("备注", "Notes")}</Label><Input value={durableForm.notes} onChange={(e) => setDurableForm({ ...durableForm, notes: e.target.value })} /></div>
+                    <div><Label htmlFor="durable-price">{t("购入价格", "Purchase Price")} (CNY) *</Label><Input id="durable-price" type="number" value={durableForm.purchase_price} onChange={(e) => setDurableForm({ ...durableForm, purchase_price: e.target.value })} /></div>
+                    <div><Label htmlFor="durable-purchase-date">{t("购入日期", "Purchase Date")} *</Label><Input id="durable-purchase-date" type="date" value={durableForm.purchase_date} onChange={(e) => setDurableForm({ ...durableForm, purchase_date: e.target.value })} /></div>
+                    <div><Label htmlFor="durable-lifespan">{t("预期寿命", "Expected Lifespan")} ({t("天", "days")}) *</Label><Input id="durable-lifespan" type="number" value={durableForm.expected_lifespan_days} onChange={(e) => setDurableForm({ ...durableForm, expected_lifespan_days: e.target.value })} /></div>
+                    <div><Label htmlFor="durable-notes">{t("备注", "Notes")}</Label><Input id="durable-notes" value={durableForm.notes} onChange={(e) => setDurableForm({ ...durableForm, notes: e.target.value })} /></div>
                     <Button onClick={saveDurableItem} className="w-full">{t("保存", "Save")}</Button>
                   </div>
                 )}
@@ -123,8 +123,8 @@ export default function BelongingsPage() {
                       <Badge variant="secondary" className="text-xs">{item.category}</Badge>
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingItem(item); setDailyForm({ name: item.name, category: item.category, purchase_date: item.purchase_date || "", notes: item.notes || "" }); setDailyDialog(true); }}><Edit2 className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => dailyDelete.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={t("编辑日用品", "Edit item")} className="h-7 w-7" onClick={() => { setEditingItem(item); setDailyForm({ name: item.name, category: item.category, purchase_date: item.purchase_date || "", notes: item.notes || "" }); setDailyDialog(true); }}><Edit2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={t("删除日用品", "Delete item")} className="h-7 w-7 text-destructive" onClick={() => dailyDelete.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -156,12 +156,12 @@ export default function BelongingsPage() {
                           </div>
                         </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                          <Button variant="ghost" size="icon" aria-label={t("编辑耐用品", "Edit item")} className="h-7 w-7" onClick={() => {
                             setEditingItem(item);
                             setDurableForm({ name: item.name, category: item.category, purchase_price: String(item.purchase_price), purchase_date: item.purchase_date, expected_lifespan_days: String(item.expected_lifespan_days), notes: item.notes || "" });
                             setDurableDialog(true);
                           }}><Edit2 className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => durableDelete.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={t("删除耐用品", "Delete item")} className="h-7 w-7 text-destructive" onClick={() => durableDelete.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </div>
                     </CardContent>

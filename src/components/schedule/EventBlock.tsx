@@ -98,13 +98,23 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
   return (
     <div
       ref={blockRef}
-      className="absolute left-1 right-1 rounded-md cursor-pointer select-none overflow-hidden group"
+      role="button"
+      tabIndex={0}
+      aria-label={`${event.title} ${format(startDate, "HH:mm")} - ${format(endDate, "HH:mm")}`}
+      className="absolute left-1 right-1 rounded-md cursor-pointer select-none overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       style={{
         top: `${top}px`, height: `${height}px`,
         background: color + "45", borderLeft: `3px solid ${color}`, zIndex: 10,
         boxShadow: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)",
       }}
       onMouseDown={(e) => handleMouseDown(e, "move")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.stopPropagation();
+          e.preventDefault();
+          onEdit(event);
+        }
+      }}
     >
       <div className="px-1.5 py-0.5 overflow-hidden h-full flex flex-col">
         <span className="text-xs font-medium truncate" style={{ color }}>{event.title}</span>

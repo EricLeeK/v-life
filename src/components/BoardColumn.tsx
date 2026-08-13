@@ -17,8 +17,8 @@ export function BoardColumn({ title, count, children, onAdd, innerRef, placehold
   return (
     <div className="flex flex-col w-full h-full" {...droppableProps}>
       <div className="flex items-center justify-between px-2 py-2 shrink-0">
-        <h3 className="text-[13px] font-medium text-[#1f1a14]">{title}</h3>
-        <span className="text-[11px] text-[#8a847a] bg-[#f4f3ee] px-1.5 py-0.5 rounded-full font-medium">{count}</span>
+        <h3 className="text-[13px] font-medium text-foreground">{title}</h3>
+        <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full font-medium">{count}</span>
       </div>
       <div ref={innerRef} className="flex-1 space-y-2 pr-0.5 overflow-y-auto scrollbar-thin min-h-[100px]">
         {children}
@@ -27,7 +27,7 @@ export function BoardColumn({ title, count, children, onAdd, innerRef, placehold
       <Button
         variant="ghost"
         size="sm"
-        className="mt-2 justify-start text-[#8a847a] hover:text-[#1f1a14] text-xs h-7"
+        className="mt-2 justify-start text-muted-foreground hover:text-foreground text-xs h-7"
         onClick={onAdd}
       >
         <Plus className="h-3.5 w-3.5 mr-1" />

@@ -139,18 +139,18 @@ export default function FinancePage() {
               <DialogContent>
                 <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("新增", "New")} {t("记录", "Record")}</DialogTitle></DialogHeader>
                 <div className="space-y-3">
-                  <div><Label>{t("名称", "Name")} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                  <div><Label>{t("分类", "Category")} *</Label>
+                  <div><Label htmlFor="fin-name">{t("名称", "Name")} *</Label><Input id="fin-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                  <div><Label htmlFor="fin-category">{t("分类", "Category")} *</Label>
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{CATEGORIES_ZH.map((c) => { const CatIcon = CATEGORY_ICON_MAP[c.key]; return <SelectItem key={c.key} value={c.key}><span className="flex items-center gap-1.5">{CatIcon && <CatIcon className="h-4 w-4 text-[#8a847a]" />}{lang === "zh" ? c.key : (CATEGORIES_EN[c.key] || c.key)}</span></SelectItem>; })}</SelectContent>
+                      <SelectTrigger id="fin-category"><SelectValue /></SelectTrigger>
+                      <SelectContent>{CATEGORIES_ZH.map((c) => { const CatIcon = CATEGORY_ICON_MAP[c.key]; return <SelectItem key={c.key} value={c.key}><span className="flex items-center gap-1.5">{CatIcon && <CatIcon className="h-4 w-4 text-muted-foreground" />}{lang === "zh" ? c.key : (CATEGORIES_EN[c.key] || c.key)}</span></SelectItem>; })}</SelectContent>
                     </Select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div><Label>{t("金额", "Amount")} *</Label><Input type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-                    <div><Label>{t("货币", "Currency")}</Label>
+                    <div><Label htmlFor="fin-amount">{t("金额", "Amount")} *</Label><Input id="fin-amount" type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+                    <div><Label htmlFor="fin-currency">{t("货币", "Currency")}</Label>
                       <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger id="fin-currency"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="CNY">CNY ¥</SelectItem>
                           <SelectItem value="JPY">JPY ¥</SelectItem>
@@ -161,8 +161,8 @@ export default function FinancePage() {
                   {form.currency === "JPY" && form.amount && (
                     <p className="text-xs text-muted-foreground">≈ ¥{(Number(form.amount) * exchangeRate).toFixed(2)} CNY (汇率: {exchangeRate})</p>
                   )}
-                  <div><Label>{t("日期", "Date")} *</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                  <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                  <div><Label htmlFor="fin-date">{t("日期", "Date")} *</Label><Input id="fin-date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                  <div><Label htmlFor="fin-notes">{t("备注", "Notes")}</Label><Input id="fin-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                   <Button onClick={handleSave} className="w-full">{t("保存", "Save")}</Button>
                 </div>
               </DialogContent>
@@ -201,7 +201,7 @@ export default function FinancePage() {
                         const CatIcon = CATEGORY_ICON_MAP[item.name];
                         return (
                           <div key={item.name} className="flex justify-between text-xs">
-                            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i] }} />{CatIcon && <CatIcon className="h-3 w-3 text-[#8a847a]" />}{lang === "zh" ? item.name : (CATEGORIES_EN[item.name] || item.name)}</span>
+                            <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: PIE_COLORS[i] }} />{CatIcon && <CatIcon className="h-3 w-3 text-muted-foreground" />}{lang === "zh" ? item.name : (CATEGORIES_EN[item.name] || item.name)}</span>
                             <span className="text-muted-foreground">¥{item.value.toFixed(0)}</span>
                           </div>
                         );
@@ -239,7 +239,7 @@ export default function FinancePage() {
                         <Card key={r.id} style={{ ['--i' as any]: i }} className="enter-up hover:border-primary/20 transition-colors">
                           <CardContent className="p-2 px-3 flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
-                              {CatIcon && <CatIcon className="h-4 w-4 text-[#8a847a]" />}
+                              {CatIcon && <CatIcon className="h-4 w-4 text-muted-foreground" />}
                               <span className="text-sm truncate">{r.name}</span>
                               <span className="text-xs text-muted-foreground">{format(new Date(r.date), "MM/dd")}</span>
                             </div>
@@ -248,13 +248,13 @@ export default function FinancePage() {
                                 <span className="text-sm font-medium">¥{Number(r.amount_cny).toFixed(2)}</span>
                                 {r.currency === "JPY" && <span className="text-xs text-muted-foreground ml-1">(¥{Number(r.amount).toFixed(0)} JPY)</span>}
                               </div>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => {
+                              <Button variant="ghost" size="icon" aria-label={t("编辑记录", "Edit record")} className="h-7 w-7" onClick={(e) => {
                                 e.stopPropagation();
                                 setEditingItem(r);
                                 setForm({ name: r.name, category: r.category, amount: String(r.amount), currency: r.currency, date: r.date, notes: r.notes || "" });
                                 setDialogOpen(true);
                               }}><Edit2 className="h-3 w-3" /></Button>
-                              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(r.id); }}><Trash2 className="h-3 w-3" /></Button>
+                              <Button variant="ghost" size="icon" aria-label={t("删除记录", "Delete record")} className="h-7 w-7 text-destructive" onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(r.id); }}><Trash2 className="h-3 w-3" /></Button>
                             </div>
                           </CardContent>
                         </Card>

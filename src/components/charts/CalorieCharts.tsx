@@ -7,24 +7,25 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ChartTooltip } from "./ChartTooltip";
+import { chartPalette } from "@/lib/chartTokens";
 import { format, subDays } from "date-fns";
 
 const COLORS = {
-  orange: "#d17847",
-  green: "#5b8c44",
-  teal: "#5a9da8",
-  purple: "#8b7bb8",
-  yellow: "#c49840",
-  blue: "#5b88b5",
+  get orange() { return chartPalette.orange(); },
+  get green() { return chartPalette.green(); },
+  get teal() { return chartPalette.teal(); },
+  get purple() { return chartPalette.purple(); },
+  get yellow() { return chartPalette.yellow(); },
+  get blue() { return chartPalette.blue(); },
 };
 
-const MEAL_COLORS: Record<string, string> = {
+const MEAL_COLORS = (): Record<string, string> => ({
   breakfast: COLORS.yellow,
   lunch: COLORS.orange,
   dinner: COLORS.purple,
   snack: COLORS.teal,
   exercise: COLORS.green,
-};
+});
 
 interface CalorieRecord {
   date: string;
@@ -67,9 +68,9 @@ export function WeeklyCalorieChart({ records, target }: {
       <CardContent>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#8a847a" }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: "#8a847a" }} tickLine={false} axisLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
             <Tooltip content={<ChartTooltip />} />
             <ReferenceLine y={target} stroke={COLORS.teal} strokeDasharray="5 5" strokeWidth={1} />
             <Bar dataKey="food" stackId="cal" fill={COLORS.orange} radius={[4, 4, 0, 0]} name={t("摄入", "Intake")} />
@@ -127,23 +128,29 @@ export function MealDistributionChart({ records }: { records: CalorieRecord[] })
           <ResponsiveContainer width={140} height={140}>
             <PieChart>
               <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} dataKey="value" stroke="none" paddingAngle={2}>
-                {data.map((entry) => <Cell key={entry.key} fill={MEAL_COLORS[entry.key] || COLORS.blue} />)}
+                {data.map((entry) => {
+                  const meal = MEAL_COLORS();
+                  return <Cell key={entry.key} fill={meal[entry.key] || COLORS.blue} />;
+                })}
               </Pie>
               <Tooltip content={<ChartTooltip formatter={(v) => `${v} kcal`} />} />
             </PieChart>
           </ResponsiveContainer>
           <div className="flex-1 space-y-1.5">
-            {data.map((item) => (
+            {data.map((item) => {
+              const meal = MEAL_COLORS();
+              return (
               <div key={item.key} className="flex items-center justify-between text-xs">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: MEAL_COLORS[item.key] || COLORS.blue }} />
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: meal[item.key] || COLORS.blue }} />
                   <span>{item.name}</span>
                 </span>
                 <span className="text-muted-foreground font-mono-data">
                   {item.value} kcal <span className="text-[10px]">({((item.value / total) * 100).toFixed(0)}%)</span>
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </CardContent>

@@ -65,8 +65,8 @@ export default function ResetPasswordPage() {
         <CardContent>
           <form onSubmit={handleReset} className="space-y-4">
             <div className="space-y-2">
-              <Label>{t("新密码", "New Password")}</Label>
-              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t("至少6位", "At least 6 characters")} required minLength={6} />
+              <Label htmlFor="new-password">{t("新密码", "New Password")}</Label>
+              <Input id="new-password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t("至少6位", "At least 6 characters")} required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? t("重置中...", "Resetting...") : t("重置密码", "Reset Password")}

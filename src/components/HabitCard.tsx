@@ -22,7 +22,7 @@ function CircularProgress({ value }: { value: number }) {
           stroke="currentColor"
           strokeWidth="3"
           fill="transparent"
-          className="text-[#e4e1d7]"
+          className="text-border"
         />
         <circle
           cx="20"
@@ -33,11 +33,11 @@ function CircularProgress({ value }: { value: number }) {
           fill="transparent"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="text-[#8b7bb8]"
+          className="text-primary"
           strokeLinecap="round"
         />
       </svg>
-      <span className="absolute text-[9px] font-medium text-[#8a847a]">{Math.round(value)}%</span>
+      <span className="absolute text-[9px] font-medium text-muted-foreground">{Math.round(value)}%</span>
     </div>
   );
 }
@@ -95,12 +95,12 @@ function HabitCardInner({ task, projectId }: HabitCardProps) {
   return (
     <div className="card-premium px-3 py-3">
       <div className="flex items-center gap-2 w-full mb-2">
-        <div className="h-5 w-5 rounded-md bg-[#e7ddf1] flex items-center justify-center shrink-0">
-          <Repeat className="h-3 w-3 text-[#8b7bb8]" />
+        <div className="h-5 w-5 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
+          <Repeat className="h-3 w-3 text-primary" />
         </div>
-        <span className="text-[13px] font-medium flex-1 truncate text-[#1f1a14]">{task.title}</span>
+        <span className="text-[13px] font-medium flex-1 truncate text-foreground">{task.title}</span>
         {streak > 0 && (
-          <span className="text-[10px] bg-[#fce0c8] text-[#d17847] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium">
+          <span className="text-[10px] bg-accent/20 text-accent-foreground px-1.5 py-0.5 rounded-full flex items-center gap-0.5 font-medium">
             <Flame className="h-2.5 w-2.5" /> {streak}
           </span>
         )}
@@ -108,7 +108,7 @@ function HabitCardInner({ task, projectId }: HabitCardProps) {
       <div className="flex items-center justify-center">
         <CircularProgress value={progress} />
       </div>
-      <p className="text-[10px] text-[#8a847a] mt-1 text-center">
+      <p className="text-[10px] text-muted-foreground mt-1 text-center">
         {lang === "zh" ? `本周 ${completedThisWeek} / ${weeklyGoal}` : `Week ${completedThisWeek} / ${weeklyGoal}`}
       </p>
       <button
@@ -116,8 +116,8 @@ function HabitCardInner({ task, projectId }: HabitCardProps) {
         disabled={toggleMutation.isPending}
         className={`mt-2 w-full py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
           isCompletedToday
-            ? "bg-[#8b7bb8] text-white"
-            : "bg-[#f4f3ee] hover:bg-[#e4e1d7] text-[#8a847a]"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted hover:bg-muted/80 text-muted-foreground"
         }`}
       >
         {isCompletedToday ? t("已打卡", "Done") : t("今日打卡", "Check In")}

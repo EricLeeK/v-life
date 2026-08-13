@@ -69,7 +69,7 @@ export function GroupPlanList({ subjectGroup }: { subjectGroup: SubjectGroup }) 
 
   return (
     <>
-      <Card className="border-[#e4e1d7] bg-white">
+      <Card className="border-border bg-white">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2 flex-wrap">
           <CardTitle className="text-base heading-font">{t("学习计划", "Study plans")}</CardTitle>
           <div className="flex items-center gap-2">
@@ -90,14 +90,14 @@ export function GroupPlanList({ subjectGroup }: { subjectGroup: SubjectGroup }) 
         </CardHeader>
         <CardContent className="space-y-2">
           {filtered.length === 0 && (
-            <p className="text-[13px] text-[#8a847a] text-center py-6">{t("暂无计划", "No plans yet")}</p>
+            <p className="text-[13px] text-muted-foreground text-center py-6">{t("暂无计划", "No plans yet")}</p>
           )}
           {filtered.map((item) => (
-            <div key={item.id} className={`flex items-start gap-2 rounded-lg border border-[#e4e1d7] p-3 ${item.is_completed ? "opacity-60" : ""}`}>
+            <div key={item.id} className={`flex items-start gap-2 rounded-lg border border-border p-3 ${item.is_completed ? "opacity-60" : ""}`}>
               <Checkbox checked={item.is_completed} onCheckedChange={() => toggle.mutate(item)} className="mt-0.5" />
               <div className="flex-1 min-w-0">
-                <p className={`text-sm text-[#1f1a14] ${item.is_completed ? "line-through" : ""}`}>{item.title}</p>
-                <p className="text-[11px] text-[#8a847a] mt-0.5">
+                <p className={`text-sm text-foreground ${item.is_completed ? "line-through" : ""}`}>{item.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
                   {item.plan_date}
                   {item.subject_tag ? ` · ${item.subject_tag}` : ""}
                   {item.start_time ? ` · ${format(new Date(item.start_time), "HH:mm")}` : ""}
@@ -151,7 +151,7 @@ export function GroupPlanList({ subjectGroup }: { subjectGroup: SubjectGroup }) 
           <DialogHeader>
             <DialogTitle className="heading-font">{t("同步更新主模式？", "Also sync to main mode?")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-[#8a847a]">
+          <p className="text-sm text-muted-foreground">
             {t("该计划已同步到日程或待办，是否一并更新？", "This plan was synced. Update the linked schedule/todo too?")}
           </p>
           <DialogFooter className="gap-2 sm:gap-0">

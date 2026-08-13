@@ -15,7 +15,7 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
 
   return (
     <div>
-      <p className="text-sm font-medium text-[#8a847a] mb-3">{t("目标概览", "Goal Overview")}</p>
+      <p className="text-sm font-medium text-muted-foreground mb-3">{t("目标概览", "Goal Overview")}</p>
       <div className="grid grid-cols-3 gap-3">
         <Card>
           <CardContent className="p-3 text-center">
@@ -24,9 +24,9 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
                 <Target className="h-4 w-4 text-[#5b8c44]" />
               </div>
             </div>
-            <p className="text-xl font-semibold text-[#1f1a14] font-mono-data">{rate}%</p>
-            <p className="text-[11px] text-[#8a847a]">{t("完成率", "Completion")}</p>
-            <div className="h-1 bg-[#e4e1d7] rounded-full mt-2 overflow-hidden">
+            <p className="text-xl font-semibold text-foreground font-mono-data">{rate}%</p>
+            <p className="text-[11px] text-muted-foreground">{t("完成率", "Completion")}</p>
+            <div className="h-1 bg-muted rounded-full mt-2 overflow-hidden">
               <div className="h-full rounded-full bg-[#5b8c44]" style={{ width: `${rate}%` }} />
             </div>
           </CardContent>
@@ -39,8 +39,8 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
                 <ListChecks className="h-4 w-4 text-[#5b88b5]" />
               </div>
             </div>
-            <p className="text-xl font-semibold text-[#1f1a14] font-mono-data">{total}</p>
-            <p className="text-[11px] text-[#8a847a]">{t("全部目标", "Total Goals")}</p>
+            <p className="text-xl font-semibold text-foreground font-mono-data">{total}</p>
+            <p className="text-[11px] text-muted-foreground">{t("全部目标", "Total Goals")}</p>
           </CardContent>
         </Card>
 
@@ -51,8 +51,8 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
                 <CheckCircle2 className="h-4 w-4 text-[#d17847]" />
               </div>
             </div>
-            <p className="text-xl font-semibold text-[#1f1a14] font-mono-data">{completed}</p>
-            <p className="text-[11px] text-[#8a847a]">{t("已完成", "Completed")}</p>
+            <p className="text-xl font-semibold text-foreground font-mono-data">{completed}</p>
+            <p className="text-[11px] text-muted-foreground">{t("已完成", "Completed")}</p>
           </CardContent>
         </Card>
       </div>

@@ -27,7 +27,7 @@ export default function CivilServiceGroup() {
     <AppLayout title={label}>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2">
-          <Button asChild variant="ghost" size="sm" className="text-[#8a847a] -ml-2">
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground -ml-2">
             <Link to="/civil-service">
               <ArrowLeft className="h-4 w-4 mr-1" />
               {t("返回考公", "Back")}
@@ -35,7 +35,7 @@ export default function CivilServiceGroup() {
           </Button>
         </div>
 
-        <p className="text-[13px] text-[#8a847a]">
+        <p className="text-[13px] text-muted-foreground">
           {tags.join(" · ")}
         </p>
 

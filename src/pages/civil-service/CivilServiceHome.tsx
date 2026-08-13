@@ -38,7 +38,7 @@ export default function CivilServiceHome() {
             const Icon = GROUP_ICONS[g];
             return (
               <Link key={g} to={`/civil-service/${g}`}>
-                <Card className="border-[#e4e1d7] bg-white hover:border-[#d17847]/40 transition-colors h-full">
+                <Card className="border-border bg-white hover:border-[#d17847]/40 transition-colors h-full">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div
                       className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"
@@ -47,12 +47,12 @@ export default function CivilServiceHome() {
                       <Icon className="h-5 w-5" style={{ color: GROUP_COLORS[g] }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="heading-font text-base text-[#1f1a14]">{SUBJECT_GROUP_LABELS[g].zh}</p>
-                      <p className="text-[12px] text-[#8a847a]">
+                      <p className="heading-font text-base text-foreground">{SUBJECT_GROUP_LABELS[g].zh}</p>
+                      <p className="text-[12px] text-muted-foreground">
                         {t("计划 · 错题", "Plans · Wrongs")}
                       </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-[#8a847a]" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </CardContent>
                 </Card>
               </Link>

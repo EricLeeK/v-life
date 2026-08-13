@@ -11,6 +11,7 @@ import { useSettings } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
 import { useClipboardImagePaste } from "@/hooks/useClipboardImagePaste";
+import { moduleByKey, tableOf, getModuleLabels, allQueryKeys } from "@modules";
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
@@ -29,66 +30,37 @@ type Operation = {
   data: Record<string, any>;
 };
 
-const MODULE_TABLE_MAP: Record<string, string> = {
-  finance: "finance_records",
-  calories: "calorie_records",
-  schedule: "schedule_events",
-  todo: "todos",
-  pantry: "pantry_items",
-  thought: "thoughts",
-  belongings_daily: "belongings_daily",
-  belongings_durable: "belongings_durable",
-  weight: "weight_records",
-  measurement: "measurement_records",
-  goal: "goals",
-  project: "projects",
-  project_task: "project_tasks",
-  learning_course: "learning_courses",
-  learning_note: "learning_notes",
-  civil_exam: "civil_exams",
-  civil_plan: "civil_plan_items",
-  civil_checkin: "civil_checkins",
-  civil_wrong: "civil_wrong_answers",
-  civil_xingce_paper: "civil_xingce_papers",
-  daily_task: "daily_tasks",
-};
+// React Query keys invalidated after any write. Single source: the canonical
+// module registry (shared with the Supabase edge functions). Previously two
+// hand-written lists here disagreed (20 keys vs 16 keys); both now derive
+// from the registry plus the shared composite keys below.
+const WRITE_QUERY_KEYS = allQueryKeys();
+const COMPOSITE_QUERY_KEYS: ReadonlyArray<[string, string]> = [
+  ["schedule", "today"],
+  ["calories", "today_summary"],
+  ["finance", "summary"],
+  ["todos", "pending"],
+];
 
-const MODULE_LABELS: Record<string, string> = {
-  finance: "记账",
-  calories: "热量",
-  schedule: "日程",
-  todo: "待办",
-  pantry: "食材",
-  thought: "随想",
-  belongings_daily: "日用品",
-  belongings_durable: "耐用品",
-  weight: "体重",
-  measurement: "围度",
-  goal: "目标",
-  project: "项目",
-  project_task: "项目任务",
-  learning_course: "课程",
-  learning_note: "学习笔记",
-  civil_exam: "考公考试",
-  civil_plan: "考公计划",
-  civil_checkin: "考公打卡",
-  civil_wrong: "考公错题",
-  civil_xingce_paper: "行测套卷",
-  daily_task: "今日待办",
-};
-
-const getModuleLabels = (t: (zh: string, en: string) => string) => ({
-  finance: t("记账", "Finance"), calories: t("热量", "Calories"), schedule: t("日程", "Schedule"),
-  todo: t("待办", "To-Do"), pantry: t("食材", "Pantry"), thought: t("随想", "Thought"),
-  belongings_daily: t("日用品", "Daily"), belongings_durable: t("耐用品", "Durable"),
-  weight: t("体重", "Weight"), measurement: t("围度", "Measurement"),
-  goal: t("目标", "Goal"), project: t("项目", "Project"), project_task: t("项目任务", "Task"),
-  learning_course: t("课程", "Course"), learning_note: t("学习笔记", "Learning Note"),
-  civil_exam: t("考公考试", "Civil Exam"), civil_plan: t("考公计划", "Civil Plan"),
-  civil_checkin: t("考公打卡", "Civil Check-in"), civil_wrong: t("考公错题", "Civil Wrong"),
-  civil_xingce_paper: t("行测套卷", "Xingce Paper"),
-  daily_task: t("今日待办", "Today's Todo"),
-});
+/**
+ * Resolve a model-supplied name to a foreign-key id, e.g. project_name → project_id.
+ * Driven by `executor.resolves` on the module registry entry, so adding a new
+ * name-resolved module needs no changes here.
+ */
+async function resolveByName(
+  spec: { targetTable: string; targetField: string },
+  value: string,
+  throwOnMissing: boolean,
+): Promise<string | null> {
+  const { data } = await (supabase.from as any)(spec.targetTable)
+    .select("id")
+    .ilike(spec.targetField, `%${value}%`)
+    .limit(1)
+    .maybeSingle();
+  if (data) return data.id as string;
+  if (throwOnMissing) throw new Error(`未找到「${value}」`);
+  return null;
+}
 
 const MAX_SESSIONS = 30;
 
@@ -483,48 +455,63 @@ export function AIChatPanel() {
       let hasError = false;
 
       for (const op of operations) {
-        const table = MODULE_TABLE_MAP[op.module];
+        const table = tableOf(op.module);
         if (!table) {
           hasError = true;
           results.push(`${t("未知模块", "Unknown module")}: ${op.module}`);
           continue;
         }
+        const mod = moduleByKey[op.module];
+        const ex = mod?.executor;
         const label = moduleLabels[op.module] || op.module;
         const itemName = op.data.name || op.data.title || op.data.food_name || op.data.weight || op.data.match?.name || op.data.match?.title || "";
         try {
           if (op.action === "create") {
-            // daily_task（今日待办）：按标题找/建 todo，再加入今天（带难度/XP）
+            // daily_task（今日待办）：优先用 todo_id 直接引用，否则按标题找/建 todo，再加入今天
             if (op.module === "daily_task") {
               const { data: { user: dtUser } } = await supabase.auth.getUser();
               if (!dtUser) throw new Error("未登录");
               const dtTitle = String(op.data.title || "").trim();
-              if (!dtTitle) throw new Error("缺少任务标题 title");
+              const dtTodoId = String(op.data.todo_id || "").trim();
+              if (!dtTitle && !dtTodoId) throw new Error("缺少任务标题 title 或 todo_id");
               const dtDiff = op.data.difficulty === "easy" || op.data.difficulty === "hard" ? op.data.difficulty : "medium";
               const dtPts = op.data.base_points != null ? Number(op.data.base_points)
                 : dtDiff === "easy" ? 10 : dtDiff === "hard" ? 30 : 20;
               const dtToday = new Date().toISOString().split("T")[0];
-              // 找现有 todo（未完成，优先未归档）；找不到则新建
-              let { data: dtTodo } = await (supabase.from as any)("todos")
-                .select("id")
-                .eq("user_id", dtUser.id)
-                .eq("title", dtTitle)
-                .eq("is_completed", false)
-                .order("is_archived", { ascending: true })
-                .limit(1).maybeSingle();
-              if (!dtTodo) {
-                const { data: newTodo, error: te } = await (supabase.from as any)("todos").insert({
-                  user_id: dtUser.id, title: dtTitle, category: "未分类", importance: "普通",
-                  is_completed: false, is_archived: false,
-                }).select().single();
-                if (te) throw te;
-                dtTodo = newTodo;
-                if (newTodo?.id) createdIds.push({ table: "todos", id: newTodo.id });
+              let dtTodo: any = null;
+              // 1) 优先：直接引用已命中的 todo（校验归属）
+              if (dtTodoId) {
+                const { data: byId } = await (supabase.from as any)("todos")
+                  .select("id,title").eq("id", dtTodoId).eq("user_id", dtUser.id).maybeSingle();
+                dtTodo = byId;
               }
+              // 2) 兜底：按标题找现有 todo（未完成，优先未归档）；找不到则新建
+              if (!dtTodo) {
+                if (!dtTitle) throw new Error("缺少任务标题 title");
+                const { data: byTitle } = await (supabase.from as any)("todos")
+                  .select("id,title")
+                  .eq("user_id", dtUser.id)
+                  .eq("title", dtTitle)
+                  .eq("is_completed", false)
+                  .order("is_archived", { ascending: true })
+                  .limit(1).maybeSingle();
+                dtTodo = byTitle;
+                if (!dtTodo) {
+                  const { data: newTodo, error: te } = await (supabase.from as any)("todos").insert({
+                    user_id: dtUser.id, title: dtTitle, category: "未分类", importance: "普通",
+                    is_completed: false, is_archived: false,
+                  }).select().single();
+                  if (te) throw te;
+                  dtTodo = newTodo;
+                  if (newTodo?.id) createdIds.push({ table: "todos", id: newTodo.id });
+                }
+              }
+              const dtDisplay = dtTodo.title || dtTitle;
               // 已在今天则跳过
               const { data: dtExist } = await (supabase.from as any)("daily_tasks")
                 .select("id").eq("todo_id", dtTodo.id).eq("task_date", dtToday).maybeSingle();
               if (dtExist) {
-                results.push(`${label}: 「${dtTitle}」${t("已在今日待办", "already in today's list")}`);
+                results.push(`${label}: 「${dtDisplay}」${t("已在今日待办", "already in today's list")}`);
                 continue;
               }
               const { data: dtRow, error: dtErr } = await (supabase.from as any)("daily_tasks").insert({
@@ -533,13 +520,13 @@ export function AIChatPanel() {
               }).select().single();
               if (dtErr) throw dtErr;
               if (dtRow?.id) createdIds.push({ table: "daily_tasks", id: dtRow.id });
-              results.push(`${label}: ${t("已加入今日待办", "Added to today")}「${dtTitle}」`);
+              results.push(`${label}: ${t("已加入今日待办", "Added to today")}「${dtDisplay}」`);
               continue;
             }
 
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
 
-            if (op.module === "project" || op.module === "learning_course" || op.module === "civil_exam" || op.module === "civil_plan" || op.module === "civil_checkin" || op.module === "civil_wrong" || op.module === "civil_xingce_paper") {
+            if (ex?.needsUserId) {
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) throw new Error("未登录");
               row.user_id = user.id;
@@ -552,28 +539,21 @@ export function AIChatPanel() {
               }
             }
 
-            if (op.module === "project_task") {
-              const projectName = op.data.project_name;
-              if (!projectName) throw new Error("缺少项目名称 project_name");
-              const { data: proj } = await (supabase.from as any)("projects")
-                .select("id")
-                .ilike("name", `%${projectName}%`)
-                .limit(1)
-                .single();
-              if (!proj) throw new Error(`未找到项目「${projectName}」`);
-              row.project_id = proj.id;
+            // Foreign-key-by-name resolution (project_name → project_id, course_name → course_id, …)
+            if (ex?.resolves) {
+              const r = ex.resolves;
+              const val = op.data[r.from];
+              if (val == null || val === "") {
+                if (r.required) throw new Error(`缺少${r.from}`);
+              } else {
+                const id = await resolveByName(r, String(val), !!r.required);
+                if (id) row[r.toColumn] = id;
+              }
             }
 
-            // learning_note：course_name 模糊匹配课程 → course_id
-            if (op.module === "learning_note" && op.data.course_name) {
-              const { data: course } = await (supabase.from as any)("learning_courses")
-                .select("id").ilike("name", `%${op.data.course_name}%`).limit(1).maybeSingle();
-              if (course) row.course_id = course.id;
-            }
-
-            const useUpsert = op.module === "weight" || op.module === "measurement" || op.module === "civil_checkin";
-            const { data: inserted, error } = useUpsert
-              ? await (supabase.from as any)(table).upsert(row, { onConflict: "user_id,date" }).select().single()
+            const conflict = ex?.upsert;
+            const { data: inserted, error } = conflict
+              ? await (supabase.from as any)(table).upsert(row, { onConflict: conflict.join(",") }).select().single()
               : await (supabase.from as any)(table).insert(row).select().single();
             if (error) throw error;
             if (inserted?.id) createdIds.push({ table, id: inserted.id });
@@ -598,23 +578,16 @@ export function AIChatPanel() {
             const match = op.data.match || {};
             const matchEntries = Object.entries(match).filter(([_, v]) => v !== undefined && v !== null && v !== "");
 
-            if (op.module === "project_task" && match.project_name) {
-              const { data: proj } = await (supabase.from as any)("projects")
-                .select("id")
-                .ilike("name", `%${match.project_name}%`)
-                .limit(1)
-                .single();
-              if (proj) {
-                match.project_id = proj.id;
-              }
-              delete match.project_name;
+            if (ex?.resolves && match[ex.resolves.from] != null) {
+              const id = await resolveByName(ex.resolves, String(match[ex.resolves.from]), false);
+              if (id) match[ex.resolves.toColumn] = id;
+              delete match[ex.resolves.from];
             }
 
             if (matchEntries.length === 0) {
               const searchName = op.data.name || op.data.title || op.data.food_name || "";
               if (!searchName) throw new Error("删除操作缺少匹配条件");
-              const nameField = ["calorie_records"].includes(table) ? "food_name" :
-                               ["finance_records", "pantry_items", "belongings_daily", "belongings_durable"].includes(table) ? "name" : "title";
+              const nameField = ex?.nameField ?? "title";
               const { data: found } = await (supabase.from as any)(table).select("id").ilike(nameField, `%${searchName}%`).limit(1).single();
               if (!found) throw new Error(`未找到匹配「${searchName}」的记录`);
               const { error } = await (supabase.from as any)(table).delete().eq("id", found.id);
@@ -625,8 +598,8 @@ export function AIChatPanel() {
                 if (error) throw error;
               } else {
                 let searchQuery = (supabase.from as any)(table).select("id");
-                for (const [key, val] of Object.entries(match).filter(([k]) => k !== "project_name")) {
-                  if (key === "project_id") {
+                for (const [key, val] of Object.entries(match)) {
+                  if (key.endsWith("_id")) {
                     searchQuery = searchQuery.eq(key, val);
                   } else {
                     searchQuery = searchQuery.ilike(key, `%${val}%`);
@@ -642,21 +615,15 @@ export function AIChatPanel() {
           } else if (op.action === "update" && op.data.match && op.data.update) {
             const match = { ...op.data.match };
 
-            if (op.module === "project_task" && match.project_name) {
-              const { data: proj } = await (supabase.from as any)("projects")
-                .select("id")
-                .ilike("name", `%${match.project_name}%`)
-                .limit(1)
-                .single();
-              if (proj) {
-                match.project_id = proj.id;
-              }
-              delete match.project_name;
+            if (ex?.resolves && match[ex.resolves.from] != null) {
+              const id = await resolveByName(ex.resolves, String(match[ex.resolves.from]), false);
+              if (id) match[ex.resolves.toColumn] = id;
+              delete match[ex.resolves.from];
             }
 
             let searchQuery = (supabase.from as any)(table).select("id");
             for (const [key, val] of Object.entries(match)) {
-              if (key === "project_id") {
+              if (key.endsWith("_id")) {
                 searchQuery = searchQuery.eq(key, val);
               } else {
                 searchQuery = searchQuery.ilike(key, `%${val}%`);
@@ -668,8 +635,10 @@ export function AIChatPanel() {
             if (error) throw error;
             results.push(`${label}: ${t("已更新", "Updated")}「${itemName}」`);
           } else {
-            hasError = true;
-            results.push(`${label}: ${t("不支持的操作", "Unsupported action")} ${op.action}`);
+            // Non-CRUD actions (e.g. a stray read_data the model misrouted) —
+            // the edge function should have fulfilled reads server-side; silently
+            // skip anything that isn't create/update/delete instead of erroring.
+            continue;
           }
         } catch (e: any) {
           hasError = true;
@@ -677,13 +646,12 @@ export function AIChatPanel() {
         }
       }
 
-      for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "weight_records", "measurement_records", "goals", "projects", "project_tasks", "learning_courses", "learning_notes", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers", "daily_tasks"]) {
+      for (const key of WRITE_QUERY_KEYS) {
         qc.invalidateQueries({ queryKey: [key] });
       }
-      qc.invalidateQueries({ queryKey: ["schedule", "today"] });
-      qc.invalidateQueries({ queryKey: ["calories", "today_summary"] });
-      qc.invalidateQueries({ queryKey: ["finance", "summary"] });
-      qc.invalidateQueries({ queryKey: ["todos", "pending"] });
+      for (const key of COMPOSITE_QUERY_KEYS) {
+        qc.invalidateQueries({ queryKey: key });
+      }
 
       return { results, createdIds, hasError };
     },
@@ -695,8 +663,11 @@ export function AIChatPanel() {
     for (const { table, id } of recentlyCreatedIds) {
       await (supabase.from as any)(table).delete().eq("id", id);
     }
-    for (const key of ["calories", "finance", "todos", "schedule", "pantry", "thoughts", "belongings", "projects", "project_tasks", "learning_courses", "learning_notes", "civil_exams", "civil_plan_items", "civil_checkins", "civil_wrong_answers", "civil_xingce_papers"]) {
+    for (const key of WRITE_QUERY_KEYS) {
       qc.invalidateQueries({ queryKey: [key] });
+    }
+    for (const key of COMPOSITE_QUERY_KEYS) {
+      qc.invalidateQueries({ queryKey: key });
     }
     setRecentlyCreatedIds([]);
     if (undoTimer) clearTimeout(undoTimer);
@@ -841,12 +812,58 @@ export function AIChatPanel() {
     refetchSessions();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  // Focus trap for accessible dialog navigation
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const container = dialogRef.current;
+    if (!container) return;
+
+    const handleTabKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const currentFocusables = Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+
+      if (currentFocusables.length === 0) return;
+      const first = currentFocusables[0];
+      const last = currentFocusables[currentFocusables.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          last.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === last) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleTabKey);
+    return () => window.removeEventListener("keydown", handleTabKey);
+  }, [isOpen, showHistory]);
+
   if (!isOpen) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
         size="icon"
-        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 h-12 w-12 rounded-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white shadow-lg"
+        aria-label={t("打开 AI 助手", "Open AI Assistant")}
+        className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
       >
         <Bot className="h-6 w-6" />
       </Button>
@@ -860,28 +877,32 @@ export function AIChatPanel() {
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]"
         onClick={() => setIsOpen(false)}
       />
-      {/* 居中弹窗（尺寸放大至原来 1.8 倍：720×1008） */}
+      {/* 居中弹窗 */}
       <div
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[720px] max-w-[calc(100vw-2rem)] h-[800px] max-h-[calc(100vh-4rem)] bg-white border border-[#e4e1d7] rounded-xl shadow-[var(--shadow-overlay)] flex flex-col overflow-hidden animate-pop-in"
+        ref={dialogRef}
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[720px] max-w-[calc(100vw-2rem)] h-[800px] max-h-[calc(100vh-4rem)] bg-card border border-border rounded-xl shadow-[var(--shadow-overlay)] flex flex-col overflow-hidden animate-pop-in"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("AI 助手", "AI Assistant")}
       >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e4e1d7] bg-white shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-2">
-          <Bot className="h-5 w-5 text-[#8b7bb8]" />
-          <span className="font-medium text-sm text-[#1f1a14]">{t("AI 助手", "AI Assistant")}</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#f4f3ee] text-[#8a847a]">
+          <Bot className="h-5 w-5 text-primary" />
+          <span className="font-medium text-sm text-foreground">{t("AI 助手", "AI Assistant")}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
             {aiMode === "direct" ? t("直接模式", "Direct mode") : t("确认模式", "Confirm mode")}
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-[#1f1a14] hover:bg-[#f4f3ee]" onClick={() => setShowHistory(!showHistory)} title="历史会话">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => setShowHistory(!showHistory)} aria-label={t("历史会话", "History")} title={t("历史会话", "History")}>
             <History className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-[#1f1a14] hover:bg-[#f4f3ee]" onClick={startNewSession} title="新对话">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={startNewSession} aria-label={t("新对话", "New chat")} title={t("新对话", "New chat")}>
             <Plus className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-[#1f1a14] hover:bg-[#f4f3ee]" onClick={() => setIsOpen(false)}>
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => setIsOpen(false)} aria-label={t("关闭", "Close")}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -889,38 +910,53 @@ export function AIChatPanel() {
 
       {showHistory ? (
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          <p className="text-xs text-[#8a847a] mb-2">{lang === "zh" ? `最近 ${sessions.length} 个会话` : `${sessions.length} recent sessions`}</p>
+          <p className="text-xs text-muted-foreground mb-2">{lang === "zh" ? `最近 ${sessions.length} 个会话` : `${sessions.length} recent sessions`}</p>
           {sessions.map((s: any) => (
             <div
               key={s.id}
-              className={`flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-[#f4f3ee] transition-colors ${
-                currentSessionId === s.id ? "bg-[#f4f3ee]" : ""
+              role="button"
+              tabIndex={0}
+              aria-label={s.title || t("无标题", "Untitled")}
+              className={`w-full flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary transition-colors ${
+                currentSessionId === s.id ? "bg-muted font-medium" : ""
               }`}
               onClick={() => loadSession(s.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  loadSession(s.id);
+                }
+              }}
             >
-              <div className="min-w-0 flex-1">
-                <p className="text-sm truncate text-[#1f1a14]">{s.title || t("无标题", "Untitled")}</p>
-                <p className="text-[10px] text-[#8a847a]">{format(new Date(s.updated_at), "MM/dd HH:mm")}</p>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-sm truncate text-foreground">{s.title || t("无标题", "Untitled")}</p>
+                <p className="text-[10px] text-muted-foreground">{format(new Date(s.updated_at), "MM/dd HH:mm")}</p>
               </div>
-              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-[#8a847a] hover:text-red-500 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}>
-                <Trash2 className="h-3 w-3" />
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("删除会话", "Delete session")}
+                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
               </Button>
             </div>
           ))}
-          {sessions.length === 0 && <p className="text-sm text-[#8a847a] text-center py-4">{t("暂无历史会话", "No history")}</p>}
+          {sessions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("暂无历史会话", "No history")}</p>}
         </div>
       ) : (
         <>
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
             {messages.length === 0 && (
-              <div className="text-center text-[#8a847a] text-sm py-8 space-y-2">
+              <div className="text-center text-muted-foreground text-sm py-8 space-y-2">
                 <Bot className="h-10 w-10 mx-auto opacity-30" />
                 <p>{t("试试说：", "Try saying:")}</p>
                 <div className="space-y-1 text-xs">
-                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"午饭吃了拉面，花了30元，大概600卡"</p>
-                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5">"明天下午3点开会，大概1小时"</p>
-                  <p className="bg-[#f4f3ee] rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</p>
+                  <p className="bg-muted rounded-lg px-3 py-1.5 font-normal">"午饭吃了拉面，花了30元，大概600卡"</p>
+                  <p className="bg-muted rounded-lg px-3 py-1.5 font-normal">"明天下午3点开会，大概1小时"</p>
+                  <p className="bg-muted rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5 font-normal"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</p>
                 </div>
               </div>
             )}
@@ -929,8 +965,8 @@ export function AIChatPanel() {
                 <div
                   className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap transition-colors ${
                     msg.role === "user"
-                      ? "bg-[#1f1a14] text-white"
-                      : "bg-[#f4f3ee] text-[#1f1a14]"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-foreground"
                   }`}
                 >
                   {msg.imageUrls && msg.imageUrls.length > 0 && (
@@ -953,10 +989,10 @@ export function AIChatPanel() {
                   )}
                   {msg.status === "preview" && (
                     <div className="mt-2 flex gap-2">
-                      <Button size="sm" className="h-7 text-xs bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" onClick={() => handleConfirmExecute(i)} disabled={loading}>
+                      <Button size="sm" className="h-7 text-xs bg-accent hover:bg-accent/90 text-accent-foreground" onClick={() => handleConfirmExecute(i)} disabled={loading}>
                         <Check className="h-3 w-3 mr-1" /> {t("确认执行", "Confirm")}
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs text-[#8a847a] hover:bg-[#f4f3ee]" onClick={() => {
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:bg-muted" onClick={() => {
                         setMessages(prev => prev.map((m, idx) => idx === i ? { ...m, status: undefined, content: m.content + `\n\n${t("已取消", "Cancelled")}` } : m));
                       }}>
                         {t("取消", "Cancel")}
@@ -968,11 +1004,11 @@ export function AIChatPanel() {
             ))}
             {loading && (
               <div className="flex justify-start animate-stream-in">
-                <div className="bg-[#f4f3ee] rounded-lg px-3 py-2.5 flex items-end gap-[3px] h-8">
+                <div className="bg-muted rounded-lg px-3 py-2.5 flex items-end gap-[3px] h-8">
                   {[0, 1, 2].map((b) => (
                     <span
                       key={b}
-                      className="w-[3px] rounded-full bg-[#d17847] animate-eq-bounce"
+                      className="w-[3px] rounded-full bg-primary animate-eq-bounce"
                       style={{ height: "100%", transformOrigin: "bottom", animationDelay: `${b * 0.15}s` }}
                     />
                   ))}
@@ -983,9 +1019,9 @@ export function AIChatPanel() {
 
           {/* Undo bar */}
           {recentlyCreatedIds.length > 0 && (
-            <div className="px-3 py-2 border-t border-[#e4e1d7] bg-[#f4f3ee] flex items-center justify-between">
-              <span className="text-xs text-[#8a847a]">{t("刚刚执行了操作", "Operation just executed")}</span>
-              <Button size="sm" variant="secondary" className="h-7 text-xs bg-white border border-[#e4e1d7] text-[#1f1a14] hover:bg-[#f4f3ee]" onClick={handleUndo}>
+            <div className="px-3 py-2 border-t border-border bg-muted flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">{t("刚刚执行了操作", "Operation just executed")}</span>
+              <Button size="sm" variant="secondary" className="h-7 text-xs bg-background border border-border text-foreground hover:bg-muted" onClick={handleUndo}>
                 <Undo2 className="h-3 w-3 mr-1" /> {t("撤销", "Undo")}
               </Button>
             </div>
@@ -993,19 +1029,25 @@ export function AIChatPanel() {
 
           {/* Image previews */}
           {imagePreviews.length > 0 && (
-            <div className="px-3 py-1 border-t border-[#e4e1d7] flex gap-1 flex-wrap">
+            <div className="px-3 py-1 border-t border-border flex gap-1 flex-wrap">
               {imagePreviews.map((url, i) => (
                 <div key={i} className="relative">
                   <img src={url} alt="" className="h-12 w-12 object-cover rounded" />
-                  <button className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-4 w-4 flex items-center justify-center text-[10px]"
-                    onClick={() => removeImage(i)}>×</button>
+                  <button
+                    type="button"
+                    className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-6 w-6 min-h-[24px] min-w-[24px] flex items-center justify-center text-[10px]"
+                    onClick={() => removeImage(i)}
+                    aria-label={t("移除图片", "Remove image")}
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
             </div>
           )}
 
           {/* Input */}
-          <div className="p-3 border-t border-[#e4e1d7] shrink-0">
+          <div className="p-3 border-t border-border shrink-0">
             <div className="flex gap-2 items-end">
               <input
                 ref={fileInputRef}
@@ -1015,7 +1057,14 @@ export function AIChatPanel() {
                 className="hidden"
                 onChange={handleImageSelect}
               />
-              <Button type="button" variant="ghost" size="icon" className="shrink-0 h-9 w-9 text-[#8a847a] hover:text-[#1f1a14] hover:bg-[#f4f3ee]" onClick={() => fileInputRef.current?.click()}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="shrink-0 h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label={t("添加图片", "Attach image")}
+              >
                 <Image className="h-4 w-4" />
               </Button>
               <Textarea
@@ -1035,11 +1084,19 @@ export function AIChatPanel() {
                   }
                 }}
                 placeholder={t("描述你要记录的内容...（可粘贴图片）", "Describe what to record... (paste images)")}
-                className="flex-1 text-sm min-h-[36px] max-h-[200px] resize-y py-2 overflow-y-auto border-[#e4e1d7] focus-visible:ring-[#1f1a14]/20"
+                className="flex-1 text-sm min-h-[36px] max-h-[200px] resize-y py-2 overflow-y-auto border-border focus-visible:ring-primary/20"
                 rows={1}
                 disabled={loading}
+                aria-label={t("消息输入", "Message input")}
               />
-              <Button type="button" size="icon" disabled={loading || (!input.trim() && imageFiles.length === 0)} className="shrink-0 bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" onClick={handleSend}>
+              <Button
+                type="button"
+                size="icon"
+                disabled={loading || (!input.trim() && imageFiles.length === 0)}
+                className="shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground"
+                onClick={handleSend}
+                aria-label={t("发送", "Send")}
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>

@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { PLATFORM_URLS } from "./hostedAi.ts";
+import { getHostedConfig } from "./hostedAi.ts";
 
 export const HOROSCOPE_SIGNS = [
   "aries",
@@ -72,12 +72,10 @@ export async function fetchOhmanda(sign: string): Promise<{ date: string; text: 
 }
 
 function getTranslateConfig() {
-  const apiKey = Deno.env.get("HOSTED_AI_API_KEY") || "";
-  const platform = Deno.env.get("HOSTED_AI_PLATFORM") || "gemini";
-  const model = Deno.env.get("HOSTED_AI_MODEL") || "gemini-3.1-flash-lite";
-  const baseUrlOverride = Deno.env.get("HOSTED_AI_BASE_URL") || "";
-  const baseUrl = baseUrlOverride || PLATFORM_URLS[platform] || PLATFORM_URLS.gemini;
-  return { apiKey, model, baseUrl };
+  const text = getHostedConfig(false);
+  if (text.apiKey) return { apiKey: text.apiKey, model: text.model, baseUrl: text.baseUrl };
+  const vision = getHostedConfig(true);
+  return { apiKey: vision.apiKey, model: vision.model, baseUrl: vision.baseUrl };
 }
 
 /** Translate EN horoscope map → ZH map via hosted AI. Falls back to empty zh on failure. */

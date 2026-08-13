@@ -29,7 +29,7 @@ export function CheckinCard() {
   };
 
   return (
-    <Card className="border-[#e4e1d7] bg-white">
+    <Card className="border-border bg-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font flex items-center gap-2">
           <Clock className="h-4 w-4 text-[#d17847]" />
@@ -45,7 +45,7 @@ export function CheckinCard() {
           placeholder="0"
           className="max-w-[120px] font-mono-data"
         />
-        <span className="text-sm text-[#8a847a]">{t("分钟", "min")}</span>
+        <span className="text-sm text-muted-foreground">{t("分钟", "min")}</span>
         <Button size="sm" onClick={handleSave} className="bg-[#d17847] hover:bg-[#c06838] text-white ml-auto">
           {checkin ? t("更新打卡", "Update") : t("打卡", "Check in")}
         </Button>

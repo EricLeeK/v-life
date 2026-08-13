@@ -88,20 +88,20 @@ export function PlanItemForm({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label>{t("标题", "Title")}</Label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("如：刷言语理解 20 题", "e.g. Verbal 20 Qs")} />
+        <Label htmlFor="plan-title">{t("标题", "Title")}</Label>
+        <Input id="plan-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("如：刷言语理解 20 题", "e.g. Verbal 20 Qs")} />
       </div>
       {!hideDate && (
         <div className="space-y-2">
-          <Label>{t("日期", "Date")}</Label>
-          <Input type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} />
+          <Label htmlFor="plan-date">{t("日期", "Date")}</Label>
+          <Input id="plan-date" type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} />
         </div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
-          <Label>{t("科目", "Subject")}</Label>
+          <Label htmlFor="plan-group">{t("科目", "Subject")}</Label>
           <Select value={group} onValueChange={(v) => setGroup(v as SubjectGroup)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="plan-group"><SelectValue /></SelectTrigger>
             <SelectContent>
               {SUBJECT_GROUPS.map((g) => (
                 <SelectItem key={g} value={g}>{SUBJECT_GROUP_LABELS[g].zh}</SelectItem>
@@ -111,9 +111,9 @@ export function PlanItemForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>{t("细分", "Tag")}</Label>
+          <Label htmlFor="plan-tag">{t("细分", "Tag")}</Label>
           <Select value={tag || "__none"} onValueChange={(v) => setTag(v === "__none" ? "" : v)}>
-            <SelectTrigger><SelectValue placeholder={t("可选", "Optional")} /></SelectTrigger>
+            <SelectTrigger id="plan-tag"><SelectValue placeholder={t("可选", "Optional")} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__none">{t("无", "None")}</SelectItem>
               {tags.map((tg) => (
@@ -125,20 +125,20 @@ export function PlanItemForm({
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
-          <Label>{t("开始（可选）", "Start (optional)")}</Label>
-          <Input type="datetime-local" value={startLocal} onChange={(e) => setStartLocal(e.target.value)} />
+          <Label htmlFor="plan-start-time">{t("开始（可选）", "Start (optional)")}</Label>
+          <Input id="plan-start-time" type="datetime-local" value={startLocal} onChange={(e) => setStartLocal(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>{t("结束（可选）", "End (optional)")}</Label>
-          <Input type="datetime-local" value={endLocal} onChange={(e) => setEndLocal(e.target.value)} />
+          <Label htmlFor="plan-end-time">{t("结束（可选）", "End (optional)")}</Label>
+          <Input id="plan-end-time" type="datetime-local" value={endLocal} onChange={(e) => setEndLocal(e.target.value)} />
         </div>
       </div>
-      <p className="text-[11px] text-[#8a847a]">
+      <p className="text-[11px] text-muted-foreground">
         {t("有起止时间可同步到日程，否则同步到待办「考公」", "With time → schedule; otherwise → todos (Civil)")}
       </p>
       <div className="space-y-2">
-        <Label>{t("备注", "Detail")}</Label>
-        <Textarea value={detail} onChange={(e) => setDetail(e.target.value)} rows={2} />
+        <Label htmlFor="plan-detail">{t("备注", "Detail")}</Label>
+        <Textarea id="plan-detail" value={detail} onChange={(e) => setDetail(e.target.value)} rows={2} />
       </div>
       <div className="flex justify-end gap-2 pt-1">
         {onCancel && (

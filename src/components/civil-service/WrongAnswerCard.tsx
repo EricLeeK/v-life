@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import { ChevronDown, ChevronRight, ImageIcon } from "lucide-react";
@@ -43,11 +44,11 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
   return (
     <div className="space-y-3">
       {item.title && (
-        <p className="text-sm font-semibold text-[#1f1a14]">{item.title}</p>
+        <p className="text-sm font-semibold text-foreground">{item.title}</p>
       )}
 
       {item.content && (
-        <div className="wrong-answer-serif wrong-answer-body prose max-w-none text-[#1f1a14]">
+        <div className="wrong-answer-serif wrong-answer-body prose max-w-none text-foreground">
           <ReactMarkdown remarkPlugins={markdownPlugins} rehypePlugins={rehypePlugins}>
             {item.content}
           </ReactMarkdown>
@@ -69,8 +70,8 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
                   isCorrect
                     ? "border-[#5b8c44] bg-[#f0f7ec] text-[#3d6b2e]"
                     : isSelected
-                      ? "border-[#d17847] bg-[#fdf3ed] text-[#1f1a14]"
-                      : "border-[#e4e1d7] bg-white text-[#1f1a14] hover:border-[#d17847]/50 hover:bg-[#faf9f6]",
+                      ? "border-[#d17847] bg-[#fdf3ed] text-foreground"
+                      : "border-border bg-white text-foreground hover:border-[#d17847]/50 hover:bg-[#faf9f6]",
                 ].join(" ")}
               >
                 <span className="shrink-0 font-medium leading-none">{opt.key}.</span>
@@ -132,7 +133,7 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
           <img
             src={item.image_url!}
             alt=""
-            className="max-h-48 rounded-md border border-[#e4e1d7] object-contain cursor-zoom-in"
+            className="max-h-48 rounded-md border border-border object-contain cursor-zoom-in"
           />
         </button>
       )}
@@ -141,7 +142,7 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
         <button
           type="button"
           onClick={() => setLightboxOpen(true)}
-          className="inline-flex items-center gap-1 text-[12px] text-[#8a847a] hover:text-[#5a9da8]"
+          className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-[#5a9da8]"
         >
           <ImageIcon className="h-3.5 w-3.5" />
           {t("查看原图", "View image")}

@@ -6,14 +6,14 @@ export function MoonCard({ data, lang }: { data: MoonPhaseInfo; lang: "zh" | "en
     <div className="card-premium h-full p-5">
       <div className="mb-3 flex items-center gap-2">
         <Moon className="h-4 w-4 text-[#8b7bb8]" />
-        <span className="text-[14px] font-semibold text-[#1f1a14]">
+        <span className="text-[14px] font-semibold text-foreground">
           {lang === "zh" ? "月相" : "Moon"}
         </span>
       </div>
-      <p className="font-mono-data text-[28px] font-semibold text-[#1f1a14]">
+      <p className="font-mono-data text-[28px] font-semibold text-foreground">
         {lang === "zh" ? data.phaseZh : data.phaseEn}
       </p>
-      <p className="mt-1 font-mono-data text-[12px] text-[#8a847a]">
+      <p className="mt-1 font-mono-data text-[12px] text-muted-foreground">
         {lang === "zh"
           ? `亮度 ${Math.round(data.illumination * 100)}%`
           : `${Math.round(data.illumination * 100)}% lit`}

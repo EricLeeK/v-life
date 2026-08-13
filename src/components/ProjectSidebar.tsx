@@ -41,27 +41,28 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
     if (items.length === 0) return null;
     return (
       <div className="space-y-1.5">
-        <h4 className="text-[11px] font-medium text-[#8a847a] px-1 uppercase tracking-wider">{title} ({items.length})</h4>
+        <h4 className="text-[11px] font-medium text-muted-foreground px-1 uppercase tracking-wider">{title} ({items.length})</h4>
         <div className="space-y-1">
           {items.map((p) => (
             <div
               key={p.id}
               className={`card-premium cursor-pointer px-3 py-2.5 ${
                 selectedId === p.id
-                  ? "!border-[#1f1a14]/20 !shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
+                  ? "!border-primary/30 !shadow-sm bg-muted/40"
                   : ""
               }`}
               onClick={() => onSelect(p.id)}
             >
               <div className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot[p.priority] || "bg-[#d4d1c7]"}`} />
-                <span className="text-[13px] font-medium truncate flex-1 text-[#1f1a14]">{p.name}</span>
+                <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot[p.priority] || "bg-muted"}`} />
+                <span className="text-[13px] font-medium truncate flex-1 text-foreground">{p.name}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-5 w-5 -mr-1 text-[#8a847a] hover:text-[#1f1a14]"
+                      aria-label={t("更多操作", "More actions")}
+                      className="h-6 w-6 -mr-1 text-muted-foreground hover:text-foreground"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <MoreHorizontal className="h-3 w-3" />
@@ -75,13 +76,13 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
                 </DropdownMenu>
               </div>
               <div className="mt-2 flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full bg-[#e4e1d7]">
+                <div className="flex-1 h-1.5 rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-[#1f1a14]/40 transition-all"
+                    className="h-full rounded-full bg-primary/60 transition-all"
                     style={{ width: `${p.progress || 0}%` }}
                   />
                 </div>
-                <span className="text-[10px] font-medium text-[#8a847a] w-7 text-right">{p.progress || 0}%</span>
+                <span className="text-[10px] font-medium text-muted-foreground w-7 text-right">{p.progress || 0}%</span>
               </div>
             </div>
           ))}
@@ -91,10 +92,10 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
   };
 
   return (
-    <div className="w-full h-full flex flex-col p-3 bg-white">
+    <div className="w-full h-full flex flex-col p-3 bg-card border-r border-border">
       <Button
         onClick={onAdd}
-        className="w-full mb-4 bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white text-sm h-9"
+        className="w-full mb-4 bg-primary hover:bg-primary/90 text-primary-foreground text-sm h-9"
       >
         <Plus className="h-4 w-4 mr-1" />
         {t("新建项目", "New Project")}
@@ -105,7 +106,7 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
         {renderGroup(t("暂停中", "Paused"), grouped.paused)}
         <Collapsible open={showArchived} onOpenChange={setShowArchived}>
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm" className="w-full justify-between text-[#8a847a] hover:text-[#1f1a14] text-xs h-7">
+            <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground hover:text-foreground text-xs min-h-[32px]">
               <span>{t("已完成 / 归档", "Completed / Archived")} ({grouped.done.length})</span>
               {showArchived ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             </Button>
@@ -116,23 +117,23 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
                 key={p.id}
                 className={`card-premium cursor-pointer px-3 py-2 ${
                   selectedId === p.id
-                    ? "!border-[#1f1a14]/20 !shadow-[0_1px_4px_rgba(0,0,0,0.06)]"
+                    ? "!border-primary/30 !shadow-sm"
                     : "opacity-70"
                 }`}
                 onClick={() => onSelect(p.id)}
               >
                 <div className="flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot[p.priority] || "bg-[#d4d1c7]"}`} />
-                  <span className="text-[13px] font-medium truncate flex-1 text-[#1f1a14]">{p.name}</span>
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot[p.priority] || "bg-muted"}`} />
+                  <span className="text-[13px] font-medium truncate flex-1 text-foreground">{p.name}</span>
                 </div>
                 <div className="mt-1.5 flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-[#e4e1d7]">
+                  <div className="flex-1 h-1.5 rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-[#6b9e6b] transition-all"
+                      className="h-full rounded-full bg-emerald-600 dark:bg-emerald-500 transition-all"
                       style={{ width: `${p.progress || 0}%` }}
                     />
                   </div>
-                  <span className="text-[10px] font-medium text-[#8a847a] w-7 text-right">{p.progress || 0}%</span>
+                  <span className="text-[10px] font-medium text-muted-foreground w-7 text-right">{p.progress || 0}%</span>
                 </div>
               </div>
             ))}

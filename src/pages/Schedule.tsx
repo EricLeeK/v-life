@@ -27,7 +27,26 @@ const SCHEDULE_COLORS = [
   "#78716c", "#d97706", "#059669", "#7c3aed",
 ];
 
-type ViewMode = "3day" | "week" | "month";
+const SCHEDULE_COLOR_NAMES: Record<string, { zh: string; en: string }> = {
+  "#ef4444": { zh: "红色", en: "Red" },
+  "#f59e0b": { zh: "琥珀色", en: "Amber" },
+  "#84cc16": { zh: "黄绿色", en: "Lime" },
+  "#22c55e": { zh: "绿色", en: "Green" },
+  "#14b8a6": { zh: "青色", en: "Teal" },
+  "#0ea5e9": { zh: "天蓝色", en: "Sky" },
+  "#3b82f6": { zh: "蓝色", en: "Blue" },
+  "#6366f1": { zh: "靛蓝色", en: "Indigo" },
+  "#8b5cf6": { zh: "紫色", en: "Violet" },
+  "#a855f7": { zh: "紫红色", en: "Purple" },
+  "#ec4899": { zh: "粉色", en: "Pink" },
+  "#f43f5e": { zh: "玫红", en: "Rose" },
+  "#78716c": { zh: "石灰色", en: "Stone" },
+  "#d97706": { zh: "橙色", en: "Orange" },
+  "#059669": { zh: "翠绿", en: "Emerald" },
+  "#7c3aed": { zh: "紫罗兰", en: "Violet deep" },
+};
+
+type ViewMode = "1day" | "3day" | "week" | "month";
 
 // Generate recurring instances from a master event's recurrence rule
 function generateInstances(
@@ -96,7 +115,12 @@ function generateInstances(
 export default function SchedulePage() {
   const { t, lang } = useLang();
   const [baseDate, setBaseDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
-  const [viewMode, setViewMode] = useState<ViewMode>("3day");
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      return "1day";
+    }
+    return "3day";
+  });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({
@@ -108,6 +132,7 @@ export default function SchedulePage() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const days = useMemo(() => {
+    if (viewMode === "1day") return [baseDate];
     if (viewMode === "3day") return [baseDate, addDays(baseDate, 1), addDays(baseDate, 2)];
     if (viewMode === "week") {
       const start = startOfWeek(baseDate, { weekStartsOn: 1 });
@@ -311,12 +336,14 @@ export default function SchedulePage() {
 
   // Navigation
   const goBack = () => {
-    if (viewMode === "3day") setBaseDate(subDays(baseDate, 1));
+    if (viewMode === "1day") setBaseDate(subDays(baseDate, 1));
+    else if (viewMode === "3day") setBaseDate(subDays(baseDate, 3));
     else if (viewMode === "week") setBaseDate(subWeeks(baseDate, 1));
     else setBaseDate(subMonths(baseDate, 1));
   };
   const goForward = () => {
-    if (viewMode === "3day") setBaseDate(addDays(baseDate, 1));
+    if (viewMode === "1day") setBaseDate(addDays(baseDate, 1));
+    else if (viewMode === "3day") setBaseDate(addDays(baseDate, 3));
     else if (viewMode === "week") setBaseDate(addWeeks(baseDate, 1));
     else setBaseDate(addMonths(baseDate, 1));
   };
@@ -335,9 +362,15 @@ export default function SchedulePage() {
 
   const headerLabel = viewMode === "month"
     ? (lang === "zh" ? format(baseDate, "yyyy年M月", { locale: zhCN }) : format(baseDate, "MMMM yyyy"))
+    : viewMode === "1day"
+    ? format(days[0], "M/d (eee)", { locale: zhCN })
     : `${format(days[0], "M/d")} – ${format(days[days.length - 1], "M/d")}`;
 
-  const gridCols = viewMode === "week" ? "grid-cols-[40px_repeat(7,1fr)]" : "grid-cols-[50px_1fr_1fr_1fr]";
+  const gridCols = viewMode === "week"
+    ? "grid-cols-[40px_repeat(7,1fr)]"
+    : viewMode === "1day"
+    ? "grid-cols-[50px_1fr]"
+    : "grid-cols-[50px_1fr_1fr_1fr]";
 
   // Check if editing item is part of a series
   const editingIsSeries = editingItem && (() => {
@@ -351,18 +384,18 @@ export default function SchedulePage() {
       <div className="space-y-4">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goBack}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goBack} aria-label={t("上一页", "Previous")}><ChevronLeft className="h-4 w-4" /></Button>
           <Button variant="secondary" size="sm" onClick={goToday}>{t("今天", "Today")}</Button>
-          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goForward}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goForward} aria-label={t("下一页", "Next")}><ChevronRight className="h-4 w-4" /></Button>
           <span className="text-sm font-medium text-foreground min-w-[100px]">{headerLabel}</span>
           <div className="flex-1" />
           {settings?.show_goals_in_schedule !== false && <GoalsBall />}
           <div className="flex gap-1 bg-muted rounded-lg p-0.5">
-            {(["3day", "week", "month"] as ViewMode[]).map((mode) => (
+            {(["1day", "3day", "week", "month"] as ViewMode[]).map((mode) => (
               <Button key={mode} variant={viewMode === mode ? "default" : "ghost"} size="sm"
-                className="h-7 text-xs px-3"
+                className="h-7 text-xs px-2.5"
                 onClick={() => setViewMode(mode)}>
-                {{ "3day": t("3天", "3 Day"), "week": t("周", "Week"), "month": t("月", "Month") }[mode]}
+                {{ "1day": t("日", "Day"), "3day": t("3天", "3 Day"), "week": t("周", "Week"), "month": t("月", "Month") }[mode]}
               </Button>
             ))}
           </div>
@@ -375,12 +408,12 @@ export default function SchedulePage() {
               <div className="space-y-3">
                 {incompleteTodos.length > 0 && (
                   <div>
-                    <Label className="text-xs text-muted-foreground">{t("从待办快速选择", "Quick Pick from To-Dos")}</Label>
+                    <Label htmlFor="quick-todo-select" className="text-xs text-muted-foreground">{t("从待办快速选择", "Quick Pick from To-Dos")}</Label>
                     <Select onValueChange={(v) => {
                       const todo = incompleteTodos.find((t: any) => t.id === v);
                       if (todo) setForm({ ...form, title: todo.title, notes: todo.detail || form.notes });
                     }}>
-                      <SelectTrigger className="mt-1"><SelectValue placeholder={t("选择待办作为标题...", "Pick a to-do as title...")} /></SelectTrigger>
+                      <SelectTrigger id="quick-todo-select" className="mt-1"><SelectValue placeholder={t("选择待办作为标题...", "Pick a to-do as title...")} /></SelectTrigger>
                       <SelectContent>
                         {incompleteTodos.map((todo: any) => {
                           const displayTitle = (() => {
@@ -400,25 +433,25 @@ export default function SchedulePage() {
                     </Select>
                   </div>
                 )}
-                <div><Label>{t("标题", "Title")} *</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                <div><Label htmlFor="event-title">{t("标题", "Title")} *</Label><Input id="event-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>{t("开始日期", "Start Date")} *</Label><Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value, end_date: e.target.value })} /></div>
-                  <div><Label>{t("开始时间", "Start Time")}</Label><Input type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
+                  <div><Label htmlFor="event-start-date">{t("开始日期", "Start Date")} *</Label><Input id="event-start-date" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value, end_date: e.target.value })} /></div>
+                  <div><Label htmlFor="event-start-time">{t("开始时间", "Start Time")}</Label><Input id="event-start-time" type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>{t("结束日期", "End Date")} *</Label><Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
-                  <div><Label>{t("结束时间", "End Time")}</Label><Input type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
+                  <div><Label htmlFor="event-end-date">{t("结束日期", "End Date")} *</Label><Input id="event-end-date" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
+                  <div><Label htmlFor="event-end-time">{t("结束时间", "End Time")}</Label><Input id="event-end-time" type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>{t("重要性", "Importance")}</Label>
+                  <div><Label htmlFor="event-importance">{t("重要性", "Importance")}</Label>
                     <Select value={form.importance} onValueChange={(v) => setForm({ ...form, importance: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="event-importance"><SelectValue /></SelectTrigger>
                       <SelectContent>{Object.keys(IMPORTANCE_COLORS).map((k) => <SelectItem key={k} value={k}>{t(k, { "紧急": "Urgent", "重要": "Important", "普通": "Normal", "低": "Low" }[k] || k)}</SelectItem>)}</SelectContent>
                     </Select>
                   </div>
-                  <div><Label>{t("状态", "Status")}</Label>
+                  <div><Label htmlFor="event-status">{t("状态", "Status")}</Label>
                     <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger id="event-status"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="未开始">{t("未开始", "Not Started")}</SelectItem>
                         <SelectItem value="进行中">{t("进行中", "In Progress")}</SelectItem>
@@ -428,26 +461,39 @@ export default function SchedulePage() {
                     </Select>
                   </div>
                 </div>
-                <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label htmlFor="event-notes">{t("备注", "Notes")}</Label><Input id="event-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <div>
-                  <Label>{t("颜色", "Color")}</Label>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {SCHEDULE_COLORS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className="w-6 h-6 rounded-full border-2 transition-all shrink-0"
-                        style={{
-                          backgroundColor: c,
-                          borderColor: form.color === c ? "#1f1a14" : "transparent",
-                          transform: form.color === c ? "scale(1.15)" : "scale(1)",
-                        }}
-                        onClick={() => setForm({ ...form, color: c })}
-                      />
-                    ))}
+                  <Label id="event-color-label">{t("颜色", "Color")}</Label>
+                  <div
+                    role="group"
+                    aria-labelledby="event-color-label"
+                    className="flex flex-wrap gap-1.5 mt-2"
+                  >
+                    {SCHEDULE_COLORS.map((c) => {
+                      const name = SCHEDULE_COLOR_NAMES[c];
+                      const colorLabel = name ? (lang === "zh" ? name.zh : name.en) : c;
+                      const selected = form.color === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          aria-label={colorLabel}
+                          aria-pressed={selected}
+                          className="w-7 h-7 rounded-full border-2 transition-all shrink-0 min-h-[32px] min-w-[32px]"
+                          style={{
+                            backgroundColor: c,
+                            borderColor: selected ? "var(--foreground)" : "transparent",
+                            transform: selected ? "scale(1.15)" : "scale(1)",
+                          }}
+                          onClick={() => setForm({ ...form, color: c })}
+                        />
+                      );
+                    })}
                     <button
                       type="button"
-                      className="w-6 h-6 rounded-full border-2 border-dashed border-[#d1cdc4] flex items-center justify-center text-[10px] text-[#8a847a] hover:border-[#8a847a] transition-colors shrink-0"
+                      aria-label={t("使用默认颜色", "Use default color")}
+                      aria-pressed={!form.color}
+                      className="w-7 h-7 rounded-full border-2 border-dashed border-border flex items-center justify-center text-[10px] text-muted-foreground hover:border-foreground transition-colors shrink-0 min-h-[32px] min-w-[32px]"
                       onClick={() => setForm({ ...form, color: "" })}
                       title={t("使用默认颜色", "Use default")}
                     >
@@ -458,9 +504,9 @@ export default function SchedulePage() {
                 </div>
                 {/* Recurrence */}
                 <div>
-                  <Label>{t("重复", "Repeat")}</Label>
+                  <Label htmlFor="event-recurrence">{t("重复", "Repeat")}</Label>
                   <Select value={form.recurrence_type} onValueChange={(v) => setForm({ ...form, recurrence_type: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="event-recurrence"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">{t("不重复", "No repeat")}</SelectItem>
                       <SelectItem value="daily">{t("每天", "Daily")}</SelectItem>
@@ -475,6 +521,7 @@ export default function SchedulePage() {
                         const selected = form.recurrence_days.includes(dayNum);
                         return (
                           <Button key={d} type="button" variant={selected ? "default" : "secondary"} size="sm" className="h-7 w-7 p-0 text-xs"
+                            aria-pressed={selected}
                             onClick={() => setForm(f => ({ ...f, recurrence_days: selected ? f.recurrence_days.filter(x => x !== dayNum) : [...f.recurrence_days, dayNum] }))}>
                             {d}
                           </Button>
@@ -484,15 +531,15 @@ export default function SchedulePage() {
                   )}
                   {form.recurrence_type !== "none" && (
                     <div className="mt-2">
-                      <Label className="text-xs">{t("结束日期（可选，不填则生成未来12个月）", "End date (optional, defaults to 12 months)")}</Label>
-                      <Input type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
+                      <Label htmlFor="event-recurrence-end" className="text-xs">{t("结束日期（可选，不填则生成未来12个月）", "End date (optional, defaults to 12 months)")}</Label>
+                      <Input id="event-recurrence-end" type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
                     </div>
                   )}
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleSave} className="flex-1">{t("保存", "Save")}{editingIsSeries ? t("（整个系列）", " (entire series)") : ""}</Button>
                   {editingItem && (
-                    <Button variant="destructive" size="icon" onClick={handleDelete}>
+                    <Button variant="destructive" size="icon" onClick={handleDelete} aria-label={t("删除事件", "Delete event")}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   )}
@@ -510,24 +557,25 @@ export default function SchedulePage() {
           <MonthView baseDate={baseDate} events={displayEvents} onEdit={openEdit} onCreateAt={handleCreateAt} />
         ) : (
           /* Day/Week Grid View */
-          <div className="border border-[#e4e1d7] rounded-[9px] overflow-hidden bg-white">
-            {/* Day headers */}
-            <div className={`grid ${gridCols} border-b border-[#e4e1d7] bg-[#faf9f4]`}>
-              <div className="p-2 text-xs text-muted-foreground" />
-              {days.map((d) => {
-                const isToday = format(d, "yyyy-MM-dd") === todayStr;
-                return (
-                  <div key={d.toISOString()} className={`p-1.5 text-center border-l ${isToday ? "border-[#5b88b5]/30 bg-[#e1eaf4]/50" : "border-[#e4e1d7]"}`}>
-                    <div className={`text-[10px] ${isToday ? "text-[#5b88b5] font-semibold" : "text-[#8a847a]"}`}>
-                      {format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}
+          <div className="border border-border rounded-[9px] overflow-hidden bg-card overflow-x-auto">
+            <div className="min-w-[600px] sm:min-w-0">
+              {/* Day headers */}
+              <div className={`grid ${gridCols} border-b border-border bg-muted/40`}>
+                <div className="p-2 text-xs text-muted-foreground" />
+                {days.map((d) => {
+                  const isToday = format(d, "yyyy-MM-dd") === todayStr;
+                  return (
+                    <div key={d.toISOString()} className={`p-1.5 text-center border-l ${isToday ? "border-[#5b88b5]/30 bg-[#e1eaf4]/50" : "border-border"}`}>
+                      <div className={`text-[10px] ${isToday ? "text-[#5b88b5] font-semibold" : "text-muted-foreground"}`}>
+                        {format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}
+                      </div>
+                      <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : "text-foreground"}`}>
+                        {format(d, "dd")}
+                      </div>
                     </div>
-                    <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : "text-[#1f1a14]"}`}>
-                      {format(d, "dd")}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
             {/* Scrollable time grid */}
             <div ref={scrollRef} className="max-h-[calc(100vh-220px)] overflow-y-auto relative">
@@ -567,6 +615,7 @@ export default function SchedulePage() {
               </div>
             </div>
           </div>
+        </div>
         )}
 
         {/* Time distribution analysis */}

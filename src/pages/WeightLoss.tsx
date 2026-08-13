@@ -243,9 +243,9 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
           <DialogContent>
             <DialogHeader><DialogTitle>{t("记录体重", "Log Weight")}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>{t("日期", "Date")}</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-              <div><Label>{t("体重", "Weight")} (kg)</Label><Input type="number" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder={lang === "zh" ? "如 65.5" : "e.g. 65.5"} /></div>
-              <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+              <div><Label htmlFor="wl-weight-date">{t("日期", "Date")}</Label><Input id="wl-weight-date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              <div><Label htmlFor="wl-weight-value">{t("体重", "Weight")} (kg)</Label><Input id="wl-weight-value" type="number" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder={lang === "zh" ? "如 65.5" : "e.g. 65.5"} /></div>
+              <div><Label htmlFor="wl-weight-notes">{t("备注", "Notes")}</Label><Input id="wl-weight-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
               <Button className="w-full" onClick={() => {
                 if (!form.weight) return;
                 saveMutation.mutate({ date: form.date, weight: Number(form.weight), notes: form.notes || null });
@@ -400,11 +400,11 @@ function MeasurementTracker() {
           <DialogContent>
             <DialogHeader><DialogTitle>{t("记录围度", "Log Measurements")} (cm)</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label>{t("日期", "Date")}</Label><Input type="date" value={form.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              <div><Label htmlFor="wl-measure-date">{t("日期", "Date")}</Label><Input id="wl-measure-date" type="date" value={form.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
               {MEASUREMENT_FIELDS.map(({ key, label }) => (
                 <div key={key}>
-                  <Label>{MEASUREMENT_LABELS[label] || label} (cm)</Label>
-                  <Input type="number" step="0.1" value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                  <Label htmlFor={`wl-measure-${key}`}>{MEASUREMENT_LABELS[label] || label} (cm)</Label>
+                  <Input id={`wl-measure-${key}`} type="number" step="0.1" value={form[key] || ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
                 </div>
               ))}
               <Button className="w-full" onClick={() => {
@@ -522,15 +522,15 @@ export default function WeightLossPage() {
           <CardHeader><CardTitle className="text-base">{t("设置", "Settings")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2">
-              <Label className="shrink-0">{t("进食开始", "Eating starts at")}</Label>
-              <Input type="number" min={0} max={23} value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-20" />
+              <Label htmlFor="wl-eating-start-h" className="shrink-0">{t("进食开始", "Eating starts at")}</Label>
+              <Input id="wl-eating-start-h" type="number" min={0} max={23} value={editStart} onChange={(e) => setEditStart(e.target.value)} className="w-20" aria-label={t("时", "Hour")} />
               <span className="text-sm text-muted-foreground">{t("时", "h")}</span>
-              <Input type="number" min={0} max={59} step={5} value={editStartMin} onChange={(e) => setEditStartMin(e.target.value)} className="w-20" />
+              <Input id="wl-eating-start-m" type="number" min={0} max={59} step={5} value={editStartMin} onChange={(e) => setEditStartMin(e.target.value)} className="w-20" aria-label={t("分", "Minute")} />
               <span className="text-sm text-muted-foreground">{t("分", "m")}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Label className="shrink-0">{t("目标体重", "Target Weight")}</Label>
-              <Input type="number" step="0.1" value={editTarget} onChange={(e) => setEditTarget(e.target.value)} className="w-24" placeholder="kg" />
+              <Label htmlFor="wl-target-weight" className="shrink-0">{t("目标体重", "Target Weight")}</Label>
+              <Input id="wl-target-weight" type="number" step="0.1" value={editTarget} onChange={(e) => setEditTarget(e.target.value)} className="w-24" placeholder="kg" />
               <span className="text-sm text-muted-foreground">kg</span>
             </div>
             <Button size="sm" onClick={handleSaveSettings}>{t("保存设置", "Save Settings")}</Button>

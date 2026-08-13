@@ -20,7 +20,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useState } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLang } from "@/contexts/LanguageContext";
@@ -34,6 +34,9 @@ export function MobileNav() {
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
   const focusMode = (settings as any)?.app_focus_mode || "full";
+  const morePanelId = useId();
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const primaryItems = focusMode === "civil_service"
     ? [
@@ -76,35 +79,92 @@ export function MobileNav() {
     return !hiddenFeatures.includes(key);
   });
 
+  useEffect(() => {
+    if (!showMore) return;
+
+    const panel = panelRef.current;
+    const focusables = () =>
+      Array.from(
+        panel?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      ).filter((el) => el.offsetParent !== null);
+
+    const first = focusables()[0];
+    first?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowMore(false);
+        moreButtonRef.current?.focus();
+        return;
+      }
+      if (e.key !== "Tab" || !panel) return;
+      const items = focusables();
+      if (items.length === 0) return;
+      const firstEl = items[0];
+      const lastEl = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === firstEl) {
+        e.preventDefault();
+        lastEl.focus();
+      } else if (!e.shiftKey && document.activeElement === lastEl) {
+        e.preventDefault();
+        firstEl.focus();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [showMore]);
+
   return (
     <>
       {/* More panel overlay */}
       {showMore && (
-        <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden" onClick={() => setShowMore(false)}>
-          <div className="absolute bottom-16 left-0 right-0 bg-card border-t border-border p-4" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+          onClick={() => {
+            setShowMore(false);
+            moreButtonRef.current?.focus();
+          }}
+          role="presentation"
+        >
+          <div
+            ref={panelRef}
+            id={morePanelId}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("更多功能菜单", "More features menu")}
+            className="absolute bottom-16 left-0 right-0 bg-card border-t border-border p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="grid grid-cols-5 gap-3">
               {visibleMoreItems.map((item) => (
                 <NavLink
                   key={item.url}
                   to={item.url}
                   end={item.url === "/"}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                   activeClassName="text-primary"
+                  onClick={() => setShowMore(false)}
                 >
                   <item.icon className="h-5 w-5" />
                   <span className="text-[10px]">{item.title}</span>
                 </NavLink>
               ))}
               <button
+                type="button"
                 onClick={toggleLang}
-                className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Languages className="h-5 w-5" />
                 <span className="text-[10px]">{lang === "zh" ? "EN" : "中文"}</span>
               </button>
               <button
+                type="button"
                 onClick={signOut}
-                className="flex flex-col items-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
+                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
               >
                 <LogOut className="h-5 w-5" />
                 <span className="text-[10px]">{t("退出", "Exit")}</span>
@@ -122,7 +182,7 @@ export function MobileNav() {
               key={item.url}
               to={item.url}
               end={item.url === "/"}
-              className="flex flex-col items-center gap-0.5 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex flex-col items-center justify-center gap-0.5 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
               activeClassName="text-primary"
             >
               <item.icon className="h-5 w-5" />
@@ -130,9 +190,14 @@ export function MobileNav() {
             </NavLink>
           ))}
           <button
+            ref={moreButtonRef}
+            type="button"
             onClick={() => setShowMore(!showMore)}
+            aria-expanded={showMore}
+            aria-controls={morePanelId}
+            aria-label={t("更多菜单", "More menu")}
             className={cn(
-              "flex flex-col items-center gap-0.5 p-1.5 transition-colors",
+              "flex flex-col items-center justify-center gap-0.5 p-1.5 transition-colors",
               showMore ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >

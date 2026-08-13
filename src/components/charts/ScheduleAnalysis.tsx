@@ -69,8 +69,8 @@ export function ScheduleAnalysis({ events }: { events: ScheduleEvent[] }) {
       <CardContent>
         <ResponsiveContainer width="100%" height={Math.max(120, data.length * 36)}>
           <BarChart data={data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-            <XAxis type="number" tick={{ fontSize: 10, fill: "#8a847a" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}h`} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#1f1a14" }} tickLine={false} axisLine={false} width={110} />
+            <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}h`} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--foreground))" }} tickLine={false} axisLine={false} width={110} />
             <Tooltip content={<ChartTooltip formatter={(v) => `${v}h`} />} />
             <Bar dataKey="hours" radius={[0, 4, 4, 0]} barSize={16}>
               {data.map((entry, i) => (

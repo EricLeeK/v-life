@@ -56,7 +56,10 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
             return (
               <div
                 key={day.toISOString()}
-                className={`min-h-[80px] p-1 border-r border-border last:border-r-0 cursor-pointer hover:bg-muted/30 transition-colors ${
+                role="button"
+                tabIndex={0}
+                aria-label={format(day, "yyyy-MM-dd")}
+                className={`min-h-[80px] p-1 border-r border-border last:border-r-0 cursor-pointer hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary transition-colors ${
                   !isCurrentMonth ? "opacity-40" : ""
                 }`}
                 onClick={() => {
@@ -65,6 +68,16 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
                   const end = new Date(day);
                   end.setHours(10, 0, 0, 0);
                   onCreateAt(start, end);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    const start = new Date(day);
+                    start.setHours(9, 0, 0, 0);
+                    const end = new Date(day);
+                    end.setHours(10, 0, 0, 0);
+                    onCreateAt(start, end);
+                  }
                 }}
               >
                 <div className={`text-xs text-right mb-1 ${
@@ -80,9 +93,19 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
                     return (
                       <div
                         key={ev.id}
-                        className="text-[10px] truncate rounded px-1 cursor-pointer"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`${ev.title} ${format(new Date(ev.start_time), "HH:mm")}`}
+                        className="text-[10px] truncate rounded px-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                         style={{ background: color + "20", color }}
                         onClick={(e) => { e.stopPropagation(); onEdit(ev); }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            onEdit(ev);
+                          }
+                        }}
                       >
                         {format(new Date(ev.start_time), "HH:mm")} {ev.title}
                       </div>

@@ -12,19 +12,19 @@ export function FortunePageHeader(props: {
       <div className="min-w-0">
         <Link
           to="/fortune"
-          className="mb-3 inline-flex items-center gap-1 text-[12px] text-[#8a847a] transition-colors hover:text-[#1f1a14]"
+          className="mb-3 inline-flex items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           {props.backLabel}
         </Link>
         <h1
-          className="font-bold leading-[1.1] tracking-tight text-[#1f1a14] heading-font"
+          className="font-bold leading-[1.1] tracking-tight text-foreground heading-font"
           style={{ fontSize: "clamp(28px, 3.6vw, 48px)" }}
         >
           {props.title}
         </h1>
         {props.subtitle && (
-          <p className="mt-2 text-[14px] text-[#8a847a]">{props.subtitle}</p>
+          <p className="mt-2 text-[14px] text-muted-foreground">{props.subtitle}</p>
         )}
       </div>
       {props.actions && <div className="shrink-0">{props.actions}</div>}

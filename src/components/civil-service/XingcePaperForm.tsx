@@ -125,25 +125,25 @@ export function XingcePaperForm({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
-          <Label>{t("做题日期", "Date")}</Label>
-          <Input type="date" value={takenDate} onChange={(e) => setTakenDate(e.target.value)} />
+          <Label htmlFor="xingce-date">{t("做题日期", "Date")}</Label>
+          <Input id="xingce-date" type="date" value={takenDate} onChange={(e) => setTakenDate(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>{t("套题来源", "Source")}</Label>
-          <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder={t("如：粉笔模考", "e.g. Fenbi mock")} />
+          <Label htmlFor="xingce-source">{t("套题来源", "Source")}</Label>
+          <Input id="xingce-source" value={source} onChange={(e) => setSource(e.target.value)} placeholder={t("如：粉笔模考", "e.g. Fenbi mock")} />
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm text-[#1f1a14]">
+      <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
         <Checkbox checked={isMock} onCheckedChange={(v) => setIsMock(!!v)} />
         {t("正式模考", "Formal mock")}
       </label>
 
       <div className="space-y-2">
-        <Label>{t("各科题量 / 正确数", "Total / Correct by subject")}</Label>
-        <div className="space-y-2">
+        <Label htmlFor="xingce-subject-scores">{t("各科题量 / 正确数", "Total / Correct by subject")}</Label>
+        <div id="xingce-subject-scores" className="space-y-2">
           {XINGCE_SUBJECT_FIELDS.map((f) => (
             <div key={f.key} className="grid grid-cols-[1fr_72px_72px] gap-2 items-center">
-              <span className="text-[13px] text-[#1f1a14]">{f.labelZh}</span>
+              <span className="text-[13px] text-foreground">{f.labelZh}</span>
               <Input
                 type="number"
                 min={0}
@@ -163,7 +163,7 @@ export function XingcePaperForm({
             </div>
           ))}
         </div>
-        <p className="text-[12px] text-[#8a847a] font-mono-data">
+        <p className="text-[12px] text-muted-foreground font-mono-data">
           {t("总正确率", "Overall")}: {preview.overallRate != null ? `${preview.overallRate}%` : "—"}
           {" · "}
           {t("判断", "Judgment")}: {preview.judgmentRate != null ? `${preview.judgmentRate}%` : "—"}
@@ -174,15 +174,15 @@ export function XingcePaperForm({
 
       <div className="grid grid-cols-3 gap-2">
         <div className="space-y-2">
-          <Label>{t("用时(分)", "Minutes")}</Label>
-          <Input type="number" min={0} className="font-mono-data" value={duration} onChange={(e) => setDuration(e.target.value)} />
+          <Label htmlFor="xingce-duration">{t("用时(分)", "Minutes")}</Label>
+          <Input id="xingce-duration" type="number" min={0} className="font-mono-data" value={duration} onChange={(e) => setDuration(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>{t("总分", "Score")}</Label>
-          <Input type="number" className="font-mono-data" value={totalScore} onChange={(e) => setTotalScore(e.target.value)} />
+          <Label htmlFor="xingce-score">{t("总分", "Score")}</Label>
+          <Input id="xingce-score" type="number" className="font-mono-data" value={totalScore} onChange={(e) => setTotalScore(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>{t("击败率%", "Beat %")}</Label>
+          <Label htmlFor="xingce-beat">{t("击败率%", "Beat %")}</Label>
           <Input type="number" min={0} max={100} className="font-mono-data" value={beatRate} onChange={(e) => setBeatRate(e.target.value)} />
         </div>
       </div>

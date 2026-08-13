@@ -79,12 +79,12 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#e4e1d7] bg-white">
+    <Sidebar collapsible="icon" className="border-r border-border bg-white">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <img src="/v-life-icon.svg" alt="V-Life" className="h-8 w-8 rounded-lg shrink-0" />
           {!collapsed && (
-            <span className="text-base font-semibold text-[#1f1a14] tracking-tight">
+            <span className="text-base font-semibold text-foreground tracking-tight">
               V-Life
             </span>
           )}
@@ -101,8 +101,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
-                      activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
+                      className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                      activeClassName="bg-muted text-foreground font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
@@ -122,8 +122,8 @@ export function AppSidebar() {
               <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
                 <NavLink
                   to="/shop"
-                  className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
-                  activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
+                  className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                  activeClassName="bg-muted text-foreground font-medium"
                 >
                   <ShoppingBag className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>{t("商店", "Shop")}</span>}
@@ -138,8 +138,8 @@ export function AppSidebar() {
             <SidebarMenuButton asChild tooltip={t("设置", "Settings")}>
               <NavLink
                 to="/settings"
-                className="text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] transition-colors rounded-md"
-                activeClassName="bg-[#f4f3ee] text-[#1f1a14] font-medium"
+                className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                activeClassName="bg-muted text-foreground font-medium"
               >
                 <Settings className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>{t("设置", "Settings")}</span>}

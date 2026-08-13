@@ -97,7 +97,7 @@ export default function CaloriesPage() {
             <div className="relative bg-[#e6e3d9] rounded-[11px] p-[5px] shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.07)] overflow-hidden">
               {/* Sliding indicator */}
               <div
-                className="absolute top-[5px] bottom-[5px] bg-white rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                className="absolute top-[5px] bottom-[5px] bg-white rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out"
                 style={{
                   width: `calc((100% - 10px) / ${n})`,
                   left: `calc(5px + ${selIdx} * (100% - 10px) / ${n})`,
@@ -114,14 +114,14 @@ export default function CaloriesPage() {
                       onClick={() => setSelectedDate(d)}
                       className="flex-1 flex flex-col items-center justify-center py-2.5 z-10 transition-colors duration-200 cursor-pointer"
                     >
-                      <span className={`text-[10px] font-medium leading-none ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
+                      <span className={`text-[10px] font-medium leading-none ${isSelected ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
                         {format(new Date(d), "EEE", { locale: lang === "zh" ? zhCN : undefined })}
                       </span>
-                      <span className={`text-[13px] font-semibold leading-none mt-1 ${isSelected ? 'text-[#1f1a14]' : 'text-[#8a847a]'}`}>
+                      <span className={`text-[13px] font-semibold leading-none mt-1 ${isSelected ? 'text-foreground font-bold' : 'text-muted-foreground'}`}>
                         {format(new Date(d), "dd")}
                       </span>
                       {isToday && (
-                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-[#5b88b5]' : 'text-[#8a847a]'}`}>{t("今天", "Today")}</span>
+                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-[#5b88b5]' : 'text-muted-foreground'}`}>{t("今天", "Today")}</span>
                       )}
                     </button>
                   );
@@ -150,7 +150,7 @@ export default function CaloriesPage() {
           return (
             <div key={key}>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium flex items-center gap-1.5">{MealIcon && <MealIcon className="h-4 w-4 text-[#8a847a]" />}{MEAL_TYPES_DISPLAY[key] || label} <span className="text-muted-foreground ml-1">{mealTotal} kcal</span></h3>
+                <h3 className="text-sm font-medium flex items-center gap-1.5">{MealIcon && <MealIcon className="h-4 w-4 text-muted-foreground" />}{MEAL_TYPES_DISPLAY[key] || label} <span className="text-muted-foreground ml-1">{mealTotal} kcal</span></h3>
                 <Dialog open={dialogOpen && form.meal_type === key} onOpenChange={(o) => { if (o) { setForm({ ...form, meal_type: key }); setDialogOpen(true); } else { setDialogOpen(false); setEditingItem(null); } }}>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-7"><Plus className="h-3 w-3 mr-1" />{t("添加", "Add")}</Button>
@@ -158,15 +158,15 @@ export default function CaloriesPage() {
                   <DialogContent>
                     <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("添加", "Add")} {t("记录", "Record")}</DialogTitle></DialogHeader>
                     <div className="space-y-3">
-                      <div><Label>{t("食物名称", "Food Name")} *</Label><Input value={form.food_name} onChange={(e) => setForm({ ...form, food_name: e.target.value })} /></div>
-                      <div><Label>{t("热量", "Calories")} (kcal) *</Label><Input type="number" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} /></div>
-                      <div><Label>{t("餐次", "Meal Type")}</Label>
+                      <div><Label htmlFor="cal-food-name">{t("食物名称", "Food Name")} *</Label><Input id="cal-food-name" value={form.food_name} onChange={(e) => setForm({ ...form, food_name: e.target.value })} /></div>
+                      <div><Label htmlFor="cal-calories">{t("热量", "Calories")} (kcal) *</Label><Input id="cal-calories" type="number" value={form.calories} onChange={(e) => setForm({ ...form, calories: e.target.value })} /></div>
+                      <div><Label htmlFor="cal-meal-type">{t("餐次", "Meal Type")}</Label>
                         <Select value={form.meal_type} onValueChange={(v) => setForm({ ...form, meal_type: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{MEAL_TYPES.map((m) => { const MIcon = MEAL_TYPE_ICONS[m.key]; return <SelectItem key={m.key} value={m.key}><span className="flex items-center gap-1.5">{MIcon && <MIcon className="h-4 w-4 text-[#8a847a]" />}{MEAL_TYPES_DISPLAY[m.key] || m.label}</span></SelectItem>; })}</SelectContent>
+                          <SelectTrigger id="cal-meal-type"><SelectValue /></SelectTrigger>
+                          <SelectContent>{MEAL_TYPES.map((m) => { const MIcon = MEAL_TYPE_ICONS[m.key]; return <SelectItem key={m.key} value={m.key}><span className="flex items-center gap-1.5">{MIcon && <MIcon className="h-4 w-4 text-muted-foreground" />}{MEAL_TYPES_DISPLAY[m.key] || m.label}</span></SelectItem>; })}</SelectContent>
                         </Select>
                       </div>
-                      <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                      <div><Label htmlFor="cal-notes">{t("备注", "Notes")}</Label><Input id="cal-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                       <Button onClick={handleSave} className="w-full">{t("保存", "Save")}</Button>
                     </div>
                   </DialogContent>
@@ -184,12 +184,12 @@ export default function CaloriesPage() {
                           <span className="text-xs text-[#d17847] font-medium">{r.calories} kcal</span>
                         </div>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                          <Button variant="ghost" size="icon" aria-label={t("编辑食物记录", "Edit food record")} className="h-7 w-7" onClick={() => {
                             setEditingItem(r);
                             setForm({ food_name: r.food_name, calories: String(r.calories), meal_type: r.meal_type, notes: r.notes || "" });
                             setDialogOpen(true);
                           }}><Edit2 className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteMutation.mutate(r.id)}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={t("删除食物记录", "Delete food record")} className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(r.id)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </CardContent>
                     </Card>

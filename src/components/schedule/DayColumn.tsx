@@ -12,6 +12,22 @@ export function DayColumn({ day, events, onEdit, onDragEnd, onCreateAt, isToday 
   const colRef = useRef<HTMLDivElement>(null);
   const dragCreate = useRef<{ startY: number; indicator: HTMLDivElement | null } | null>(null);
 
+  const createAtDefaultTime = useCallback(() => {
+    const start = new Date(day);
+    start.setHours(9, 0, 0, 0);
+    const end = new Date(start);
+    end.setHours(10, 0, 0, 0);
+    onCreateAt(start, end);
+  }, [day, onCreateAt]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    // Only when the column itself is focused (not an event child)
+    if ((e.target as HTMLElement) !== colRef.current) return;
+    e.preventDefault();
+    createAtDefaultTime();
+  }, [createAtDefaultTime]);
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     const col = colRef.current;
@@ -66,9 +82,13 @@ export function DayColumn({ day, events, onEdit, onDragEnd, onCreateAt, isToday 
   return (
     <div
       ref={colRef}
-      className={`schedule-day-column border-l relative ${isToday ? "bg-[#f0ede6]" : "border-[#e4e1d7]/50"}`}
+      role="region"
+      tabIndex={0}
+      aria-label={`Schedule for ${day.toLocaleDateString()}. Press Enter or Space to add an event at 9:00 AM.`}
+      className={`schedule-day-column border-l relative focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary ${isToday ? "bg-accent/40" : "border-border/50"}`}
       style={{ height: `${TOTAL_HOURS * HOUR_HEIGHT}px` }}
       onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
     >
       {Array.from({ length: TOTAL_HOURS * 2 }).map((_, i) => (
         <div key={i} className="absolute left-0 right-0 border-b"

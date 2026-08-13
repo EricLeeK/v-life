@@ -1127,6 +1127,7 @@ export type Database = {
           calorie_target: number | null
           created_at: string
           custom_thought_tags: Json | null
+          day_start_hour: number | null
           display_name: string | null
           exchange_rate_jpy_to_cny: number | null
           exchange_rate_updated_at: string | null
@@ -1156,6 +1157,7 @@ export type Database = {
           calorie_target?: number | null
           created_at?: string
           custom_thought_tags?: Json | null
+          day_start_hour?: number | null
           display_name?: string | null
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null
@@ -1185,6 +1187,7 @@ export type Database = {
           calorie_target?: number | null
           created_at?: string
           custom_thought_tags?: Json | null
+          day_start_hour?: number | null
           display_name?: string | null
           exchange_rate_jpy_to_cny?: number | null
           exchange_rate_updated_at?: string | null

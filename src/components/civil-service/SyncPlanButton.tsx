@@ -60,7 +60,7 @@ export function SyncPlanButton({ item, size = "sm" }: { item: CivilPlanItem; siz
   }
 
   return (
-    <Button size="sm" variant="outline" className="border-[#e4e1d7] text-[12px]" onClick={handleSync} disabled={loading}>
+    <Button size="sm" variant="outline" className="border-border text-[12px]" onClick={handleSync} disabled={loading}>
       <RefreshCw className={`h-3 w-3 mr-1 ${loading ? "animate-spin" : ""}`} />
       {synced ? t("重新同步", "Re-sync") : t("同步", "Sync")}
     </Button>

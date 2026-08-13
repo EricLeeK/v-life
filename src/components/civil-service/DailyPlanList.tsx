@@ -82,22 +82,22 @@ export function DailyPlanList() {
 
   return (
     <>
-      <Card className="border-[#e4e1d7] bg-white">
+      <Card className="border-border bg-white">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-base heading-font">
             {t("每日计划", "Daily plan")}
-            <span className="ml-2 text-[13px] font-normal text-[#8a847a] font-mono-data">
+            <span className="ml-2 text-[13px] font-normal text-muted-foreground font-mono-data">
               {done}/{items.length}
             </span>
           </CardTitle>
-          <Button size="sm" variant="outline" className="border-[#e4e1d7]" onClick={() => setAddOpen(true)}>
+          <Button size="sm" variant="outline" className="border-border" onClick={() => setAddOpen(true)}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             {t("额外项", "Extra")}
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
           {items.length === 0 && (
-            <p className="text-[13px] text-[#8a847a] py-4 text-center">
+            <p className="text-[13px] text-muted-foreground py-4 text-center">
               {t("今天还没有计划，可在科目页添加，或点「额外项」", "No plans today — add in subjects or as extra")}
             </p>
           )}
@@ -106,7 +106,7 @@ export function DailyPlanList() {
             return (
               <div
                 key={item.id}
-                className={`flex items-start gap-2 rounded-lg border border-[#e4e1d7] p-3 ${item.is_completed ? "opacity-60" : ""}`}
+                className={`flex items-start gap-2 rounded-lg border border-border p-3 ${item.is_completed ? "opacity-60" : ""}`}
               >
                 <Checkbox
                   checked={item.is_completed}
@@ -114,8 +114,8 @@ export function DailyPlanList() {
                   className="mt-0.5"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm text-[#1f1a14] ${item.is_completed ? "line-through" : ""}`}>{item.title}</p>
-                  <p className="text-[11px] text-[#8a847a] mt-0.5">
+                  <p className={`text-sm text-foreground ${item.is_completed ? "line-through" : ""}`}>{item.title}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     {groupLabel}
                     {item.subject_tag ? ` · ${item.subject_tag}` : ""}
                     {item.source === "daily_extra" ? ` · ${t("今日额外", "Extra")}` : ""}
@@ -171,7 +171,7 @@ export function DailyPlanList() {
           <DialogHeader>
             <DialogTitle className="heading-font">{t("同步更新主模式？", "Also sync to main mode?")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-[#8a847a]">
+          <p className="text-sm text-muted-foreground">
             {t("该计划已同步到日程或待办，是否一并更新？", "This plan was synced. Update the linked schedule/todo too?")}
           </p>
           <DialogFooter className="gap-2 sm:gap-0">

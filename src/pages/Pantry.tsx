@@ -104,19 +104,19 @@ export default function PantryPage() {
             <DialogContent>
               <DialogHeader><DialogTitle>{editingItem ? t("编辑食材", "Edit Item") : t("添加食材", "Add Item")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
-                <div><Label>{t("名称", "Name")} *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                <div><Label>{t("分类", "Category")} *</Label>
+                <div><Label htmlFor="pantry-name">{t("名称", "Name")} *</Label><Input id="pantry-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                <div><Label htmlFor="pantry-category">{t("分类", "Category")} *</Label>
                   <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger id="pantry-category"><SelectValue /></SelectTrigger>
                     <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c] || c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div><Label>{t("数量", "Quantity")}</Label><Input value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder={lang === "zh" ? "如：1袋、500g" : "e.g. 1 bag, 500g"} /></div>
+                <div><Label htmlFor="pantry-quantity">{t("数量", "Quantity")}</Label><Input id="pantry-quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder={lang === "zh" ? "如：1袋、500g" : "e.g. 1 bag, 500g"} /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>{t("购入日期", "Purchase Date")}</Label><Input type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
-                  <div><Label>{t("保质期", "Expiry Date")}</Label><Input type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></div>
+                  <div><Label htmlFor="pantry-purchase-date">{t("购入日期", "Purchase Date")}</Label><Input id="pantry-purchase-date" type="date" value={form.purchase_date} onChange={(e) => setForm({ ...form, purchase_date: e.target.value })} /></div>
+                  <div><Label htmlFor="pantry-expiry-date">{t("保质期", "Expiry Date")}</Label><Input id="pantry-expiry-date" type="date" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} /></div>
                 </div>
-                <div><Label>{t("备注", "Notes")}</Label><Input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+                <div><Label htmlFor="pantry-notes">{t("备注", "Notes")}</Label><Input id="pantry-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
                 <Button onClick={handleSave} className="w-full" disabled={createMutation.isPending || updateMutation.isPending}>{t("保存", "Save")}</Button>
               </div>
             </DialogContent>
@@ -142,8 +142,8 @@ export default function PantryPage() {
                           {item.expiry_date && <span className="text-xs text-muted-foreground">{format(new Date(item.expiry_date), "MM/dd")}</span>}
                         </div>
                         <div className="flex gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}><Edit2 className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={t("编辑食材", "Edit item")} className="h-7 w-7" onClick={() => openEdit(item)}><Edit2 className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={t("删除食材", "Delete item")} className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(item.id)}><Trash2 className="h-3 w-3" /></Button>
                         </div>
                       </CardContent>
                     </Card>

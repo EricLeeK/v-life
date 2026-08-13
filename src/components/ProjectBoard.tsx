@@ -131,36 +131,36 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#f4f3ee]">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-[#e4e1d7] shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 bg-card border-b border-border shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <h2 className="text-base font-semibold text-[#1f1a14] truncate">{project.name}</h2>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-[#8a847a] hover:text-[#1f1a14]" onClick={onEditProject}>
+          <h2 className="text-base font-semibold text-foreground truncate">{project.name}</h2>
+          <Button variant="ghost" size="icon" aria-label={t("项目设置", "Project settings")} title={t("项目设置", "Project settings")} className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={onEditProject}>
             <Settings2 className="h-3.5 w-3.5" />
           </Button>
         </div>
         <div className="flex items-center gap-3">
           {/* Slim progress bar */}
           <div className="flex items-center gap-2">
-            <div className="w-24 h-1.5 rounded-full bg-[#e4e1d7]">
+            <div className="w-24 h-1.5 rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-[#1f1a14]/40 transition-all"
+                className="h-full rounded-full bg-primary/60 transition-all"
                 style={{ width: `${project.progress || 0}%` }}
               />
             </div>
-            <span className="text-xs font-medium text-[#8a847a] w-8 text-right">{project.progress || 0}%</span>
+            <span className="text-xs font-medium text-muted-foreground w-8 text-right">{project.progress || 0}%</span>
           </div>
           {/* Filter buttons */}
-          <div className="flex items-center gap-0.5 bg-[#f4f3ee] rounded-lg p-0.5">
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5">
             {filters.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
                 className={`text-[11px] px-2.5 py-1 rounded-md transition-colors font-medium ${
                   filter === f.key
-                    ? "bg-white text-[#1f1a14] shadow-sm"
-                    : "text-[#8a847a] hover:text-[#1f1a14]"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {f.label}

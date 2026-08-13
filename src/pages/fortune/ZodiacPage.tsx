@@ -126,7 +126,7 @@ export default function ZodiacPage() {
         </div>
 
         <div className="card-premium p-6">
-          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
             {lang === "zh" ? ZODIAC_LABELS[sign].zh : ZODIAC_LABELS[sign].en}
             {loadingHoro ? (lang === "zh" ? " · 拉取中…" : " · Loading…") : ""}
           </p>

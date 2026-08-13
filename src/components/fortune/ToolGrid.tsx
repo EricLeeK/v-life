@@ -97,14 +97,14 @@ export function ToolGrid({ lang }: { lang: "zh" | "en" }) {
           <Icon className={`h-4 w-4 ${item.color}`} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-semibold text-[#1f1a14]">
+          <p className="text-[14px] font-semibold text-foreground">
             {lang === "zh" ? item.zh : item.en}
           </p>
-          <p className="mt-0.5 text-[12px] text-[#8a847a]">
+          <p className="mt-0.5 text-[12px] text-muted-foreground">
             {lang === "zh" ? item.descZh : item.descEn}
           </p>
         </div>
-        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#e4e1d7] transition-colors group-hover:text-[#8a847a]" />
+        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#e4e1d7] transition-colors group-hover:text-muted-foreground" />
       </button>
     );
   };
@@ -115,12 +115,12 @@ export function ToolGrid({ lang }: { lang: "zh" | "en" }) {
         <div className="mb-4 flex items-baseline justify-between">
           <div>
             <h2
-              className="font-bold leading-tight text-[#1f1a14] heading-font"
+              className="font-bold leading-tight text-foreground heading-font"
               style={{ fontSize: "clamp(22px, 2.6vw, 28px)" }}
             >
               {lang === "zh" ? "西式占卜" : "Western"}
             </h2>
-            <p className="mt-1 text-[12px] text-[#8a847a]">
+            <p className="mt-1 text-[12px] text-muted-foreground">
               {lang === "zh" ? "塔罗与星座" : "Tarot & zodiac"}
             </p>
           </div>
@@ -132,19 +132,19 @@ export function ToolGrid({ lang }: { lang: "zh" | "en" }) {
         <div className="mb-4 flex items-baseline justify-between">
           <div>
             <h2
-              className="font-bold leading-tight text-[#1f1a14] heading-font"
+              className="font-bold leading-tight text-foreground heading-font"
               style={{ fontSize: "clamp(22px, 2.6vw, 28px)" }}
             >
               {lang === "zh" ? "中式运势" : "Chinese"}
             </h2>
-            <p className="mt-1 text-[12px] text-[#8a847a]">
+            <p className="mt-1 text-[12px] text-muted-foreground">
               {lang === "zh" ? "易经、求签、生肖与日柱" : "I Ching, lots, shengxiao & day pillar"}
             </p>
           </div>
           <button
             type="button"
             onClick={() => navigate("/fortune/history")}
-            className="inline-flex items-center gap-1 text-[12px] text-[#8a847a] transition-colors hover:text-[#1f1a14]"
+            className="inline-flex items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <History className="h-3.5 w-3.5" />
             {lang === "zh" ? "我的记录" : "History"}

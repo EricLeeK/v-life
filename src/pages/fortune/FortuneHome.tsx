@@ -196,17 +196,17 @@ export default function FortuneHome() {
       <div className="space-y-10">
         <section>
           <h1
-            className="font-bold leading-[1.1] tracking-tight text-[#1f1a14] heading-font"
+            className="font-bold leading-[1.1] tracking-tight text-foreground heading-font"
             style={{ fontSize: "clamp(34px, 4.8vw, 64px)" }}
           >
             {t("今日运势", "Today's Fortune")}
           </h1>
-          <p className="mt-2 text-[14px] text-[#8a847a]">{lunarLabelForDate(date, lang)}</p>
+          <p className="mt-2 text-[14px] text-muted-foreground">{lunarLabelForDate(date, lang)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-[#e4e1d7] bg-white px-2.5 py-0.5 text-[11px] font-medium text-[#8a847a]"
+                className="rounded-full border border-border bg-white px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
               >
                 {tag}
               </span>
@@ -245,12 +245,12 @@ export default function FortuneHome() {
           <div className="flex items-baseline justify-between">
             <div>
               <h2
-                className="font-bold leading-tight text-[#1f1a14] heading-font"
+                className="font-bold leading-tight text-foreground heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("今日解读", "Today's Reading")}
               </h2>
-              <p className="mt-1 text-[12px] text-[#8a847a]">
+              <p className="mt-1 text-[12px] text-muted-foreground">
                 {t("当日生成一次，刷新沿用", "Generated once per day")}
               </p>
             </div>

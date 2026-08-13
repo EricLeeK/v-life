@@ -50,7 +50,7 @@ export default function LotPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
           <div className="card-premium flex flex-col items-center justify-center gap-4 p-8">
             <div
-              className={`flex h-36 w-full items-center justify-center rounded-lg bg-[#f4f3ee] text-5xl ${
+              className={`flex h-36 w-full items-center justify-center rounded-lg bg-muted text-5xl ${
                 shaking ? "animate-pulse" : ""
               }`}
             >
@@ -63,18 +63,18 @@ export default function LotPage() {
 
           <div className="card-premium min-h-[320px] p-6">
             {!lot ? (
-              <div className="flex min-h-[280px] items-center justify-center text-[14px] text-[#8a847a]">
+              <div className="flex min-h-[280px] items-center justify-center text-[14px] text-muted-foreground">
                 {t("签文会显示在这里", "Your lot verse will appear here")}
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-baseline gap-3">
-                  <p className="font-mono-data text-[28px] font-semibold text-[#1f1a14]">
+                  <p className="font-mono-data text-[28px] font-semibold text-foreground">
                     {lang === "zh" ? lot.rankZh : lot.rankEn}
                   </p>
-                  <span className="text-[12px] text-[#8a847a]">#{lot.id}</span>
+                  <span className="text-[12px] text-muted-foreground">#{lot.id}</span>
                 </div>
-                <p className="text-[16px] text-[#1f1a14]">
+                <p className="text-[16px] text-foreground">
                   {lang === "zh" ? lot.verseZh : lot.verseEn}
                 </p>
                 <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">

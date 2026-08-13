@@ -95,7 +95,7 @@ export default function ShengxiaoPage() {
           }
         />
 
-        <p className="text-[13px] text-[#8a847a]">
+        <p className="text-[13px] text-muted-foreground">
           {almanac.dayPillar} · {almanac.chongsha} · {relationLabel}
         </p>
 
@@ -107,7 +107,7 @@ export default function ShengxiaoPage() {
         </div>
 
         <div className="card-premium p-6">
-          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
             {lang === "zh" ? `属${SHENGXIAO_LABELS[animal].zh}` : SHENGXIAO_LABELS[animal].en}
           </p>
           <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c]">

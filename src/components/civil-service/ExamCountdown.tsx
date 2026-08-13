@@ -41,15 +41,15 @@ export function ExamCountdown() {
 
   return (
     <>
-      <Card className="border-[#e4e1d7] bg-white overflow-hidden">
+      <Card className="border-border bg-white overflow-hidden">
         <CardContent className="p-0">
           {nearest ? (
             <>
               <div className="flex items-center justify-between gap-3 border-b border-[#eeeae1] px-5 py-3.5">
-                <p className="heading-font text-base font-medium text-[#1f1a14]">
+                <p className="heading-font text-base font-medium text-foreground">
                   {t("考试倒计时", "Exam countdown")}
                 </p>
-                <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="border-[#e4e1d7]">
+                <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="border-border">
                   {t("管理考试", "Manage exams")}
                 </Button>
               </div>
@@ -68,12 +68,12 @@ export function ExamCountdown() {
                   </div>
                   <p className="text-sm font-medium text-[#5d574f]">{nearest.exam.name}</p>
                   <div className="mt-1 flex items-baseline gap-2">
-                    <span className="heading-font text-5xl font-semibold tracking-tight text-[#1f1a14] sm:text-6xl">
+                    <span className="heading-font text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
                       {Math.max(nearest.daysLeft, 0)}
                     </span>
-                    <span className="text-lg text-[#8a847a]">{t("天", "days")}</span>
+                    <span className="text-lg text-muted-foreground">{t("天", "days")}</span>
                   </div>
-                  <p className="mt-2 text-[13px] text-[#8a847a]">
+                  <p className="mt-2 text-[13px] text-muted-foreground">
                     {t("考试日", "Exam date")} {format(parseISO(nearest.exam.exam_date), "yyyy-MM-dd")}
                     {nearest.daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
                   </p>
@@ -111,8 +111,8 @@ export function ExamCountdown() {
           ) : (
             <div className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="heading-font text-xl text-[#1f1a14]">{t("还没有考试倒计时", "No exam countdown yet")}</p>
-                <p className="text-[13px] text-[#8a847a] mt-1">{t("添加国考 / 省考 / 事业编目标", "Add national / provincial / public institution exams")}</p>
+                <p className="heading-font text-xl text-foreground">{t("还没有考试倒计时", "No exam countdown yet")}</p>
+                <p className="text-[13px] text-muted-foreground mt-1">{t("添加国考 / 省考 / 事业编目标", "Add national / provincial / public institution exams")}</p>
               </div>
               <Button onClick={() => setManageOpen(true)} className="bg-[#d17847] hover:bg-[#c06838] text-white">
                 <Plus className="h-4 w-4 mr-1" />
@@ -171,13 +171,13 @@ function ExamManageDialog({
 
         <div className="space-y-3">
           {exams.map((exam) => (
-            <div key={exam.id} className="rounded-lg border border-[#e4e1d7] p-3 flex items-start justify-between gap-2">
+            <div key={exam.id} className="rounded-lg border border-border p-3 flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   {exam.is_primary && <Star className="h-3.5 w-3.5 text-[#d17847] fill-[#d17847]" />}
-                  <p className="font-medium text-[#1f1a14] truncate">{exam.name}</p>
+                  <p className="font-medium text-foreground truncate">{exam.name}</p>
                 </div>
-                <p className="text-[12px] text-[#8a847a] mt-0.5">
+                <p className="text-[12px] text-muted-foreground mt-0.5">
                   {exam.exam_type} · {exam.exam_date}
                 </p>
               </div>
@@ -213,21 +213,21 @@ function ExamManageDialog({
             </div>
           ))}
           {exams.length === 0 && (
-            <p className="text-[13px] text-[#8a847a] text-center py-2">{t("暂无考试", "No exams yet")}</p>
+            <p className="text-[13px] text-muted-foreground text-center py-2">{t("暂无考试", "No exams yet")}</p>
           )}
         </div>
 
-        <div className="border-t border-[#e4e1d7] pt-4 space-y-3">
-          <p className="text-sm font-medium text-[#1f1a14]">{t("添加考试", "Add exam")}</p>
+        <div className="border-t border-border pt-4 space-y-3">
+          <p className="text-sm font-medium text-foreground">{t("添加考试", "Add exam")}</p>
           <div className="space-y-2">
-            <Label>{t("名称", "Name")}</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("如：2027国考", "e.g. 2027 National Exam")} />
+            <Label htmlFor="exam-name">{t("名称", "Name")}</Label>
+            <Input id="exam-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("如：2027国考", "e.g. 2027 National Exam")} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-2">
-              <Label>{t("类型", "Type")}</Label>
+              <Label htmlFor="exam-type">{t("类型", "Type")}</Label>
               <Select value={form.exam_type} onValueChange={(v) => setForm({ ...form, exam_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="exam-type"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {EXAM_TYPES.map((type) => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
@@ -236,25 +236,23 @@ function ExamManageDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t("考试日", "Exam date")}</Label>
-              <Input type="date" value={form.exam_date} onChange={(e) => setForm({ ...form, exam_date: e.target.value })} />
+              <Label htmlFor="exam-date">{t("考试日", "Exam date")}</Label>
+              <Input id="exam-date" type="date" value={form.exam_date} onChange={(e) => setForm({ ...form, exam_date: e.target.value })} />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>{t("备注", "Notes")}</Label>
-            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+            <Label htmlFor="exam-notes">{t("备注", "Notes")}</Label>
+            <Textarea id="exam-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
           </div>
-          <label className="flex items-center gap-2 text-sm text-[#1f1a14]">
+          <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
             <Checkbox checked={form.is_primary} onCheckedChange={(v) => setForm({ ...form, is_primary: !!v })} />
             {t("标记为重点目标", "Mark as priority target")}
           </label>
-        </div>
-
-        <DialogFooter>
-          <Button onClick={handleCreate} className="bg-[#d17847] hover:bg-[#c06838] text-white">
+          <Button onClick={handleCreate} disabled={createExam.isPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            {createExam.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
             {t("添加", "Add")}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

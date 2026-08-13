@@ -117,12 +117,12 @@ export default function ThoughtsPage() {
               <DialogHeader><DialogTitle>{editingItem ? t("编辑随想", "Edit Thought") : t("新随想", "New Thought")}</DialogTitle></DialogHeader>
               <div className="space-y-3">
                 <div className="grid grid-cols-[1fr_60px] gap-2">
-                  <div><Label>{t("标题（可选）", "Title (optional)")}</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                  <div><Label>{t("图标", "Icon")}</Label><Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="😊" className="text-center" /></div>
+                  <div><Label htmlFor="thought-title">{t("标题（可选）", "Title (optional)")}</Label><Input id="thought-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+                  <div><Label htmlFor="thought-icon">{t("图标", "Icon")}</Label><Input id="thought-icon" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="😊" className="text-center" /></div>
                 </div>
-                <div><Label>{t("内容", "Content")} * (Markdown)</Label><Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} /></div>
+                <div><Label htmlFor="thought-content">{t("内容", "Content")} * (Markdown)</Label><Textarea id="thought-content" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} /></div>
                 <div>
-                  <Label>{t("标签", "Tags")}</Label>
+                  <Label htmlFor="thought-new-tag">{t("标签", "Tags")}</Label>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {allTags.map(({ tag }) => {
                       const TagIcon = TAG_ICON_MAP[tag] || Tag;
@@ -140,7 +140,7 @@ export default function ThoughtsPage() {
                     ))}
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <Input value={form.newTag} onChange={(e) => setForm({ ...form, newTag: e.target.value })}
+                    <Input id="thought-new-tag" value={form.newTag} onChange={(e) => setForm({ ...form, newTag: e.target.value })}
                       placeholder={t("添加新标签", "Add new tag")} className="flex-1 h-8 text-xs"
                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addCustomTag())} />
                     <Button size="sm" className="h-8 text-xs" onClick={addCustomTag}>+</Button>
@@ -166,8 +166,8 @@ export default function ThoughtsPage() {
                       <span className="font-medium text-sm truncate">{thought.title || thought.content.split("\n")[0].slice(0, 30)}</span>
                     </div>
                     <div className="flex gap-1 shrink-0">
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openEdit(thought)}><Edit2 className="h-3 w-3" /></Button>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteMutation.mutate(thought.id)}><Trash2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={t("编辑随想", "Edit thought")} className="h-7 w-7" onClick={() => openEdit(thought)}><Edit2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={t("删除随想", "Delete thought")} className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(thought.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   </div>
                   <div className="prose prose-sm prose-invert max-w-none text-sm text-muted-foreground">

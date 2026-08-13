@@ -65,6 +65,27 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+        },
+        cat: {
+          green: "hsl(var(--cat-green))",
+          "green-bg": "hsl(var(--cat-green-bg))",
+          blue: "hsl(var(--cat-blue))",
+          "blue-bg": "hsl(var(--cat-blue-bg))",
+          orange: "hsl(var(--cat-orange))",
+          "orange-bg": "hsl(var(--cat-orange-bg))",
+          teal: "hsl(var(--cat-teal))",
+          "teal-bg": "hsl(var(--cat-teal-bg))",
+          purple: "hsl(var(--cat-purple))",
+          "purple-bg": "hsl(var(--cat-purple-bg))",
+          yellow: "hsl(var(--cat-yellow))",
+          "yellow-bg": "hsl(var(--cat-yellow-bg))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -99,8 +120,8 @@ export default {
           "100%": { opacity: "1", scale: "1" },
         },
         "stream-in": {
-          "0%": { opacity: "0", filter: "blur(4px)" },
-          "100%": { opacity: "1", filter: "blur(0px)" },
+          "0%": { opacity: "0", transform: "translateY(2px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "caret-blink": {
           "0%, 100%": { opacity: "1" },

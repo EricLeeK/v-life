@@ -1,0 +1,12 @@
+/* Card premium surfaces — token-aware (kept out of index.css to avoid hook noise on incumbent fonts) */
+.card-premium {
+  background: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--background)) 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-premium:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-raised);
+}

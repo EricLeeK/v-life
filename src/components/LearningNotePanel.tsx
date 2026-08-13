@@ -39,6 +39,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
+import { noteTextFromAiChat } from "@/lib/aiNoteResponse";
 import type { Tables } from "@/integrations/supabase/types";
 
 type LearningCourse = Tables<"learning_courses">;
@@ -231,7 +232,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
             { role: "system", content: systemInstruction },
             { role: "user", content: form.content },
           ],
-          mode: "direct",
+          mode: "note",
         },
       });
 
@@ -241,8 +242,15 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
         return;
       }
 
-      let content = typeof data?.content === "string" ? data.content.trim() : "";
-      content = content.replace(/^```markdown\s*/i, "").replace(/^```\s*/i, "").replace(/\s*```$/i, "").trim();
+      const content = noteTextFromAiChat(data);
+      if (!content) {
+        toast({
+          title: t("AI 优化失败", "AI Optimization Failed"),
+          description: t("没有收到可用的文本结果，请重试。", "No usable text was returned. Please try again."),
+          variant: "destructive",
+        });
+        return;
+      }
 
       setGeneratedResult(content);
       toast({ title: t("AI 优化成功", "AI Optimization Complete") });

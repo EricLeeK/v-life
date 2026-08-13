@@ -84,6 +84,8 @@ export default defineConfig(() => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Canonical module registry shared with Supabase edge functions.
+      "@modules": path.resolve(__dirname, "./supabase/functions/_shared/moduleRegistry.ts"),
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },

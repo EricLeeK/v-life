@@ -12,14 +12,14 @@ export function DailyHero(props: {
   const { meta, body, overallPercent, lang, needsProfile } = props;
   return (
     <div className="card-premium overflow-hidden">
-      <div className="flex items-center justify-between border-b border-[#e4e1d7] px-5 py-3">
+      <div className="flex items-center justify-between border-b border-border px-5 py-3">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-[#c49840]" />
-          <span className="text-[14px] font-semibold text-[#1f1a14]">
+          <span className="text-[14px] font-semibold text-foreground">
             {lang === "zh" ? "今日解读" : "Today's reading"}
           </span>
         </div>
-        {meta ? <span className="text-[11px] text-[#8a847a]">{meta}</span> : null}
+        {meta ? <span className="text-[11px] text-muted-foreground">{meta}</span> : null}
       </div>
       <div className="grid gap-6 p-5 lg:grid-cols-[1fr_220px] lg:items-start">
         <div className="min-w-0">
@@ -40,11 +40,11 @@ export function DailyHero(props: {
             </Link>
           )}
         </div>
-        <div className="rounded-lg bg-[#f4f3ee] px-4 py-4 text-center">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-[#8a847a]">
+        <div className="rounded-lg bg-muted px-4 py-4 text-center">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {lang === "zh" ? "整体" : "Overall"}
           </p>
-          <p className="mt-1 font-mono-data text-[40px] font-semibold leading-none text-[#1f1a14]">
+          <p className="mt-1 font-mono-data text-[40px] font-semibold leading-none text-foreground">
             {overallPercent}
           </p>
         </div>

@@ -1,10 +1,11 @@
-export const PLATFORM_URLS: Record<string, string> = {
-  gemini: "https://generativelanguage.googleapis.com/v1beta/openai",
-  openai: "https://api.openai.com/v1",
-  deepseek: "https://api.deepseek.com/v1",
-  siliconflow: "https://api.siliconflow.cn/v1",
-  custom: "",
-};
+import {
+  PLATFORM_URLS,
+  getHostedConfig as readHostedConfig,
+  pickByokCreds,
+  type ByokSettings,
+} from "./hostedRouting.ts";
+
+export { PLATFORM_URLS };
 
 export const GLOBAL_HOSTED_RPM = 120;
 
@@ -50,12 +51,7 @@ type AdminClient = {
   from: (table: string) => any;
 };
 
-type SettingsRow = {
-  ai_api_key?: string | null;
-  ai_platform?: string | null;
-  ai_model?: string | null;
-  ai_base_url?: string | null;
-} | null;
+type SettingsRow = ByokSettings;
 
 type EntitlementRow = {
   status: string;
@@ -77,14 +73,8 @@ export function jsonError(
   });
 }
 
-export function getHostedConfig() {
-  const enabled = Deno.env.get("HOSTED_AI_ENABLED") !== "false";
-  const apiKey = Deno.env.get("HOSTED_AI_API_KEY") || "";
-  const platform = Deno.env.get("HOSTED_AI_PLATFORM") || "gemini";
-  const model = Deno.env.get("HOSTED_AI_MODEL") || "gemini-3.1-flash-lite";
-  const baseUrlOverride = Deno.env.get("HOSTED_AI_BASE_URL") || "";
-  const baseUrl = baseUrlOverride || PLATFORM_URLS[platform] || PLATFORM_URLS.gemini;
-  return { enabled, apiKey, platform, model, baseUrl };
+export function getHostedConfig(isVision = false) {
+  return readHostedConfig(isVision, Deno.env);
 }
 
 function shanghaiDatePrefix(d = new Date()): string {
@@ -183,38 +173,6 @@ export async function assertHostedQuota(
   return null;
 }
 
-function byokCreds(settings: SettingsRow, isVision = false): ResolvedAi | null {
-  if (isVision) {
-    const apiKey = settings?.ai_vision_api_key || settings?.ai_api_key;
-    if (!apiKey) return null;
-    const platform = settings?.ai_vision_platform || settings?.ai_platform || "gemini";
-    const defaultModel = platform === "deepseek" ? "deepseek-chat" : "gemini-2.5-flash";
-    const model = settings?.ai_vision_model || settings?.ai_model || defaultModel;
-    const baseUrl = settings?.ai_vision_base_url || settings?.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.gemini;
-    return {
-      mode: "byok",
-      apiKey,
-      platform,
-      model,
-      baseUrl,
-    };
-  }
-
-  const apiKey = settings?.ai_api_key || settings?.ai_vision_api_key;
-  if (!apiKey) return null;
-  const platform = settings?.ai_platform || "deepseek";
-  const defaultModel = platform === "deepseek" ? "deepseek-chat" : "gemini-2.5-flash";
-  const model = settings?.ai_model || defaultModel;
-  const baseUrl = settings?.ai_base_url || PLATFORM_URLS[platform] || PLATFORM_URLS.deepseek;
-  return {
-    mode: "byok",
-    apiKey,
-    platform,
-    model,
-    baseUrl,
-  };
-}
-
 export async function resolveAiCredentials(
   adminSb: AdminClient,
   userId: string,
@@ -239,15 +197,7 @@ export async function resolveAiCredentials(
     entitlement.status === "active" &&
     (!entitlement.expires_at || new Date(entitlement.expires_at).getTime() > now);
 
-  if (entitlementActive && entitlement) {
-    if (!hosted.apiKey) {
-      return {
-        ok: false,
-        status: 503,
-        code: "HOSTED_NOT_PROVISIONED",
-        message: "托管 AI 暂未配置完成，请稍后或改用自己的 API Key",
-      };
-    }
+  if (entitlementActive && entitlement && hosted.apiKey) {
     const quotaFail = await assertHostedQuota(adminSb, userId, entitlement);
     if (quotaFail) return quotaFail;
     return {
@@ -267,8 +217,19 @@ export async function resolveAiCredentials(
     };
   }
 
-  const byok = byokCreds(settings, isVision);
+  const byok = pickByokCreds(settings, isVision);
   if (byok) return { ok: true, creds: byok };
+
+  if (entitlementActive && !hosted.apiKey) {
+    return {
+      ok: false,
+      status: 503,
+      code: "HOSTED_NOT_PROVISIONED",
+      message: isVision
+        ? "托管视觉模型暂未配置完成，请稍后或在设置中填写 Gemini API Key"
+        : "托管文本模型暂未配置完成，请稍后或在设置中填写 DeepSeek API Key",
+    };
+  }
 
   if (entitlement?.status === "disabled") {
     return {
@@ -283,7 +244,9 @@ export async function resolveAiCredentials(
     ok: false,
     status: 400,
     code: "AI_NOT_CONFIGURED",
-    message: "请开通托管 AI，或在设置中填写自己的 API Key",
+    message: isVision
+      ? "请配置视觉模型（Gemini），或开通托管 AI"
+      : "请开通托管 AI，或在设置中填写 DeepSeek API Key",
   };
 }
 

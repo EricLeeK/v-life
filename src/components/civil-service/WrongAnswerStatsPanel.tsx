@@ -111,19 +111,19 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
 
   if (wrongs.length === 0) {
     return (
-      <Card className="border-[#e4e1d7] bg-white">
+      <Card className="border-border bg-white">
         <CardHeader className="pb-2">
           <CardTitle className="text-base heading-font">{t("错题统计", "Wrong answer stats")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-[13px] text-[#8a847a] text-center py-8">{t("暂无错题数据", "No wrong answers yet")}</p>
+          <p className="text-[13px] text-muted-foreground text-center py-8">{t("暂无错题数据", "No wrong answers yet")}</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border-[#e4e1d7] bg-white">
+    <Card className="border-border bg-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font">{t("错题统计", "Wrong answer stats")}</CardTitle>
       </CardHeader>
@@ -141,9 +141,9 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
         </div>
 
         <div>
-          <p className="text-[12px] text-[#8a847a] mb-2">{t("板块分布", "By subject tag")}</p>
+          <p className="text-[12px] text-muted-foreground mb-2">{t("板块分布", "By subject tag")}</p>
           {tagChartData.every((d) => d.count === 0) ? (
-            <p className="text-[13px] text-[#8a847a] text-center py-4">{t("暂无板块数据", "No tag data")}</p>
+            <p className="text-[13px] text-muted-foreground text-center py-4">{t("暂无板块数据", "No tag data")}</p>
           ) : (
             <div className="w-full" style={{ height: tagChartHeight }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -153,7 +153,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
                   margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "#8a847a" }} />
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis
                     type="category"
                     dataKey="name"
@@ -179,16 +179,16 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
 
         {typeChartData.length > 0 && (
           <div>
-            <p className="text-[12px] text-[#8a847a] mb-2">{t("题型分布", "By question type")}</p>
+            <p className="text-[12px] text-muted-foreground mb-2">{t("题型分布", "By question type")}</p>
             <div className="flex flex-wrap gap-2">
               {typeChartData.map((row, i) => (
                 <div
                   key={row.name}
-                  className="rounded-lg border border-[#e4e1d7] px-3 py-2 min-w-[88px]"
+                  className="rounded-lg border border-border px-3 py-2 min-w-[88px]"
                   style={{ borderLeftWidth: 3, borderLeftColor: TAG_COLORS[i % TAG_COLORS.length] }}
                 >
-                  <p className="text-[11px] text-[#8a847a]">{row.name}</p>
-                  <p className="font-mono-data text-lg text-[#1f1a14]">{row.count}</p>
+                  <p className="text-[11px] text-muted-foreground">{row.name}</p>
+                  <p className="font-mono-data text-lg text-foreground">{row.count}</p>
                 </div>
               ))}
             </div>
@@ -197,9 +197,9 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
 
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-[12px] text-[#8a847a]">{t("新增趋势", "New wrong answers")}</p>
+            <p className="text-[12px] text-muted-foreground">{t("新增趋势", "New wrong answers")}</p>
             <Tabs value={trendRange} onValueChange={(v) => setTrendRange(v as TrendRange)}>
-              <TabsList className="bg-[#f4f3ee] h-8">
+              <TabsList className="bg-muted h-8">
                 <TabsTrigger value="30" className="text-[11px] px-2 h-6">
                   {t("近30天", "30d")}
                 </TabsTrigger>
@@ -215,10 +215,10 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
                 <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 10, fill: "#8a847a" }}
+                  tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
                   interval={trendRange === "90" ? 13 : 4}
                 />
-                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#8a847a" }} width={28} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={28} />
                 <Tooltip
                   formatter={(value: number) => [value, t("新增", "New")]}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e1d7" }}
@@ -253,8 +253,8 @@ function StatTile({
   accent?: string;
 }) {
   return (
-    <div className="rounded-lg bg-[#f4f3ee] p-3">
-      <p className="text-[11px] text-[#8a847a]">{label}</p>
+    <div className="rounded-lg bg-muted p-3">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
       <p className="font-mono-data text-xl mt-0.5" style={{ color: accent || "#1f1a14" }}>
         {value}
       </p>

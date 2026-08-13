@@ -37,6 +37,8 @@ serve(async (req) => {
     }
 
     const isFortune = mode === "fortune";
+    const isNote = mode === "note";
+    const isPlainText = isFortune || isNote;
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -80,30 +82,31 @@ serve(async (req) => {
     }
     const { apiKey, model, baseUrl } = resolved.creds;
 
-    // Inject today's date into the last user message for context
+    // Inject today's date into the last user message for context (agent/fortune only)
     const today = new Date().toISOString().split("T")[0];
-    const enrichedMessages = messages.map((m: any, i: number) => {
-      if (i === messages.length - 1 && m.role === "user") {
-        // Handle multimodal messages (with images)
-        if (Array.isArray(m.content)) {
-          const parts = m.content.map((part: any, pi: number) => {
-            if (part.type === "text" && pi === 0) {
-              return { ...part, text: `[当前日期: ${today}] ${part.text}` };
+    const enrichedMessages = isNote
+      ? messages
+      : messages.map((m: any, i: number) => {
+          if (i === messages.length - 1 && m.role === "user") {
+            if (Array.isArray(m.content)) {
+              const parts = m.content.map((part: any, pi: number) => {
+                if (part.type === "text" && pi === 0) {
+                  return { ...part, text: `[当前日期: ${today}] ${part.text}` };
+                }
+                return part;
+              });
+              return { ...m, content: parts };
             }
-            return part;
-          });
-          return { ...m, content: parts };
-        }
-        return { ...m, content: `[当前日期: ${today}] ${m.content}` };
-      }
-      return m;
-    });
+            return { ...m, content: `[当前日期: ${today}] ${m.content}` };
+          }
+          return m;
+        });
 
     const systemPrompt = isFortune ? FORTUNE_SYSTEM_PROMPT : SYSTEM_PROMPT;
     const dayStartHour = Number(settings?.day_start_hour) || 0;
 
     // ── ReAct tools (non-fortune only) ──────────────────────────────
-    const agentTools = isFortune ? null : [
+    const agentTools = isPlainText ? null : [
       {
         type: "function" as const,
         function: {
@@ -160,8 +163,8 @@ serve(async (req) => {
       };
       if (withTools && agentTools) {
         body.tools = agentTools;
-      } else if (!isFortune) {
-        // force JSON only on plain (non-tool) turns — some providers reject tools+response_format together
+      } else if (!isPlainText) {
+        // force JSON only on agent turns — some providers reject tools+response_format together
         body.response_format = { type: "json_object" };
       }
       const resp = await fetch(`${baseUrl}/chat/completions`, {
@@ -180,11 +183,12 @@ serve(async (req) => {
       return await resp.json();
     }
 
-    const baseMessages = [{ role: "system", content: systemPrompt }, ...enrichedMessages];
+    const baseMessages = isNote
+      ? [...enrichedMessages]
+      : [{ role: "system", content: systemPrompt }, ...enrichedMessages];
 
     let result: any;
-    if (isFortune) {
-      // Fortune: single-shot plain text.
+    if (isPlainText) {
       result = await chatOnce(baseMessages, false);
     } else {
       // ── Agent loop (max 6 turns; last turn forced without tools) ──
@@ -226,15 +230,15 @@ serve(async (req) => {
     if (resolved.creds.mode === "hosted") {
       await recordHostedUsage(adminSb, {
         userId: user.id,
-        functionName: isFortune ? "ai-chat-fortune" : "ai-chat",
+        functionName: isNote ? "ai-chat-note" : isFortune ? "ai-chat-fortune" : "ai-chat",
         model,
         usage: result.usage,
         estimateFrom: content,
       });
     }
 
-    if (isFortune) {
-      return new Response(JSON.stringify({ content, mode: "fortune" }), {
+    if (isFortune || isNote) {
+      return new Response(JSON.stringify({ content, mode: isNote ? "note" : "fortune" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

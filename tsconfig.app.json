@@ -19,6 +19,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@modules": [
+        "./supabase/functions/_shared/moduleRegistry.ts"
       ]
     },
     "skipLibCheck": true,
@@ -30,6 +33,7 @@
     "useDefineForClassFields": true
   },
   "include": [
-    "src"
+    "src",
+    "supabase/functions/_shared/moduleRegistry.ts"
   ]
 }

@@ -12,25 +12,25 @@ export function ReviewQueueCard() {
   const review = useReviewCivilWrongAnswer();
 
   return (
-    <Card className="border-[#e4e1d7] bg-white">
+    <Card className="border-border bg-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font flex items-center gap-2">
           <BookMarked className="h-4 w-4 text-[#d17847]" />
           {t("今日待复习", "Due today")}
-          <span className="ml-1 text-[13px] font-normal text-[#8a847a] font-mono-data">{due.length}</span>
+          <span className="ml-1 text-[13px] font-normal text-muted-foreground font-mono-data">{due.length}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {due.length === 0 && (
-          <p className="text-[13px] text-[#8a847a] text-center py-4">
+          <p className="text-[13px] text-muted-foreground text-center py-4">
             {t("今天没有到期错题", "No wrong answers due today")}
           </p>
         )}
         {due.map((item) => (
-          <div key={item.id} className="rounded-lg border border-[#e4e1d7] p-3 flex items-start justify-between gap-2">
+          <div key={item.id} className="rounded-lg border border-border p-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-[#1f1a14] truncate">{item.title}</p>
-              <p className="text-[11px] text-[#8a847a] mt-0.5">
+              <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {item.subject_tag || item.subject_group}
                 {item.knowledge_point ? ` · ${item.knowledge_point}` : ""}
                 {" · "}
@@ -41,7 +41,7 @@ export function ReviewQueueCard() {
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 text-[12px] border-[#e4e1d7]"
+                className="h-8 text-[12px] border-border"
                 onClick={async () => {
                   await review.markReviewed(item);
                   toast({ title: t("已复习，下次后推", "Reviewed, next date advanced") });

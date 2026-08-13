@@ -76,21 +76,21 @@ export default function AuthPage() {
 
   if (showForgot) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f4f3ee] p-4">
-        <Card className="w-full max-w-sm border-[#e4e1d7] shadow-none">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm border-border shadow-none">
           <CardHeader>
-            <CardTitle className="text-center text-[#1f1a14]">{t("重置密码", "Reset Password")}</CardTitle>
+            <CardTitle className="text-center text-foreground">{t("重置密码", "Reset Password")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-[#8a847a]">{t("邮箱", "Email")}</Label>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
+                <Label htmlFor="forgot-email" className="text-muted-foreground">{t("邮箱", "Email")}</Label>
+                <Input id="forgot-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
               </div>
-              <Button type="submit" className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
                 {loading ? t("发送中...", "Sending...") : t("发送重置邮件", "Send Reset Email")}
               </Button>
-              <Button type="button" variant="ghost" className="w-full text-[#8a847a]" onClick={() => setShowForgot(false)}>
+              <Button type="button" variant="ghost" className="w-full text-muted-foreground" onClick={() => setShowForgot(false)}>
                 {t("返回登录", "Back to Login")}
               </Button>
             </form>
@@ -101,34 +101,34 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f3ee] p-4">
-      <Card className="w-full max-w-sm border-[#e4e1d7] shadow-none">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm border-border shadow-none">
         <CardHeader>
           <div className="flex items-center justify-center gap-2 mb-2">
             <img src="/v-life-icon.svg" alt="V-Life" className="h-10 w-10 rounded-lg" />
-            <span className="text-xl font-semibold text-[#1f1a14]">V-Life</span>
+            <span className="text-xl font-semibold text-foreground">V-Life</span>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login">
-            <TabsList className="grid w-full grid-cols-2 bg-[#ebe8e0] p-1 h-10">
-              <TabsTrigger value="login" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1f1a14] data-[state=active]:shadow-sm text-[#8a847a]">{t("登录", "Login")}</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-md data-[state=active]:bg-white data-[state=active]:text-[#1f1a14] data-[state=active]:shadow-sm text-[#8a847a]">{t("注册", "Sign Up")}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-muted p-1 h-10">
+              <TabsTrigger value="login" className="rounded-md data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground">{t("登录", "Login")}</TabsTrigger>
+              <TabsTrigger value="signup" className="rounded-md data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground">{t("注册", "Sign Up")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">{t("邮箱", "Email")}</Label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
+                  <Label htmlFor="login-email" className="text-muted-foreground">{t("邮箱", "Email")}</Label>
+                  <Input id="login-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">{t("密码", "Password")}</Label>
-                  <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                  <Label htmlFor="login-password" className="text-muted-foreground">{t("密码", "Password")}</Label>
+                  <Input id="login-password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
                 </div>
-                <Button type="submit" className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" disabled={loading}>
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
                   {loading ? t("登录中...", "Logging in...") : t("登录", "Login")}
                 </Button>
-                <Button type="button" variant="link" className="w-full text-sm text-[#8a847a]" onClick={() => setShowForgot(true)}>
+                <Button type="button" variant="link" className="w-full text-sm text-muted-foreground" onClick={() => setShowForgot(true)}>
                   {t("忘记密码？", "Forgot password?")}
                 </Button>
               </form>
@@ -136,24 +136,24 @@ export default function AuthPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignup} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">{t("邮箱", "Email")}</Label>
-                  <Input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
+                  <Label htmlFor="signup-email" className="text-muted-foreground">{t("邮箱", "Email")}</Label>
+                  <Input id="signup-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[#8a847a]">{t("密码", "Password")}</Label>
-                  <Input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t("至少6位", "At least 6 characters")} required minLength={6} />
+                  <Label htmlFor="signup-password" className="text-muted-foreground">{t("密码", "Password")}</Label>
+                  <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder={t("至少6位", "At least 6 characters")} required minLength={6} />
                 </div>
-                <Button type="submit" className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90 text-white" disabled={loading}>
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={loading}>
                   {loading ? t("注册中...", "Signing up...") : t("注册", "Sign Up")}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-          <div className="mt-6 pt-4 border-t border-[#e4e1d7]">
-            <Button type="button" variant="outline" className="w-full border-[#e4e1d7] text-[#8a847a] hover:bg-[#f4f3ee] hover:text-[#1f1a14] gap-2" onClick={handleGuestTour}>
+          <div className="mt-6 pt-4 border-t border-border">
+            <Button type="button" variant="outline" className="w-full border-border text-muted-foreground hover:bg-muted hover:text-foreground gap-2" onClick={handleGuestTour}>
               <Compass className="h-4 w-4" />{t("游客参观", "Guest Tour")}
             </Button>
-            <p className="text-xs text-center text-[#8a847a] mt-2">
+            <p className="text-xs text-center text-muted-foreground mt-2">
               {t("无需注册，直接体验完整功能", "No signup needed, explore all features")}
             </p>
           </div>

@@ -83,7 +83,7 @@ export default function TarotPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controls */}
           <div className="card-premium space-y-4 p-5">
-            <p className="text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+            <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
               {t("今天想问什么？", "What do you want to ask?")}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
@@ -95,7 +95,7 @@ export default function TarotPage() {
                   className={`rounded-lg border px-3 py-2.5 text-left text-[13px] transition-colors ${
                     topic === item.id
                       ? "border-[#1f1a14] bg-[#1f1a14] text-white"
-                      : "border-[#e4e1d7] bg-white text-[#1f1a14] hover:bg-[#f4f3ee]"
+                      : "border-border bg-white text-foreground hover:bg-muted"
                   }`}
                 >
                   {lang === "zh" ? item.zh : item.en}
@@ -118,7 +118,7 @@ export default function TarotPage() {
           <div className="card-premium min-h-[320px] p-5">
             {cards.length === 0 ? (
               <div className="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
-                <p className="text-[14px] text-[#8a847a]">
+                <p className="text-[14px] text-muted-foreground">
                   {t("选好问题后点抽牌，牌面会铺在这里", "Choose a question and draw — cards appear here")}
                 </p>
               </div>
@@ -128,12 +128,12 @@ export default function TarotPage() {
                   {cards.map((c) => (
                     <div
                       key={c.position}
-                      className="rounded-lg border border-[#e4e1d7] bg-[#f4f3ee] px-4 py-5 text-center"
+                      className="rounded-lg border border-border bg-muted px-4 py-5 text-center"
                     >
-                      <p className="text-[11px] uppercase tracking-wide text-[#8a847a]">
+                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
                         {lang === "zh" ? POS_LABEL[c.position].zh : POS_LABEL[c.position].en}
                       </p>
-                      <p className="mt-2 text-[16px] font-semibold text-[#1f1a14]">
+                      <p className="mt-2 text-[16px] font-semibold text-foreground">
                         {lang === "zh" ? c.card.nameZh : c.card.nameEn}
                       </p>
                       <p className="mt-1 text-[12px] text-[#c49840]">
@@ -152,7 +152,7 @@ export default function TarotPage() {
                   ))}
                 </div>
                 <div>
-                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-[#8a847a]">
+                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("解读", "Reading")}
                   </p>
                   <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">

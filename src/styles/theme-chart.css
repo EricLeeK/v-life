@@ -1,0 +1,21 @@
+/* Dark-mode chart/category tokens (supplement to index.css :root) */
+.dark {
+  --chart-1: 200 45% 62%;
+  --chart-2: 100 30% 55%;
+  --chart-3: 30 65% 60%;
+  --chart-4: 0 65% 58%;
+  --chart-5: 260 35% 68%;
+
+  --cat-green: 100 30% 55%;
+  --cat-green-bg: 100 20% 18%;
+  --cat-blue: 207 40% 62%;
+  --cat-blue-bg: 210 30% 18%;
+  --cat-orange: 22 60% 58%;
+  --cat-orange-bg: 24 35% 18%;
+  --cat-teal: 185 34% 55%;
+  --cat-teal-bg: 164 20% 16%;
+  --cat-purple: 256 30% 68%;
+  --cat-purple-bg: 265 25% 18%;
+  --cat-yellow: 40 50% 58%;
+  --cat-yellow-bg: 42 30% 16%;
+}

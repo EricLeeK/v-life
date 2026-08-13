@@ -224,9 +224,10 @@ export function WrongAnswerForm({
   return (
     <div className="space-y-3" onPaste={handlePaste}>
       <div className="space-y-2">
-        <Label>{t("拍照 / 图片", "Photo")}</Label>
+        <Label htmlFor="wrong-photo-input">{t("拍照 / 图片", "Photo")}</Label>
         <div className="flex flex-wrap gap-2">
           <input
+            id="wrong-photo-input"
             ref={fileRef}
             type="file"
             accept="image/*"
@@ -237,37 +238,37 @@ export function WrongAnswerForm({
               if (f) handleFile(f);
             }}
           />
-          <Button type="button" variant="outline" size="sm" className="border-[#e4e1d7]" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <Button type="button" variant="outline" size="sm" className="border-border" onClick={() => fileRef.current?.click()} disabled={uploading}>
             {uploading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Camera className="h-3.5 w-3.5 mr-1" />}
             {t("选图", "Pick")}
           </Button>
-          <Button type="button" variant="outline" size="sm" className="border-[#e4e1d7]" onClick={handleAiDraft} disabled={aiLoading || (!imageUrl && !previewDataUrl)}>
+          <Button type="button" variant="outline" size="sm" className="border-border" onClick={handleAiDraft} disabled={aiLoading || (!imageUrl && !previewDataUrl)}>
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
             {t("AI 识图填草稿", "AI draft")}
           </Button>
         </div>
-        <p className="text-[11px] text-[#8a847a]">{t("支持 Ctrl+V 粘贴图片", "Ctrl+V to paste image")}</p>
+        <p className="text-[11px] text-muted-foreground">{t("支持 Ctrl+V 粘贴图片", "Ctrl+V to paste image")}</p>
         {(previewDataUrl || imageUrl) && (
-          <img src={previewDataUrl || imageUrl} alt="" className="mt-2 max-h-40 rounded-md border border-[#e4e1d7] object-contain" />
+          <img src={previewDataUrl || imageUrl} alt="" className="mt-2 max-h-40 rounded-md border border-border object-contain" />
         )}
       </div>
 
       <div className="space-y-2">
-        <Label>{t("标题", "Title")}</Label>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Label htmlFor="wrong-title">{t("标题", "Title")}</Label>
+        <Input id="wrong-title" value={title} onChange={(e) => setTitle(e.target.value)} />
       </div>
       <div className="space-y-2">
-        <Label>{t("题干 / 摘录", "Content")}</Label>
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder={t("支持 LaTeX，如 $\\\\frac{a}{b}$", "LaTeX supported, e.g. $\\\\frac{a}{b}$")} />
+        <Label htmlFor="wrong-content">{t("题干 / 摘录", "Content")}</Label>
+        <Textarea id="wrong-content" value={content} onChange={(e) => setContent(e.target.value)} rows={3} placeholder={t("支持 LaTeX，如 $\\frac{a}{b}$", "LaTeX supported, e.g. $\\frac{a}{b}$")} />
       </div>
 
-      <div className="rounded-lg border border-[#e4e1d7] p-3 space-y-3">
-        <p className="text-[13px] font-medium text-[#1f1a14]">{t("题型与选项", "Question type & options")}</p>
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-[13px] font-medium text-foreground">{t("题型与选项", "Question type & options")}</p>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-2">
-            <Label>{t("题型", "Type")}</Label>
+            <Label htmlFor="wrong-type">{t("题型", "Type")}</Label>
             <Select value={questionType || "__none"} onValueChange={(v) => setQuestionType(v === "__none" ? "" : v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="wrong-type"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none">{t("未指定", "Unspecified")}</SelectItem>
                 <SelectItem value="choice">{t("选择题", "Choice")}</SelectItem>
@@ -280,18 +281,18 @@ export function WrongAnswerForm({
             <Label>{t("默认展示图", "Show image inline")}</Label>
             <div className="flex items-center gap-2 h-9">
               <Switch checked={imageRequired} onCheckedChange={setImageRequired} />
-              <span className="text-[12px] text-[#8a847a]">{imageRequired ? t("是", "Yes") : t("否", "No")}</span>
+              <span className="text-[12px] text-muted-foreground">{imageRequired ? t("是", "Yes") : t("否", "No")}</span>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-2">
-            <Label>{t("正确答案", "Correct answer")}</Label>
-            <Input value={correctAnswer} onChange={(e) => setCorrectAnswer(e.target.value)} placeholder="A / AB / 对" />
+            <Label htmlFor="wrong-correct-ans">{t("正确答案", "Correct answer")}</Label>
+            <Input id="wrong-correct-ans" value={correctAnswer} onChange={(e) => setCorrectAnswer(e.target.value)} placeholder="A / AB / 对" />
           </div>
           <div className="space-y-2">
-            <Label>{t("你的选择", "Your answer")}</Label>
-            <Input value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
+            <Label htmlFor="wrong-user-ans">{t("你的选择", "Your answer")}</Label>
+            <Input id="wrong-user-ans" value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} />
           </div>
         </div>
         {(questionType === "choice" || options.length > 0) && (
@@ -341,9 +342,9 @@ export function WrongAnswerForm({
 
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
-          <Label>{t("科目", "Subject")}</Label>
+          <Label htmlFor="wrong-subject">{t("科目", "Subject")}</Label>
           <Select value={group} onValueChange={(v) => setGroup(v as SubjectGroup)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="wrong-subject"><SelectValue /></SelectTrigger>
             <SelectContent>
               {SUBJECT_GROUPS.map((g) => (
                 <SelectItem key={g} value={g}>{SUBJECT_GROUP_LABELS[g].zh}</SelectItem>
@@ -352,9 +353,9 @@ export function WrongAnswerForm({
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>{t("细分", "Tag")}</Label>
+          <Label htmlFor="wrong-tag">{t("细分", "Tag")}</Label>
           <Select value={tag || "__none"} onValueChange={(v) => setTag(v === "__none" ? "" : v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="wrong-tag"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__none">{t("无", "None")}</SelectItem>
               {tags.map((tg) => (
@@ -365,22 +366,22 @@ export function WrongAnswerForm({
         </div>
       </div>
       <div className="space-y-2">
-        <Label>{t("错因", "Wrong reason")}</Label>
-        <Textarea value={wrongReason} onChange={(e) => setWrongReason(e.target.value)} rows={2} />
+        <Label htmlFor="wrong-reason">{t("错因", "Wrong reason")}</Label>
+        <Textarea id="wrong-reason" value={wrongReason} onChange={(e) => setWrongReason(e.target.value)} rows={2} />
       </div>
       <div className="space-y-2">
-        <Label>{t("知识点", "Knowledge point")}</Label>
-        <Input value={knowledgePoint} onChange={(e) => setKnowledgePoint(e.target.value)} />
+        <Label htmlFor="wrong-kp">{t("知识点", "Knowledge point")}</Label>
+        <Input id="wrong-kp" value={knowledgePoint} onChange={(e) => setKnowledgePoint(e.target.value)} />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
-          <Label>{t("做错日期", "Date")}</Label>
-          <Input type="date" value={sourceDate} onChange={(e) => setSourceDate(e.target.value)} />
+          <Label htmlFor="wrong-date">{t("做错日期", "Date")}</Label>
+          <Input id="wrong-date" type="date" value={sourceDate} onChange={(e) => setSourceDate(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label>{t("状态", "Status")}</Label>
+          <Label htmlFor="wrong-status">{t("状态", "Status")}</Label>
           <Select value={reviewStatus} onValueChange={setReviewStatus}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger id="wrong-status"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="pending">{t("待复习", "To review")}</SelectItem>
               <SelectItem value="mastered">{t("已掌握", "Mastered")}</SelectItem>
