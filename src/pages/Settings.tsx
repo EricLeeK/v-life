@@ -12,7 +12,9 @@ import { useSettings, useUpdateSettings } from "@/hooks/useData";
 import { useHostedAiStatus } from "@/hooks/useHostedAiStatus";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, Download, Save, ChevronDown } from "lucide-react";
+import { useDemoMode } from "@/contexts/DemoModeContext";
+import { buildFeedUrl, buildWebcalUrl, generateFeedToken } from "@/lib/calendarFeed";
+import { Upload, Download, Save, ChevronDown, Copy, RotateCcw, Link2, CalendarPlus } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import {
   zodiacDetailsFromBirthDate,
@@ -59,6 +61,53 @@ export default function SettingsPage() {
   // Local draft state — all edits go here first
   const [draft, setDraft] = useState<Record<string, any> | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // ── Calendar sync feed (Apple Calendar subscription) ──
+  const { isDemo } = useDemoMode();
+  const [feedResetArmed, setFeedResetArmed] = useState(false);
+  const feedToken = ((draft?.calendar_feed_token as string | null) ?? null);
+  const feedUrl = useMemo(
+    () => (feedToken ? buildFeedUrl(import.meta.env.VITE_SUPABASE_URL, feedToken) : null),
+    [feedToken],
+  );
+  const feedWebcalUrl = useMemo(() => (feedUrl ? buildWebcalUrl(feedUrl) : null), [feedUrl]);
+  const feedPending = Boolean((updateSettings as { isPending?: boolean }).isPending);
+
+  const applyFeedToken = async (token: string) => {
+    await updateSettings.mutateAsync({ calendar_feed_token: token });
+    setDraft((prev) => (prev ? { ...prev, calendar_feed_token: token } : prev));
+    setFeedResetArmed(false);
+  };
+
+  const createFeedToken = async () => {
+    try {
+      await applyFeedToken(generateFeedToken());
+      toast({ title: t("订阅链接已生成", "Feed link generated") });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: t("生成失败", "Generation failed"), description: msg, variant: "destructive" });
+    }
+  };
+
+  const resetFeedToken = async () => {
+    try {
+      await applyFeedToken(generateFeedToken());
+      toast({ title: t("已重置，请用新链接重新订阅", "Reset — re-subscribe with the new URL") });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: t("重置失败", "Reset failed"), description: msg, variant: "destructive" });
+    }
+  };
+
+  const copyFeedUrl = async () => {
+    if (!feedUrl) return;
+    try {
+      await navigator.clipboard.writeText(feedUrl);
+      toast({ title: t("已复制到剪贴板", "Copied to clipboard") });
+    } catch {
+      toast({ title: t("复制失败，请手动选中复制", "Copy failed — select and copy manually"), variant: "destructive" });
+    }
+  };
 
   // Sync draft with server when settings load
   const settingsRef = useRef(settings);
@@ -705,6 +754,79 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Calendar Sync (Apple Calendar subscription) */}
+        {!isDemo && (
+          <Card>
+            <CardHeader><CardTitle className="text-base">{t("日历同步", "Calendar Sync")}</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  "把 V-Life 日程以只读订阅日历的形式同步到苹果日历，最短每 5 分钟自动刷新；在苹果日历里的修改不会写回 V-Life。",
+                  "Sync your V-Life schedule into Apple Calendar as a read-only subscribed calendar, auto-refreshing as often as every 5 minutes. Edits in Apple Calendar do not flow back.",
+                )}
+              </p>
+              {feedToken ? (
+                <>
+                  <Button asChild size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground">
+                    <a href={feedWebcalUrl ?? "#"}>
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                      {t("一键订阅到苹果日历", "Subscribe in Apple Calendar")}
+                    </a>
+                  </Button>
+                  <div className="flex gap-2">
+                    <Input
+                      readOnly
+                      value={feedUrl ?? ""}
+                      onFocus={(e) => e.currentTarget.select()}
+                      aria-label={t("订阅链接", "Subscription URL")}
+                      className="text-xs font-mono h-9"
+                    />
+                    <Button variant="secondary" size="sm" className="shrink-0 gap-1.5" onClick={copyFeedUrl}>
+                      <Copy className="h-3.5 w-3.5" />{t("复制", "Copy")}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 gap-1.5 text-muted-foreground"
+                      disabled={feedPending}
+                      onBlur={() => setFeedResetArmed(false)}
+                      onClick={() => (feedResetArmed ? resetFeedToken() : setFeedResetArmed(true))}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {feedResetArmed ? t("确认重置？", "Confirm reset?") : t("重置", "Reset")}
+                    </Button>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>
+                      {t(
+                        "点上面的按钮会直接唤起日历 app 的订阅确认框——位置选 iCloud，iPhone / iPad 自动同步，自动刷新可设为每 5 分钟。",
+                        "Tap the button above to open Calendar's subscribe dialog — choose the iCloud location so iPhone/iPad sync too, and set auto-refresh to every 5 minutes.",
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        "按钮没反应（如被浏览器或 PWA 拦截）时再手动操作：macOS 日历 → 文件 → 新建日历订阅；iOS：设置 → 日历 → 账户 → 添加账户 → 其他 → 订阅日历。",
+                        "If the button is blocked (some in-app browsers/PWA), do it manually: macOS Calendar → File → New Calendar Subscription; iOS: Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar.",
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        "重置后旧订阅会停止更新，需要用新链接重新订阅。",
+                        "After a reset the old subscription stops updating; re-subscribe with the new URL.",
+                      )}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <Button variant="secondary" size="sm" className="gap-1.5" onClick={createFeedToken} disabled={feedPending}>
+                  <Link2 className="h-3.5 w-3.5" />
+                  {feedPending ? t("生成中...", "Generating...") : t("生成订阅链接", "Generate feed link")}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Data Management */}
         <Card>

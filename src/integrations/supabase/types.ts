@@ -1124,6 +1124,7 @@ export type Database = {
           ai_vision_model: string | null
           ai_vision_platform: string | null
           app_focus_mode: string
+          calendar_feed_token: string | null
           calorie_target: number | null
           created_at: string
           custom_thought_tags: Json | null
@@ -1154,6 +1155,7 @@ export type Database = {
           ai_vision_model?: string | null
           ai_vision_platform?: string | null
           app_focus_mode?: string
+          calendar_feed_token?: string | null
           calorie_target?: number | null
           created_at?: string
           custom_thought_tags?: Json | null
@@ -1184,6 +1186,7 @@ export type Database = {
           ai_vision_model?: string | null
           ai_vision_platform?: string | null
           app_focus_mode?: string
+          calendar_feed_token?: string | null
           calorie_target?: number | null
           created_at?: string
           custom_thought_tags?: Json | null
