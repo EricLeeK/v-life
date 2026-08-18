@@ -52,4 +52,11 @@ describe("SettingsPage", () => {
     expect(screen.getByText("AI 模型与 Key 配置")).toBeInTheDocument();
     expect(screen.getByText("智能路由 · 成本优化")).toBeInTheDocument();
   });
+
+  it("renders the section nav with all grouped sections", () => {
+    render(<SettingsPage />);
+    for (const label of ["通用", "AI", "日程", "个性", "健康·财务", "数据"]) {
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    }
+  });
 });

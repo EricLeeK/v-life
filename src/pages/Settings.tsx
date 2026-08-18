@@ -9,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useSettings, useUpdateSettings } from "@/hooks/useData";
+import { SettingsNav, type SettingsSection } from "@/components/SettingsNav";
 import { useHostedAiStatus } from "@/hooks/useHostedAiStatus";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { buildFeedUrl, buildWebcalUrl, generateFeedToken } from "@/lib/calendarFeed";
-import { Upload, Download, Save, ChevronDown, Copy, RotateCcw, Link2, CalendarPlus } from "lucide-react";
+import { messageFromAiInvoke } from "@/lib/aiErrors";
+import { Upload, Download, Save, ChevronDown, Copy, RotateCcw, Link2, CalendarPlus, Ticket } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import {
   zodiacDetailsFromBirthDate,
@@ -37,6 +39,16 @@ function deriveZodiacSign(birthDate: string, birthHour?: number | null): ZodiacS
 
 const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "schedule_events", "calorie_records", "finance_records", "todos", "thoughts", "settings"] as const;
 
+// Section groups for the sticky settings nav; ids must match the <section> wrappers below.
+const SETTINGS_SECTIONS: SettingsSection[] = [
+  { id: "settings-general", zh: "通用", en: "General" },
+  { id: "settings-ai", zh: "AI", en: "AI" },
+  { id: "settings-schedule", zh: "日程", en: "Schedule" },
+  { id: "settings-personal", zh: "个性", en: "Personal" },
+  { id: "settings-health", zh: "健康·财务", en: "Health · Finance" },
+  { id: "settings-data", zh: "数据", en: "Data" },
+];
+
 // Deep equality check to detect unsaved changes
 function hasChanges(local: Record<string, any>, server: Record<string, any>): boolean {
   const keys = new Set([...Object.keys(local), ...Object.keys(server)]);
@@ -50,7 +62,7 @@ function hasChanges(local: Record<string, any>, server: Record<string, any>): bo
 
 export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
-  const { data: hostedAi } = useHostedAiStatus();
+  const { data: hostedAi, refetch: refetchHostedAi } = useHostedAiStatus();
   const updateSettings = useUpdateSettings();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -106,6 +118,32 @@ export default function SettingsPage() {
       toast({ title: t("已复制到剪贴板", "Copied to clipboard") });
     } catch {
       toast({ title: t("复制失败，请手动选中复制", "Copy failed — select and copy manually"), variant: "destructive" });
+    }
+  };
+
+  // ── Hosted AI membership redemption (月卡/年卡) ──
+  const [redeemInput, setRedeemInput] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  const handleRedeem = async () => {
+    const code = redeemInput.trim();
+    if (!code || redeeming) return;
+    setRedeeming(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("redeem-code", { body: { code } });
+      const errMsg = await messageFromAiInvoke(data, error);
+      if (errMsg) throw new Error(errMsg);
+      const expiry = data?.expires_at ? new Date(data.expires_at).toLocaleDateString() : "";
+      toast({
+        title: hostedAi?.active ? t("已续费成功", "Membership renewed") : t("已开通会员", "Membership activated"),
+        description: expiry ? `${t("有效期至", "Valid until")} ${expiry}` : undefined,
+      });
+      setRedeemInput("");
+      await refetchHostedAi();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      toast({ title: t("兑换失败", "Redemption failed"), description: msg, variant: "destructive" });
+    } finally {
+      setRedeeming(false);
     }
   };
 
@@ -230,23 +268,33 @@ export default function SettingsPage() {
 
   return (
     <AppLayout title={t("设置", "Settings")}>
-      {/* Sticky save bar */}
-      {dirty && (
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-card/90 backdrop-blur-md border-b border-border flex items-center justify-between">
-          <span className="text-[13px] text-[#d17847] font-medium">{t("有未保存的更改", "Unsaved changes")}</span>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleDiscard}>
-              {t("撤销", "Discard")}
-            </Button>
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5" onClick={handleSave} disabled={saving}>
-              <Save className="h-3.5 w-3.5" />
-              {saving ? t("保存中...", "Saving...") : t("保存", "Save")}
-            </Button>
+      {/* Desktop: viewport-height inner scroller so the sticky nav pins inside it
+          (the app column grows beyond the viewport and window-level scrolling
+          would never trigger the nav's sticky). Mobile keeps page scrolling. */}
+      <div className="md:h-[calc(100vh_-_3rem)] md:overflow-y-auto md:-mx-6 lg:-mx-10 md:-my-6 md:pb-6">
+      <SettingsNav
+        sections={SETTINGS_SECTIONS}
+        headerRow={dirty ? (
+          <div className="px-4 md:px-6 lg:px-10 py-2 flex items-center justify-between border-b border-border/60">
+            <span className="text-[13px] text-[#d17847] font-medium">{t("有未保存的更改", "Unsaved changes")}</span>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={handleDiscard}>
+                {t("撤销", "Discard")}
+              </Button>
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5" onClick={handleSave} disabled={saving}>
+                <Save className="h-3.5 w-3.5" />
+                {saving ? t("保存中...", "Saving...") : t("保存", "Save")}
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        ) : undefined}
+      />
 
-      <div className="space-y-6 mt-2">
+      {/* Restore the horizontal padding the full-bleed scroller negated above
+          (mobile keeps AppLayout's p-4 since the negative margins are md: only). */}
+      <div className="mt-2 space-y-10 md:px-6 lg:px-10">
+        <section id="settings-general" className="scroll-mt-24 space-y-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("通用", "General")}</h2>
         {/* Account & Appearance */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("账号与外观", "Account & Appearance")}</CardTitle></CardHeader>
@@ -280,135 +328,110 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Fortune profile — collapsed by default */}
-        <Collapsible defaultOpen={false}>
-          <Card>
-            <CardHeader className="py-3">
-              <CollapsibleTrigger asChild>
-                <button type="button" className="flex w-full items-center justify-between text-left">
-                  <CardTitle className="text-base">{t("运势档案", "Fortune Profile")}</CardTitle>
-                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                    {t("展开", "Expand")}
-                    <ChevronDown className="h-4 w-4" />
-                  </span>
-                </button>
-              </CollapsibleTrigger>
-            </CardHeader>
-            <CollapsibleContent>
-              <CardContent className="space-y-4">
-                {(() => {
-                  const fp = (draft.fortune_profile || {}) as FortuneProfile;
-                  const setFp = (next: FortuneProfile) => update("fortune_profile", next);
-                  const cusp =
-                    fp.birth_date != null && fp.birth_date !== ""
-                      ? fp.birth_hour != null && fp.birth_hour >= 0
-                        ? zodiacFromSunLongitude(fp.birth_date, fp.birth_hour)
-                        : zodiacDetailsFromBirthDate(fp.birth_date)
-                      : null;
-                  return (
-                    <>
-                      <div>
-                        <Label htmlFor="fp-birth-date">{t("生日（公历）", "Birthday (Gregorian)")}</Label>
-                        <Input
-                          id="fp-birth-date"
-                          type="date"
-                          value={fp.birth_date || ""}
-                          onChange={(e) => {
-                            const birth_date = e.target.value;
-                            setFp({
-                              ...fp,
-                              birth_date,
-                              zodiac_sign: birth_date
-                                ? deriveZodiacSign(birth_date, fp.birth_hour)
-                                : fp.zodiac_sign,
-                              shengxiao: birth_date ? shengxiaoFromBirthDate(birth_date) : fp.shengxiao,
-                            });
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="fp-birth-hour">{t("出生时辰（可选）", "Birth hour (optional)")}</Label>
-                        <Select
-                          value={fp.birth_hour == null ? "none" : String(fp.birth_hour)}
-                          onValueChange={(v) => {
-                            const birth_hour = v === "none" ? null : Number(v);
-                            setFp({
-                              ...fp,
-                              birth_hour,
-                              zodiac_sign: fp.birth_date
-                                ? deriveZodiacSign(fp.birth_date, birth_hour)
-                                : fp.zodiac_sign,
-                            });
-                          }}
-                        >
-                          <SelectTrigger id="fp-birth-hour"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">{t("未知", "Unknown")}</SelectItem>
-                            {Array.from({ length: 24 }, (_, h) => (
-                              <SelectItem key={h} value={String(h)}>
-                                {String(h).padStart(2, "0")}:00
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="fp-birth-place">{t("出生地（备注）", "Birth place (note)")}</Label>
-                        <Input
-                          id="fp-birth-place"
-                          value={fp.birth_place || ""}
-                          onChange={(e) => setFp({ ...fp, birth_place: e.target.value })}
-                          placeholder={t("可选", "Optional")}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="fp-zodiac-sign">{t("星座", "Zodiac")}</Label>
-                        <Select
-                          value={fp.zodiac_sign || ""}
-                          onValueChange={(v) => setFp({ ...fp, zodiac_sign: v as ZodiacSign })}
-                        >
-                          <SelectTrigger id="fp-zodiac-sign"><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
-                          <SelectContent>
-                            {ZODIAC_SIGNS.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {lang === "zh" ? ZODIAC_LABELS[s].zh : ZODIAC_LABELS[s].en}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {cusp?.cuspSensitive && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {t(
-                              "交界日：填写出生时辰可用太阳黄经更精确判定。",
-                              "Cusp day: add birth hour for Sun-longitude precision.",
-                            )}
-                          </p>
-                        )}
-                      </div>
-                      <div>
-                        <Label htmlFor="fp-shengxiao">{t("生肖", "Shengxiao")}</Label>
-                        <Select
-                          value={fp.shengxiao || ""}
-                          onValueChange={(v) => setFp({ ...fp, shengxiao: v as Shengxiao })}
-                        >
-                          <SelectTrigger id="fp-shengxiao"><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
-                          <SelectContent>
-                            {SHENGXIAO_ORDER.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {lang === "zh" ? SHENGXIAO_LABELS[s].zh : SHENGXIAO_LABELS[s].en}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  );
-                })()}
-              </CardContent>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
+        {/* Day Start Time */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("跨天结算时间", "Day Reset Time")}</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="settings-day-start">{t("新的一天从几点开始？", "When does a new day start?")}</Label>
+              <p className="text-xs text-muted-foreground">{t("如果你经常熬夜，可以设置凌晨几点才算新的一天（比如设置 2:00，那么凌晨 1 点还是算昨天）。", "If you stay up late, you can shift the start of the day (e.g., set to 2:00 AM, and 1:00 AM will still count towards yesterday).")}</p>
+              <Select value={String(draft.day_start_hour || 0)} onValueChange={(v) => update("day_start_hour", Number(v))}>
+                <SelectTrigger id="settings-day-start" className="w-full sm:w-[200px] mt-2"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">{t("午夜 00:00", "Midnight 00:00")}</SelectItem>
+                  <SelectItem value="1">01:00 AM</SelectItem>
+                  <SelectItem value="2">02:00 AM</SelectItem>
+                  <SelectItem value="3">03:00 AM</SelectItem>
+                  <SelectItem value="4">04:00 AM</SelectItem>
+                  <SelectItem value="5">05:00 AM</SelectItem>
+                  <SelectItem value="6">06:00 AM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
+        {/* Module Visibility Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              {t("导航栏与模块控制", "Navigation & Module Control")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2 pb-2 border-b border-border">
+              <Label htmlFor="settings-focus-mode" className="font-medium text-sm text-foreground">
+                {t("专注模式", "Focus mode")}
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  "「仅考公」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
+                  "Civil-only hides main modules and sync UI; data is kept. Switch back anytime."
+                )}
+              </p>
+              <Select
+                value={(draft.app_focus_mode as string) || "full"}
+                onValueChange={(v) => update("app_focus_mode", v)}
+              >
+                <SelectTrigger id="settings-focus-mode" className="max-w-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full">{t("全功能", "Full app")}</SelectItem>
+                  <SelectItem value="civil_service">{t("仅考公", "Civil service only")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "在此选择要在侧边栏和手机导航中显示的非核心模块。关闭某个模块仅做视觉隐藏，您存过的历史数据不会受到任何影响。",
+                "Choose which modules to display in the sidebar and mobile nav. Disabling a module only hides it visually; your historical data remains completely safe."
+              )}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {[
+                { id: "pantry", name: t("食材管理", "Pantry") },
+                { id: "belongings", name: t("用品管理", "Belongings") },
+                { id: "calories", name: t("热量记录", "Calories") },
+                { id: "finance", name: t("记账", "Finance") },
+                { id: "projects", name: t("项目管理", "Projects") },
+                { id: "goals", name: t("目标管理", "Goals") },
+                { id: "thoughts", name: t("随想", "Thoughts") },
+                { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
+                { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
+                { id: "civil-service", name: t("考公", "Civil Service") },
+                { id: "fortune", name: t("运势", "Fortune") },
+              ].map((feature) => {
+                const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);
+                return (
+                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-[#fbfbfa]">
+                    <div>
+                      <Label htmlFor={`settings-feature-${feature.id}`} className="font-medium text-sm text-foreground">{feature.name}</Label>
+                    </div>
+                    <Switch
+                      id={`settings-feature-${feature.id}`}
+                      checked={!isHidden}
+                      onCheckedChange={(checked) => {
+                        const current = (draft.hidden_features as string[] | null) || [];
+                        if (!checked) {
+                          // Hide: add to hidden_features
+                          update("hidden_features", [...current.filter(x => x !== feature.id), feature.id]);
+                        } else {
+                          // Show: remove from hidden_features
+                          update("hidden_features", current.filter(x => x !== feature.id));
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+        </section>
+
+        <section id="settings-ai" className="scroll-mt-24 space-y-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("AI", "AI")}</h2>
         {/* Hosted AI status */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("托管 AI", "Hosted AI")}</CardTitle></CardHeader>
@@ -433,8 +456,37 @@ export default function SettingsPage() {
               </>
             ) : (
               <p className="text-sm text-muted-foreground">
-                {t("未开通 · 可使用下方自带 Key", "Not active · use your own API key below")}
+                {t("未开通 · 输入兑换码开通，或在下方使用自带 Key", "Not active · redeem a code below, or use your own API key")}
               </p>
+            )}
+            {!isDemo && (
+              <>
+                <div className="flex gap-2 pt-1">
+                  <Input
+                    value={redeemInput}
+                    onChange={(e) => setRedeemInput(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => e.key === "Enter" && handleRedeem()}
+                    placeholder={t("输入兑换码（月卡 / 年卡）", "Enter code (monthly / yearly)")}
+                    aria-label={t("兑换码", "Redemption code")}
+                    className="text-xs font-mono h-9 tracking-wider"
+                  />
+                  <Button
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    onClick={handleRedeem}
+                    disabled={redeeming || !redeemInput.trim()}
+                  >
+                    <Ticket className="h-3.5 w-3.5" />
+                    {redeeming ? t("兑换中...", "Redeeming...") : t("兑换", "Redeem")}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    "兑换码可开通或续期托管 AI 会员（月卡 30 天 / 年卡 365 天），重复兑换自动顺延；也可在下方使用自己的 API Key。",
+                    "Codes activate or extend hosted-AI membership (30-day monthly / 365-day yearly; redemptions stack). Your own API key below works independently.",
+                  )}
+                </p>
+              </>
             )}
           </CardContent>
         </Card>
@@ -591,170 +643,10 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Goals in Schedule */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{t("目标设置", "Goals Settings")}</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="settings-show-goals-ball">{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
-                <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
-              </div>
-              <Switch id="settings-show-goals-ball" checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
-            </div>
-          </CardContent>
-        </Card>
+        </section>
 
-        {/* Day Start Time */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{t("跨天结算时间", "Day Reset Time")}</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="settings-day-start">{t("新的一天从几点开始？", "When does a new day start?")}</Label>
-              <p className="text-xs text-muted-foreground">{t("如果你经常熬夜，可以设置凌晨几点才算新的一天（比如设置 2:00，那么凌晨 1 点还是算昨天）。", "If you stay up late, you can shift the start of the day (e.g., set to 2:00 AM, and 1:00 AM will still count towards yesterday).")}</p>
-              <Select value={String(draft.day_start_hour || 0)} onValueChange={(v) => update("day_start_hour", Number(v))}>
-                <SelectTrigger id="settings-day-start" className="w-full sm:w-[200px] mt-2"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">{t("午夜 00:00", "Midnight 00:00")}</SelectItem>
-                  <SelectItem value="1">01:00 AM</SelectItem>
-                  <SelectItem value="2">02:00 AM</SelectItem>
-                  <SelectItem value="3">03:00 AM</SelectItem>
-                  <SelectItem value="4">04:00 AM</SelectItem>
-                  <SelectItem value="5">05:00 AM</SelectItem>
-                  <SelectItem value="6">06:00 AM</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Module Visibility Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("导航栏与模块控制", "Navigation & Module Control")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2 pb-2 border-b border-border">
-              <Label htmlFor="settings-focus-mode" className="font-medium text-sm text-foreground">
-                {t("专注模式", "Focus mode")}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  "「仅考公」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
-                  "Civil-only hides main modules and sync UI; data is kept. Switch back anytime."
-                )}
-              </p>
-              <Select
-                value={(draft.app_focus_mode as string) || "full"}
-                onValueChange={(v) => update("app_focus_mode", v)}
-              >
-                <SelectTrigger id="settings-focus-mode" className="max-w-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full">{t("全功能", "Full app")}</SelectItem>
-                  <SelectItem value="civil_service">{t("仅考公", "Civil service only")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                "在此选择要在侧边栏和手机导航中显示的非核心模块。关闭某个模块仅做视觉隐藏，您存过的历史数据不会受到任何影响。",
-                "Choose which modules to display in the sidebar and mobile nav. Disabling a module only hides it visually; your historical data remains completely safe."
-              )}
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              {[
-                { id: "pantry", name: t("食材管理", "Pantry") },
-                { id: "belongings", name: t("用品管理", "Belongings") },
-                { id: "calories", name: t("热量记录", "Calories") },
-                { id: "finance", name: t("记账", "Finance") },
-                { id: "projects", name: t("项目管理", "Projects") },
-                { id: "goals", name: t("目标管理", "Goals") },
-                { id: "thoughts", name: t("随想", "Thoughts") },
-                { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
-                { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
-                { id: "civil-service", name: t("考公", "Civil Service") },
-                { id: "fortune", name: t("运势", "Fortune") },
-              ].map((feature) => {
-                const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);
-                return (
-                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-[#fbfbfa]">
-                    <div>
-                      <Label htmlFor={`settings-feature-${feature.id}`} className="font-medium text-sm text-foreground">{feature.name}</Label>
-                    </div>
-                    <Switch
-                      id={`settings-feature-${feature.id}`}
-                      checked={!isHidden}
-                      onCheckedChange={(checked) => {
-                        const current = (draft.hidden_features as string[] | null) || [];
-                        if (!checked) {
-                          // Hide: add to hidden_features
-                          update("hidden_features", [...current.filter(x => x !== feature.id), feature.id]);
-                        } else {
-                          // Show: remove from hidden_features
-                          update("hidden_features", current.filter(x => x !== feature.id));
-                        }
-                      }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-
-        {/* Finance */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{t("财务设置", "Finance Settings")}</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label id="settings-exchange-rate-label">JPY → CNY 汇率</Label>
-                <p className="text-xs text-muted-foreground">
-                  {t("当前:", "Current:")} 1 JPY = {draft.exchange_rate_jpy_to_cny} CNY
-                  {draft.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(draft.exchange_rate_updated_at).toLocaleDateString()})`}
-                </p>
-              </div>
-              <Button variant="secondary" size="sm" aria-labelledby="settings-exchange-rate-label" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
-            </div>
-            <div>
-              <Label htmlFor="settings-budget">{t("月度预算", "Monthly Budget")} (CNY)</Label>
-              <Input id="settings-budget" type="number" value={draft.monthly_budget || 5000} onChange={(e) => update("monthly_budget", Number(e.target.value))} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Calories */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{t("热量设置", "Calorie Settings")}</CardTitle></CardHeader>
-          <CardContent>
-            <Label htmlFor="settings-calorie-target">{t("每日热量目标", "Daily Calorie Target")} (kcal)</Label>
-            <Input id="settings-calorie-target" type="number" value={draft.calorie_target || 2000} onChange={(e) => update("calorie_target", Number(e.target.value))} />
-          </CardContent>
-        </Card>
-
-        {/* Thought Tags */}
-        <Card>
-          <CardHeader><CardTitle className="text-base">{t("随想标签", "Thought Tags")}</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex flex-wrap gap-1">
-              {((draft.custom_thought_tags as string[] | null) || []).map((tag: string) => (
-                <Button key={tag} variant="secondary" size="sm" className="h-7" onClick={() => removeTag(tag)}>
-                  {tag} ×
-                </Button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder={t("添加自定义标签", "Add custom tag")} className="flex-1" onKeyDown={(e) => e.key === "Enter" && addTag()} />
-              <Button size="sm" onClick={addTag}>{t("添加", "Add")}</Button>
-            </div>
-          </CardContent>
-        </Card>
-
+        <section id="settings-schedule" className="scroll-mt-24 space-y-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("日程", "Schedule")}</h2>
         {/* Calendar Sync (Apple Calendar subscription) */}
         {!isDemo && (
           <Card>
@@ -828,6 +720,208 @@ export default function SettingsPage() {
           </Card>
         )}
 
+        {/* Goals in Schedule */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("目标设置", "Goals Settings")}</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="settings-show-goals-ball">{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
+                <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
+              </div>
+              <Switch id="settings-show-goals-ball" checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
+            </div>
+          </CardContent>
+        </Card>
+
+        </section>
+
+        <section id="settings-personal" className="scroll-mt-24 space-y-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("个性", "Personal")}</h2>
+        {/* Fortune profile — collapsed by default */}
+        <Collapsible defaultOpen={false}>
+          <Card>
+            <CardHeader className="py-3">
+              <CollapsibleTrigger asChild>
+                <button type="button" className="flex w-full items-center justify-between text-left">
+                  <CardTitle className="text-base">{t("运势档案", "Fortune Profile")}</CardTitle>
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                    {t("展开", "Expand")}
+                    <ChevronDown className="h-4 w-4" />
+                  </span>
+                </button>
+              </CollapsibleTrigger>
+            </CardHeader>
+            <CollapsibleContent>
+              <CardContent className="space-y-4">
+                {(() => {
+                  const fp = (draft.fortune_profile || {}) as FortuneProfile;
+                  const setFp = (next: FortuneProfile) => update("fortune_profile", next);
+                  const cusp =
+                    fp.birth_date != null && fp.birth_date !== ""
+                      ? fp.birth_hour != null && fp.birth_hour >= 0
+                        ? zodiacFromSunLongitude(fp.birth_date, fp.birth_hour)
+                        : zodiacDetailsFromBirthDate(fp.birth_date)
+                      : null;
+                  return (
+                    <>
+                      <div>
+                        <Label htmlFor="fp-birth-date">{t("生日（公历）", "Birthday (Gregorian)")}</Label>
+                        <Input
+                          id="fp-birth-date"
+                          type="date"
+                          value={fp.birth_date || ""}
+                          onChange={(e) => {
+                            const birth_date = e.target.value;
+                            setFp({
+                              ...fp,
+                              birth_date,
+                              zodiac_sign: birth_date
+                                ? deriveZodiacSign(birth_date, fp.birth_hour)
+                                : fp.zodiac_sign,
+                              shengxiao: birth_date ? shengxiaoFromBirthDate(birth_date) : fp.shengxiao,
+                            });
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="fp-birth-hour">{t("出生时辰（可选）", "Birth hour (optional)")}</Label>
+                        <Select
+                          value={fp.birth_hour == null ? "none" : String(fp.birth_hour)}
+                          onValueChange={(v) => {
+                            const birth_hour = v === "none" ? null : Number(v);
+                            setFp({
+                              ...fp,
+                              birth_hour,
+                              zodiac_sign: fp.birth_date
+                                ? deriveZodiacSign(fp.birth_date, birth_hour)
+                                : fp.zodiac_sign,
+                            });
+                          }}
+                        >
+                          <SelectTrigger id="fp-birth-hour"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">{t("未知", "Unknown")}</SelectItem>
+                            {Array.from({ length: 24 }, (_, h) => (
+                              <SelectItem key={h} value={String(h)}>
+                                {String(h).padStart(2, "0")}:00
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="fp-birth-place">{t("出生地（备注）", "Birth place (note)")}</Label>
+                        <Input
+                          id="fp-birth-place"
+                          value={fp.birth_place || ""}
+                          onChange={(e) => setFp({ ...fp, birth_place: e.target.value })}
+                          placeholder={t("可选", "Optional")}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="fp-zodiac-sign">{t("星座", "Zodiac")}</Label>
+                        <Select
+                          value={fp.zodiac_sign || ""}
+                          onValueChange={(v) => setFp({ ...fp, zodiac_sign: v as ZodiacSign })}
+                        >
+                          <SelectTrigger id="fp-zodiac-sign"><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
+                          <SelectContent>
+                            {ZODIAC_SIGNS.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {lang === "zh" ? ZODIAC_LABELS[s].zh : ZODIAC_LABELS[s].en}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {cusp?.cuspSensitive && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {t(
+                              "交界日：填写出生时辰可用太阳黄经更精确判定。",
+                              "Cusp day: add birth hour for Sun-longitude precision.",
+                            )}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor="fp-shengxiao">{t("生肖", "Shengxiao")}</Label>
+                        <Select
+                          value={fp.shengxiao || ""}
+                          onValueChange={(v) => setFp({ ...fp, shengxiao: v as Shengxiao })}
+                        >
+                          <SelectTrigger id="fp-shengxiao"><SelectValue placeholder={t("自动推导", "Auto")} /></SelectTrigger>
+                          <SelectContent>
+                            {SHENGXIAO_ORDER.map((s) => (
+                              <SelectItem key={s} value={s}>
+                                {lang === "zh" ? SHENGXIAO_LABELS[s].zh : SHENGXIAO_LABELS[s].en}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  );
+                })()}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+
+        {/* Thought Tags */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("随想标签", "Thought Tags")}</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-1">
+              {((draft.custom_thought_tags as string[] | null) || []).map((tag: string) => (
+                <Button key={tag} variant="secondary" size="sm" className="h-7" onClick={() => removeTag(tag)}>
+                  {tag} ×
+                </Button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder={t("添加自定义标签", "Add custom tag")} className="flex-1" onKeyDown={(e) => e.key === "Enter" && addTag()} />
+              <Button size="sm" onClick={addTag}>{t("添加", "Add")}</Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        </section>
+
+        <section id="settings-health" className="scroll-mt-24 space-y-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("健康·财务", "Health · Finance")}</h2>
+        {/* Calories */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("热量设置", "Calorie Settings")}</CardTitle></CardHeader>
+          <CardContent>
+            <Label htmlFor="settings-calorie-target">{t("每日热量目标", "Daily Calorie Target")} (kcal)</Label>
+            <Input id="settings-calorie-target" type="number" value={draft.calorie_target || 2000} onChange={(e) => update("calorie_target", Number(e.target.value))} />
+          </CardContent>
+        </Card>
+
+        {/* Finance */}
+        <Card>
+          <CardHeader><CardTitle className="text-base">{t("财务设置", "Finance Settings")}</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label id="settings-exchange-rate-label">JPY → CNY 汇率</Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("当前:", "Current:")} 1 JPY = {draft.exchange_rate_jpy_to_cny} CNY
+                  {draft.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(draft.exchange_rate_updated_at).toLocaleDateString()})`}
+                </p>
+              </div>
+              <Button variant="secondary" size="sm" aria-labelledby="settings-exchange-rate-label" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
+            </div>
+            <div>
+              <Label htmlFor="settings-budget">{t("月度预算", "Monthly Budget")} (CNY)</Label>
+              <Input id="settings-budget" type="number" value={draft.monthly_budget || 5000} onChange={(e) => update("monthly_budget", Number(e.target.value))} />
+            </div>
+          </CardContent>
+        </Card>
+        </section>
+
+        <section id="settings-data" className="scroll-mt-24 space-y-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("数据", "Data")}</h2>
         {/* Data Management */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("数据管理", "Data Management")}</CardTitle></CardHeader>
@@ -844,6 +938,8 @@ export default function SettingsPage() {
             </p>
           </CardContent>
         </Card>
+        </section>
+      </div>
       </div>
     </AppLayout>
   );

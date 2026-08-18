@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Tables } from "@/integrations/supabase/types";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import type { DemoDataStore } from "@/data/demoSeed";
+import { pickSettingsRow } from "@/lib/pickSettingsRow";
 
 // ============ Demo-mode helpers ============
 function useDemoQuery<T>(key: string, filter: (data: DemoDataStore) => T): { data: T | undefined; isLoading: false; error: null } {
@@ -47,20 +48,17 @@ export function useSettings() {
   const supa = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("settings").select("*").limit(1).single();
-      if (error) {
-        if (error.code === "PGRST116") {
-          const { data: newData, error: insertError } = await supabase
-            .from("settings")
-            .insert({})
-            .select()
-            .single();
-          if (insertError) throw insertError;
-          return newData;
-        }
-        throw error;
-      }
-      return data;
+      const { data, error } = await supabase.from("settings").select("*");
+      if (error) throw error;
+      const picked = pickSettingsRow(data ?? []);
+      if (picked) return picked;
+      const { data: newData, error: insertError } = await supabase
+        .from("settings")
+        .insert({})
+        .select()
+        .single();
+      if (insertError) throw insertError;
+      return newData;
     },
     enabled: !isDemo,
   });
@@ -73,7 +71,9 @@ export function useUpdateSettings() {
   const qc = useQueryClient();
   const supa = useMutation({
     mutationFn: async (updates: Partial<Tables<"settings">>) => {
-      const { data: existing } = await supabase.from("settings").select("id").limit(1).single();
+      const { data: rows, error: loadError } = await supabase.from("settings").select("*");
+      if (loadError) throw loadError;
+      const existing = pickSettingsRow(rows ?? []);
       if (!existing) throw new Error("No settings found");
       const { data, error } = await supabase
         .from("settings")
