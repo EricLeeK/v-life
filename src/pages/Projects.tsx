@@ -52,8 +52,8 @@ export default function ProjectsPage() {
   };
 
   return (
-    <AppLayout title={t("项目管理", "Projects")}>
-      <div className="flex h-[calc(100vh-6rem)] flex-col md:flex-row gap-0">
+    <AppLayout title={t("项目管理", "Projects")} fullBleed>
+      <div className="flex h-full flex-col md:flex-row gap-0">
         <div className="h-56 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto">
           <ProjectSidebar
             projects={projects}

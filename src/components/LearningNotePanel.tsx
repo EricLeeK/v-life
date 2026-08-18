@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -11,7 +11,6 @@ import {
   Edit2,
   Eye,
   Plus,
-  Save,
   Trash2,
   Sparkles,
   Wand2,
@@ -21,6 +20,10 @@ import {
   Loader2,
   RotateCcw,
   ChevronDown,
+  GraduationCap,
+  Lightbulb,
+  ListTree,
+  BookMarked,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,13 +49,14 @@ type LearningCourse = Tables<"learning_courses">;
 type LearningNote = Tables<"learning_notes">;
 export type LearningNoteCreateValues = Pick<LearningNote, "course_id" | "title" | "content" | "tags" | "note_date">;
 export type LearningNoteSaveValues = LearningNoteCreateValues & { id: string };
+export type LearningNoteSaveOptions = { source?: "auto" | "manual" };
 export type LearningNoteDeleteValues = Pick<LearningNote, "id" | "course_id">;
 
 interface LearningNotePanelProps {
   course: LearningCourse;
   notes: LearningNote[];
   onCreateNote: (values: LearningNoteCreateValues) => Promise<LearningNote | undefined> | LearningNote | undefined;
-  onSaveNote: (values: LearningNoteSaveValues) => Promise<unknown> | unknown;
+  onSaveNote: (values: LearningNoteSaveValues, options?: LearningNoteSaveOptions) => Promise<unknown> | unknown;
   onDeleteNote: (values: LearningNoteDeleteValues) => Promise<unknown> | unknown;
 }
 
@@ -71,11 +75,13 @@ function textToTags(value: string) {
     .filter(Boolean);
 }
 
+const NO_EMOJI = "禁止使用任何 emoji、表情符号或装饰性符号，只用纯文字与 Markdown。";
+
 const POLISH_PROMPTS = {
-  academic: "请对以下学习笔记内容进行【学术与技术规范化润色】。要求：1. 纠正错别字与语法错误；2. 规范学术/技术专业术语；3. 采用严谨、流畅、客观的学术表达；4. 严禁改变或遗漏原始笔记中的核心知识点与结论。保持 Markdown 格式不变。",
-  accessible: "请对以下学习笔记内容进行【通俗易懂化重写】。要求：1. 用生动清晰、通俗易懂的语言解释复杂概念；2. 适当使用直观比喻或生活化场景帮助理解；3. 保持结构层次清晰；4. 保持核心知识点准确。保持 Markdown 格式不变。",
-  concise: "请对以下学习笔记内容进行【逻辑提炼与精简】。要求：1. 提取核心干货与要点；2. 去除废话与冗余修饰；3. 采用清晰的层次结构与列表展现；4. 保留所有关键数据与结论。保持 Markdown 格式不变。",
-  elaborate: "请对以下学习笔记内容进行【专业深度扩充】。要求：1. 在保留原笔记全部内容的基础上，补充相关的背景知识、核心定义释义；2. 对关键推导或原理进行进一步说明；3. 补充易错点提示或总结。保持 Markdown 格式不变。",
+  academic: `请对以下学习笔记内容进行【学术与技术规范化润色】。要求：1. 纠正错别字与语法错误；2. 规范学术/技术专业术语；3. 采用严谨、流畅、客观的学术表达；4. 严禁改变或遗漏原始笔记中的核心知识点与结论。保持 Markdown 格式不变。${NO_EMOJI}`,
+  accessible: `请对以下学习笔记内容进行【通俗易懂化重写】。要求：1. 用生动清晰、通俗易懂的语言解释复杂概念；2. 适当使用直观比喻或生活化场景帮助理解；3. 保持结构层次清晰；4. 保持核心知识点准确。保持 Markdown 格式不变。${NO_EMOJI}`,
+  concise: `请对以下学习笔记内容进行【逻辑提炼与精简】。要求：1. 提取核心干货与要点；2. 去除废话与冗余修饰；3. 采用清晰的层次结构与列表展现；4. 保留所有关键数据与结论。保持 Markdown 格式不变。${NO_EMOJI}`,
+  elaborate: `请对以下学习笔记内容进行【专业深度扩充】。要求：1. 在保留原笔记全部内容的基础上，补充相关的背景知识、核心定义释义；2. 对关键推导或原理进行进一步说明；3. 补充易错点提示或总结。保持 Markdown 格式不变。${NO_EMOJI}`,
 };
 
 const FORMAT_PROMPT = `你是一位精通 Markdown 和 Obsidian 知识管理的排版专家。请对以下学习笔记进行【Obsidian 级别的 Markdown 格式排版优化】。
@@ -89,6 +95,7 @@ const FORMAT_PROMPT = `你是一位精通 Markdown 和 Obsidian 知识管理的�
 6. **引用块**：将核心直觉、总结、重要提醒提炼为引用块 (> )。
 7. **代码块**：包含代码时使用带有语言标识的代码块 (\`\`\`python, \`\`\`js 等)。
 8. **忠实原文**：绝不改变或删减笔记原本的思想、事实与知识点内容，只重构排版视觉体验。
+9. **${NO_EMOJI}**
 
 只直接返回优化后的 Markdown 文本，不要包含任何前言或总结废话。`;
 
@@ -120,12 +127,70 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     [notes, selectedNoteId],
   );
 
+  const formRef = useRef(form);
+  formRef.current = form;
+  const dirtyRef = useRef(isDirty);
+  dirtyRef.current = isDirty;
+  const selectedNoteRef = useRef(selectedNote);
+  selectedNoteRef.current = selectedNote;
+  const onSaveNoteRef = useRef(onSaveNote);
+  onSaveNoteRef.current = onSaveNote;
+  const savingRef = useRef(false);
+  const confirmDeleteTimer = useRef<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const clearConfirmDeleteTimer = () => {
+    if (confirmDeleteTimer.current != null) {
+      window.clearTimeout(confirmDeleteTimer.current);
+      confirmDeleteTimer.current = null;
+    }
+  };
+
+  const persist = async (
+    source: "auto" | "manual",
+    override?: Partial<typeof form>,
+  ) => {
+    const note = selectedNoteRef.current;
+    if (!note) return;
+    const next = { ...formRef.current, ...override };
+    savingRef.current = true;
+    try {
+      await onSaveNoteRef.current(
+        {
+          id: note.id,
+          course_id: course.id,
+          title: next.title.trim() || t("未命名笔记", "Untitled Note"),
+          content: next.content,
+          tags: textToTags(next.tagsText),
+          note_date: next.note_date || null,
+        },
+        { source },
+      );
+      const unchanged = JSON.stringify(formRef.current) === JSON.stringify(next);
+      if (unchanged) {
+        dirtyRef.current = false;
+        setIsDirty(false);
+      }
+    } finally {
+      savingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (!selectedNote && notes.length === 0) {
       setSelectedNoteId(undefined);
       setDraftNoteId(undefined);
       setForm({ title: "", content: "", tagsText: "", note_date: todayString() });
       setIsDirty(false);
+      return;
+    }
+
+    // 新建笔记后 notes 可能尚未包含新笔记：保留 handleCreate 设置的选择与表单，等数据到达再同步
+    if (
+      selectedNoteId &&
+      draftNoteId === selectedNoteId &&
+      !notes.some((note) => note.id === selectedNoteId)
+    ) {
       return;
     }
 
@@ -145,7 +210,39 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     }
   }, [notes, selectedNote, selectedNoteId, draftNoteId, isDirty]);
 
-  const handleSelectNote = (id: string) => {
+  useEffect(() => {
+    if (!isDirty || !selectedNote) return;
+    const timer = window.setTimeout(() => {
+      void persist("auto").catch(() => {});
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [form, isDirty, selectedNote?.id]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (dirtyRef.current && selectedNoteRef.current && !savingRef.current) {
+        void persist("auto").catch(() => {});
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+      flush();
+    };
+  }, []);
+
+  const handleSelectNote = async (id: string) => {
+    if (id === selectedNoteId) return;
+    if (dirtyRef.current) {
+      await persist("auto");
+    }
+    clearConfirmDeleteTimer();
+    setConfirmDelete(false);
     setSelectedNoteId(id);
     setActiveTab("preview");
   };
@@ -172,19 +269,6 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     }
   };
 
-  const handleSave = async () => {
-    if (!selectedNote) return;
-    await onSaveNote({
-      id: selectedNote.id,
-      course_id: course.id,
-      title: form.title.trim() || t("未命名笔记", "Untitled Note"),
-      content: form.content,
-      tags: textToTags(form.tagsText),
-      note_date: form.note_date || null,
-    });
-    setIsDirty(false);
-  };
-
   const handleDelete = async () => {
     if (!selectedNote) return;
     await onDeleteNote({ id: selectedNote.id, course_id: course.id });
@@ -194,6 +278,51 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     setIsDirty(false);
     setActiveTab("preview");
   };
+
+  // 删除需两次点击确认：第一次进入待确认状态，3 秒内再次点击才执行删除
+  const requestDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      clearConfirmDeleteTimer();
+      confirmDeleteTimer.current = window.setTimeout(() => setConfirmDelete(false), 3000);
+      return;
+    }
+    clearConfirmDeleteTimer();
+    setConfirmDelete(false);
+    void handleDelete();
+  };
+
+  useEffect(
+    () => () => {
+      if (confirmDeleteTimer.current != null) {
+        window.clearTimeout(confirmDeleteTimer.current);
+      }
+    },
+    [],
+  );
+
+  // 待确认状态下点击其他区域或按 Esc 立即取消，无需等 3 秒超时
+  useEffect(() => {
+    if (!confirmDelete) return;
+    const cancel = () => {
+      clearConfirmDeleteTimer();
+      setConfirmDelete(false);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("[data-delete-confirm]")) return;
+      cancel();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") cancel();
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [confirmDelete]);
 
   const handleOpenAiDialog = (mode: "polish" | "format" = "polish") => {
     setAiToolMode(mode);
@@ -220,7 +349,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
         systemInstruction = FORMAT_PROMPT;
       } else {
         if (customPrompt.trim()) {
-          systemInstruction = `你是一位专业的内容编辑。请对学习笔记进行优化，具体要求：${customPrompt.trim()}。请保持知识点准确，按 Markdown 格式直接输出结果，不要包含任何对话废话。`;
+          systemInstruction = `你是一位专业的内容编辑。请对学习笔记进行优化，具体要求：${customPrompt.trim()}。请保持知识点准确，按 Markdown 格式直接输出结果，不要包含任何对话废话。禁止使用任何 emoji、表情符号或装饰性符号。`;
         } else {
           systemInstruction = POLISH_PROMPTS[polishStyle];
         }
@@ -261,13 +390,19 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     }
   };
 
-  const handleApplyAiResult = () => {
+  const handleApplyAiResult = async () => {
     if (!generatedResult) return;
-    setForm((prev) => ({ ...prev, content: generatedResult }));
-    setIsDirty(true);
-    setIsAiDialogOpen(false);
-    setActiveTab("preview");
-    toast({ title: t("已应用 AI 优化内容并切回预览", "Applied to note content") });
+    const next = { ...formRef.current, content: generatedResult };
+    setForm(next);
+    formRef.current = next;
+    dirtyRef.current = true;
+    try {
+      await persist("manual", { content: generatedResult });
+      setIsAiDialogOpen(false);
+      setActiveTab("preview");
+    } catch {
+      setIsDirty(true);
+    }
   };
 
   const handleCopyResult = () => {
@@ -353,56 +488,52 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                   </TabsTrigger>
                 </TabsList>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {/* AI Assistant Menu Button */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="border-amber-200 bg-amber-50/70 text-amber-800 hover:bg-amber-100 hover:text-amber-900 shadow-2xs font-medium text-xs h-8"
+                        className="border-border text-foreground hover:bg-muted text-xs h-8"
                       >
-                        <Sparkles className="h-3.5 w-3.5 mr-1.5 text-amber-600 animate-pulse" />
+                        <Sparkles className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
                         {t("AI 助手", "AI Assistant")}
                         <ChevronDown className="h-3 w-3 ml-1 opacity-60" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-xl p-1.5 shadow-md">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem
                         onClick={() => handleOpenAiDialog("polish")}
-                        className="cursor-pointer text-xs rounded-lg py-2"
+                        className="cursor-pointer text-xs py-2"
                       >
-                        <Wand2 className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span>{t("✨ 内容润色", "✨ Content Polish")}</span>
+                        <Wand2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{t("内容润色", "Content Polish")}</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleOpenAiDialog("format")}
-                        className="cursor-pointer text-xs rounded-lg py-2"
+                        className="cursor-pointer text-xs py-2"
                       >
-                        <FileText className="h-4 w-4 mr-2 text-emerald-500" />
-                        <span>{t("🎨 格式排版优化", "🎨 Format Optimization")}</span>
+                        <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span>{t("格式排版优化", "Format Optimization")}</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {activeTab === "preview" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setActiveTab("edit")}
-                      className="border-border text-foreground hover:bg-muted text-xs h-8"
-                    >
-                      <Edit2 className="h-3.5 w-3.5 mr-1" />
-                      {t("编辑笔记", "Edit Note")}
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={handleDelete} className="border-border text-destructive hover:text-destructive text-xs h-8">
-                    <Trash2 className="h-3.5 w-3.5 mr-1" />
-                    {t("删除", "Delete")}
-                  </Button>
-                  <Button size="sm" onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8">
-                    <Save className="h-3.5 w-3.5 mr-1" />
-                    {t("保存", "Save")}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    data-delete-confirm
+                    onClick={requestDelete}
+                    aria-label={confirmDelete ? t("再次点击确认删除", "Click again to confirm delete") : t("删除笔记", "Delete note")}
+                    title={confirmDelete ? t("再次点击确认删除", "Click again to confirm delete") : t("删除笔记", "Delete note")}
+                    className={`h-8 w-8 p-0 ${
+                      confirmDelete
+                        ? "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive"
+                        : "border-border text-muted-foreground hover:bg-muted hover:text-destructive"
+                    }`}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -496,72 +627,69 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
       {/* AI Note Assistant Dialog */}
       <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-6 rounded-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
           <DialogHeader className="pb-2 border-b border-border flex flex-row items-center justify-between">
             <DialogTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
-              <Sparkles className="h-5 w-5 text-amber-500" />
+              <Sparkles className="h-5 w-5 text-primary" />
               {t("AI 笔记优化助手", "AI Note Assistant")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="flex-1 min-h-0 overflow-y-auto py-4 space-y-5">
-            {/* Mode Switcher Pills */}
-            <div className="flex items-center gap-2 bg-stone-100 p-1 rounded-xl w-fit">
-              <button
-                type="button"
-                onClick={() => { setAiToolMode("polish"); setGeneratedResult(null); }}
-                className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  aiToolMode === "polish"
-                    ? "bg-white text-stone-900 shadow-2xs font-semibold"
-                    : "text-stone-600 hover:text-stone-900"
-                }`}
-              >
-                {t("✨ 内容润色", "✨ Content Polish")}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setAiToolMode("format"); setGeneratedResult(null); }}
-                className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  aiToolMode === "format"
-                    ? "bg-white text-stone-900 shadow-2xs font-semibold"
-                    : "text-stone-600 hover:text-stone-900"
-                }`}
-              >
-                {t("🎨 格式排版优化", "🎨 Format Optimization")}
-              </button>
-            </div>
+            {/* Mode Switcher */}
+            <Tabs
+              value={aiToolMode}
+              onValueChange={(value) => {
+                setAiToolMode(value as "polish" | "format");
+                setGeneratedResult(null);
+              }}
+            >
+              <TabsList>
+                <TabsTrigger value="polish" className="text-xs">
+                  <Wand2 className="h-3.5 w-3.5 mr-1.5" />
+                  {t("内容润色", "Content Polish")}
+                </TabsTrigger>
+                <TabsTrigger value="format" className="text-xs">
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  {t("格式排版优化", "Format Optimization")}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
             {/* Mode 1: Polish Options */}
             {aiToolMode === "polish" && (
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs font-semibold text-stone-700 mb-2 block">{t("选择预设润色风格", "Select Preset Style")}</Label>
+                  <Label className="text-xs font-medium text-foreground mb-2 block">{t("选择预设润色风格", "Select Preset Style")}</Label>
                   <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
                     {[
-                      { key: "academic", label: "🎓 学术规范", desc: "规范学术术语与严谨口吻" },
-                      { key: "accessible", label: "💡 通俗易懂", desc: "生动比喻与浅显表达拆解难点" },
-                      { key: "concise", label: "⚡ 逻辑精简", desc: "提炼核心干货并去除冗余" },
-                      { key: "elaborate", label: "📚 专业扩充", desc: "补充定义背景与延伸推导" },
+                      { key: "academic", icon: GraduationCap, label: t("学术规范", "Academic"), desc: t("规范学术术语与严谨口吻", "Formal academic tone") },
+                      { key: "accessible", icon: Lightbulb, label: t("通俗易懂", "Accessible"), desc: t("生动比喻与浅显表达拆解难点", "Clear analogies for hard ideas") },
+                      { key: "concise", icon: ListTree, label: t("逻辑精简", "Concise"), desc: t("提炼核心干货并去除冗余", "Keep the core, drop the fluff") },
+                      { key: "elaborate", icon: BookMarked, label: t("专业扩充", "Elaborate"), desc: t("补充定义背景与延伸推导", "Add definitions and context") },
                     ].map((item) => (
                       <button
                         key={item.key}
                         type="button"
-                        onClick={() => { setPolishStyle(item.key as any); setCustomPrompt(""); }}
-                        className={`text-left p-3 rounded-xl border text-xs transition-all ${
+                        onClick={() => { setPolishStyle(item.key as typeof polishStyle); setCustomPrompt(""); }}
+                        className={`text-left p-3 rounded-xl border text-xs transition-colors ${
                           polishStyle === item.key && !customPrompt.trim()
-                            ? "border-[#5b88b5] bg-[#f0f5fa] text-[#2c5282] ring-1 ring-[#5b88b5]"
-                            : "border-stone-200 bg-white hover:border-stone-300 text-stone-700"
+                            ? "border-primary/30 bg-muted text-foreground"
+                            : "border-border bg-card hover:bg-muted/50 text-foreground"
                         }`}
                       >
-                        <span className="font-semibold block">{item.label}</span>
-                        <span className="text-[11px] text-stone-500 mt-1 block leading-tight">{item.desc}</span>
+                        <span className="font-medium flex items-center gap-1.5">
+                          <item.icon className={`h-3.5 w-3.5 shrink-0 ${polishStyle === item.key && !customPrompt.trim() ? "text-foreground" : "text-muted-foreground"}`} />
+                          {item.label}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground mt-1 block leading-tight">{item.desc}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="custom-polish-prompt" className="text-xs font-semibold text-stone-700">{t("个性化提示词（可选）", "Custom Instruction (Optional)")}</Label>
+                  <Label htmlFor="custom-polish-prompt" className="text-xs font-medium text-foreground">{t("个性化提示词（可选）", "Custom Instruction (Optional)")}</Label>
                   <Input
                     id="custom-polish-prompt"
                     value={customPrompt}
@@ -575,12 +703,12 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
             {/* Mode 2: Format Rules Explanation */}
             {aiToolMode === "format" && (
-              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-4 text-xs text-emerald-900 space-y-2">
-                <p className="font-semibold text-emerald-950 flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-emerald-600" />
+              <div className="bg-muted/50 border border-border rounded-xl p-4 text-xs text-muted-foreground space-y-2">
+                <p className="font-medium text-foreground flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
                   {t("Obsidian 级别 Markdown 排版优化规则", "Obsidian Markdown Optimization Rules")}
                 </p>
-                <ul className="list-disc pl-4 space-y-1 text-emerald-800">
+                <ul className="list-disc pl-4 space-y-1">
                   <li>{t("自动构建清晰的标题层级（H1 / H2 / H3）", "Auto-structure title hierarchy (H1/H2/H3)")}</li>
                   <li>{t("调整段落、列表、代码块与公式块的呼吸感空行", "Add proper breathing space and empty lines between sections")}</li>
                   <li>{t("黑体高亮核心术语与关键结论，强化视读体验", "Bold highlight key terms and core conclusions")}</li>
@@ -597,7 +725,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                   type="button"
                   onClick={handleRunAi}
                   disabled={isGenerating || !form.content.trim()}
-                  className="bg-[#5b88b5] hover:bg-[#4a77a4] text-white rounded-xl text-xs px-5 h-9"
+                  className="text-xs px-5 h-9"
                 >
                   {isGenerating ? (
                     <>
@@ -616,10 +744,10 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
             {/* Result Preview & Diff */}
             {generatedResult && (
-              <div className="space-y-3 pt-3 border-t border-stone-200">
+              <div className="space-y-3 pt-3 border-t border-border">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-emerald-600" />
+                  <h4 className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                    <Check className="h-4 w-4 text-cat-green" />
                     {t("AI 优化生成结果预览", "AI Result Preview")}
                   </h4>
                   <Button
@@ -628,7 +756,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     size="sm"
                     onClick={handleRunAi}
                     disabled={isGenerating}
-                    className="text-xs text-stone-500 hover:text-stone-800"
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     <RotateCcw className="h-3.5 w-3.5 mr-1" />
                     {t("重新生成", "Regenerate")}
@@ -637,16 +765,16 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Original Content */}
-                  <div className="border border-stone-200 rounded-xl p-3 bg-stone-50/50 flex flex-col max-h-[300px]">
-                    <span className="text-[11px] font-semibold text-stone-500 mb-2">{t("原文", "Original")}</span>
-                    <div className="overflow-y-auto flex-1 font-mono text-xs text-stone-600 whitespace-pre-wrap">
+                  <div className="border border-border rounded-xl p-3 bg-muted/40 flex flex-col max-h-[300px]">
+                    <span className="text-[11px] font-medium text-muted-foreground mb-2">{t("原文", "Original")}</span>
+                    <div className="overflow-y-auto flex-1 font-mono text-xs text-muted-foreground whitespace-pre-wrap">
                       {form.content}
                     </div>
                   </div>
 
                   {/* AI Optimized Markdown Preview */}
-                  <div className="border border-emerald-200 rounded-xl p-3 bg-white flex flex-col max-h-[300px] shadow-2xs">
-                    <span className="text-[11px] font-semibold text-emerald-700 mb-2">{t("AI 优化效果预览", "AI Optimized Preview")}</span>
+                  <div className="border border-border rounded-xl p-3 bg-card flex flex-col max-h-[300px]">
+                    <span className="text-[11px] font-medium text-foreground mb-2">{t("AI 优化效果预览", "AI Optimized Preview")}</span>
                     <div className="overflow-y-auto flex-1 obsidian-markdown text-xs">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
@@ -663,18 +791,18 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     type="button"
                     variant="outline"
                     onClick={handleCopyResult}
-                    className="text-xs h-9 rounded-xl"
+                    className="text-xs h-9"
                   >
-                    {copied ? <Check className="h-4 w-4 mr-1 text-emerald-600" /> : <Copy className="h-4 w-4 mr-1 text-stone-500" />}
+                    {copied ? <Check className="h-4 w-4 mr-1 text-cat-green" /> : <Copy className="h-4 w-4 mr-1 text-muted-foreground" />}
                     {copied ? t("已复制", "Copied") : t("复制优化内容", "Copy Content")}
                   </Button>
                   <Button
                     type="button"
                     onClick={handleApplyAiResult}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9 rounded-xl px-4"
+                    className="text-xs h-9 px-4"
                   >
                     <Check className="h-4 w-4 mr-1.5" />
-                    {t("应用并覆盖原笔记", "Apply & Replace Note")}
+                    {t("覆盖并保存", "Replace & Save")}
                   </Button>
                 </div>
               </div>

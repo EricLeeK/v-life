@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import {
   AlertDialog,
@@ -16,6 +16,7 @@ import {
   LearningNotePanel,
   type LearningNoteCreateValues,
   type LearningNoteDeleteValues,
+  type LearningNoteSaveOptions,
   type LearningNoteSaveValues,
 } from "@/components/LearningNotePanel";
 import {
@@ -36,6 +37,18 @@ import { getErrorMessage } from "@/lib/errorMessage";
 type LearningCourse = Tables<"learning_courses">;
 type LearningNote = Tables<"learning_notes">;
 
+const COURSE_ORDER_KEY = "vlife-learning-course-order";
+
+function loadCourseOrder(): string[] {
+  try {
+    const raw = localStorage.getItem(COURSE_ORDER_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((v) => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function LearningNotesPage() {
   const { data: coursesData = [] } = useLearningCourses();
   const courses = coursesData as LearningCourse[];
@@ -43,6 +56,7 @@ export default function LearningNotesPage() {
   const { t } = useLang();
 
   const [selectedId, setSelectedId] = useState<string | undefined>();
+  const [courseOrder, setCourseOrder] = useState<string[]>(loadCourseOrder);
   const [courseModalOpen, setCourseModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<LearningCourse | null>(null);
   const [courseToDelete, setCourseToDelete] = useState<LearningCourse | null>(null);
@@ -50,6 +64,26 @@ export default function LearningNotesPage() {
   const selectedCourse = courses.find((course) => course.id === selectedId);
   const { data: notesData = [] } = useLearningNotes(selectedCourse?.id);
   const notes = notesData as LearningNote[];
+
+  // 已保存的拖拽排序优先；新增课程（未在排序中）排在最前
+  const orderedCourses = useMemo(() => {
+    if (courseOrder.length === 0) return courses;
+    const inOrder = courseOrder
+      .map((id) => courses.find((course) => course.id === id))
+      .filter((course): course is LearningCourse => Boolean(course));
+    const fresh = courses.filter((course) => !courseOrder.includes(course.id));
+    return [...fresh, ...inOrder];
+  }, [courses, courseOrder]);
+
+  const handleReorderCourses = (reordered: LearningCourse[]) => {
+    const ids = reordered.map((course) => course.id);
+    setCourseOrder(ids);
+    try {
+      localStorage.setItem(COURSE_ORDER_KEY, JSON.stringify(ids));
+    } catch {
+      // localStorage 不可用时仅保留本次会话内的排序
+    }
+  };
 
   const createCourse = useCreateLearningCourse();
   const updateCourse = useUpdateLearningCourse();
@@ -103,10 +137,12 @@ export default function LearningNotesPage() {
     }
   };
 
-  const handleSaveNote = async (values: LearningNoteSaveValues) => {
+  const handleSaveNote = async (values: LearningNoteSaveValues, options?: LearningNoteSaveOptions) => {
     try {
       await updateNote.mutateAsync(values);
-      toast({ title: t("笔记已保存", "Note saved") });
+      if (options?.source !== "auto") {
+        toast({ title: t("笔记已保存", "Note saved") });
+      }
     } catch (e: unknown) {
       toast({ title: t("保存失败", "Save failed"), description: getErrorMessage(e), variant: "destructive" });
       throw e;
@@ -122,14 +158,15 @@ export default function LearningNotesPage() {
   };
 
   return (
-    <AppLayout title={t("学习笔记", "Learning Notes")}>
-      <div className="flex h-[calc(100vh-6rem)] flex-col md:flex-row gap-0">
+    <AppLayout title={t("学习笔记", "Learning Notes")} fullBleed>
+      <div className="flex h-full flex-col md:flex-row gap-0">
         <div className="h-64 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-border">
           <LearningCourseSidebar
-            courses={courses}
+            courses={orderedCourses}
             selectedId={selectedId}
             noteCounts={selectedCourse ? { [selectedCourse.id]: notes.length } : {}}
             onSelect={setSelectedId}
+            onReorder={handleReorderCourses}
             onAdd={() => {
               setEditingCourse(null);
               setCourseModalOpen(true);

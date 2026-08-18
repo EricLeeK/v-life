@@ -882,7 +882,11 @@ export function useCreateLearningNote() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      // 先同步写入缓存，保证新建后能立刻选中并进入编辑，再后台刷新保持一致
+      if (data) {
+        qc.setQueryData<any[]>(["learning_notes", variables.course_id], (old) => (old ? [data, ...old] : [data]));
+      }
       qc.invalidateQueries({ queryKey: ["learning_notes", variables.course_id] });
     },
   });

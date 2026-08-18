@@ -18,4 +18,8 @@ describe("noteTextFromAiChat", () => {
       }),
     ).toBe("");
   });
+
+  it("strips emoji from AI note output", () => {
+    expect(noteTextFromAiChat({ content: "## 要点 ✨\n- 结论 🎓" })).toBe("## 要点\n- 结论");
+  });
 });

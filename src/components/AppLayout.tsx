@@ -7,9 +7,11 @@ import { useDemoMode } from "@/contexts/DemoModeContext";
 interface AppLayoutProps {
   children: React.ReactNode;
   title?: string;
+  /** 工作台页面（学习笔记/项目管理）使用：内容贴满主区域，与顶部导航一体，无内边距 */
+  fullBleed?: boolean;
 }
 
-export function AppLayout({ children, title }: AppLayoutProps) {
+export function AppLayout({ children, title, fullBleed = false }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const { isDemo } = useDemoMode();
 
@@ -32,7 +34,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className={`min-h-screen flex w-full bg-background text-foreground ${isDemo ? "pt-10" : ""}`}>
+      <div className={`${fullBleed ? "h-screen" : "min-h-screen"} flex w-full bg-background text-foreground ${isDemo ? "pt-10" : ""}`}>
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-12 flex items-center border-b border-border px-4 gap-3 shrink-0 bg-card">
@@ -41,10 +43,16 @@ export function AppLayout({ children, title }: AppLayoutProps) {
               <span className="text-base font-semibold text-foreground">{title}</span>
             )}
           </header>
-          <main className="flex-1 overflow-auto bg-background flex justify-center">
-            <div className="w-full px-6 lg:px-10 py-6" style={{ maxWidth: '100rem' }}>
-              {children}
-            </div>
+          <main className="flex-1 min-h-0 overflow-auto bg-background flex justify-center">
+            {fullBleed ? (
+              <div className="w-full h-full">
+                {children}
+              </div>
+            ) : (
+              <div className="w-full px-6 lg:px-10 py-6" style={{ maxWidth: '100rem' }}>
+                {children}
+              </div>
+            )}
           </main>
         </div>
       </div>
