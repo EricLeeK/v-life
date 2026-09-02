@@ -9,9 +9,14 @@ import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2
 import { format } from "date-fns";
 import { useSettings } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
 import { useClipboardImagePaste } from "@/hooks/useClipboardImagePaste";
 import { moduleByKey, tableOf, getModuleLabels, allQueryKeys } from "@modules";
+import { chartPalette } from "@/lib/chartTokens";
+import { parseAgentChatContent, sanitizeAssistantContent } from "../../supabase/functions/_shared/parseAgentChat";
+import { formatOpPreview, normalizeHabitCreate, rewriteCompleteOp, shouldSkipDailyTask } from "@/lib/habitAi";
+import { isPersistentKind } from "@/lib/habits";
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
@@ -109,14 +114,21 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         notes: data.notes || null,
       };
     }
-    case "todo":
+    case "todo": {
+      const habit = normalizeHabitCreate(data);
       return {
-        title: data.title || "未命名待办",
-        category: data.category || "未分类",
-        importance: data.importance || "普通",
+        title: habit.title,
+        category: habit.category || data.category || "未分类",
+        importance: data.importance === "低" ? "低优先" : (data.importance || "普通"),
         detail: data.detail || null,
         is_completed: false,
+        kind: habit.kind || "once",
+        habit_type: habit.habit_type ?? null,
+        habit_target: habit.habit_target ?? null,
+        habit_unit: habit.habit_unit ?? null,
+        is_paused: habit.is_paused === true,
       };
+    }
     case "pantry":
       return {
         name: data.name || "未命名",
@@ -192,7 +204,7 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
       return {
         name: data.name || "未命名课程",
         description: data.description || null,
-        color: data.color || "#5b88b5",
+        color: data.color || chartPalette.blue(),
       };
     case "learning_note":
       return {
@@ -291,8 +303,8 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
   }
 }
 
-export function AIChatPanel() {
-  const [isOpen, setIsOpen] = useState(false);
+export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) {
+  const [isOpen, setIsOpen] = useState(initialOpen);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -314,6 +326,7 @@ export function AIChatPanel() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: settings } = useSettings();
+  const { isDemo } = useDemoMode();
   const aiMode = settings?.ai_mode || "confirm";
   const { t, lang } = useLang();
   const moduleLabels = getModuleLabels(t);
@@ -329,7 +342,7 @@ export function AIChatPanel() {
       if (error) throw error;
       return data;
     },
-    enabled: isOpen,
+    enabled: isOpen && !isDemo,
   });
 
   useEffect(() => {
@@ -454,7 +467,36 @@ export function AIChatPanel() {
       const createdIds: Array<{ table: string; id: string }> = [];
       let hasError = false;
 
-      for (const op of operations) {
+      const findTodo = async (match: { id?: string; title?: string; todo_id?: string }) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+        const id = String(match.id || match.todo_id || "").trim();
+        const title = String(match.title || "").trim();
+        if (id) {
+          const { data } = await (supabase.from as any)("todos")
+            .select("id,title,kind,habit_type,habit_target,is_archived")
+            .eq("id", id)
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (data) return data;
+        }
+        if (!title) return null;
+        const { data } = await (supabase.from as any)("todos")
+          .select("id,title,kind,habit_type,habit_target,is_archived")
+          .eq("user_id", user.id)
+          .eq("title", title)
+          .order("is_archived", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        return data;
+      };
+
+      for (const rawOp of operations) {
+        let op: Operation = rawOp;
+        if (op.module === "todo" && op.action === "update" && op.data?.update?.is_completed === true) {
+          const parent = await findTodo(op.data.match || { title: op.data.title });
+          op = rewriteCompleteOp(op, parent);
+        }
         const table = tableOf(op.module);
         if (!table) {
           hasError = true;
@@ -482,14 +524,14 @@ export function AIChatPanel() {
               // 1) 优先：直接引用已命中的 todo（校验归属）
               if (dtTodoId) {
                 const { data: byId } = await (supabase.from as any)("todos")
-                  .select("id,title").eq("id", dtTodoId).eq("user_id", dtUser.id).maybeSingle();
+                  .select("id,title,kind").eq("id", dtTodoId).eq("user_id", dtUser.id).maybeSingle();
                 dtTodo = byId;
               }
               // 2) 兜底：按标题找现有 todo（未完成，优先未归档）；找不到则新建
               if (!dtTodo) {
                 if (!dtTitle) throw new Error("缺少任务标题 title");
                 const { data: byTitle } = await (supabase.from as any)("todos")
-                  .select("id,title")
+                  .select("id,title,kind")
                   .eq("user_id", dtUser.id)
                   .eq("title", dtTitle)
                   .eq("is_completed", false)
@@ -499,7 +541,7 @@ export function AIChatPanel() {
                 if (!dtTodo) {
                   const { data: newTodo, error: te } = await (supabase.from as any)("todos").insert({
                     user_id: dtUser.id, title: dtTitle, category: "未分类", importance: "普通",
-                    is_completed: false, is_archived: false,
+                    kind: "once", is_completed: false, is_archived: false,
                   }).select().single();
                   if (te) throw te;
                   dtTodo = newTodo;
@@ -507,24 +549,83 @@ export function AIChatPanel() {
                 }
               }
               const dtDisplay = dtTodo.title || dtTitle;
-              // 已在今天则跳过
+              if (shouldSkipDailyTask(dtTodo)) {
+                results.push(`${label}: 「${dtDisplay}」${t("是习惯，已在今日顶部", "is a habit already pinned today")}`);
+                continue;
+              }
+              // 已在今天则跳过（complete: true 时补勾）
               const { data: dtExist } = await (supabase.from as any)("daily_tasks")
                 .select("id").eq("todo_id", dtTodo.id).eq("task_date", dtToday).maybeSingle();
               if (dtExist) {
-                results.push(`${label}: 「${dtDisplay}」${t("已在今日待办", "already in today's list")}`);
+                if (op.data.complete === true) {
+                  await (supabase.from as any)("daily_tasks").update({
+                    is_completed: true, completed_at: new Date().toISOString(),
+                  }).eq("id", dtExist.id);
+                  results.push(`${label}: ${t("已完成今日", "Completed today")}「${dtDisplay}」`);
+                } else {
+                  results.push(`${label}: 「${dtDisplay}」${t("已在今日待办", "already in today's list")}`);
+                }
                 continue;
               }
               const { data: dtRow, error: dtErr } = await (supabase.from as any)("daily_tasks").insert({
                 user_id: dtUser.id, todo_id: dtTodo.id, task_date: dtToday,
-                difficulty: dtDiff, base_points: dtPts, is_completed: false, completed_at: null, metadata: {},
+                difficulty: dtDiff, base_points: dtPts,
+                is_completed: op.data.complete === true,
+                completed_at: op.data.complete === true ? new Date().toISOString() : null,
+                metadata: {},
               }).select().single();
               if (dtErr) throw dtErr;
               if (dtRow?.id) createdIds.push({ table: "daily_tasks", id: dtRow.id });
-              results.push(`${label}: ${t("已加入今日待办", "Added to today")}「${dtDisplay}」`);
+              results.push(
+                op.data.complete === true
+                  ? `${label}: ${t("已加入今日并完成", "Added and completed")}「${dtDisplay}」`
+                  : `${label}: ${t("已加入今日待办", "Added to today")}「${dtDisplay}」`,
+              );
+              continue;
+            }
+
+            if (op.module === "habit_log") {
+              const { data: { user: logUser } } = await supabase.auth.getUser();
+              if (!logUser) throw new Error("未登录");
+              const habit = await findTodo({ id: op.data.todo_id, title: op.data.title });
+              if (!habit || habit.kind !== "habit") throw new Error(`未找到习惯「${op.data.title || ""}」`);
+              const logDate = new Date().toISOString().split("T")[0];
+              const value = op.data.value != null ? Number(op.data.value) : 1;
+              const { data: logRow, error: logErr } = await (supabase.from as any)("todo_habit_logs").upsert(
+                {
+                  user_id: logUser.id,
+                  todo_id: habit.id,
+                  log_date: logDate,
+                  value,
+                  broken: false,
+                },
+                { onConflict: "todo_id,log_date" },
+              ).select().single();
+              if (logErr) throw logErr;
+              if (logRow?.id) createdIds.push({ table: "todo_habit_logs", id: logRow.id });
+              results.push(`${label}: ${t("已记录打卡", "Logged check-in")}「${habit.title}」`);
               continue;
             }
 
             const row = mapOperationToRow(op.module, op.data, exchangeRate);
+
+            if (op.module === "todo" && isPersistentKind(row.kind)) {
+              const { data: { user: todoUser } } = await supabase.auth.getUser();
+              if (todoUser) {
+                const { data: dup } = await (supabase.from as any)("todos")
+                  .select("id")
+                  .eq("user_id", todoUser.id)
+                  .eq("title", row.title)
+                  .eq("kind", row.kind)
+                  .eq("is_archived", false)
+                  .limit(1)
+                  .maybeSingle();
+                if (dup) {
+                  results.push(`${label}: 「${row.title}」${t("已存在，未重复创建", "already exists, skipped")}`);
+                  continue;
+                }
+              }
+            }
 
             if (ex?.needsUserId) {
               const { data: { user } } = await supabase.auth.getUser();
@@ -613,6 +714,17 @@ export function AIChatPanel() {
             }
             results.push(`${label}: ${t("已删除", "Deleted")}「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
+            if (op.module === "todo") {
+              const parent = await findTodo(op.data.match);
+              if (isPersistentKind(parent?.kind) && Object.prototype.hasOwnProperty.call(op.data.update, "is_completed")) {
+                const { is_completed: _ignored, ...rest } = op.data.update;
+                if (Object.keys(rest).length === 0) {
+                  results.push(`${label}: ${t("习惯/例行不能勾完成母卡", "Cannot complete habit/routine cards")}`);
+                  continue;
+                }
+                op = { ...op, data: { ...op.data, update: rest } };
+              }
+            }
             const match = { ...op.data.match };
 
             if (ex?.resolves && match[ex.resolves.from] != null) {
@@ -723,9 +835,9 @@ export function AIChatPanel() {
       const invokeMsg = await messageFromAiInvoke(data, error);
       if (invokeMsg) throw new Error(invokeMsg);
 
-      const result = data?.result;
-      const operations: Operation[] = result?.operations || [];
-      const summary: string = result?.summary || data?.raw || "无法理解请求";
+      const parsed = parseAgentChatContent({ result: data?.result, raw: data?.raw });
+      const operations: Operation[] = parsed.operations || [];
+      const summary: string = parsed.summary || "无法理解请求";
 
       if (operations.length > 0) {
         if (aiMode === "direct") {
@@ -753,6 +865,9 @@ export function AIChatPanel() {
           const previewLines = operations.map((op) => {
             const label = moduleLabels[op.module] || op.module;
             const action = { create: t("新增", "Create"), update: t("更新", "Update"), delete: t("删除", "Delete") }[op.action] || op.action;
+            if ((op.module === "todo" && (op.data.kind === "habit" || op.data.kind === "routine")) || op.module === "habit_log") {
+              return `• ${formatOpPreview(op, action, label)}`;
+            }
             const name = op.data.name || op.data.title || op.data.food_name || op.data.match?.name || op.data.match?.title || "";
             return `• ${action} ${label}「${name}」`;
           });
@@ -791,7 +906,7 @@ export function AIChatPanel() {
       const { results: execResults, hasError } = await executeOperations(msg.operations);
       const updatedMsg: Message = {
         ...msg,
-        content: `${msg.content.split("\n\n将执行以下操作")[0]}\n\n${execResults.join("\n")}`,
+        content: `${sanitizeAssistantContent(msg.content.split(/\n\n将执行以下操作|\n\nWill execute:/)[0])}\n\n${execResults.join("\n")}`,
         status: hasError ? "error" : "executed",
       };
       setMessages((prev) => prev.map((m, i) => (i === msgIndex ? updatedMsg : m)));
@@ -976,7 +1091,7 @@ export function AIChatPanel() {
                       ))}
                     </div>
                   )}
-                  {msg.content}
+                  {sanitizeAssistantContent(msg.content)}
                   {msg.status === "executed" && (
                     <div className="flex items-center gap-1 mt-1 text-xs opacity-70">
                       <Check className="h-3 w-3" /> {t("已执行", "Executed")}

@@ -1259,6 +1259,102 @@ export function useToggleHabitLog() {
   return supa;
 }
 
+export function useTodoHabitLogs() {
+  const { isDemo, demoData } = useDemoMode();
+  const supa = useQuery({
+    queryKey: ["todo_habit_logs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("todo_habit_logs").select("*");
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    return { data: demoData.todo_habit_logs || [], isLoading: false, error: null } as any;
+  }
+  return supa;
+}
+
+export function useUpsertTodoHabitLog() {
+  const { isDemo, demoData, addRecord, updateRecord, deleteRecord } = useDemoMode();
+  const qc = useQueryClient();
+
+  const applyLocal = (todoId: string, logDate: string, value: number | null, broken: boolean, remove: boolean) => {
+    const existing = (demoData.todo_habit_logs || []).find((l: any) => l.todo_id === todoId && l.log_date === logDate);
+    if (remove) {
+      if (existing) deleteRecord("todo_habit_logs", existing.id);
+      return;
+    }
+    if (existing) {
+      updateRecord("todo_habit_logs", existing.id, { value, broken, updated_at: new Date().toISOString() });
+    } else {
+      addRecord("todo_habit_logs", {
+        todo_id: todoId,
+        log_date: logDate,
+        value,
+        broken,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+  };
+
+  const supa = useMutation({
+    mutationFn: async ({
+      todoId,
+      logDate,
+      value,
+      broken,
+      remove,
+    }: {
+      todoId: string;
+      logDate: string;
+      value?: number | null;
+      broken?: boolean;
+      remove?: boolean;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("未登录");
+      if (remove) {
+        const { error } = await supabase.from("todo_habit_logs").delete().eq("todo_id", todoId).eq("log_date", logDate);
+        if (error) throw error;
+        return { removed: true };
+      }
+      const { error } = await supabase.from("todo_habit_logs").upsert(
+        {
+          user_id: user.id,
+          todo_id: todoId,
+          log_date: logDate,
+          value: value ?? null,
+          broken: broken === true,
+        },
+        { onConflict: "todo_id,log_date" },
+      );
+      if (error) throw error;
+      return { removed: false };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["todo_habit_logs"] });
+    },
+  });
+
+  if (isDemo) {
+    return {
+      mutate: (args: any) => {
+        applyLocal(args.todoId, args.logDate, args.value ?? null, args.broken === true, !!args.remove);
+        qc.invalidateQueries({ queryKey: ["todo_habit_logs"] });
+      },
+      mutateAsync: async (args: any) => {
+        applyLocal(args.todoId, args.logDate, args.value ?? null, args.broken === true, !!args.remove);
+        qc.invalidateQueries({ queryKey: ["todo_habit_logs"] });
+      },
+      isPending: false,
+    } as any;
+  }
+  return supa;
+}
+
 export function useTaskTags(projectId?: string) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({

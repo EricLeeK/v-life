@@ -11,8 +11,8 @@ import {
 } from "@modules";
 
 describe("MODULES integrity", () => {
-  it("has exactly 21 modules", () => {
-    expect(MODULES).toHaveLength(21);
+  it("has exactly 22 modules", () => {
+    expect(MODULES).toHaveLength(22);
   });
 
   it("has unique keys", () => {
@@ -34,9 +34,9 @@ describe("MODULES integrity", () => {
     }
   });
 
-  it("module indices are 1..21 contiguous", () => {
+  it("module indices are 1..22 contiguous", () => {
     const indices = MODULES.map((m) => m.index).sort((a, b) => a - b);
-    expect(indices).toEqual(Array.from({ length: 21 }, (_, i) => i + 1));
+    expect(indices).toEqual(Array.from({ length: 22 }, (_, i) => i + 1));
   });
 
   it("no internal field appears in any updateFields list", () => {
@@ -67,6 +67,8 @@ describe("derived helpers", () => {
     // todo.is_completed is updateOnly → excluded from create
     const todo = createFieldsOf("todo").map((f) => f.name);
     expect(todo).not.toContain("is_completed");
+    expect(todo).toContain("kind");
+    expect(todo).toContain("habit_type");
   });
 
   it("moduleByKey covers all modules", () => {
@@ -86,15 +88,16 @@ describe("derived helpers", () => {
     // the two belongings modules share the "belongings" namespace → deduped to one
     expect(keys).toContain("belongings");
     expect(keys.filter((k) => k === "belongings")).toHaveLength(1);
-    // 21 modules, minus 1 because belongings_daily + belongings_durable collapse to one key
-    expect(keys).toHaveLength(20);
+    // 22 modules, minus 1 because belongings_daily + belongings_durable collapse to one key
+    expect(keys).toContain("todo_habit_logs");
+    expect(keys).toHaveLength(21);
   });
 });
 
 describe("buildSystemPrompt", () => {
   const prompt = buildSystemPrompt();
 
-  it("renders all 21 module headings", () => {
+  it("renders all 22 module headings", () => {
     for (const m of MODULES) {
       expect(prompt).toContain(`### ${m.index}. ${m.key}（${m.headingZh}）`);
     }
@@ -106,10 +109,18 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("## 支持的操作类型（action）");
     expect(prompt).toContain("## 模块定义与字段规范");
     expect(prompt).toContain("## 默认值规则");
+    expect(prompt).toContain("## 开放字段与封闭字段");
     expect(prompt).toContain("## 跨模块识别");
     expect(prompt).toContain("## 图片输入");
     expect(prompt).toContain("### 购物小票特别规则");
     expect(prompt).toContain("## 示例");
+  });
+
+  it("forbids asking the user to pick habit vs routine", () => {
+    expect(prompt).toContain("禁止在 summary 里问「这是习惯还是例行」");
+    expect(prompt).toContain("我想每天喝八杯水");
+    expect(prompt).toContain("查工作邮箱要经常做");
+    expect(prompt).toContain("冥想打卡了");
   });
 
   it("uses the corrected rule 4 (empty operations, not a phantom chat type)", () => {
@@ -122,6 +133,14 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain('meal_type: "breakfast"|"lunch"|"dinner"|"snack"|"exercise"');
     // finance category enum must include the 税费 category
     expect(prompt).toContain('"税费"');
+  });
+
+  it("treats todo and daily-belonging categories as open vocab, not a fake closed enum", () => {
+    expect(prompt).not.toContain('"工作"|"学习"|"学业"|"生活"|"健康"|"考公"|"未分类"');
+    expect(prompt).not.toContain('"洗护"|"清洁"|"厨房"|"文具"|"其他"');
+    expect(prompt).toMatch(/### 4\. todo[\s\S]*?category\?: string/);
+    expect(prompt).toContain("## 开放字段与封闭字段");
+    expect(prompt).toContain("「用户词表」为准");
   });
 
   it("keeps internal computed columns out of the prompt", () => {

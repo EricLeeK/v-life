@@ -334,6 +334,12 @@ export const demoTodos = [
   { id: "demo-t0000000-0000-0000-0000-000000000011", title: "提交研究报告", detail: "季度进展报告", importance: "important", category: "工作", is_completed: true, is_archived: false, created_at: "2026-04-22T10:00:00+09:00", updated_at: "2026-04-25T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t0000000-0000-0000-0000-000000000012", title: "修理自行车刹车", detail: null, importance: "low", category: "生活", is_completed: false, is_archived: false, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t0000000-0000-0000-0000-000000000013", title: "回复导师邮件", detail: "关于实验参数设置的问题", importance: "important", category: "工作", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
+
+  { id: "demo-habit-meditate", title: "晨间冥想", detail: null, importance: "普通", category: "习惯", kind: "habit", habit_type: "checkin", habit_target: null, habit_unit: null, is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-20T10:00:00+09:00", updated_at: "2026-08-20T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-habit-water", title: "喝水", detail: null, importance: "普通", category: "习惯", kind: "habit", habit_type: "count", habit_target: 8, habit_unit: "杯", is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-20T10:00:00+09:00", updated_at: "2026-08-20T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-habit-read", title: "阅读", detail: null, importance: "普通", category: "习惯", kind: "habit", habit_type: "duration", habit_target: 30, habit_unit: "分钟", is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-20T10:00:00+09:00", updated_at: "2026-08-20T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-habit-sleep", title: "23:30 前睡觉", detail: null, importance: "普通", category: "习惯", kind: "habit", habit_type: "avoidance", habit_target: null, habit_unit: null, is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-26T10:00:00+09:00", updated_at: "2026-08-26T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-routine-email", title: "查工作邮箱", detail: null, importance: "普通", category: "工作", kind: "routine", habit_type: null, habit_target: null, habit_unit: null, is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-20T10:00:00+09:00", updated_at: "2026-08-20T10:00:00+09:00", user_id: DEMO_USER },
 ];
 
 // ============ Daily Tasks (Today's Todo — dynamic) ============
@@ -897,6 +903,19 @@ export const demoCivilXingcePapers = [
   }
 })();
 
+function isoDaysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split("T")[0];
+}
+
+export const demoTodoHabitLogs = [
+  { id: "demo-thl-meditate-0", user_id: DEMO_USER, todo_id: "demo-habit-meditate", log_date: isoDaysAgo(0), value: 1, broken: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "demo-thl-meditate-1", user_id: DEMO_USER, todo_id: "demo-habit-meditate", log_date: isoDaysAgo(1), value: 1, broken: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "demo-thl-water-0", user_id: DEMO_USER, todo_id: "demo-habit-water", log_date: isoDaysAgo(0), value: 5, broken: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  { id: "demo-thl-read-0", user_id: DEMO_USER, todo_id: "demo-habit-read", log_date: isoDaysAgo(0), value: 18, broken: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+];
+
 // ============ Aggregated Demo Data Store ============
 export interface DemoDataStore {
   settings: typeof demoSettings;
@@ -919,6 +938,7 @@ export interface DemoDataStore {
   project_tasks: typeof demoProjectTasks;
   task_tags: typeof demoTaskTags;
   habit_logs: typeof demoHabitLogs;
+  todo_habit_logs: typeof demoTodoHabitLogs;
   shop_items: typeof demoShopItems;
   user_inventory: typeof demoUserInventory;
   gacha_pity: typeof demoGachaPity;
@@ -951,6 +971,7 @@ export function createDemoDataStore(): DemoDataStore {
     project_tasks: [...demoProjectTasks],
     task_tags: [...demoTaskTags],
     habit_logs: [...demoHabitLogs],
+    todo_habit_logs: [...demoTodoHabitLogs],
     shop_items: [...demoShopItems],
     user_inventory: [...demoUserInventory],
     gacha_pity: [...demoGachaPity],

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,13 +23,17 @@ import {
   todoHooks,
   getLocalDateString,
   useSettings,
+  useTodoHabitLogs,
+  useUpsertTodoHabitLog,
 } from "@/hooks/useData";
 import { POINTS_FEATURE_ENABLED as POINTS } from "@/lib/featureFlags";
+import { todayPickerItems } from "@/lib/habits";
+import { HabitWidgetStack } from "@/components/HabitWidgetStack";
 
 const DIFFICULTY_CONFIG = {
-  easy: { label: { zh: "简单", en: "Easy" }, color: "bg-emerald-100 text-emerald-700", points: 10 },
-  medium: { label: { zh: "中等", en: "Medium" }, color: "bg-amber-100 text-amber-700", points: 20 },
-  hard: { label: { zh: "困难", en: "Hard" }, color: "bg-rose-100 text-rose-700", points: 30 },
+  easy: { label: { zh: "简单", en: "Easy" }, color: "bg-cat-green-bg text-cat-green", points: 10 },
+  medium: { label: { zh: "中等", en: "Medium" }, color: "bg-cat-yellow-bg text-cat-yellow", points: 20 },
+  hard: { label: { zh: "困难", en: "Hard" }, color: "bg-cat-red-bg text-cat-red", points: 30 },
 } as const;
 
 const MOTIVATIONAL_QUOTES = [
@@ -46,15 +50,15 @@ function CircularProgress({ value, size = 64 }: { value: number; size?: number }
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="#e4e1d7" strokeWidth="4" fill="transparent" />
+        <circle cx={size / 2} cy={size / 2} r={radius} stroke="hsl(var(--border))" strokeWidth="4" fill="transparent" />
         <circle
           cx={size / 2} cy={size / 2} r={radius}
-          stroke="#d17847" strokeWidth="4" fill="transparent"
+          stroke="hsl(var(--cat-orange))" strokeWidth="4" fill="transparent"
           strokeDasharray={circumference} strokeDashoffset={offset}
           strokeLinecap="round" className="transition-all duration-500"
         />
       </svg>
-      <span className="absolute text-sm font-semibold" style={{ fontFamily: "JetBrains Mono, monospace", color: "#1f1a14" }}>
+      <span className="absolute text-sm font-semibold text-foreground font-mono-data">
         {Math.round(value)}%
       </span>
     </div>
@@ -163,6 +167,9 @@ export default function TodayTodoPage() {
   const estimateDifficulty = useEstimateDifficulty();
   const { data: allTodos = [] } = todoHooks.useList();
   const createTodo = todoHooks.useCreate();
+  const { data: habitLogs = [] } = useTodoHabitLogs();
+  const upsertHabitLog = useUpsertTodoHabitLog();
+  const { data: settings } = useSettings();
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [selectedTodos, setSelectedTodos] = useState<string[]>([]);
@@ -182,7 +189,14 @@ export default function TodayTodoPage() {
   const [adjustingPoints, setAdjustingPoints] = useState<number>(20);
   const [adjustingFeedback, setAdjustingFeedback] = useState<string>("");
 
-  const { data: settings } = useSettings();
+  const todayStr = getLocalDateString(new Date(), settings?.day_start_hour || 0);
+  const todayHabits = useMemo(
+    () =>
+      allTodos
+        .filter((t: any) => t.kind === "habit" && !t.is_archived && !t.is_paused)
+        .sort((a: any, b: any) => String(b.created_at).localeCompare(String(a.created_at))),
+    [allTodos],
+  );
 
   useEffect(() => {
     if (POINTS && userPoints) {
@@ -195,12 +209,14 @@ export default function TodayTodoPage() {
   }, [userPoints, settings?.day_start_hour]);
 
   const todayTaskIds = useMemo(() => new Set(todayTasks.map((dt: any) => dt.todo_id)), [todayTasks]);
-  const availableTodos = allTodos.filter((t: any) => {
-    if (t.is_completed || t.is_archived || todayTaskIds.has(t.id)) return false;
-    if (t.parent_id) return true;
-    const hasActiveChildren = allTodos.some((child: any) => child.parent_id === t.id && !child.is_completed && !child.is_archived);
-    return !hasActiveChildren;
-  });
+  const availableTodos = todayPickerItems(
+    allTodos.filter((t: any) => {
+      if (t.parent_id) return true;
+      const hasActiveChildren = allTodos.some((child: any) => child.parent_id === t.id && !child.is_completed && !child.is_archived);
+      return !hasActiveChildren;
+    }),
+    todayTaskIds,
+  );
 
   // Keep freshly-created temp tasks on top of the picker until confirmed.
   const [recentTempIds, setRecentTempIds] = useState<string[]>([]);
@@ -249,6 +265,7 @@ export default function TodayTodoPage() {
         detail: null,
         importance: tempTaskImportance,
         category: tempTaskCategory || "生活",
+        kind: "once",
         is_completed: false,
         is_archived: false,
       });
@@ -482,10 +499,10 @@ export default function TodayTodoPage() {
             <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
               {POINTS && has4D && (
                 <div className="flex gap-1 mr-1 hidden md:flex">
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-blue-50 text-blue-600 border-blue-200">
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-cat-blue-bg text-cat-blue border-cat-blue/30">
                     L{meta.cognitive_level}
                   </Badge>
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-purple-50 text-purple-600 border-purple-200">
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-cat-purple-bg text-cat-purple border-cat-purple/30">
                     L{meta.willpower_level}
                   </Badge>
                 </div>
@@ -495,10 +512,10 @@ export default function TodayTodoPage() {
                 const pts = task.base_points || cfg?.points || 20;
                 const badgeColor =
                   pts < 20
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    ? "bg-cat-green-bg text-cat-green border-cat-green/30"
                     : pts < 40
-                    ? "bg-blue-50 text-blue-700 border-blue-200"
-                    : "bg-rose-50 text-rose-700 border-rose-200";
+                    ? "bg-cat-blue-bg text-cat-blue border-cat-blue/30"
+                    : "bg-cat-red-bg text-cat-red border-cat-red/30";
                 return (
                   <Badge variant="outline" className={`text-xs font-semibold px-2 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
                     +{pts} XP
@@ -511,7 +528,7 @@ export default function TodayTodoPage() {
                   variant="ghost"
                   size="icon"
                   aria-label={t("调整分值", "Adjust score")}
-                  className="h-7 w-7 text-muted-foreground hover:text-[#d17847] hover:bg-[#fdf8f3] rounded-md shrink-0"
+                  className="h-7 w-7 text-muted-foreground hover:text-cat-orange hover:bg-muted/50 rounded-md shrink-0"
                   onClick={() => {
                     if (adjustingTaskId === task.id) {
                       setAdjustingTaskId(null);
@@ -538,7 +555,7 @@ export default function TodayTodoPage() {
           </div>
 
           {POINTS && adjustingTaskId === task.id && (
-            <div className="mt-3 p-3 bg-stone-50 border border-border rounded-lg space-y-3 relative z-10 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="mt-3 p-3 bg-muted/40 border border-border rounded-lg space-y-3 relative z-10 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-muted-foreground">
                   {t("调整分值", "Adjust Score")}
@@ -547,7 +564,7 @@ export default function TodayTodoPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-7 w-7 rounded-md border-border bg-white hover:bg-stone-50"
+                    className="h-7 w-7 rounded-md border-border bg-card hover:bg-muted/40"
                     onClick={() => setAdjustingPoints((prev) => Math.max(5, prev - 5))}
                   >
                     <Minus className="h-3.5 w-3.5" />
@@ -558,7 +575,7 @@ export default function TodayTodoPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className="h-7 w-7 rounded-md border-border bg-white hover:bg-stone-50"
+                    className="h-7 w-7 rounded-md border-border bg-card hover:bg-muted/40"
                     onClick={() => setAdjustingPoints((prev) => Math.min(1000, prev + 5))}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -575,7 +592,7 @@ export default function TodayTodoPage() {
                   value={adjustingFeedback}
                   onChange={(e) => setAdjustingFeedback(e.target.value)}
                   placeholder={t("例如：实际耗时更长 / 任务难度较高", "E.g., Took more effort / High cognitive load")}
-                  className="h-8 text-xs bg-white border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
+                  className="h-8 text-xs bg-card border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
                 />
               </div>
 
@@ -647,10 +664,10 @@ export default function TodayTodoPage() {
             ].map(({ icon: Icon, value, suffix, label }) => (
               <div
                 key={label}
-                className="flex items-center gap-1.5 bg-white border border-border rounded-full px-2.5 py-1 shadow-sm"
+                className="flex items-center gap-1.5 bg-card border border-border rounded-full px-2.5 py-1 shadow-sm"
               >
-                <Icon className="h-3.5 w-3.5" style={{ color: "#d17847" }} />
-                <span className="text-xs font-bold" style={{ fontFamily: "JetBrains Mono, monospace", color: "#1f1a14" }}>
+                <Icon className="h-3.5 w-3.5 text-cat-orange" />
+                <span className="text-xs font-bold text-foreground font-mono-data">
                   {value}{suffix}
                 </span>
                 <span className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
@@ -664,7 +681,7 @@ export default function TodayTodoPage() {
         <div className="flex items-center gap-4">
           <CircularProgress value={progressPct} size={72} />
           <div className="flex-1">
-            <p className="text-sm font-medium" style={{ color: "#1f1a14" }}>
+            <p className="text-sm font-medium text-foreground">
               {completedCount} / {totalCount} {t("已完成", "completed")}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -684,10 +701,13 @@ export default function TodayTodoPage() {
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>{t("选择今日任务", "Pick Today's Tasks")}</DialogTitle>
+                <DialogDescription>
+                  {t("例行会排在最上面。习惯不用选，已经在今日顶部。", "Routines are listed first. Habits are already pinned above.")}
+                </DialogDescription>
               </DialogHeader>
 
               {/* Quick add temporary task — synced to 待办事项 */}
-              <div className="rounded-lg border border-dashed border-[#e4d0b8] bg-[#fdf8f3] p-3 space-y-2">
+              <div className="rounded-lg border border-dashed border-cat-orange/30 bg-[var(--field-warm)] p-3 space-y-2">
                 <div className="flex items-center gap-1.5">
                   <Plus className="h-3.5 w-3.5 text-[#d17847]" />
                   <span className="text-xs font-bold text-foreground">
@@ -704,13 +724,13 @@ export default function TodayTodoPage() {
                     }
                   }}
                   placeholder={t("想到什么就先记下来…", "Just type what comes to mind…")}
-                  className="h-8 text-sm bg-white border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
+                  className="h-8 text-sm bg-card border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
                 />
                 <div className="flex items-center gap-2">
                   <select
                     value={tempTaskImportance}
                     onChange={(e) => setTempTaskImportance(e.target.value)}
-                    className="h-7 flex-1 text-xs rounded-md border border-border bg-white px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-[#d17847]"
+                    className="h-7 flex-1 text-xs rounded-md border border-border bg-card px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-[#d17847]"
                   >
                     <option value="紧急">{t("紧急", "Urgent")}</option>
                     <option value="重要">{t("重要", "Important")}</option>
@@ -721,7 +741,7 @@ export default function TodayTodoPage() {
                     value={tempTaskCategory}
                     onChange={(e) => setTempTaskCategory(e.target.value)}
                     placeholder={t("分类", "Category")}
-                    className="h-7 flex-1 text-xs bg-white border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
+                    className="h-7 flex-1 text-xs bg-card border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
                   />
                   <Button
                     type="button"
@@ -737,7 +757,7 @@ export default function TodayTodoPage() {
                     )}
                   </Button>
                 </div>
-                <p className="text-[10px] text-[#b8a590] leading-relaxed">
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
                   {t("会同步写入“待办事项”，并自动选中加入今天。", "Will be saved to To-Dos and auto-selected for today.")}
                 </p>
               </div>
@@ -751,7 +771,7 @@ export default function TodayTodoPage() {
                   displayTodos.map((todo: any) => (
                     <label
                       key={todo.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#f9f8f5] cursor-pointer"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
                     >
                       <input
                         type="checkbox"
@@ -766,7 +786,7 @@ export default function TodayTodoPage() {
                         className="rounded accent-[#d17847]"
                       />
                       <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
-                        <span className="text-sm font-medium" style={{ color: "#1f1a14" }}>
+                        <span className="text-sm font-medium text-foreground">
                           {(() => {
                             if (todo.parent_id) {
                               const parent = allTodos.find((p: any) => p.id === todo.parent_id);
@@ -775,31 +795,34 @@ export default function TodayTodoPage() {
                             return todo.title;
                           })()}
                         </span>
+                        {todo.kind === "routine" && (
+                          <span className="text-[10px] text-muted-foreground">{t("例行", "Routine")}</span>
+                        )}
                         
                         {/* 4D dimensions details display */}
                         {POINTS && selectedTodos.includes(todo.id) && estimatedEvaluations[todo.id] && (
                           <div className="mt-1.5 flex flex-wrap gap-1 items-center animate-in fade-in duration-200">
-                            <span className="text-[9px] bg-sky-50 text-sky-700 px-1 py-0.2 rounded border border-sky-100 font-semibold">
+                            <span className="text-[9px] bg-cat-blue-bg text-cat-blue px-1 py-0.2 rounded border border-cat-blue/30 font-semibold">
                               脑力 L{estimatedEvaluations[todo.id].cognitive_level || 1}
                             </span>
-                            <span className="text-[9px] bg-violet-50 text-violet-700 px-1 py-0.2 rounded border border-violet-100 font-semibold">
+                            <span className="text-[9px] bg-cat-purple-bg text-cat-purple px-1 py-0.2 rounded border border-cat-purple/30 font-semibold">
                               意志 L{estimatedEvaluations[todo.id].willpower_level || 1}
                             </span>
-                            <span className="text-[9px] bg-amber-50 text-amber-700 px-1 py-0.2 rounded border border-amber-100 font-semibold">
+                            <span className="text-[9px] bg-cat-yellow-bg text-cat-yellow px-1 py-0.2 rounded border border-cat-yellow/30 font-semibold">
                               时间 L{estimatedEvaluations[todo.id].duration_level || 1}
                             </span>
-                            <span className="text-[9px] bg-rose-50 text-rose-700 px-1 py-0.2 rounded border border-rose-100 font-semibold">
+                            <span className="text-[9px] bg-cat-red-bg text-cat-red px-1 py-0.2 rounded border border-cat-red/30 font-semibold">
                               价值 L{estimatedEvaluations[todo.id].impact_level || 1}
                             </span>
                             {estimatedEvaluations[todo.id].category && (
-                              <span className="text-[9px] bg-stone-100 text-stone-600 px-1 py-0.2 rounded border border-stone-200 font-semibold">
+                              <span className="text-[9px] bg-muted/40 text-muted-foreground px-1 py-0.2 rounded border border-border font-semibold">
                                 {estimatedEvaluations[todo.id].category}
                               </span>
                             )}
                           </div>
                         )}
                         {POINTS && selectedTodos.includes(todo.id) && estimatedEvaluations[todo.id]?.ai_encouragement && (
-                          <p className="text-[9px] mt-1 italic text-[#b8a590] leading-snug">
+                          <p className="text-[9px] mt-1 italic text-muted-foreground leading-snug">
                             "{estimatedEvaluations[todo.id].ai_encouragement}"
                           </p>
                         )}
@@ -810,22 +833,22 @@ export default function TodayTodoPage() {
                             const pts = estimatedEvaluations[todo.id].awarded_xp || 20;
                             const badgeColor =
                               pts < 20
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                ? "bg-cat-green-bg text-cat-green border-cat-green/30"
                                 : pts < 40
-                                ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-rose-50 text-rose-700 border-rose-200";
+                                ? "bg-cat-blue-bg text-cat-blue border-cat-blue/30"
+                                : "bg-cat-red-bg text-cat-red border-cat-red/30";
                             return (
                               <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${badgeColor}`}>
                                 +{pts} XP
                               </Badge>
                             );
                           })() : (
-                            <div className="flex items-center gap-1 shrink-0 bg-stone-50 p-0.5 rounded-md border border-border">
+                            <div className="flex items-center gap-1 shrink-0 bg-muted/40 p-0.5 rounded-md border border-border">
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -847,7 +870,7 @@ export default function TodayTodoPage() {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded"
+                                className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded"
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
@@ -860,7 +883,7 @@ export default function TodayTodoPage() {
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
-                              <span className="text-[10px] font-bold text-stone-400 mr-1 shrink-0">XP</span>
+                              <span className="text-[10px] font-bold text-muted-foreground mr-1 shrink-0">XP</span>
                             </div>
                           )}
                         </div>
@@ -895,9 +918,16 @@ export default function TodayTodoPage() {
           </Dialog>
         </div>
 
+        <HabitWidgetStack
+          habits={todayHabits}
+          logs={habitLogs}
+          today={todayStr}
+          onChange={(todoId, patch) => upsertHabitLog.mutate({ todoId, logDate: todayStr, ...patch })}
+        />
+
         {/* Task List */}
-        {todayTasks.length === 0 ? (
-          <Card className="bg-white border-border">
+        {todayTasks.length === 0 && todayHabits.length === 0 ? (
+          <Card className="bg-card border-border">
             <CardContent className="p-8 text-center">
               <ClipboardList className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -908,17 +938,17 @@ export default function TodayTodoPage() {
         ) : (
           <div className="space-y-4">
             {groupedTasks.map((group) => (
-              <Card key={group.parent?.id || Math.random().toString()} className="bg-white border-border overflow-hidden shadow-sm">
-                <div className="bg-[#fdfbf7] border-b border-border px-4 py-2.5 flex items-center justify-between">
+              <Card key={group.parent?.id || Math.random().toString()} className="bg-card border-border overflow-hidden shadow-sm">
+                <div className="bg-muted/30 border-b border-border px-4 py-2.5 flex items-center justify-between">
                   <h3 className="font-bold text-foreground flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4 text-[#d17847]" />
+                    <ClipboardList className="h-4 w-4 text-cat-orange" />
                     {group.parent?.title || t("未知主任务", "Unknown Project")}
                   </h3>
-                  <Badge variant="outline" className="bg-white text-xs border-border">
+                  <Badge variant="outline" className="bg-card text-xs border-border">
                     {group.tasks.filter((t: any) => t.is_completed).length} / {group.tasks.length}
                   </Badge>
                 </div>
-                <div className="p-2 space-y-2 bg-[#fdfbf7]/30">
+                <div className="p-2 space-y-2 bg-muted/20">
                   {group.tasks.map((task: any, i: number) => renderTaskRow(task, i))}
                 </div>
               </Card>
@@ -934,19 +964,19 @@ export default function TodayTodoPage() {
 
         {/* Live Earnings & Settle Estimate Card */}
         {POINTS && (
-        <Card className="overflow-hidden border-[#e8ddd0] bg-gradient-to-br from-[#fdfbf7] via-[#fbf6ef] to-[#f5ebd7] shadow-sm relative">
+        <Card className="overflow-hidden border-border bg-gradient-to-br from-[#fdfbf7] via-[#fbf6ef] to-[#f5ebd7] dark:from-[#282219] dark:via-[#241f18] dark:to-[#2b2317] shadow-sm relative">
           <div className="absolute top-0 right-0 p-3 opacity-[0.08]">
-            <Sparkles className="h-20 w-20 text-[#d17847]" />
+            <Sparkles className="h-20 w-20 text-cat-orange" />
           </div>
           <CardContent className="p-4 relative z-10">
-            <div className="flex items-center justify-between border-b border-[#f0ede6] pb-3 mb-3">
+            <div className="flex items-center justify-between border-b border-border/60 pb-3 mb-3">
               <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-[#d17847]" />
+                <Trophy className="h-4 w-4 text-cat-orange" />
                 <span className="text-xs font-bold text-foreground uppercase tracking-wider">
                   {t("今日积分结算看板", "Today's Settlement Board")}
                 </span>
               </div>
-              <Badge variant="outline" className="bg-[#fcf8f3] text-[#d17847] border-[#e8ddd0] text-[10px] py-0.5 px-2 font-mono font-semibold">
+              <Badge variant="outline" className="bg-cat-orange-bg text-cat-orange border-cat-orange/25 text-[10px] py-0.5 px-2 font-mono font-semibold">
                 {t("结算时间: 00:00 (自动)", "Settle: 00:00 (Auto)")}
               </Badge>
             </div>
@@ -956,10 +986,10 @@ export default function TodayTodoPage() {
                 <span className="text-[10px] text-muted-foreground block font-medium uppercase tracking-wide">
                   {t("今日已赚得", "Earned Today So Far")}
                 </span>
-                <span className="text-2xl font-black text-[#d17847] block font-mono leading-none tracking-tight">
+                <span className="text-2xl font-black text-cat-orange block font-mono leading-none tracking-tight">
                   {earnedTodaySoFar} <span className="text-xs font-bold text-muted-foreground">XP</span>
                 </span>
-                <span className="text-[9px] text-[#b8a590] block leading-relaxed">
+                <span className="text-[9px] text-muted-foreground block leading-relaxed">
                   {t(`基础 ${completed_base_sum} + 完成奖 ${liveCompletionBonus}`, `Base ${completed_base_sum} + Bonus ${liveCompletionBonus}`)} (×{liveStreakMult})
                 </span>
               </div>
@@ -968,7 +998,7 @@ export default function TodayTodoPage() {
                 <span className="text-[10px] text-muted-foreground block font-medium uppercase tracking-wide">
                   {t("今日将结算 (当前状态)", "Estimated Settle (As-Is)")}
                 </span>
-                <span className="text-2xl font-black text-[#5b88b5] block font-mono leading-none tracking-tight">
+                <span className="text-2xl font-black text-cat-blue block font-mono leading-none tracking-tight">
                   {estimatedTotalToday} <span className="text-xs font-bold text-muted-foreground">XP</span>
                 </span>
                 <span className="text-[9px] text-muted-foreground block leading-relaxed">
@@ -976,14 +1006,14 @@ export default function TodayTodoPage() {
                 </span>
               </div>
 
-              <div className="col-span-2 sm:col-span-1 space-y-1 bg-white/50 border border-border/40 rounded-lg p-2.5">
+              <div className="col-span-2 sm:col-span-1 space-y-1 bg-card/50 border border-border/40 rounded-lg p-2.5">
                 <span className="text-[10px] text-muted-foreground block font-medium uppercase tracking-wide">
                   {t("完美完成奖励估算", "Perfect Run Potential")}
                 </span>
-                <span className="text-lg font-bold text-[#c06838] block font-mono leading-none tracking-tight">
+                <span className="text-lg font-bold text-cat-orange block font-mono leading-none tracking-tight">
                   {potentialTotalToday} <span className="text-[10px] font-semibold text-muted-foreground">XP</span>
                 </span>
-                <span className="text-[9px] text-[#b8a590] block leading-relaxed mt-0.5">
+                <span className="text-[9px] text-muted-foreground block leading-relaxed mt-0.5">
                   {t(`若100%完成今日全部任务`, `If 100% completed today's tasks`)}
                 </span>
               </div>
@@ -1002,9 +1032,9 @@ export default function TodayTodoPage() {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <Card className="bg-white border-border mt-2 shadow-sm rounded-xl overflow-hidden">
+            <Card className="bg-card border-border mt-2 shadow-sm rounded-xl overflow-hidden">
               <CardContent className="p-5 space-y-4 text-xs leading-relaxed text-muted-foreground">
-                <div className="border-b border-[#f0ede6] pb-3">
+                <div className="border-b border-border/60 pb-3">
                   <h4 className="font-bold text-sm mb-2 text-foreground flex items-center gap-1.5">
                     <Sparkles className="h-4 w-4 text-[#d17847]" />
                     {t("日程游戏化 AI 裁判长：四维评估矩阵", "Game Life AI Referee: 4D Evaluation Matrix")}
@@ -1057,7 +1087,7 @@ export default function TodayTodoPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-                  <div className="space-y-1 bg-[#fdfbf7] p-3 rounded-lg border border-[#f0ede6]">
+                  <div className="space-y-1 bg-muted/30 p-3 rounded-lg border border-border/60">
                     <p className="font-bold text-foreground">{t("裁判长算法公式", "Referee XP Formula")}</p>
                     <p className="text-[11px] text-muted-foreground">
                       1. <strong>{t("基础分", "Base XP")}</strong> = ({t("认知负荷", "Cognitive")} + {t("意志力消耗", "Willpower")}) × 5<br />
@@ -1066,7 +1096,7 @@ export default function TodayTodoPage() {
                     </p>
                   </div>
                   
-                  <div className="space-y-1 bg-[#f9f8f5] p-3 rounded-lg border border-[#f0ede6]">
+                  <div className="space-y-1 bg-muted/20 p-3 rounded-lg border border-border/60">
                     <p className="font-semibold text-foreground">{t("完成奖励", "Completion Bonus")}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {t("全部完成或完成度 ≥80%：", "All done or progress ≥80%:")} <strong>+50 XP</strong><br />
@@ -1074,7 +1104,7 @@ export default function TodayTodoPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-1 bg-[#f9f8f5] p-3 rounded-lg border border-[#f0ede6]">
+                  <div className="space-y-1 bg-muted/20 p-3 rounded-lg border border-border/60">
                     <p className="font-semibold text-foreground">{t("连续加成 (Streak Mult)", "Streak Multiplier")}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {t("连续 1-6 天: ×1.0 倍", "1-6 days: ×1.0")}<br />

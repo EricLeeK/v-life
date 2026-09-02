@@ -1309,15 +1309,61 @@ export type Database = {
         }
         Relationships: []
       }
+      todo_habit_logs: {
+        Row: {
+          broken: boolean
+          created_at: string | null
+          id: string
+          log_date: string
+          todo_id: string
+          updated_at: string | null
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          broken?: boolean
+          created_at?: string | null
+          id?: string
+          log_date: string
+          todo_id: string
+          updated_at?: string | null
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          broken?: boolean
+          created_at?: string | null
+          id?: string
+          log_date?: string
+          todo_id?: string
+          updated_at?: string | null
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "todo_habit_logs_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos: {
         Row: {
           category: string
           created_at: string
           detail: string | null
+          habit_target: number | null
+          habit_type: string | null
+          habit_unit: string | null
           id: string
           importance: string
           is_archived: boolean | null
           is_completed: boolean
+          is_paused: boolean
+          kind: string
           parent_id: string | null
           title: string
           updated_at: string
@@ -1327,10 +1373,15 @@ export type Database = {
           category?: string
           created_at?: string
           detail?: string | null
+          habit_target?: number | null
+          habit_type?: string | null
+          habit_unit?: string | null
           id?: string
           importance?: string
           is_archived?: boolean | null
           is_completed?: boolean
+          is_paused?: boolean
+          kind?: string
           parent_id?: string | null
           title: string
           updated_at?: string
@@ -1340,8 +1391,13 @@ export type Database = {
           category?: string
           created_at?: string
           detail?: string | null
+          habit_target?: number | null
+          habit_type?: string | null
+          habit_unit?: string | null
           id?: string
           importance?: string
+          is_paused?: boolean
+          kind?: string
           is_archived?: boolean | null
           is_completed?: boolean
           parent_id?: string | null

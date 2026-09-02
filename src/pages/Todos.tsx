@@ -1,9 +1,10 @@
 import { useState, useRef, useLayoutEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -26,28 +27,30 @@ import {
   X,
   ArchiveRestore,
   Folder,
+  Repeat,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 import { todoHooks } from "@/hooks/useData";
+import { isPersistentKind } from "@/lib/habits";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 
 const IMPORTANCE_LEVELS = [
-  { key: "紧急", labelEn: "Urgent", color: "bg-rose-50 text-rose-500 border-none font-medium" },
-  { key: "重要", labelEn: "Important", color: "bg-[#fff3e0] text-[#d97706] border-none font-medium" },
-  { key: "普通", labelEn: "Normal", color: "bg-blue-50 text-blue-600 border-none font-medium" },
-  { key: "低优先", labelEn: "Low", color: "bg-slate-100 text-slate-600 border-none font-medium" },
+  { key: "紧急", labelEn: "Urgent", color: "bg-cat-red-bg text-cat-red border-none font-medium" },
+  { key: "重要", labelEn: "Important", color: "bg-cat-orange-bg text-cat-orange border-none font-medium" },
+  { key: "普通", labelEn: "Normal", color: "bg-cat-blue-bg text-cat-blue border-none font-medium" },
+  { key: "低优先", labelEn: "Low", color: "bg-muted text-muted-foreground border-none font-medium" },
 ] as const;
 
 const IMPORTANCE_MAP: Record<string, { labelZh: string; labelEn: string; color: string }> = {
-  "urgent": { labelZh: "紧急", labelEn: "Urgent", color: "bg-rose-50 text-rose-500 border-none font-medium" },
-  "紧急": { labelZh: "紧急", labelEn: "Urgent", color: "bg-rose-50 text-rose-500 border-none font-medium" },
-  "important": { labelZh: "重要", labelEn: "Important", color: "bg-[#fff3e0] text-[#d97706] border-none font-medium" },
-  "重要": { labelZh: "重要", labelEn: "Important", color: "bg-[#fff3e0] text-[#d97706] border-none font-medium" },
-  "normal": { labelZh: "普通", labelEn: "Normal", color: "bg-blue-50 text-blue-600 border-none font-medium" },
-  "普通": { labelZh: "普通", labelEn: "Normal", color: "bg-blue-50 text-blue-600 border-none font-medium" },
-  "low": { labelZh: "低优先", labelEn: "Low", color: "bg-slate-100 text-slate-600 border-none font-medium" },
-  "低优先": { labelZh: "低优先", labelEn: "Low", color: "bg-slate-100 text-slate-600 border-none font-medium" },
+  "urgent": { labelZh: "紧急", labelEn: "Urgent", color: "bg-cat-red-bg text-cat-red border-none font-medium" },
+  "紧急": { labelZh: "紧急", labelEn: "Urgent", color: "bg-cat-red-bg text-cat-red border-none font-medium" },
+  "important": { labelZh: "重要", labelEn: "Important", color: "bg-cat-orange-bg text-cat-orange border-none font-medium" },
+  "重要": { labelZh: "重要", labelEn: "Important", color: "bg-cat-orange-bg text-cat-orange border-none font-medium" },
+  "normal": { labelZh: "普通", labelEn: "Normal", color: "bg-cat-blue-bg text-cat-blue border-none font-medium" },
+  "普通": { labelZh: "普通", labelEn: "Normal", color: "bg-cat-blue-bg text-cat-blue border-none font-medium" },
+  "low": { labelZh: "低优先", labelEn: "Low", color: "bg-muted text-muted-foreground border-none font-medium" },
+  "低优先": { labelZh: "低优先", labelEn: "Low", color: "bg-muted text-muted-foreground border-none font-medium" },
 };
 
 type ViewMode = "category" | "importance" | "all";
@@ -76,7 +79,7 @@ const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }:
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="absolute right-2 text-stone-400 hover:text-stone-600 focus:outline-none"
+            className="absolute right-2 text-muted-foreground hover:text-muted-foreground focus:outline-none"
             style={{ zIndex: 5 }}
             aria-label={isOpen ? "收起分类列表" : "展开分类列表"}
             aria-expanded={isOpen}
@@ -88,7 +91,7 @@ const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }:
       {isOpen && existingCategories.length > 0 && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} aria-hidden="true" />
-          <div role="listbox" className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto bg-white border border-stone-200 rounded-lg shadow-lg z-20 py-1">
+          <div role="listbox" className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto bg-card border border-border rounded-lg shadow-lg z-20 py-1">
             {existingCategories.map((cat: string) => (
               <button
                 key={cat}
@@ -98,7 +101,7 @@ const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }:
                   onChange(cat);
                   setIsOpen(false);
                 }}
-                className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 transition-colors"
+                className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-muted/40 transition-colors"
               >
                 {cat}
               </button>
@@ -112,14 +115,16 @@ const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }:
 
 export default function TodosPage() {
   const { t } = useLang();
+  const location = useLocation();
+  const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
   const [viewMode, setViewMode] = useState<ViewMode>("category");
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(openCreateFromDashboard);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   // Forms
-  const [form, setForm] = useState({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习" });
+  const [form, setForm] = useState({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习", kind: "once", habit_type: "checkin", habit_target: "", habit_unit: "" });
   const [editingTodo, setEditingTodo] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习" });
+  const [editForm, setEditForm] = useState({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习", kind: "once", habit_type: "checkin", habit_target: "", habit_unit: "", is_paused: false });
 
   // Subtask Quick Add Inline State
   const [addingSubtaskFor, setAddingSubtaskFor] = useState<string | null>(null);
@@ -227,21 +232,26 @@ export default function TodosPage() {
     });
   };
 
+  const habitParents = sortedParents.filter((t: any) => t.kind === "habit" && !t.is_archived);
+  const groupedSource = viewMode === "category"
+    ? sortedParents.filter((t: any) => t.kind !== "habit" || t.is_archived)
+    : sortedParents;
+
   const grouped = viewMode === "category"
-    ? sortedParents.reduce((acc: Record<string, any[]>, t: any) => {
+    ? groupedSource.reduce((acc: Record<string, any[]>, t: any) => {
         const cat = t.category ? t.category.trim() : "";
         const key = cat === "" || cat === "未分类" || cat === "Uncategorized" ? "未分类" : cat;
         (acc[key] = acc[key] || []).push(t);
         return acc;
       }, {})
     : viewMode === "importance"
-    ? sortedParents.reduce((acc: Record<string, any[]>, t: any) => {
+    ? groupedSource.reduce((acc: Record<string, any[]>, t: any) => {
         const impInfo = IMPORTANCE_MAP[t.importance] || IMPORTANCE_MAP["普通"];
         const impKey = impInfo.labelZh;
         (acc[impKey] = acc[impKey] || []).push(t);
         return acc;
       }, {})
-    : { "全部": sortedParents };
+    : { "全部": groupedSource };
 
   const groupedEntries = Object.entries(grouped).sort(([aKey], [bKey]) => {
     if (viewMode === "importance") {
@@ -252,6 +262,9 @@ export default function TodosPage() {
     if (bKey === "未分类") return -1;
     return aKey.localeCompare(bKey);
   });
+  if (viewMode === "category" && habitParents.length > 0) {
+    groupedEntries.unshift(["习惯", habitParents]);
+  }
 
   const handleSaveMainTask = async () => {
     if (!form.title) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
@@ -262,12 +275,19 @@ export default function TodosPage() {
         detail: form.detail || null,
         tags: parsedTags,
         importance: form.importance,
-        category: form.category || "AI学习",
+        category: form.kind === "habit" ? "习惯" : (form.category || "AI学习"),
+        kind: form.kind,
+        habit_type: form.kind === "habit" ? form.habit_type : null,
+        habit_target: form.kind === "habit" && (form.habit_type === "count" || form.habit_type === "duration")
+          ? Number(form.habit_target) || (form.habit_type === "duration" ? 30 : 1)
+          : null,
+        habit_unit: form.kind === "habit" ? (form.habit_unit || (form.habit_type === "duration" ? "分钟" : "次")) : null,
+        is_paused: false,
         is_completed: false,
         is_archived: false,
       });
       setDialogOpen(false);
-      setForm({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习" });
+      setForm({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习", kind: "once", habit_type: "checkin", habit_target: "", habit_unit: "" });
       toast({ title: t("主任务已添加", "Task added") });
     } catch (e: any) {
       toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
@@ -283,6 +303,11 @@ export default function TodosPage() {
       tags: tagStr,
       importance: item.importance || "普通",
       category: item.category || "AI学习",
+      kind: item.kind || "once",
+      habit_type: item.habit_type || "checkin",
+      habit_target: item.habit_target != null ? String(item.habit_target) : "",
+      habit_unit: item.habit_unit || "",
+      is_paused: !!item.is_paused,
     });
     setEditDialogOpen(true);
   };
@@ -297,7 +322,14 @@ export default function TodosPage() {
         detail: editForm.detail || null,
         tags: parsedTags,
         importance: editForm.importance,
-        category: editForm.category,
+        category: editForm.kind === "habit" ? "习惯" : editForm.category,
+        kind: editForm.kind,
+        habit_type: editForm.kind === "habit" ? editForm.habit_type : null,
+        habit_target: editForm.kind === "habit" && (editForm.habit_type === "count" || editForm.habit_type === "duration")
+          ? Number(editForm.habit_target) || (editForm.habit_type === "duration" ? 30 : 1)
+          : null,
+        habit_unit: editForm.kind === "habit" ? (editForm.habit_unit || (editForm.habit_type === "duration" ? "分钟" : "次")) : null,
+        is_paused: editForm.is_paused,
       });
       setEditDialogOpen(false);
       setEditingTodo(null);
@@ -308,6 +340,7 @@ export default function TodosPage() {
   };
 
   const toggleComplete = (item: any) => {
+    if (isPersistentKind(item.kind)) return;
     updateMutation.mutate({ id: item.id, is_completed: !item.is_completed });
   };
 
@@ -397,8 +430,8 @@ export default function TodosPage() {
     return (
       <div key={item.id} style={{ ['--i' as any]: index }} className="enter-up space-y-2 mb-2.5">
         <div
-          className={`bg-white rounded-2xl border border-stone-200/80 shadow-2xs transition-all duration-200 p-3.5 hover:border-stone-300/80 ${
-            item.is_completed ? "opacity-60 bg-stone-50/70" : ""
+          className={`bg-card rounded-2xl border border-border shadow-2xs transition-all duration-200 p-3.5 hover:border-border ${
+            item.is_completed ? "opacity-60 bg-muted/40" : ""
           }`}
         >
           <div className="flex items-start gap-3">
@@ -408,7 +441,7 @@ export default function TodosPage() {
               onClick={(e) => handleTaskToggleClick(e, item.id)}
               aria-expanded={isExpanded}
               aria-label={isExpanded ? t("收起任务详情", "Collapse task") : t("展开任务详情", "Expand task")}
-              className="mt-0.5 rounded-md text-stone-400 hover:text-stone-600 transition-colors shrink-0 cursor-pointer flex items-center justify-center w-5 h-5"
+              className="mt-0.5 rounded-md text-muted-foreground hover:text-muted-foreground transition-colors shrink-0 cursor-pointer flex items-center justify-center w-5 h-5"
             >
               {totalSubtasksCount > 0 ? (
                 isExpanded ? (
@@ -419,13 +452,18 @@ export default function TodosPage() {
               ) : (
                 <span
                   className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    isExpanded ? "bg-[#5b88b5] scale-125 shadow-2xs" : "bg-stone-300 hover:bg-[#5b88b5]"
+                    isExpanded ? "bg-cat-blue scale-125 shadow-2xs" : "bg-muted-foreground/40 hover:bg-cat-blue"
                   }`}
                 />
               )}
             </button>
 
-            {/* Checkbox */}
+            {/* Checkbox — not for habits or routines */}
+            {isPersistentKind(item.kind) ? (
+              <span className="mt-0.5 h-5 w-5 rounded-full border-2 border-border bg-muted/40 flex items-center justify-center shrink-0" aria-hidden="true">
+                <Repeat className="h-3 w-3 text-cat-orange" />
+              </span>
+            ) : (
             <button
               type="button"
               onClick={() => toggleComplete(item)}
@@ -434,19 +472,20 @@ export default function TodosPage() {
               className={`mt-0.5 h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center shrink-0 ${
                 item.is_completed
                   ? "bg-[#5b88b5] border-[#5b88b5] text-white"
-                  : "border-stone-300 hover:border-[#5b88b5] bg-white"
+                  : "border-border hover:border-[#5b88b5] bg-card"
               }`}
             >
               {item.is_completed && <Check className="h-3 w-3 stroke-[3]" />}
             </button>
+            )}
 
             {/* Main Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  className={`text-left text-sm font-medium text-stone-900 leading-snug cursor-pointer bg-transparent border-0 p-0 ${
-                    item.is_completed ? "line-through text-stone-400" : ""
+                  className={`text-left text-sm font-medium text-foreground leading-snug cursor-pointer bg-transparent border-0 p-0 ${
+                    item.is_completed ? "line-through text-muted-foreground" : ""
                   }`}
                   onClick={(e) => handleTaskToggleClick(e, item.id)}
                 >
@@ -457,19 +496,29 @@ export default function TodosPage() {
                 <div className="flex items-center gap-2 shrink-0 ml-auto">
                   {/* Collapsed view mini subtask progress indicator (ONLY if subtasks exist, FIXED width for single & double digits e.g. 4/4 vs 15/99) */}
                   {!isExpanded && totalSubtasksCount > 0 && (
-                    <div className="flex items-center justify-between w-[86px] shrink-0 mr-1 bg-stone-50 px-2 py-0.5 rounded-lg border border-stone-200/50">
-                      <div className="h-1.5 w-9 bg-stone-200/80 rounded-full overflow-hidden shrink-0 hidden sm:block">
+                    <div className="flex items-center justify-between w-[86px] shrink-0 mr-1 bg-muted/40 px-2 py-0.5 rounded-lg border border-border">
+                      <div className="h-1.5 w-9 bg-muted rounded-full overflow-hidden shrink-0 hidden sm:block">
                         <div
                           className="h-full bg-[#c69c4e] rounded-full transition-all duration-300"
                           style={{ width: `${progressPercent}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-medium text-stone-600 font-mono tabular-nums w-[36px] text-right shrink-0">
+                      <span className="text-[11px] font-medium text-muted-foreground font-mono tabular-nums w-[36px] text-right shrink-0">
                         {completedSubtasksCount}/{totalSubtasksCount}
                       </span>
                     </div>
                   )}
 
+                  {item.kind === "routine" && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full shrink-0 text-muted-foreground border-border">
+                      {t("例行", "Routine")}
+                    </Badge>
+                  )}
+                  {item.kind === "habit" && item.is_paused && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 rounded-full shrink-0 text-muted-foreground border-border">
+                      {t("已暂停", "Paused")}
+                    </Badge>
+                  )}
                   {/* Priority Badge - ALWAYS at top right */}
                   <Badge variant="outline" className={`text-xs px-2.5 py-0.5 rounded-full shrink-0 ${impInfo.color}`}>
                     {impLabel}
@@ -481,12 +530,21 @@ export default function TodosPage() {
                       <button
                         type="button"
                         aria-label={t("任务操作菜单", "Task actions")}
-                        className="p-1 rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors shrink-0"
+                        className="p-1 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-muted/40 transition-colors shrink-0"
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-36 rounded-xl border border-stone-200 shadow-md">
+                    <DropdownMenuContent align="end" className="w-36 rounded-xl border border-border shadow-md">
+                      {isPersistentKind(item.kind) && (
+                        <DropdownMenuItem
+                          onClick={() => updateMutation.mutate({ id: item.id, is_paused: !item.is_paused })}
+                          className="text-xs cursor-pointer"
+                        >
+                          {item.is_paused ? t("恢复", "Resume") : t("暂停", "Pause")}
+                        </DropdownMenuItem>
+                      )}
+                      {!isPersistentKind(item.kind) && (
                       <DropdownMenuItem
                         onClick={() => {
                           setAddingSubtaskFor(item.id);
@@ -494,11 +552,12 @@ export default function TodosPage() {
                         }}
                         className="text-xs cursor-pointer"
                       >
-                        <Plus className="h-3.5 w-3.5 mr-2 text-stone-500" />
+                        <Plus className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                         {t("添加子任务", "Add Subtask")}
                       </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem onClick={() => handleOpenEdit(item)} className="text-xs cursor-pointer">
-                        <Pencil className="h-3.5 w-3.5 mr-2 text-stone-500" />
+                        <Pencil className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                         {t("编辑任务", "Edit Task")}
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -507,12 +566,12 @@ export default function TodosPage() {
                       >
                         {item.is_archived ? (
                           <>
-                            <ArchiveRestore className="h-3.5 w-3.5 mr-2 text-stone-500" />
+                            <ArchiveRestore className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                             {t("取消归档", "Unarchive")}
                           </>
                         ) : (
                           <>
-                            <Archive className="h-3.5 w-3.5 mr-2 text-stone-500" />
+                            <Archive className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                             {t("归档任务", "Archive")}
                           </>
                         )}
@@ -532,16 +591,16 @@ export default function TodosPage() {
 
               {/* Expanded metadata section (tags & detail only, priority badge remains at top right) */}
               {isExpanded && (tagsList.length > 0 || item.detail) && (
-                <div className="mt-2 pt-1.5 flex flex-wrap items-center gap-3 text-xs text-stone-500 border-t border-stone-100">
+                <div className="mt-2 pt-1.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground border-t border-border">
                   {tagsList.length > 0 && (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-stone-400 font-normal">标签：</span>
-                      <span className="text-stone-600 font-medium">{tagsList.join(", ")}</span>
+                      <span className="text-muted-foreground font-normal">标签：</span>
+                      <span className="text-muted-foreground font-medium">{tagsList.join(", ")}</span>
                     </div>
                   )}
 
                   {item.detail && (
-                    <div className="w-full text-stone-500 italic mt-1 bg-stone-50 p-2 rounded-lg text-xs">
+                    <div className="w-full text-muted-foreground italic mt-1 bg-muted/40 p-2 rounded-lg text-xs">
                       {item.detail}
                     </div>
                   )}
@@ -553,39 +612,39 @@ export default function TodosPage() {
           {/* Expanded Subtasks Container */}
           {isExpanded && (
             totalSubtasksCount > 0 ? (
-              <div className="bg-[#fbf9f5] border border-stone-200/60 rounded-xl p-3.5 mt-3 space-y-3">
+              <div className="bg-muted/40 border border-border rounded-xl p-3.5 mt-3 space-y-3">
                 {/* Subtask Section Header */}
                 <div className="flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-stone-700">子任务</span>
-                    <span className="text-stone-500 font-medium">{completedSubtasksCount}/{totalSubtasksCount}</span>
+                    <span className="font-semibold text-foreground">子任务</span>
+                    <span className="text-muted-foreground font-medium">{completedSubtasksCount}/{totalSubtasksCount}</span>
                   </div>
 
                   {/* Progress bar line */}
                   <div className="flex-1 flex items-center max-w-xs sm:max-w-md mx-2">
-                    <div className="h-1.5 w-full bg-stone-200/80 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full bg-[#c69c4e] rounded-full transition-all duration-300"
                         style={{ width: `${progressPercent}%` }}
                       />
                     </div>
-                    <span className="text-[11px] text-stone-400 font-normal ml-2 shrink-0">{progressPercent}%</span>
+                    <span className="text-[11px] text-muted-foreground font-normal ml-2 shrink-0">{progressPercent}%</span>
                   </div>
 
                   {/* Add subtask button */}
                   <button
                     type="button"
                     onClick={() => setAddingSubtaskFor(addingSubtaskFor === item.id ? null : item.id)}
-                    className="bg-white hover:bg-stone-50 text-stone-700 border border-stone-200/80 rounded-lg px-2.5 py-1 text-xs font-medium shadow-2xs flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                    className="bg-card hover:bg-muted/40 text-foreground border border-border rounded-lg px-2.5 py-1 text-xs font-medium shadow-2xs flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
                   >
-                    <Plus className="h-3.5 w-3.5 text-stone-500" />
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                     <span>添加子任务</span>
                   </button>
                 </div>
 
                 {/* Inline Quick Add Subtask Input */}
                 {addingSubtaskFor === item.id && (
-                  <div className="flex items-center gap-2 p-2 bg-white rounded-xl border border-[#c69c4e]/50 shadow-2xs animate-in fade-in duration-150">
+                  <div className="flex items-center gap-2 p-2 bg-card rounded-xl border border-[#c69c4e]/50 shadow-2xs animate-in fade-in duration-150">
                     <Input
                       value={newSubtaskTitle}
                       onChange={(e) => setNewSubtaskTitle(e.target.value)}
@@ -594,7 +653,7 @@ export default function TodosPage() {
                         if (e.key === "Escape") setAddingSubtaskFor(null);
                       }}
                       placeholder={t("输入子任务名称...", "Enter subtask title...")}
-                      className="h-8 text-xs bg-white border border-stone-300 focus-visible:ring-1 focus-visible:ring-[#c69c4e] focus-visible:border-[#c69c4e] flex-1 shadow-2xs placeholder:text-stone-400"
+                      className="h-8 text-xs bg-card border border-border focus-visible:ring-1 focus-visible:ring-[#c69c4e] focus-visible:border-[#c69c4e] flex-1 shadow-2xs placeholder:text-muted-foreground"
                       autoFocus
                     />
                     <Button
@@ -607,7 +666,7 @@ export default function TodosPage() {
                     <button
                       type="button"
                       onClick={() => setAddingSubtaskFor(null)}
-                      className="p-1 text-stone-400 hover:text-stone-600 rounded-md"
+                      className="p-1 text-muted-foreground hover:text-muted-foreground rounded-md"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -629,14 +688,15 @@ export default function TodosPage() {
                               <div
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
-                                className={`bg-white hover:bg-stone-50/90 border border-stone-200/60 rounded-xl px-3 py-2.5 flex items-center gap-2.5 text-xs text-stone-800 shadow-2xs transition-colors duration-150 ${
+                                className={`bg-card hover:bg-muted/40 border border-border rounded-xl px-3 py-2.5 flex items-center gap-2.5 text-xs text-foreground shadow-2xs transition-colors duration-150 ${
                                   dragSnapshot.isDragging ? "shadow-md ring-2 ring-[#c69c4e]/40 z-20 opacity-95" : ""
                                 } ${sub.is_completed ? "opacity-90" : ""}`}
                               >
                                 {/* Drag handle icon */}
                                 <div
                                   {...dragProvided.dragHandleProps}
-                                  className="p-0.5 text-stone-300 hover:text-stone-500 cursor-grab active:cursor-grabbing shrink-0"
+                                  className="p-0.5 text-muted-foreground hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
+                                  aria-label={t(`拖动子任务“${sub.title}”排序`, `Reorder subtask “${sub.title}”`)}
                                 >
                                   <GripVertical className="h-3.5 w-3.5" />
                                 </div>
@@ -645,10 +705,11 @@ export default function TodosPage() {
                                 <button
                                   type="button"
                                   onClick={() => toggleComplete(sub)}
+                                  aria-label={sub.is_completed ? t(`标记“${sub.title}”为未完成`, `Mark “${sub.title}” incomplete`) : t(`标记“${sub.title}”为已完成`, `Mark “${sub.title}” complete`)}
                                   className={`h-4 w-4 rounded flex items-center justify-center shrink-0 transition-all ${
                                     sub.is_completed
                                       ? "bg-[#c69c4e] text-white shadow-2xs"
-                                      : "border-2 border-stone-300 hover:border-[#c69c4e] bg-white"
+                                      : "border-2 border-border hover:border-[#c69c4e] bg-card"
                                   }`}
                                 >
                                   {sub.is_completed && <Check className="h-3 w-3 stroke-[3]" />}
@@ -656,8 +717,8 @@ export default function TodosPage() {
 
                                 {/* Subtask Title */}
                                 <span
-                                  className={`flex-1 min-w-0 font-medium text-stone-800 leading-snug cursor-pointer ${
-                                    sub.is_completed ? "text-stone-600" : ""
+                                  className={`flex-1 min-w-0 font-medium text-foreground leading-snug cursor-pointer ${
+                                    sub.is_completed ? "text-muted-foreground" : ""
                                   }`}
                                   onClick={() => toggleComplete(sub)}
                                 >
@@ -675,11 +736,11 @@ export default function TodosPage() {
                                     }}
                                     className={`px-2 py-0.5 rounded flex items-center gap-1 font-medium text-[11px] transition-colors cursor-pointer ${
                                       sub.detail
-                                        ? "bg-[#f0ece6] text-stone-700 hover:bg-[#e6e0d4]"
-                                        : "bg-stone-100/80 text-stone-500 hover:bg-stone-200/80 hover:text-stone-700"
+                                        ? "bg-muted text-foreground hover:bg-muted/80"
+                                        : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
                                     }`}
                                   >
-                                    <AlignLeft className="h-3 w-3 text-stone-500" />
+                                    <AlignLeft className="h-3 w-3 text-muted-foreground" />
                                     <span>备注</span>
                                   </button>
 
@@ -688,12 +749,13 @@ export default function TodosPage() {
                                     <DropdownMenuTrigger asChild>
                                       <button
                                         type="button"
-                                        className="p-1 rounded-md text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+                                        className="p-1 rounded-md text-muted-foreground hover:text-muted-foreground hover:bg-muted/40 transition-colors"
+                                        aria-label={t(`子任务“${sub.title}”操作菜单`, `Actions for subtask “${sub.title}”`)}
                                       >
                                         <MoreHorizontal className="h-3.5 w-3.5" />
                                       </button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-32 rounded-xl border border-stone-200 shadow-md">
+                                    <DropdownMenuContent align="end" className="w-32 rounded-xl border border-border shadow-md">
                                       <DropdownMenuItem
                                         onClick={() => {
                                           setNoteEditTodo(sub);
@@ -701,7 +763,7 @@ export default function TodosPage() {
                                         }}
                                         className="text-xs cursor-pointer"
                                       >
-                                        <Pencil className="h-3.5 w-3.5 mr-2 text-stone-500" />
+                                        <Pencil className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
                                         {t("编辑备注", "Edit Note")}
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
@@ -727,7 +789,7 @@ export default function TodosPage() {
               </div>
             ) : (
               /* Slim, low-height compact row for tasks without subtasks */
-              <div className="bg-[#fbf9f5] border border-stone-200/60 rounded-xl p-2 mt-2.5 flex items-center gap-2 animate-in fade-in duration-150">
+              <div className="bg-muted/40 border border-border rounded-xl p-2 mt-2.5 flex items-center gap-2 animate-in fade-in duration-150">
                 <Input
                   value={addingSubtaskFor === item.id ? newSubtaskTitle : ""}
                   onChange={(e) => {
@@ -738,7 +800,7 @@ export default function TodosPage() {
                     if (e.key === "Enter") handleAddSubtaskSubmit(item.id, item.category, item.importance);
                   }}
                   placeholder={t("添加首个子任务...", "Add subtask...")}
-                  className="h-7 text-xs bg-white border border-stone-300 focus-visible:ring-1 focus-visible:ring-[#c69c4e] focus-visible:border-[#c69c4e] flex-1 shadow-2xs placeholder:text-stone-400"
+                  className="h-7 text-xs bg-card border border-border focus-visible:ring-1 focus-visible:ring-[#c69c4e] focus-visible:border-[#c69c4e] flex-1 shadow-2xs placeholder:text-muted-foreground"
                 />
                 <Button
                   size="sm"
@@ -760,10 +822,10 @@ export default function TodosPage() {
     <AppLayout title={t("待办事项", "To-Dos")}>
       <div className="space-y-5 max-w-6xl mx-auto">
         {/* Top Control Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white/50 p-2 rounded-2xl border border-stone-200/60 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-card/50 p-2 rounded-2xl border border-border shadow-2xs">
           <div className="flex flex-wrap items-center gap-2">
             {/* View Mode Pills */}
-            <div className="flex gap-1 bg-[#f0ece6] p-1 rounded-xl border border-stone-200/40">
+            <div className="flex gap-1 bg-muted p-1 rounded-xl border border-border">
               {(["category", "importance", "all"] as const).map((mode) => (
                 <button
                   key={mode}
@@ -771,8 +833,8 @@ export default function TodosPage() {
                   onClick={() => setViewMode(mode)}
                   className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all ${
                     viewMode === mode
-                      ? "bg-[#1f1a14] text-white shadow-2xs"
-                      : "text-stone-600 hover:text-stone-900"
+                      ? "bg-primary text-primary-foreground shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {mode === "category"
@@ -790,8 +852,8 @@ export default function TodosPage() {
               onClick={() => setHideCompleted(!hideCompleted)}
               className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                 hideCompleted
-                  ? "bg-stone-900 text-white border-stone-900"
-                  : "bg-[#f3f0e8] hover:bg-[#e8e4d8] text-stone-700 border-stone-200/60"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted hover:bg-muted/80 text-foreground border-border"
               }`}
             >
               {hideCompleted ? t("显示已完成", "Show completed") : t("隐藏已完成", "Hide completed")}
@@ -802,8 +864,8 @@ export default function TodosPage() {
               onClick={() => setShowArchived(!showArchived)}
               className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-colors ${
                 showArchived
-                  ? "bg-stone-900 text-white border-stone-900"
-                  : "bg-[#f3f0e8] hover:bg-[#e8e4d8] text-stone-700 border-stone-200/60"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-muted hover:bg-muted/80 text-foreground border-border"
               }`}
             >
               {showArchived ? t("隐藏已归档", "Hide archived") : t("显示已归档", "Show archived")}
@@ -813,9 +875,9 @@ export default function TodosPage() {
               <button
                 type="button"
                 onClick={handleArchiveAllCompleted}
-                className="px-3 py-1.5 text-xs font-medium rounded-xl bg-[#f3f0e8] hover:bg-[#e8e4d8] text-stone-700 border border-stone-200/60 flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium rounded-xl bg-muted hover:bg-muted/80 text-foreground border border-border flex items-center gap-1.5 transition-colors"
               >
-                <Archive className="h-3.5 w-3.5 text-stone-500" />
+                <Archive className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>{t("归档已完成", "Archive completed")}</span>
               </button>
             )}
@@ -836,8 +898,8 @@ export default function TodosPage() {
 
         {/* Task List Grouped */}
         {groupedEntries.length === 0 ? (
-          <div className="bg-white/60 border border-stone-200/60 rounded-2xl py-16 text-center shadow-2xs">
-            <p className="text-stone-400 text-sm font-medium">{t("暂无待办事项", "No to-dos")}</p>
+          <div className="bg-card/60 border border-border rounded-2xl py-16 text-center shadow-2xs">
+            <p className="text-muted-foreground text-sm font-medium">{t("暂无待办事项", "No to-dos")}</p>
           </div>
         ) : (
           groupedEntries.map(([group, items]) => {
@@ -853,16 +915,16 @@ export default function TodosPage() {
                     aria-label={`${isCategoryCollapsed ? t("展开分类", "Expand category") : t("收起分类", "Collapse category")}: ${group === "未分类" ? t("未分类", "Uncategorized") : group}`}
                     className={`relative overflow-hidden w-full flex items-center justify-between transition-all cursor-pointer select-none text-left ${
                       isCategoryCollapsed
-                        ? "bg-gradient-to-b from-[#f4eee4] to-[#e7ded0] border border-[#d4c9b5] shadow-[0_2px_5px_rgba(0,0,0,0.06),0_1px_0_rgba(255,255,255,0.9)_inset] rounded-xl px-4 py-2.5 text-stone-900 hover:from-[#f0e7db] hover:to-[#e0d6c6]"
-                        : "bg-transparent border-transparent hover:bg-stone-100/60 pl-2 pr-2 py-2 text-stone-800"
+                        ? "bg-gradient-to-b from-[#f4eee4] to-[#e7ded0] dark:from-[#2c261e] dark:to-[#241f18] border border-[#d4c9b5] dark:border-[#4a4132] shadow-[0_2px_5px_rgba(0,0,0,0.06),0_1px_0_rgba(255,255,255,0.9)_inset] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] rounded-xl px-4 py-2.5 text-foreground hover:from-[#f0e7db] hover:to-[#e0d6c6] dark:hover:from-[#322b21] dark:hover:to-[#292318]"
+                        : "bg-transparent border-transparent hover:bg-muted/40 pl-2 pr-2 py-2 text-foreground"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
                       <span
                         className={`p-1 rounded-md transition-colors shrink-0 flex items-center justify-center ${
                           isCategoryCollapsed
-                            ? "bg-[#e2d7c4] text-stone-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] border border-[#caa170]/40"
-                            : "text-stone-400"
+                            ? "bg-[#e2d7c4] dark:bg-[#3a3226] text-foreground shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)] border border-[#caa170]/40"
+                            : "text-muted-foreground"
                         }`}
                         aria-hidden="true"
                       >
@@ -874,8 +936,8 @@ export default function TodosPage() {
                       </span>
 
                       <div className="flex items-center gap-2">
-                        <Folder className={`h-4 w-4 ${isCategoryCollapsed ? "text-[#b4883b] fill-[#c69c4e]/20" : "text-stone-400"}`} />
-                        <span className={`text-xs font-bold tracking-tight ${isCategoryCollapsed ? "text-stone-900" : "text-stone-800"}`}>
+                        <Folder className={`h-4 w-4 ${isCategoryCollapsed ? "text-[#b4883b] dark:text-[#c9a45a] fill-[#c69c4e]/20" : "text-muted-foreground"}`} />
+                        <span className={`text-xs font-bold tracking-tight ${isCategoryCollapsed ? "text-foreground" : "text-foreground"}`}>
                           {group === "未分类"
                             ? t("未分类", "Uncategorized")
                             : viewMode === "importance"
@@ -885,8 +947,8 @@ export default function TodosPage() {
                         <span
                           className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-md border ${
                             isCategoryCollapsed
-                              ? "bg-[#e2d7c4] text-[#6b4e18] border-[#caa170]/40 shadow-[inset_0_1px_1px_rgba(0,0,0,0.05)]"
-                              : "bg-stone-100 text-stone-500 border-stone-200/50"
+                              ? "bg-[#e2d7c4] dark:bg-[#3a3226] text-[#6b4e18] dark:text-[#d9b57a] border-[#caa170]/40 shadow-[inset_0_1px_1px_rgba(0,0,0,0.05)]"
+                              : "bg-muted/40 text-muted-foreground border-border"
                           }`}
                         >
                           {(items as any[]).length}
@@ -896,7 +958,7 @@ export default function TodosPage() {
 
                     {/* Vintage Sealing Tape Strip (档案封条) */}
                     {isCategoryCollapsed && (
-                      <div className="bg-[#e4cb9e] text-[#6e4e14] font-mono text-[10px] font-bold px-3 py-1 rounded-xs border border-[#c7ab74] shadow-2xs flex items-center gap-1.5 tracking-wider">
+                      <div className="bg-[#e4cb9e] dark:bg-[#3d3221] text-[#6e4e14] dark:text-[#d9b57a] font-mono text-[10px] font-bold px-3 py-1 rounded-xs border border-[#c7ab74] dark:border-[#5a4a2e] shadow-2xs flex items-center gap-1.5 tracking-wider">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#b83227] shrink-0 shadow-2xs" />
                         <span>已折叠 · {(items as any[]).length} 项</span>
                       </div>
@@ -919,10 +981,11 @@ export default function TodosPage() {
         <DialogContent className="max-w-md rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold">{t("添加待办主任务", "Add To-Do Task")}</DialogTitle>
+            <DialogDescription>{t("填写任务内容与优先级，创建新的待办事项。", "Add the task details and priority.")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-3">
             <div>
-              <Label htmlFor="todo-title" className="text-xs font-medium text-stone-700">{t("任务标题", "Task Title")} *</Label>
+              <Label htmlFor="todo-title" className="text-xs font-medium text-foreground">{t("任务标题", "Task Title")} *</Label>
               <Input
                 id="todo-title"
                 value={form.title}
@@ -932,7 +995,7 @@ export default function TodosPage() {
               />
             </div>
             <div>
-              <Label htmlFor="todo-tags" className="text-xs font-medium text-stone-700">标签 (逗号分隔)</Label>
+              <Label htmlFor="todo-tags" className="text-xs font-medium text-foreground">标签 (逗号分隔)</Label>
               <Input
                 id="todo-tags"
                 value={form.tags}
@@ -942,7 +1005,7 @@ export default function TodosPage() {
               />
             </div>
             <div>
-              <Label htmlFor="todo-detail" className="text-xs font-medium text-stone-700">{t("详细说明", "Details")}</Label>
+              <Label htmlFor="todo-detail" className="text-xs font-medium text-foreground">{t("详细说明", "Details")}</Label>
               <Input
                 id="todo-detail"
                 value={form.detail}
@@ -953,12 +1016,32 @@ export default function TodosPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="todo-importance" className="text-xs font-medium text-stone-700">{t("重要性", "Priority")}</Label>
+                <Label htmlFor="todo-kind" className="text-xs font-medium text-foreground">{t("种类", "Kind")}</Label>
+                <select
+                  id="todo-kind"
+                  value={form.kind}
+                  onChange={(e) => {
+                    const kind = e.target.value;
+                    setForm({
+                      ...form,
+                      kind,
+                      category: kind === "habit" ? "习惯" : form.category === "习惯" ? "AI学习" : form.category,
+                    });
+                  }}
+                  className="mt-1 block w-full h-9 rounded-lg border border-border bg-card px-3 py-1 text-xs text-foreground focus:border-[#5b88b5] focus:outline-none"
+                >
+                  <option value="once">{t("一次性", "Once")}</option>
+                  <option value="routine">{t("例行", "Routine")}</option>
+                  <option value="habit">{t("习惯", "Habit")}</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="todo-importance" className="text-xs font-medium text-foreground">{t("重要性", "Priority")}</Label>
                 <select
                   id="todo-importance"
                   value={form.importance}
                   onChange={(e) => setForm({ ...form, importance: e.target.value })}
-                  className="mt-1 block w-full h-9 rounded-lg border border-stone-200 bg-white px-3 py-1 text-xs text-stone-800 focus:border-[#5b88b5] focus:outline-none"
+                  className="mt-1 block w-full h-9 rounded-lg border border-border bg-card px-3 py-1 text-xs text-foreground focus:border-[#5b88b5] focus:outline-none"
                 >
                   {IMPORTANCE_LEVELS.map((l) => (
                     <option key={l.key} value={l.key}>
@@ -968,7 +1051,7 @@ export default function TodosPage() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="todo-category" className="text-xs font-medium text-stone-700">{t("分类", "Category")}</Label>
+                <Label htmlFor="todo-category" className="text-xs font-medium text-foreground">{t("分类", "Category")}</Label>
                 <CategoryInput
                   id="todo-category"
                   value={form.category}
@@ -978,6 +1061,36 @@ export default function TodosPage() {
                 />
               </div>
             </div>
+            {form.kind === "habit" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="todo-habit-type" className="text-xs font-medium text-foreground">{t("形态", "Type")}</Label>
+                  <select
+                    id="todo-habit-type"
+                    value={form.habit_type}
+                    onChange={(e) => setForm({ ...form, habit_type: e.target.value })}
+                    className="mt-1 block w-full h-9 rounded-lg border border-border bg-card px-3 py-1 text-xs text-foreground"
+                  >
+                    <option value="checkin">{t("打卡", "Check-in")}</option>
+                    <option value="count">{t("计数", "Count")}</option>
+                    <option value="duration">{t("时长", "Duration")}</option>
+                    <option value="avoidance">{t("克制", "Avoidance")}</option>
+                  </select>
+                </div>
+                {(form.habit_type === "count" || form.habit_type === "duration") && (
+                  <div>
+                    <Label htmlFor="todo-habit-target" className="text-xs font-medium text-foreground">{t("目标", "Target")}</Label>
+                    <Input
+                      id="todo-habit-target"
+                      value={form.habit_target}
+                      onChange={(e) => setForm({ ...form, habit_target: e.target.value })}
+                      placeholder={form.habit_type === "duration" ? "30" : "8"}
+                      className="mt-1 h-9 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
             <Button onClick={handleSaveMainTask} className="w-full mt-3 bg-[#5b88b5] hover:bg-[#4a77a4] text-white rounded-xl h-9 text-xs">
               {t("保存添加", "Add Task")}
             </Button>
@@ -993,7 +1106,7 @@ export default function TodosPage() {
           </DialogHeader>
           <div className="space-y-4 mt-3">
             <div>
-              <Label htmlFor="edit-title" className="text-xs font-medium text-stone-700">{t("任务标题", "Task Title")} *</Label>
+              <Label htmlFor="edit-title" className="text-xs font-medium text-foreground">{t("任务标题", "Task Title")} *</Label>
               <Input
                 id="edit-title"
                 value={editForm.title}
@@ -1002,7 +1115,7 @@ export default function TodosPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-tags" className="text-xs font-medium text-stone-700">标签 (逗号分隔)</Label>
+              <Label htmlFor="edit-tags" className="text-xs font-medium text-foreground">标签 (逗号分隔)</Label>
               <Input
                 id="edit-tags"
                 value={editForm.tags}
@@ -1011,7 +1124,7 @@ export default function TodosPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-detail" className="text-xs font-medium text-stone-700">{t("详细说明", "Details")}</Label>
+              <Label htmlFor="edit-detail" className="text-xs font-medium text-foreground">{t("详细说明", "Details")}</Label>
               <Input
                 id="edit-detail"
                 value={editForm.detail}
@@ -1021,12 +1134,25 @@ export default function TodosPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="edit-importance" className="text-xs font-medium text-stone-700">{t("重要性", "Priority")}</Label>
+                <Label htmlFor="edit-kind" className="text-xs font-medium text-foreground">{t("种类", "Kind")}</Label>
+                <select
+                  id="edit-kind"
+                  value={editForm.kind}
+                  onChange={(e) => setEditForm({ ...editForm, kind: e.target.value })}
+                  className="mt-1 block w-full h-9 rounded-lg border border-border bg-card px-3 py-1 text-xs text-foreground"
+                >
+                  <option value="once">{t("一次性", "Once")}</option>
+                  <option value="routine">{t("例行", "Routine")}</option>
+                  <option value="habit">{t("习惯", "Habit")}</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="edit-importance" className="text-xs font-medium text-foreground">{t("重要性", "Priority")}</Label>
                 <select
                   id="edit-importance"
                   value={editForm.importance}
                   onChange={(e) => setEditForm({ ...editForm, importance: e.target.value })}
-                  className="mt-1 block w-full h-9 rounded-lg border border-stone-200 bg-white px-3 py-1 text-xs text-stone-800 focus:border-[#5b88b5] focus:outline-none"
+                  className="mt-1 block w-full h-9 rounded-lg border border-border bg-card px-3 py-1 text-xs text-foreground focus:border-[#5b88b5] focus:outline-none"
                 >
                   {IMPORTANCE_LEVELS.map((l) => (
                     <option key={l.key} value={l.key}>
@@ -1036,7 +1162,7 @@ export default function TodosPage() {
                 </select>
               </div>
               <div>
-                <Label htmlFor="edit-category" className="text-xs font-medium text-stone-700">{t("分类", "Category")}</Label>
+                <Label htmlFor="edit-category" className="text-xs font-medium text-foreground">{t("分类", "Category")}</Label>
                 <CategoryInput
                   id="edit-category"
                   value={editForm.category}
@@ -1056,24 +1182,24 @@ export default function TodosPage() {
       <Dialog open={!!noteEditTodo} onOpenChange={(o) => { if (!o) setNoteEditTodo(null); }}>
         <DialogContent className="max-w-sm rounded-2xl p-5">
           <DialogHeader>
-            <DialogTitle className="text-sm font-semibold flex items-center gap-1.5 text-stone-800">
+            <DialogTitle className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
               <AlignLeft className="h-4 w-4 text-[#c69c4e]" />
               <span>编辑子任务备注</span>
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
-            <p className="text-xs text-stone-500 font-medium line-clamp-2 bg-stone-50 p-2 rounded-lg border border-stone-100">
+            <p className="text-xs text-muted-foreground font-medium line-clamp-2 bg-muted/40 p-2 rounded-lg border border-border">
               {noteEditTodo?.title}
             </p>
             <div>
-              <Label htmlFor="subtask-note" className="text-xs text-stone-600 font-medium">备注详情 / 说明</Label>
+              <Label htmlFor="subtask-note" className="text-xs text-muted-foreground font-medium">备注详情 / 说明</Label>
               <textarea
                 id="subtask-note"
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
                 placeholder="输入备注内容或补充说明..."
                 rows={4}
-                className="mt-1 w-full rounded-xl border border-stone-200 bg-stone-50/50 p-2.5 text-xs text-stone-800 focus:bg-white focus:border-[#c69c4e] focus:outline-none focus:ring-1 focus:ring-[#c69c4e]"
+                className="mt-1 w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-foreground focus:bg-card focus:border-[#c69c4e] focus:outline-none focus:ring-1 focus:ring-[#c69c4e]"
               />
             </div>
             <div className="flex gap-2 justify-end pt-1">

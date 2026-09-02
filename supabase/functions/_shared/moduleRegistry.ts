@@ -26,7 +26,12 @@ export interface FieldDef {
   name: string;
   type: FieldType;
   required?: boolean; // required on create
-  enum?: string[]; // surfaced as a JSON-Schema `enum` and a prompt union
+  enum?: string[]; // closed enum, surfaced as a JSON-Schema `enum` and a prompt union (ignored when vocab is "open")
+  /**
+   * "open" = user-defined values (live 用户词表). The prompt renders a plain string
+   * and must not present a fake closed enum. Closed is the default when `enum` is set.
+   */
+  vocab?: "open";
   description?: string; // optional human hint (zh)
   /** Overrides the rendered type in the prompt (e.g. "string[]", "[{key: string, text: string}]"). */
   promptType?: string;
@@ -52,7 +57,7 @@ export interface ExecutorHints {
   nameField?: string; // field used for fuzzy-match fallback (delete with empty match)
   resolves?: ResolveSpec; // foreign-key resolution by name
   queryKeys?: string[]; // React Query keys to invalidate after write
-  special?: "daily_task"; // bespoke handler hook (not generic CRUD)
+  special?: "daily_task" | "habit_log"; // bespoke handler hook (not generic CRUD)
   dateField?: string; // column used for date-range filtering in read_data (e.g. "date", "start_time")
 }
 
@@ -155,15 +160,21 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true, update: true, delete: true },
     fields: [
       { name: "title", type: "string", required: true },
-      { name: "category", type: "string", enum: ["工作", "学习", "学业", "生活", "健康", "考公", "未分类"] },
-      { name: "importance", type: "string", enum: ["紧急", "重要", "普通", "低"] },
+      { name: "category", type: "string", vocab: "open", description: "用户自定义分类，以词表为准；默认未分类。习惯默认「习惯」" },
+      { name: "importance", type: "string", enum: ["紧急", "重要", "普通", "低优先"] },
       { name: "detail", type: "string" },
       { name: "parent_title", type: "string", description: "父待办标题；填了即作为其子条目创建/定位" },
+      { name: "kind", type: "string", enum: ["once", "routine", "habit"], description: "一次性 / 例行 / 习惯。禁止问用户选哪种，必须自行判断" },
+      { name: "habit_type", type: "string", enum: ["checkin", "count", "duration", "avoidance"], description: "仅 kind=habit：打卡/计数/时长/克制" },
+      { name: "habit_target", type: "number", description: "计数目标或时长分钟。计数默认 1，时长默认 30，喝水没说杯数用 8" },
+      { name: "habit_unit", type: "string" },
+      { name: "is_paused", type: "boolean" },
       { name: "is_completed", type: "boolean", updateOnly: true },
     ],
     matchFields: ["title", "parent_title"],
-    updateFields: ["is_completed", "title", "importance", "category", "detail"],
-    notes: "支持子条目：create 带 parent_title 即在父待办下建子项；update/delete 在 match 里同时给 title+parent_title 可精确定位子项（否则按标题匹配，父子同名时优先父项）。",
+    updateFields: ["is_completed", "title", "importance", "category", "detail", "kind", "habit_type", "habit_target", "habit_unit", "is_paused"],
+    notes:
+      'kind 默认 once。习惯自动出现在今日顶部，禁止再 daily_task。例行不自动进今日。禁止把习惯/例行的母卡标 is_completed。完成习惯用 habit_log。禁止在 summary 里问「这是习惯还是例行」「打卡还是计数」——自行判断后写入 operations，只让用户确认。含糊的重复任务默认 routine。项目里的习惯仍用 project_task type=habit。',
     executor: {
       nameField: "title",
       queryKeys: ["todos"],
@@ -205,7 +216,7 @@ export const MODULES: ModuleDef[] = [
     fields: [
       { name: "title", type: "string" },
       { name: "content", type: "string", required: true },
-      { name: "tags", type: "array", promptType: "string[]" },
+      { name: "tags", type: "array", promptType: "string[]", vocab: "open" },
     ],
     matchFields: ["title"],
     updateFields: ["title", "content", "tags"],
@@ -221,7 +232,7 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true, delete: true },
     fields: [
       { name: "name", type: "string", required: true },
-      { name: "category", type: "string", required: true, enum: ["洗护", "清洁", "厨房", "文具", "其他"] },
+      { name: "category", type: "string", required: true, vocab: "open", description: "用户自定义分类，以词表为准" },
       { name: "purchase_date", type: "date" },
       { name: "notes", type: "string" },
     ],
@@ -510,7 +521,7 @@ export const MODULES: ModuleDef[] = [
     matchFields: ["title"],
     matchRequired: ["title"],
     notes:
-      '【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。**优先用 todo_id**（你用 read_data 读到待办时拿到的 id）直接加入今天；没有 id 时给 title，系统自动按标题找/建 todo 再加入今天。',
+      '【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。**优先用 todo_id**。命中 kind=habit 时不要 daily_task（习惯已在今日顶部，报进度用 habit_log）。例行用 daily_task。没有 id 时给 title，系统自动按标题找/建 todo 再加入今天。',
     executor: { nameField: "title", queryKeys: ["daily_tasks"], special: "daily_task", dateField: "task_date" },
   },
   {
@@ -550,6 +561,25 @@ export const MODULES: ModuleDef[] = [
       resolves: { from: "course_name", toColumn: "course_id", targetTable: "learning_courses", targetField: "name" },
       dateField: "note_date",
     },
+  },
+  {
+    key: "habit_log",
+    labelZh: "习惯打卡",
+    labelEn: "Habit log",
+    headingZh: "习惯当日流水（打卡/计数/时长/坚持）",
+    table: "todo_habit_logs",
+    index: 22,
+    actions: { create: true, delete: true },
+    fields: [
+      { name: "title", type: "string", required: true, description: "习惯名称，须已存在" },
+      { name: "todo_id", type: "string", description: "已命中习惯的 UUID，优先用" },
+      { name: "value", type: "number", description: "当天累计值。打卡/克制为 1；计数为杯数；时长为分钟" },
+      { name: "broken", type: "boolean", description: "不要使用。克制用 value=1 表示今天坚持住了" },
+    ],
+    matchFields: ["title"],
+    matchRequired: ["title"],
+    notes: "只用于个人待办习惯，不是项目看板习惯。value 是当天累计。克制用 value=1 记下今天坚持住了。",
+    executor: { nameField: "title", queryKeys: ["todo_habit_logs", "todos"], special: "habit_log", needsUserId: true, dateField: "log_date" },
   },
 ];
 
@@ -591,6 +621,7 @@ export function allQueryKeys(): string[] {
 
 function displayType(f: FieldDef): string {
   if (f.promptType) return f.promptType;
+  if (f.vocab === "open") return f.type === "array" ? "string[]" : "string";
   if (f.enum) return f.enum.map((v) => `"${v}"`).join("|");
   switch (f.type) {
     case "date":
@@ -692,12 +723,12 @@ const PROMPT_HEADER = `你是 V-Life Manager 的数据操作助手。你的唯�
 
 const PROMPT_AGENT = `## 数据读取能力（ReAct 工具调用）
 你并非"盲"的——需要查看用户数据时，**先调用工具读取，再决定操作**：
-- \`read_data(module, date_from?, date_to?, filters?, limit?)\`：读取任意模块记录。\`module\` 取值即上方「模块定义」中的 key（finance/calories/schedule/todo/…/daily_task，共 21 个）。\`filters\` 为字段→值的模糊匹配对象（如 {category:"餐饮"}）；\`date_from/date_to\` 为 YYYY-MM-DD；\`limit\` 默认 50。
+- \`read_data(module, date_from?, date_to?, filters?, limit?)\`：读取任意模块记录。\`module\` 取值即上方「模块定义」中的 key（finance/calories/schedule/todo/…/habit_log，共 22 个）。\`filters\` 为字段→值的模糊匹配对象（如 {category:"餐饮"}）；\`date_from/date_to\` 为 YYYY-MM-DD；\`limit\` 默认 50。
 - \`get_today_plan()\`：读取今天已规划的任务（用于避免重复加入、查看今日安排）。
 
 ### 何时调用工具
 - **查询/统计/核对**（"我这个月餐饮花了多少""冰箱还有什么""还有哪些错题没掌握"）→ 先 \`read_data\` 再用 \`summary\` 回答（\`operations\` 可为空）。
-- **今日规划**（"今天想做 XXX / 把 XXX 排到今天"）→ 先 \`read_data(module:"todo")\` 看待办清单做**语义匹配**：命中已有项 → 用 \`daily_task\` 带 **\`todo_id\`** 加入今天（\`title\` 也带上）；未命中 → 先 \`todo\` create 建新，再 \`daily_task\` 加入今天。可先 \`get_today_plan\` 防重复。
+- **今日规划**（"今天想做 XXX / 把 XXX 排到今天"）→ 先 \`read_data(module:"todo")\` 语义匹配。命中习惯 → 不要 daily_task（已在今日顶部）；若是报进度则 \`habit_log\`。命中例行 → \`daily_task\`。未命中 → 先 todo create（自行判断 kind），只有一次性/例行再 daily_task。
 - **推荐**（"推荐我今天做啥"）→ \`read_data\` 后在 \`summary\` 给建议，**默认不自动加入**（除非用户明确说"加进去"）。
 
 ### 输出仍是 JSON
@@ -711,13 +742,21 @@ const PROMPT_DEFAULTS = `## 默认值规则
 - 币种缺失 → 默认 CNY
 - 日程缺少结束时间 → 默认开始时间 +1 小时
 - importance 缺失 → 默认 "普通"
-- todo 的 category 缺失 → 默认 "未分类"
+- todo 的 category 缺失 → 一次性/例行默认 "未分类"；习惯默认 "习惯"
+- todo.kind 缺失 → 默认 "once"
+- habit_type 缺失且 kind=habit → 默认 "checkin"
+- 计数缺目标 → 1（喝水没说杯数 → 8）；时长缺目标 → 30
 - 热量：如果用户没有明确说几大卡，根据食物名称和份量合理估算热量（kcal）
 - 运动：如果用户提到了运动但没说消耗多少，根据运动类型和时长自行估算消耗热量
 - 项目 status 缺失 → 默认 "planning"，priority 缺失 → 默认 "medium"
 - 项目子任务 type 缺失 → 默认 "task"，status 缺失 → 默认 "todo"
 - civil_plan subject_group 缺失 → 默认 "xingce"；civil_checkin 同一天 upsert
 - civil_wrong review_status 缺失 → 默认 "pending"`;
+
+const PROMPT_VOCAB = `## 开放字段与封闭字段
+- **封闭字段**：模块定义里写成 \`"A"|"B"|"C"\` 的枚举（如 finance.category、meal_type、currency）。必须用枚举值，禁止自创；不确定时用「其他」。
+- **开放字段**：todo.category、belongings_daily.category、thought.tags、project_name、course_name。以请求末尾的「用户词表」为准：词表里有的必须原样使用，没有的可以按用户原词新建。禁止用封闭枚举去否定用户已经在用的分类/标签/名称。
+- 定位某一条记录仍须调用 read_data。用户词表只列值，不是完整清单。`;
 
 const PROMPT_CROSS_MODULE = `## 跨模块识别
 一条消息可能涉及多个模块，你必须拆分为多条操作。例如「吃拉面花了30元600大卡」→ finance + calories 两条操作。`;
@@ -745,6 +784,18 @@ const PROMPT_EXAMPLES = `## 示例
 用户: "买了一瓶洗发水和一管牙膏"
 输出:
 {"operations":[{"module":"belongings_daily","action":"create","data":{"name":"洗发水","category":"洗护"}},{"module":"belongings_daily","action":"create","data":{"name":"牙膏","category":"洗护"}}],"summary":"添加了洗发水和牙膏两件日用品"}
+
+用户: "我想每天喝八杯水"
+输出:
+{"operations":[{"module":"todo","action":"create","data":{"title":"喝水","kind":"habit","habit_type":"count","habit_target":8,"habit_unit":"杯","category":"习惯"}}],"summary":"将新增习惯「喝水」：每天 8 杯（计数）。确认后会自动出现在今日顶部。"}
+
+用户: "查工作邮箱要经常做，但先别排进今天"
+输出:
+{"operations":[{"module":"todo","action":"create","data":{"title":"查工作邮箱","kind":"routine","category":"工作"}}],"summary":"将新增例行「查工作邮箱」，放在工作分类。不会自动进今日，选任务时会排在最上面。"}
+
+用户: "冥想打卡了"
+输出:
+{"operations":[{"module":"habit_log","action":"create","data":{"title":"冥想","value":1}}],"summary":"将记录习惯「冥想」今日打卡。"}
 
 用户: "帮我把'买菜'这个待办标记为完成"
 输出:
@@ -811,7 +862,7 @@ const PROMPT_EXAMPLES = `## 示例
 export function buildSystemPrompt(): string {
   const sorted = [...MODULES].sort((a, b) => a.index - b.index);
   const moduleBlocks = sorted.map(renderModule).join("\n\n");
-  return [PROMPT_HEADER, moduleBlocks, PROMPT_AGENT, PROMPT_DEFAULTS, PROMPT_CROSS_MODULE, PROMPT_IMAGE, PROMPT_EXAMPLES].join(
+  return [PROMPT_HEADER, moduleBlocks, PROMPT_AGENT, PROMPT_DEFAULTS, PROMPT_VOCAB, PROMPT_CROSS_MODULE, PROMPT_IMAGE, PROMPT_EXAMPLES].join(
     "\n\n",
   );
 }
