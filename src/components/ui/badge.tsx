@@ -12,12 +12,13 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground border-[var(--line)] bg-transparent",
-        /* Beautiful UI 软 tint 徽标：浅暖底 + 深暖字，无描边 */
-        tint: "border-transparent bg-[#f1ede4] text-[#6b6358]",
-        "tint-accent": "border-transparent bg-[#fbeae0] text-[#a85f33]",
-        "tint-success": "border-transparent bg-[#e7f0e8] text-[#3d7a4e]",
-        "tint-warning": "border-transparent bg-[#fbeede] text-[#a96b1f]",
-        "tint-destructive": "border-transparent bg-[#f7e4e3] text-[#b44448]",
+        /* Beautiful UI 软 tint 徽标：浅暖底 + 深暖字，无描边；经 --cat-* token 自适应深色 */
+        tint: "border-transparent bg-muted text-muted-foreground",
+        "tint-accent": "border-transparent bg-cat-orange-bg text-cat-orange",
+        "tint-success": "border-transparent bg-cat-green-bg text-cat-green",
+        "tint-warning": "border-transparent bg-cat-yellow-bg text-cat-yellow",
+        "tint-info": "border-transparent bg-cat-blue-bg text-cat-blue",
+        "tint-destructive": "border-transparent bg-cat-red-bg text-cat-red",
       },
     },
     defaultVariants: {

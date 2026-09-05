@@ -46,6 +46,8 @@ const DTASK_2 = "demo-dt000000-0000-0000-0000-000000000002";
 const DTASK_3 = "demo-dt000000-0000-0000-0000-000000000003";
 const DTASK_4 = "demo-dt000000-0000-0000-0000-000000000004";
 const DTASK_5 = "demo-dt000000-0000-0000-0000-000000000005";
+const DTASK_PAST_1 = "demo-dt000000-0000-0000-0000-000000000006";
+const DTASK_PAST_2 = "demo-dt000000-0000-0000-0000-000000000007";
 const UPOINTS_ID = "demo-up000000-0000-0000-0000-000000000001";
 
 // Shop item UUIDs
@@ -343,16 +345,30 @@ export const demoTodos = [
 ];
 
 // ============ Daily Tasks (Today's Todo — dynamic) ============
+function localIsoDate(daysAgo = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function generateDailyTasks(): typeof demoDailyTasks {
-  const today = new Date();
-  const dateStr = today.toISOString().split("T")[0];
+  const dateStr = localIsoDate();
+  const yesterday = localIsoDate(1);
+  const dayBefore = localIsoDate(2);
   const ts = `${dateStr}T07:00:00+09:00`;
+  const yesterdayTs = `${yesterday}T07:00:00+09:00`;
+  const dayBeforeTs = `${dayBefore}T07:00:00+09:00`;
   return [
     { id: DTASK_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000001", task_date: dateStr, difficulty: "hard", base_points: 30, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
     { id: DTASK_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000004", task_date: dateStr, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
     { id: DTASK_3, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000002", task_date: dateStr, difficulty: "easy", base_points: 10, is_completed: true, completed_at: `${dateStr}T10:30:00+09:00`, created_at: ts, updated_at: `${dateStr}T10:30:00+09:00` },
     { id: DTASK_4, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000013", task_date: dateStr, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
     { id: DTASK_5, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000005", task_date: dateStr, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
+    { id: DTASK_PAST_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000003", task_date: yesterday, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: yesterdayTs, updated_at: yesterdayTs },
+    { id: DTASK_PAST_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000012", task_date: dayBefore, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: dayBeforeTs, updated_at: dayBeforeTs },
   ];
 }
 

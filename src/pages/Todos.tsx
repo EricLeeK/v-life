@@ -36,24 +36,37 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 
 const IMPORTANCE_LEVELS = [
-  { key: "紧急", labelEn: "Urgent", color: "bg-cat-red-bg text-cat-red border-none font-medium" },
-  { key: "重要", labelEn: "Important", color: "bg-cat-orange-bg text-cat-orange border-none font-medium" },
-  { key: "普通", labelEn: "Normal", color: "bg-cat-blue-bg text-cat-blue border-none font-medium" },
-  { key: "低优先", labelEn: "Low", color: "bg-muted text-muted-foreground border-none font-medium" },
+  { key: "紧急", labelEn: "Urgent", variant: "tint-destructive" as const },
+  { key: "重要", labelEn: "Important", variant: "tint-accent" as const },
+  { key: "普通", labelEn: "Normal", variant: "tint-info" as const },
+  { key: "低优先", labelEn: "Low", variant: "tint" as const },
 ] as const;
 
-const IMPORTANCE_MAP: Record<string, { labelZh: string; labelEn: string; color: string }> = {
-  "urgent": { labelZh: "紧急", labelEn: "Urgent", color: "bg-cat-red-bg text-cat-red border-none font-medium" },
-  "紧急": { labelZh: "紧急", labelEn: "Urgent", color: "bg-cat-red-bg text-cat-red border-none font-medium" },
-  "important": { labelZh: "重要", labelEn: "Important", color: "bg-cat-orange-bg text-cat-orange border-none font-medium" },
-  "重要": { labelZh: "重要", labelEn: "Important", color: "bg-cat-orange-bg text-cat-orange border-none font-medium" },
-  "normal": { labelZh: "普通", labelEn: "Normal", color: "bg-cat-blue-bg text-cat-blue border-none font-medium" },
-  "普通": { labelZh: "普通", labelEn: "Normal", color: "bg-cat-blue-bg text-cat-blue border-none font-medium" },
-  "low": { labelZh: "低优先", labelEn: "Low", color: "bg-muted text-muted-foreground border-none font-medium" },
-  "低优先": { labelZh: "低优先", labelEn: "Low", color: "bg-muted text-muted-foreground border-none font-medium" },
+const IMPORTANCE_MAP: Record<string, { labelZh: string; labelEn: string; variant: (typeof IMPORTANCE_LEVELS)[number]["variant"] }> = {
+  urgent: { labelZh: "紧急", labelEn: "Urgent", variant: "tint-destructive" },
+  紧急: { labelZh: "紧急", labelEn: "Urgent", variant: "tint-destructive" },
+  important: { labelZh: "重要", labelEn: "Important", variant: "tint-accent" },
+  重要: { labelZh: "重要", labelEn: "Important", variant: "tint-accent" },
+  normal: { labelZh: "普通", labelEn: "Normal", variant: "tint-info" },
+  普通: { labelZh: "普通", labelEn: "Normal", variant: "tint-info" },
+  low: { labelZh: "低优先", labelEn: "Low", variant: "tint" },
+  低优先: { labelZh: "低优先", labelEn: "Low", variant: "tint" },
 };
 
 type ViewMode = "category" | "importance" | "all";
+
+const DEFAULT_TODO_CATEGORY = "未分类";
+const EMPTY_TODO_FORM = {
+  title: "",
+  detail: "",
+  tags: "",
+  importance: "普通",
+  category: "",
+  kind: "once",
+  habit_type: "checkin",
+  habit_target: "",
+  habit_unit: "",
+};
 
 const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }: {
   id?: string;
@@ -122,9 +135,9 @@ export default function TodosPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   // Forms
-  const [form, setForm] = useState({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习", kind: "once", habit_type: "checkin", habit_target: "", habit_unit: "" });
+  const [form, setForm] = useState({ ...EMPTY_TODO_FORM });
   const [editingTodo, setEditingTodo] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习", kind: "once", habit_type: "checkin", habit_target: "", habit_unit: "", is_paused: false });
+  const [editForm, setEditForm] = useState({ ...EMPTY_TODO_FORM, is_paused: false });
 
   // Subtask Quick Add Inline State
   const [addingSubtaskFor, setAddingSubtaskFor] = useState<string | null>(null);
@@ -275,7 +288,7 @@ export default function TodosPage() {
         detail: form.detail || null,
         tags: parsedTags,
         importance: form.importance,
-        category: form.kind === "habit" ? "习惯" : (form.category || "AI学习"),
+        category: form.kind === "habit" ? "习惯" : (form.category.trim() || DEFAULT_TODO_CATEGORY),
         kind: form.kind,
         habit_type: form.kind === "habit" ? form.habit_type : null,
         habit_target: form.kind === "habit" && (form.habit_type === "count" || form.habit_type === "duration")
@@ -287,7 +300,7 @@ export default function TodosPage() {
         is_archived: false,
       });
       setDialogOpen(false);
-      setForm({ title: "", detail: "", tags: "", importance: "普通", category: "AI学习", kind: "once", habit_type: "checkin", habit_target: "", habit_unit: "" });
+      setForm({ ...EMPTY_TODO_FORM });
       toast({ title: t("主任务已添加", "Task added") });
     } catch (e: any) {
       toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
@@ -302,7 +315,7 @@ export default function TodosPage() {
       detail: item.detail || "",
       tags: tagStr,
       importance: item.importance || "普通",
-      category: item.category || "AI学习",
+      category: item.category || "",
       kind: item.kind || "once",
       habit_type: item.habit_type || "checkin",
       habit_target: item.habit_target != null ? String(item.habit_target) : "",
@@ -520,7 +533,7 @@ export default function TodosPage() {
                     </Badge>
                   )}
                   {/* Priority Badge - ALWAYS at top right */}
-                  <Badge variant="outline" className={`text-xs px-2.5 py-0.5 rounded-full shrink-0 ${impInfo.color}`}>
+                  <Badge variant={impInfo.variant} className="text-xs px-2.5 py-0.5 rounded-full shrink-0">
                     {impLabel}
                   </Badge>
 
@@ -990,7 +1003,7 @@ export default function TodosPage() {
                 id="todo-title"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="例如: ARIS 面试HTML"
+                placeholder={t("例如：预约下周体检", "e.g. Book a checkup")}
                 className="mt-1 h-9 text-xs"
               />
             </div>
@@ -1000,7 +1013,7 @@ export default function TodosPage() {
                 id="todo-tags"
                 value={form.tags}
                 onChange={(e) => setForm({ ...form, tags: e.target.value })}
-                placeholder="例如: Agent 相关, RAG 相关"
+                placeholder={t("例如：周末, 家里", "e.g. weekend, home")}
                 className="mt-1 h-9 text-xs"
               />
             </div>
@@ -1010,7 +1023,7 @@ export default function TodosPage() {
                 id="todo-detail"
                 value={form.detail}
                 onChange={(e) => setForm({ ...form, detail: e.target.value })}
-                placeholder="例如: 面试准备知识点梳理"
+                placeholder={t("例如：下班路上顺便处理", "e.g. Handle it on the way home")}
                 className="mt-1 h-9 text-xs"
               />
             </div>
@@ -1025,7 +1038,7 @@ export default function TodosPage() {
                     setForm({
                       ...form,
                       kind,
-                      category: kind === "habit" ? "习惯" : form.category === "习惯" ? "AI学习" : form.category,
+                      category: kind === "habit" ? "习惯" : form.category === "习惯" ? "" : form.category,
                     });
                   }}
                   className="mt-1 block w-full h-9 rounded-lg border border-border bg-card px-3 py-1 text-xs text-foreground focus:border-[#5b88b5] focus:outline-none"
@@ -1057,7 +1070,7 @@ export default function TodosPage() {
                   value={form.category}
                   onChange={(v) => setForm({ ...form, category: v })}
                   existingCategories={existingCategories}
-                  placeholder="AI学习"
+                  placeholder={t("例如：生活", "e.g. Life")}
                 />
               </div>
             </div>

@@ -4,6 +4,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import type { DemoDataStore } from "@/data/demoSeed";
 import { pickSettingsRow } from "@/lib/pickSettingsRow";
+import { addIsoDays } from "@/lib/habits";
+import { PAST_DAILY_LOOKBACK_DAYS, selectPastIncompleteDailyTasks } from "@/lib/pastDailyTasks";
 
 // ============ Demo-mode helpers ============
 function useDemoQuery<T>(key: string, filter: (data: DemoDataStore) => T): { data: T | undefined; isLoading: false; error: null } {
@@ -1411,6 +1413,44 @@ export function useTodayTasks() {
     return { data: tasks, isLoading: false, error: null } as any;
   }
   return supa;
+}
+
+export function usePastIncompleteDailyTasks() {
+  const { isDemo, demoData } = useDemoMode();
+  const { data: settings } = useSettings();
+  const offsetHours = settings?.day_start_hour || 0;
+  const today = getLocalDateString(new Date(), offsetHours);
+  const oldest = addIsoDays(today, -PAST_DAILY_LOOKBACK_DAYS);
+  const supa = useQuery({
+    queryKey: ["daily_tasks", "past", today],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_tasks")
+        .select("*, todos(title, detail, importance, category, is_completed, is_archived, parent_id, kind)")
+        .eq("is_completed", false)
+        .gte("task_date", oldest)
+        .lt("task_date", today)
+        .order("task_date", { ascending: false })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return selectPastIncompleteDailyTasks(data as any[], today);
+    },
+    enabled: !isDemo,
+  });
+  if (isDemo) {
+    const tasks = selectPastIncompleteDailyTasks(
+      demoData.daily_tasks.map((dt: any) => {
+        const todo = demoData.todos.find((t: any) => t.id === dt.todo_id);
+        return { ...dt, todos: todo || null };
+      }),
+      today,
+    );
+    return { data: tasks, isLoading: false, error: null } as any;
+  }
+  return {
+    ...supa,
+    data: selectPastIncompleteDailyTasks(supa.data ?? [], today),
+  };
 }
 
 export function useUserPoints() {

@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useState } from "react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -58,6 +59,14 @@ describe("todo habits and routines", () => {
     expect(groups[0]).toHaveAccessibleName(/习惯/);
   });
 
+  it("keeps the urgent badge on the red tint", async () => {
+    renderPage("/todos", <TodosPage />);
+    const badges = await screen.findAllByText("紧急");
+    expect(badges[0].className).toMatch(/bg-cat-red-bg/);
+    expect(badges[0].className).toMatch(/text-cat-red/);
+    expect(badges[0].className).not.toMatch(/border-\[var\(--line\)\]/);
+  });
+
   it("shows a habit control stack on today and keeps habits out of the picker", async () => {
     renderPage("/today", <TodayTodoPage />);
 
@@ -79,5 +88,44 @@ describe("todo habits and routines", () => {
       .getAllByRole("checkbox")
       .map((box) => box.closest("label")?.textContent || "");
     expect(pickerTitles[0]).toContain("查工作邮箱");
+  });
+
+  it("keeps leftover daily tasks in a collapsed past section and completing one finishes the mother todo", async () => {
+    function SwitchablePages() {
+      const [page, setPage] = useState<"today" | "todos">("today");
+      return (
+        <>
+          <button type="button" onClick={() => setPage("todos")}>
+            打开待办
+          </button>
+          {page === "today" ? <TodayTodoPage /> : <TodosPage />}
+        </>
+      );
+    }
+
+    renderPage("/today", <SwitchablePages />);
+
+    const toggle = await screen.findByRole("button", { name: /往期未完成/ });
+    expect(toggle).toHaveAccessibleName(/2/);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("checkbox", { name: "预约牙医" })).not.toBeInTheDocument();
+    expect(screen.getByText("1 / 5 已完成")).toBeInTheDocument();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("昨天")).toBeInTheDocument();
+    expect(screen.getByText("前天")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "预约牙医" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("checkbox", { name: "预约牙医" })).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("1 / 5 已完成")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /往期未完成/ })).toHaveAccessibleName(/1/);
+
+    fireEvent.click(screen.getByRole("button", { name: "打开待办" }));
+    const leftover = await screen.findByRole("button", { name: "预约牙医" });
+    const leftoverCard = leftover.closest(".bg-card") as HTMLElement;
+    expect(within(leftoverCard).getByRole("button", { name: "标记为未完成" })).toHaveAttribute("aria-pressed", "true");
   });
 });

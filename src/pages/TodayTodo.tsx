@@ -14,6 +14,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   useTodayTasks,
+  usePastIncompleteDailyTasks,
   useUserPoints,
   useAddToToday,
   useCompleteDailyTask,
@@ -28,6 +29,7 @@ import {
 } from "@/hooks/useData";
 import { POINTS_FEATURE_ENABLED as POINTS } from "@/lib/featureFlags";
 import { todayPickerItems } from "@/lib/habits";
+import { groupPastDailyTasksByDate, PAST_DATE_LABELS, shouldCompleteMotherTodo } from "@/lib/pastDailyTasks";
 import { HabitWidgetStack } from "@/components/HabitWidgetStack";
 
 const DIFFICULTY_CONFIG = {
@@ -159,6 +161,7 @@ export default function TodayTodoPage() {
   const { toast } = useToast();
 
   const { data: todayTasks = [], isLoading: tasksLoading } = useTodayTasks();
+  const { data: pastTasks = [] } = usePastIncompleteDailyTasks();
   const { data: userPoints } = useUserPoints();
   const addToToday = useAddToToday();
   const completeTask = useCompleteDailyTask();
@@ -167,6 +170,7 @@ export default function TodayTodoPage() {
   const estimateDifficulty = useEstimateDifficulty();
   const { data: allTodos = [] } = todoHooks.useList();
   const createTodo = todoHooks.useCreate();
+  const updateTodo = todoHooks.useUpdate();
   const { data: habitLogs = [] } = useTodoHabitLogs();
   const upsertHabitLog = useUpsertTodoHabitLog();
   const { data: settings } = useSettings();
@@ -369,6 +373,11 @@ export default function TodayTodoPage() {
     }
   };
 
+  const pastGroups = useMemo(
+    () => groupPastDailyTasksByDate(pastTasks, todayStr),
+    [pastTasks, todayStr],
+  );
+
   const handleComplete = (task: any) => {
     const isNowCompleted = !task.is_completed;
     // Optimistic UI via useCompleteDailyTask.onMutate — same pattern as Todos
@@ -385,6 +394,15 @@ export default function TodayTodoPage() {
       } else if (newCompletedCount === 1 && totalCount > 1) {
         setRewardTier("silver");
       }
+    }
+  };
+
+  const handleCompletePast = (task: any) => {
+    if (task.is_completed) return;
+    const motherId = task.todo_id || task.todos?.id;
+    completeTask.mutate({ id: task.id, is_completed: true });
+    if (shouldCompleteMotherTodo(task.todos?.kind) && motherId) {
+      updateTodo.mutate({ id: motherId, is_completed: true });
     }
   };
 
@@ -960,6 +978,56 @@ export default function TodayTodoPage() {
               </div>
             )}
           </div>
+        )}
+
+        {pastTasks.length > 0 && (
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="group h-auto w-full justify-between rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              >
+                <span className="flex items-center gap-2">
+                  {t("往期未完成", "Leftover from past days")}
+                  <span aria-hidden="true" className="h-2 w-2 rounded-full bg-destructive" />
+                  <span className="font-mono-data text-xs tabular-nums text-foreground">{pastTasks.length}</span>
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="flex flex-col gap-5 pt-5">
+                {pastGroups.map((group) => (
+                  <section key={group.date} className="flex flex-col gap-2">
+                    <h3 className="px-1 text-xs font-medium text-muted-foreground">
+                      {t(PAST_DATE_LABELS[group.label].zh, PAST_DATE_LABELS[group.label].en)}
+                    </h3>
+                    {group.tasks.map((task: any) => (
+                      <Card key={task.id} className="bg-card border-border shadow-sm">
+                        <CardContent className="p-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={false}
+                              onCheckedChange={() => handleCompletePast(task)}
+                              aria-label={task.todos?.title || t("完成任务", "Complete task")}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground">
+                                {task.todos?.title || t("未知任务", "Unknown task")}
+                              </p>
+                              {task.todos?.detail && (
+                                <p className="mt-0.5 truncate text-xs text-muted-foreground">{task.todos.detail}</p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </section>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {/* Live Earnings & Settle Estimate Card */}
