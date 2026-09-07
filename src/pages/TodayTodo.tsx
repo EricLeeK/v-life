@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, Sparkles, Zap, CheckCircle2, Loader2, ClipboardList, Sliders, Minus } from "lucide-react";
+import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, Sparkles, Zap, CheckCircle2, Loader2, ClipboardList, Sliders, Minus, ArrowUp } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -403,6 +403,28 @@ export default function TodayTodoPage() {
     completeTask.mutate({ id: task.id, is_completed: true });
     if (shouldCompleteMotherTodo(task.todos?.kind) && motherId) {
       updateTodo.mutate({ id: motherId, is_completed: true });
+    }
+  };
+
+  const handleMovePastToToday = async (task: any) => {
+    const todoId = task.todo_id || task.todos?.id;
+    if (!todoId) return;
+    try {
+      if (!todayTaskIds.has(todoId)) {
+        await addToToday.mutateAsync({
+          todo_id: todoId,
+          difficulty: task.difficulty || "medium",
+          base_points: task.base_points || 20,
+          metadata: task.metadata || {},
+        });
+      }
+      removeFromToday.mutate(task.id);
+    } catch (err: any) {
+      toast({
+        title: t("移入今日失败", "Could not move to today"),
+        description: err.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -1019,6 +1041,19 @@ export default function TodayTodoPage() {
                                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{task.todos.detail}</p>
                               )}
                             </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={t(
+                                `移入今日：${task.todos?.title || "任务"}`,
+                                `Move to today: ${task.todos?.title || "task"}`,
+                              )}
+                              className="h-7 w-7 shrink-0 text-muted-foreground hover:text-cat-orange hover:bg-muted/50"
+                              onClick={() => handleMovePastToToday(task)}
+                            >
+                              <ArrowUp className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>

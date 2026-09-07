@@ -128,4 +128,18 @@ describe("todo habits and routines", () => {
     const leftoverCard = leftover.closest(".bg-card") as HTMLElement;
     expect(within(leftoverCard).getByRole("button", { name: "标记为未完成" })).toHaveAttribute("aria-pressed", "true");
   });
+
+  it("moves a leftover daily task into today without completing the mother todo", async () => {
+    renderPage("/today", <TodayTodoPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: /往期未完成/ }));
+    fireEvent.click(screen.getByRole("button", { name: "移入今日：修理自行车刹车" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "移入今日：修理自行车刹车" })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("checkbox", { name: "修理自行车刹车" })).toBeInTheDocument();
+    expect(screen.getByText("1 / 6 已完成")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /往期未完成/ })).toHaveAccessibleName(/1/);
+  });
 });
