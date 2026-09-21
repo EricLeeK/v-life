@@ -21,7 +21,7 @@
 
 Supabase Auth 配置：Site URL 为 `https://shenghuo.homes`，OAuth Server 和动态客户端注册开启，授权页路径 `/oauth/consent`，签名使用 ES256。不要把全量本地 Auth 配置推到生产，避免覆盖邮件、登录和其他现有配置。
 
-应用迁移顺序为 `20260921120000_agent_access.sql`、`20260921150000_agent_hardening.sql`。已有项目迁移历史中含其他不一致版本，不能不经核对直接全量 `db push`。
+应用迁移顺序为 `20260921120000_agent_access.sql`、`20260921150000_agent_hardening.sql`，两项已登记到生产迁移历史。项目更早的本地文件名与远端版本号仍有历史差异，不能不经核对直接全量 `db push`。
 
 ```sh
 supabase functions deploy mcp-server --use-api --no-verify-jwt
