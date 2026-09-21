@@ -1,0 +1,53 @@
+import { describe, expect, it } from "vitest";
+import { createAgentDataService, AgentDataError } from "./agentDataService";
+
+function fakeDb(result: { data?: unknown; error?: { message: string; code?: string } }) {
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const builder: any = {
+    select: (...args: unknown[]) => { calls.push({ method: "select", args }); return builder; },
+    eq: (...args: unknown[]) => { calls.push({ method: "eq", args }); return builder; },
+    ilike: (...args: unknown[]) => { calls.push({ method: "ilike", args }); return builder; },
+    order: (...args: unknown[]) => { calls.push({ method: "order", args }); return builder; },
+    limit: (...args: unknown[]) => { calls.push({ method: "limit", args }); return builder; },
+    single: async () => result,
+    maybeSingle: async () => result,
+    then: (resolve: (x: unknown) => unknown) => Promise.resolve(result).then(resolve),
+  };
+  return { calls, from: () => builder } as any;
+}
+
+const context = (db: any, permissions = { read: true, write: true, delete: true }) =>
+  ({ db, userId: "user-a", permissions });
+
+describe("agent data service", () => {
+  it("projects list results to registered read fields", async () => {
+    const db = fakeDb({ data: [{ id: "1", title: "x", detail: "ok", user_id: "user-a", secret: "no" }] });
+    const service = createAgentDataService(context(db));
+    const result = await service.list("todo");
+    expect(result.data).toEqual([{ id: "1", title: "x", detail: "ok" }]);
+    expect(db.calls.find((c) => c.method === "select")?.args[0]).not.toBe("*");
+  });
+
+  it("rejects caller supplied user_id", async () => {
+    const service = createAgentDataService(context(fakeDb({ data: [] })));
+    await expect(service.create("todo", { title: "x", user_id: "other" })).rejects.toMatchObject({ code: "USER_ID_FORBIDDEN" });
+  });
+
+  it("enforces operation permissions", async () => {
+    const service = createAgentDataService(context(fakeDb({ data: [] }), { read: false, write: false, delete: false }));
+    await expect(service.list("todo")).rejects.toMatchObject({ code: "PERMISSION_DENIED" });
+    await expect(service.create("todo", { title: "x" })).rejects.toMatchObject({ code: "PERMISSION_DENIED" });
+    await expect(service.delete("todo", "1")).rejects.toMatchObject({ code: "PERMISSION_DENIED" });
+  });
+
+  it("reports ambiguous relation matches instead of choosing one", async () => {
+    const db = fakeDb({ data: [{ id: "1" }, { id: "2" }] });
+    const service = createAgentDataService(context(db));
+    await expect(service.create("todo", { title: "child", parent_title: "same" })).rejects.toMatchObject({ code: "RELATION_AMBIGUOUS" });
+  });
+
+  it("returns structured unknown module errors", async () => {
+    const service = createAgentDataService(context(fakeDb({ data: [] })));
+    await expect(service.list("missing")).rejects.toBeInstanceOf(AgentDataError);
+  });
+});

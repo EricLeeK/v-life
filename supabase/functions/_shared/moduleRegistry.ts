@@ -75,6 +75,36 @@ export interface ModuleDef {
   updateFields?: string[]; // updatable field names; default = all non-internal fields
   notes?: string; // free-text bold legend/constraint rendered at end of the module block
   executor?: ExecutorHints;
+  /** Agent-facing contract. Optional so existing module declarations remain compatible. */
+  agentVisible?: boolean;
+  agentReadFields?: string[];
+  agentWriteFields?: string[];
+  agentSensitiveFields?: string[];
+  agentExportable?: boolean;
+}
+
+export interface AgentModuleMeta {
+  agentVisible: boolean;
+  readFields: string[];
+  writeFields: string[];
+  sensitiveFields: string[];
+  exportable: boolean;
+}
+
+/** Resolve the stable agent contract while keeping legacy registry entries valid. */
+export function agentMetaOf(mod: ModuleDef): AgentModuleMeta {
+  const publicFields = mod.fields.filter((f) => !f.internal).map((f) => f.name);
+  const readFields = mod.agentReadFields ?? publicFields;
+  const writeFields = mod.agentWriteFields ?? mod.updateFields ?? publicFields.filter((name) => !mod.fields.find((f) => f.name === name)?.updateOnly);
+  const sensitiveFields = mod.agentSensitiveFields ?? ["api_key", "visual_api_key", "calendar_token", "subscription_token"]
+    .filter((field) => publicFields.includes(field));
+  return {
+    agentVisible: mod.agentVisible ?? mod.key !== "daily_task",
+    readFields: [...new Set(readFields)],
+    writeFields: [...new Set(writeFields)],
+    sensitiveFields: [...new Set(sensitiveFields)],
+    exportable: mod.agentExportable ?? mod.key !== "habit_log",
+  };
 }
 
 // ──────────────────────────── Modules ────────────────────────────
