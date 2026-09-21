@@ -1,4 +1,13 @@
-import { describe, it } from "https://deno.land/std@0.224.0/testing/bdd.ts";
-import { expect } from "https://deno.land/std@0.224.0/expect/mod.ts";
-import { buildCapabilities, oauthChallenge } from "./mcpAdapter.ts";
-describe("MCP adapter", () => { it("publishes allowlisted capabilities", () => { const caps = buildCapabilities(); expect(caps.modules.length).toBeGreaterThan(0); expect(JSON.stringify(caps)).not.toContain("api_key"); }); it("returns OAuth challenge", () => { const r = oauthChallenge("https://example/mcp"); expect(r.status).toBe(401); expect(r.headers.get("WWW-Authenticate")).toContain("Bearer"); }); });
+import { assertEquals, assert } from 'https://deno.land/std@0.224.0/assert/mod.ts';
+import { buildCapabilities, fieldsSchema } from './mcpAdapter.ts';
+import { MODULES } from '../_shared/moduleRegistry.ts';
+Deno.test('schema preserves number boolean and required fields',()=>{
+ const finance=MODULES.find(m=>m.key==='finance')!;
+ const s=fieldsSchema(finance,'create');
+ assertEquals(s.properties.amount.type,'number');assert(s.required.includes('date'));
+ assertEquals(s.additionalProperties,false);assert(!('user_id' in s.properties));
+});
+Deno.test('capabilities follow registered operations',()=>{
+ const caps=buildCapabilities();const m=caps.modules.find(m=>m.key==='learning_note')!;
+ assertEquals(m.operations.delete,false);assert(!JSON.stringify(caps).includes('ai_api_key'));
+});

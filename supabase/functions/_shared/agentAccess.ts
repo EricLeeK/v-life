@@ -2,7 +2,7 @@
 
 export type AgentOperation = "read" | "write" | "delete";
 export type AgentGrant = { read_enabled: boolean; write_enabled: boolean; delete_enabled: boolean; revoked_at?: string | null };
-export type AgentDb = { rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string; code?: string } | null }> };
+export type AgentDb = { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: { message: string; code?: string } | null }> };
 
 export function assertBrowserMayManageAccess(clientId: string | null | undefined): void {
   if (clientId) throw new Error("BROWSER_SESSION_REQUIRED");
@@ -27,17 +27,15 @@ export async function hashIdempotencyPayload(payload: unknown): Promise<string> 
 }
 
 export interface AgentMutation {
-  userId: string; clientId: string; table: string; module: string; operation: string; id?: string | null;
-  payload: unknown; key: string; requestId?: string | null; toolName: string;
+  module: string; operation: "create" | "update" | "delete"; id?: string | null;
+  payload: unknown; key: string | null; requestId: string; toolName: string;
 }
 
-/** One RPC call: transaction, replay detection, audit logging and table whitelist live in SQL. */
+/** Identity, hashing, replay detection and auditing belong to the atomic SQL RPC. */
 export async function mutateIdempotently(db: AgentDb, input: AgentMutation): Promise<unknown> {
-  const payloadHash = await hashIdempotencyPayload(input.payload);
   const { data, error } = await db.rpc("agent_mutate", {
-    p_user_id: input.userId, p_client_id: input.clientId, p_table: input.table, p_module: input.module,
-    p_operation: input.operation, p_record_id: input.id ?? null, p_payload: input.payload,
-    p_idempotency_key: input.key, p_payload_hash: payloadHash, p_request_id: input.requestId ?? null,
+    p_module: input.module, p_operation: input.operation, p_record_id: input.id ?? null,
+    p_payload: input.payload, p_idempotency_key: input.key, p_request_id: input.requestId,
     p_tool_name: input.toolName,
   });
   if (error) throw Object.assign(new Error(error.message), { code: error.code ?? "AGENT_MUTATION_FAILED" });

@@ -77,23 +77,21 @@ V-Life 提供三条入口，适合不同使用方式。
 
 ### 2. Supabase MCP Server
 
-部署 `supabase/functions/mcp-server` 后，可让支持远程 MCP 的客户端访问 V-Life：
+用户在支持 **远程 Streamable HTTP MCP + OAuth** 的 Agent 中添加：
 
-```json
-{
-  "mcpServers": {
-    "vlife": {
-      "url": "https://<project-ref>.supabase.co/functions/v1/mcp-server"
-    }
-  }
-}
+```text
+https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp
 ```
 
-Server 暴露各生活模块的 CRUD Tools，以及 Dashboard、Finance、Calories 等统计 Resources。
+浏览器会打开 V-Life 登录和授权页。读取默认开启，新增/修改和删除需单独勾选；不需要复制 Session、API Key 或 `service_role`。设置 → 数据 → 已连接的 Agent 可以查看和撤销连接，撤销立即禁止新请求。
 
-### 3. V-Life CLI
+工具名保持 `todo_list`、`todo_create` 等形式；`vlife://capabilities` 描述模块、字段和操作。写操作可传 `idempotency_key`（或 HTTP `Idempotency-Key`），相同操作重试返回原记录，不同操作复用同一键返回冲突。列表、搜索和导出提供 `limit` / `offset` / `hasMore` / `nextOffset`，导出不包含设置和密钥。今日任务的积分流程仍在网站内操作，不开放为普通 CRUD。
 
-Node.js 18+ 可直接通过 Supabase REST API 操作或备份数据：
+部署配置、数据库权限和验收说明见 [Agent 接入与维护](docs/agent-access.md)。
+
+### 3. 管理员备份 CLI
+
+以下 CLI 仅供站点管理员在可信环境进行运维和备份；用户自己的 Agent 请使用上面的 OAuth MCP 接口：
 
 ```bash
 export VLIFE_SUPABASE_URL="https://<project-ref>.supabase.co"

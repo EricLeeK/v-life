@@ -1,3 +1,4 @@
+import { safeConsentReturnTo } from "@/lib/agentConnections";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +31,7 @@ export default function AuthPage() {
   const [showForgot, setShowForgot] = useState(false);
 
   useEffect(() => {
-    if (user) navigate(new URLSearchParams(window.location.search).get("returnTo") || "/", { replace: true });
+    if (user) navigate(safeConsentReturnTo(new URLSearchParams(window.location.search).get("returnTo")), { replace: true });
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {

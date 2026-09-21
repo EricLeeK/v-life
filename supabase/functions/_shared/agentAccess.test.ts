@@ -26,7 +26,7 @@ describe("agent access policy", () => {
   it("delegates idempotency to one atomic RPC call", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: { status: "applied" }, error: null });
     const result = await mutateIdempotently({ rpc } as any, {
-      userId: "u", clientId: "c", table: "todos", module: "todo", operation: "insert",
+      module: "todo", operation: "create",
       id: null, payload: { title: "x" }, key: "k", requestId: "r", toolName: "create",
     });
     expect(result).toEqual({ status: "applied" });

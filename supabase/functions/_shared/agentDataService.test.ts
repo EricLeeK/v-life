@@ -8,6 +8,7 @@ function fakeDb(result: { data?: unknown; error?: { message: string; code?: stri
     eq: (...args: unknown[]) => { calls.push({ method: "eq", args }); return builder; },
     ilike: (...args: unknown[]) => { calls.push({ method: "ilike", args }); return builder; },
     order: (...args: unknown[]) => { calls.push({ method: "order", args }); return builder; },
+    range: (...args: unknown[]) => { calls.push({ method: "range", args }); return builder; },
     limit: (...args: unknown[]) => { calls.push({ method: "limit", args }); return builder; },
     single: async () => result,
     maybeSingle: async () => result,
@@ -71,4 +72,14 @@ describe('agent contract regression', () => {
     await createAgentDataService(context(db)).list('todo');
     expect(db.calls).toContainEqual({method:'eq', args:['user_id','user-a']});
   });
+});
+
+it('routes OAuth writes through the atomic user-context RPC', async () => {
+  const calls: any[] = [];
+  const db: any = { rpc: async (name: string, args: any) => { calls.push({name,args}); return { data:{data:{id:'r1',title:'test'}},error:null }; } };
+  const service=createAgentDataService({...context(db),clientId:'client',idempotencyKey:'retry',requestId:'request'});
+  expect((await service.create('todo',{title:'test'})).data.id).toBe('r1');
+  expect(calls[0].name).toBe('agent_mutate');
+  expect(calls[0].args.p_idempotency_key).toBe('retry');
+  expect(calls[0].args.p_payload).not.toHaveProperty('user_id');
 });

@@ -1,3 +1,4 @@
+import { AgentConnections } from "@/components/AgentConnections";
 import { useState, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,18 +69,6 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { t, lang } = useLang();
   const [newTag, setNewTag] = useState("");
-  const [agentGrants, setAgentGrants] = useState<any[]>([]);
-  const [agentsLoading, setAgentsLoading] = useState(false);
-  const loadAgentGrants = async () => {
-    setAgentsLoading(true);
-    const { data } = await supabase.auth.oauth.listGrants();
-    setAgentGrants(data || []);
-    setAgentsLoading(false);
-  };
-  const revokeAgent = async (clientId: string) => {
-    await supabase.auth.oauth.revokeGrant(clientId);
-    await loadAgentGrants();
-  };
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Local draft state — all edits go here first
@@ -935,14 +924,7 @@ export default function SettingsPage() {
 
         <section id="settings-data" className="scroll-mt-24 space-y-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("数据", "Data")}</h2>
-        <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Bot className="h-4 w-4" />{t("已连接的 Agent", "Connected agents")}</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            <Button variant="outline" size="sm" onClick={loadAgentGrants} disabled={agentsLoading}>{agentsLoading ? t("读取中…", "Loading…") : t("刷新连接", "Refresh connections")}</Button>
-            {agentGrants.length === 0 && <p className="text-sm text-muted-foreground">{t("还没有授权的 Agent。", "No agents have been authorized.")}</p>}
-            {agentGrants.map((grant) => <div key={grant.client?.id} className="flex items-center justify-between rounded-md border p-3 text-sm"><div><div className="font-medium">{grant.client?.name || grant.client?.id}</div><div className="text-muted-foreground">{(grant.scopes || []).join(" ")}</div></div><Button variant="destructive" size="sm" onClick={() => revokeAgent(grant.client?.id)}>{t("撤销", "Revoke")}</Button></div>)}
-          </CardContent>
-        </Card>
+        <AgentConnections />
         {/* Data Management */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("数据管理", "Data Management")}</CardTitle></CardHeader>
