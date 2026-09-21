@@ -51,3 +51,24 @@ describe("agent data service", () => {
     await expect(service.list("missing")).rejects.toBeInstanceOf(AgentDataError);
   });
 });
+
+import { agentMetaOf, moduleByKey } from './moduleRegistry';
+describe('agent contract regression', () => {
+  it('separates create fields and real read columns', () => {
+    expect(agentMetaOf(moduleByKey.finance).createFields).toContain('date');
+    expect(agentMetaOf(moduleByKey.project_task).createFields).toContain('project_name');
+    expect(agentMetaOf(moduleByKey.todo).readFields).not.toContain('parent_title');
+    expect(agentMetaOf(moduleByKey.todo).readFields).toContain('parent_id');
+  });
+  it('rejects invalid field types and missing required fields', async () => {
+    const s = createAgentDataService(context(fakeDb({data: []})));
+    await expect(s.create('todo', {title: 123})).rejects.toMatchObject({code:'INVALID_INPUT'});
+    await expect(s.create('todo', {})).rejects.toMatchObject({code:'INVALID_INPUT'});
+    await expect(s.update('belongings_daily', '1', {name:'x'})).rejects.toMatchObject({code:'ACTION_NOT_ALLOWED'});
+  });
+  it('scopes every directly owned table', async () => {
+    const db = fakeDb({data: []});
+    await createAgentDataService(context(db)).list('todo');
+    expect(db.calls).toContainEqual({method:'eq', args:['user_id','user-a']});
+  });
+});

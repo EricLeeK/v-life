@@ -79,6 +79,8 @@ export interface ModuleDef {
   agentVisible?: boolean;
   agentReadFields?: string[];
   agentWriteFields?: string[];
+  agentCreateFields?: string[];
+  agentUpdateFields?: string[];
   agentSensitiveFields?: string[];
   agentExportable?: boolean;
 }
@@ -87,24 +89,26 @@ export interface AgentModuleMeta {
   agentVisible: boolean;
   readFields: string[];
   writeFields: string[];
+  createFields: string[];
+  updateFields: string[];
   sensitiveFields: string[];
   exportable: boolean;
 }
 
-/** Resolve the stable agent contract while keeping legacy registry entries valid. */
+export const AGENT_SENSITIVE_FIELDS = ["user_id", "api_key", "visual_api_key", "ai_api_key", "ai_vision_api_key", "calendar_token", "calendar_feed_token", "subscription_token", "access_token", "refresh_token"];
+
+/** Input names stay model-facing; projections always use actual database columns. */
 export function agentMetaOf(mod: ModuleDef): AgentModuleMeta {
-  const publicFields = mod.fields.filter((f) => !f.internal).map((f) => f.name);
-  const readFields = mod.agentReadFields ?? publicFields;
-  const writeFields = mod.agentWriteFields ?? mod.updateFields ?? publicFields.filter((name) => !mod.fields.find((f) => f.name === name)?.updateOnly);
-  const sensitiveFields = mod.agentSensitiveFields ?? ["api_key", "visual_api_key", "calendar_token", "subscription_token"]
-    .filter((field) => publicFields.includes(field));
-  return {
-    agentVisible: mod.agentVisible ?? mod.key !== "daily_task",
-    readFields: [...new Set(readFields)],
-    writeFields: [...new Set(writeFields)],
-    sensitiveFields: [...new Set(sensitiveFields)],
-    exportable: mod.agentExportable ?? mod.key !== "habit_log",
-  };
+  const sensitiveFields = [...new Set([...AGENT_SENSITIVE_FIELDS, ...(mod.agentSensitiveFields ?? [])])];
+  const safe = (fields: string[]) => [...new Set(fields)].filter(f => !sensitiveFields.includes(f));
+  const publicFields = mod.fields.filter(f => !f.internal);
+  const relation = mod.executor?.resolves;
+  let readFields = mod.agentReadFields ?? mod.fields.map(f => f.name).map(name => name === relation?.from ? relation.toColumn : name);
+  if (mod.key === "habit_log") readFields = ["todo_id", "log_date", "value", "broken"];
+  const createFields = safe(mod.agentCreateFields ?? mod.agentWriteFields ?? publicFields.filter(f => !f.updateOnly).map(f => f.name));
+  const updateFields = safe(mod.agentUpdateFields ?? mod.agentWriteFields ?? mod.updateFields ?? publicFields.map(f => f.name));
+  return { agentVisible: mod.agentVisible ?? mod.key !== "daily_task", readFields: safe(readFields), createFields, updateFields,
+    writeFields: safe([...createFields, ...updateFields]), sensitiveFields, exportable: mod.agentExportable ?? true };
 }
 
 // ──────────────────────────── Modules ────────────────────────────
