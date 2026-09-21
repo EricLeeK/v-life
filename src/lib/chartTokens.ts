@@ -23,6 +23,7 @@ export const chartPalette = {
   green: () => tokenColor("--cat-green"),
   yellow: () => tokenColor("--cat-yellow"),
   blue: () => tokenColor("--cat-blue"),
+  red: () => tokenColor("--cat-red"),
 };
 
 export function piePalette(): string[] {

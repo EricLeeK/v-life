@@ -23,16 +23,16 @@ export function DailyHero(props: {
       </div>
       <div className="grid gap-6 p-5 lg:grid-cols-[1fr_220px] lg:items-start">
         <div className="min-w-0">
-          <p className="font-mono-data text-[13px] font-medium text-[#c49840]">
+          <p className="font-mono-data text-[13px] font-medium text-cat-yellow">
             {lang === "zh" ? `整体 ${overallPercent}` : `Overall ${overallPercent}`}
           </p>
-          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-[#5c564c] sm:text-[16px]">
+          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
             {body}
           </p>
           {needsProfile && (
             <Link
               to="/settings"
-              className="mt-4 inline-flex items-center rounded-lg bg-[#fce0c8] px-3 py-2 text-[12px] font-medium text-[#d17847] transition-colors hover:bg-[#f5d0b0]"
+              className="mt-4 inline-flex items-center rounded-lg bg-cat-orange-bg px-3 py-2 text-[12px] font-medium text-cat-orange transition-colors hover:opacity-90"
             >
               {lang === "zh"
                 ? "去设置填写生日 →"

@@ -85,6 +85,8 @@ export default {
           "purple-bg": "hsl(var(--cat-purple-bg))",
           yellow: "hsl(var(--cat-yellow))",
           "yellow-bg": "hsl(var(--cat-yellow-bg))",
+          red: "hsl(var(--cat-red))",
+          "red-bg": "hsl(var(--cat-red-bg))",
         },
       },
       borderRadius: {

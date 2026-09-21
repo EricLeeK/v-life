@@ -56,7 +56,7 @@ export default function LotPage() {
             >
               🎋
             </div>
-            <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void draw()} disabled={loading || shaking}>
+                <Button className="w-full" onClick={() => void draw()} disabled={loading || shaking}>
               {loading ? t("解读中…", "Reading…") : t("摇签", "Draw a lot")}
             </Button>
           </div>
@@ -77,7 +77,7 @@ export default function LotPage() {
                 <p className="text-[16px] text-foreground">
                   {lang === "zh" ? lot.verseZh : lot.verseEn}
                 </p>
-                <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">
+                <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                   {reading}
                 </p>
                 <SaveReadingButton type="lot" payload={lot} reading={reading} />

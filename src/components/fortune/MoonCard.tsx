@@ -18,7 +18,7 @@ export function MoonCard({ data, lang }: { data: MoonPhaseInfo; lang: "zh" | "en
           ? `亮度 ${Math.round(data.illumination * 100)}%`
           : `${Math.round(data.illumination * 100)}% lit`}
       </p>
-      <p className="mt-2 text-[13px] leading-relaxed text-[#5c564c]">
+      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
         {lang === "zh" ? data.blurbZh : data.blurbEn}
       </p>
     </div>

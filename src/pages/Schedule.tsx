@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { GoalsBall } from "@/components/schedule/GoalsBall";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useScheduleByRange, scheduleHooks, useSettings, todoHooks,
@@ -114,6 +115,9 @@ function generateInstances(
 
 export default function SchedulePage() {
   const { t, lang } = useLang();
+  const location = useLocation();
+  const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
+  const today = format(new Date(), "yyyy-MM-dd");
   const [baseDate, setBaseDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
@@ -121,10 +125,10 @@ export default function SchedulePage() {
     }
     return "3day";
   });
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(openCreateFromDashboard);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({
-    title: "", start_date: "", start_time: "09:00", end_date: "", end_time: "10:00",
+    title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00",
     importance: "普通", status: "未开始", color: "", notes: "",
     recurrence_type: "none" as string, recurrence_end_date: "", recurrence_days: [] as number[],
   });
@@ -167,24 +171,32 @@ export default function SchedulePage() {
   const updateSeriesMutation = useUpdateSeriesWithInstances();
   const deleteSeriesMutation = useDeleteSeries();
 
-  // Filter out master events (they have recurrence but are parents) - show only instances and normal events
+  // Keep the series master visible as its first occurrence. Generated instances
+  // begin after the master date, so hiding a matching master would leave the
+  // series blank on its first day. For a weekly rule, the master only counts
+  // when its weekday is one of the selected weekdays.
   const displayEvents = useMemo(() => {
-    return rawEvents.filter((e: any) => {
-      // Normal event (no recurrence, no parent) → show
-      if (!e.recurrence && !e.parent_event_id) return true;
-      // Instance of a series → show
-      if (e.parent_event_id) return true;
-      // Master event with recurrence → hide (instances represent it)
-      // But only hide if it actually has instances in DB (check if any instance exists)
-      // For safety, hide masters that have recurrence set
-      if (e.recurrence && (e.recurrence as any).type !== "none") return false;
-      return true;
+    return rawEvents.filter((event: any) => {
+      const recurrence = event.recurrence as { type?: string; days_of_week?: number[] } | null;
+      if (!recurrence || event.parent_event_id || recurrence.type === "none" || recurrence.type !== "weekly") return true;
+      const daysOfWeek = recurrence.days_of_week;
+      if (!daysOfWeek?.length) return true;
+      const start = new Date(event.start_time);
+      const weekday = start.getDay() === 0 ? 7 : start.getDay();
+      return daysOfWeek.includes(weekday);
     });
   }, [rawEvents]);
 
   const getEventsForDay = useCallback((day: Date) => {
-    const dayStr = format(day, "yyyy-MM-dd");
-    return displayEvents.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
+    const dayStart = new Date(day);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    return displayEvents.filter((e: any) => {
+      const start = new Date(e.start_time);
+      const end = new Date(e.end_time);
+      return start < dayEnd && end > dayStart;
+    });
   }, [displayEvents]);
 
   const resetForm = useCallback(() => {
@@ -193,13 +205,23 @@ export default function SchedulePage() {
   }, []);
 
   const handleSave = async () => {
-    if (!form.title || !form.start_date || !form.end_date) {
+    if (!form.title.trim() || !form.start_date || !form.end_date || !form.start_time || !form.end_time) {
       toast({ title: t("请填写标题和时间", "Please fill in title and time"), variant: "destructive" }); return;
     }
     try {
       const startTime = new Date(`${form.start_date}T${form.start_time}:00`);
       const endTime = new Date(`${form.end_date}T${form.end_time}:00`);
       const isRecurring = form.recurrence_type !== "none";
+
+      if (!Number.isFinite(startTime.getTime()) || !Number.isFinite(endTime.getTime()) || endTime <= startTime) {
+        toast({ title: t("结束时间必须晚于开始时间", "End time must be after start time"), variant: "destructive" }); return;
+      }
+      if (isRecurring && form.recurrence_end_date && form.recurrence_end_date < form.start_date) {
+        toast({ title: t("重复结束日期不能早于开始日期", "Repeat end date cannot be before start date"), variant: "destructive" }); return;
+      }
+      if (form.recurrence_type === "weekly" && form.recurrence_days.length === 0) {
+        toast({ title: t("请选择每周重复的日期", "Choose at least one weekday for weekly repeat"), variant: "destructive" }); return;
+      }
 
       const recurrence = isRecurring ? {
         type: form.recurrence_type,
@@ -209,7 +231,7 @@ export default function SchedulePage() {
       } : null;
 
       const basePayload = {
-        title: form.title,
+        title: form.title.trim(),
         importance: form.importance,
         status: form.status,
         color: form.color || null,
@@ -404,7 +426,10 @@ export default function SchedulePage() {
               <Button size="sm" className="shrink-0" onClick={resetForm}><Plus className="h-4 w-4 mr-1" />{t("新建", "New")}</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>{editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}</DialogTitle></DialogHeader>
+              <DialogHeader>
+                <DialogTitle>{editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}</DialogTitle>
+                <DialogDescription>{t("填写标题与时间，安排新的日程事件。", "Add a title and time for this schedule event.")}</DialogDescription>
+              </DialogHeader>
               <div className="space-y-3">
                 {incompleteTodos.length > 0 && (
                   <div>
@@ -565,11 +590,11 @@ export default function SchedulePage() {
                 {days.map((d) => {
                   const isToday = format(d, "yyyy-MM-dd") === todayStr;
                   return (
-                    <div key={d.toISOString()} className={`p-1.5 text-center border-l ${isToday ? "border-[#5b88b5]/30 bg-[#e1eaf4]/50" : "border-border"}`}>
-                      <div className={`text-[10px] ${isToday ? "text-[#5b88b5] font-semibold" : "text-muted-foreground"}`}>
+                    <div key={d.toISOString()} className={`p-1.5 text-center border-l ${isToday ? "border-cat-blue/30 bg-cat-blue-bg/50" : "border-border"}`}>
+                      <div className={`text-[10px] ${isToday ? "text-cat-blue font-semibold" : "text-muted-foreground"}`}>
                         {format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}
                       </div>
-                      <div className={`text-xs font-medium ${isToday ? "bg-[#5b88b5] text-white rounded-full w-6 h-6 flex items-center justify-center mx-auto" : "text-foreground"}`}>
+                      <div className={`text-xs font-medium ${isToday ? "bg-cat-blue text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center mx-auto" : "text-foreground"}`}>
                         {format(d, "dd")}
                       </div>
                     </div>

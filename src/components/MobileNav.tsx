@@ -139,13 +139,13 @@ export function MobileNav() {
             className="absolute bottom-16 left-0 right-0 bg-card border-t border-border p-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {visibleMoreItems.map((item) => (
                 <NavLink
                   key={item.url}
                   to={item.url}
                   end={item.url === "/"}
-                  className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                  className="min-h-16 flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   activeClassName="text-primary"
                   onClick={() => setShowMore(false)}
                 >
@@ -156,7 +156,7 @@ export function MobileNav() {
               <button
                 type="button"
                 onClick={toggleLang}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                className="min-h-16 flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
                 <Languages className="h-5 w-5" />
                 <span className="text-[10px]">{lang === "zh" ? "EN" : "中文"}</span>
@@ -164,7 +164,7 @@ export function MobileNav() {
               <button
                 type="button"
                 onClick={signOut}
-                className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-destructive hover:text-destructive/80 transition-colors"
+                className="min-h-16 flex flex-col items-center justify-center gap-1 p-2 rounded-lg text-destructive hover:bg-muted hover:text-destructive/80 transition-colors"
               >
                 <LogOut className="h-5 w-5" />
                 <span className="text-[10px]">{t("退出", "Exit")}</span>
@@ -175,14 +175,14 @@ export function MobileNav() {
       )}
 
       {/* Bottom nav bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border md:hidden">
-        <div className="flex items-center justify-around h-14">
+      <nav aria-label={t("移动主导航", "Mobile navigation")} className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border md:hidden">
+        <div className="flex items-center h-16 px-1">
           {visiblePrimaryItems.map((item) => (
             <NavLink
               key={item.url}
               to={item.url}
               end={item.url === "/"}
-              className="flex flex-col items-center justify-center gap-0.5 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              className="min-h-11 min-w-11 flex-1 flex flex-col items-center justify-center gap-0.5 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
               activeClassName="text-primary"
             >
               <item.icon className="h-5 w-5" />
@@ -197,7 +197,7 @@ export function MobileNav() {
             aria-controls={morePanelId}
             aria-label={t("更多菜单", "More menu")}
             className={cn(
-              "flex flex-col items-center justify-center gap-0.5 p-1.5 transition-colors",
+              "min-h-11 min-w-11 flex-1 flex flex-col items-center justify-center gap-0.5 p-1.5 transition-colors",
               showMore ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >

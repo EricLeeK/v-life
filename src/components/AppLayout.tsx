@@ -23,7 +23,7 @@ export function AppLayout({ children, title, fullBleed = false }: AppLayoutProps
             className="sticky z-30 bg-card/80 backdrop-blur-md border-b border-border px-4 h-12 flex items-center"
             style={{ top: isDemo ? '40px' : '0px' }}
           >
-            <span className="text-base font-semibold text-foreground heading-font">{title}</span>
+            <h1 className="text-base font-semibold text-foreground heading-font">{title}</h1>
           </header>
         )}
         <main className="p-4">{children}</main>
@@ -40,7 +40,7 @@ export function AppLayout({ children, title, fullBleed = false }: AppLayoutProps
           <header className="h-12 flex items-center border-b border-border px-4 gap-3 shrink-0 bg-card">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             {title && (
-              <span className="text-base font-semibold text-foreground">{title}</span>
+              <h1 className="text-base font-semibold text-foreground">{title}</h1>
             )}
           </header>
           <main className="flex-1 min-h-0 overflow-auto bg-background flex justify-center">

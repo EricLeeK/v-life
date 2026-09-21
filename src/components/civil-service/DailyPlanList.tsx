@@ -82,7 +82,7 @@ export function DailyPlanList() {
 
   return (
     <>
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between">
           <CardTitle className="text-base heading-font">
             {t("每日计划", "Daily plan")}
@@ -112,6 +112,7 @@ export function DailyPlanList() {
                   checked={item.is_completed}
                   onCheckedChange={() => toggle.mutate(item)}
                   className="mt-0.5"
+                  aria-label={t(`标记“${item.title}”完成状态`, `Toggle completion for “${item.title}”`)}
                 />
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm text-foreground ${item.is_completed ? "line-through" : ""}`}>{item.title}</p>
@@ -124,10 +125,22 @@ export function DailyPlanList() {
                 </div>
                 <div className="flex shrink-0">
                   <SyncPlanButton item={item} size="icon" />
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditItem(item)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8"
+                    onClick={() => setEditItem(item)}
+                    aria-label={t(`编辑“${item.title}”`, `Edit “${item.title}”`)}
+                  >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600" onClick={() => deleteItem.mutate(item.id)}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-destructive"
+                    onClick={() => deleteItem.mutate(item.id)}
+                    aria-label={t(`删除“${item.title}”`, `Delete “${item.title}”`)}
+                  >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>

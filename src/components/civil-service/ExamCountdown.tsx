@@ -41,11 +41,11 @@ export function ExamCountdown() {
 
   return (
     <>
-      <Card className="border-border bg-white overflow-hidden">
+      <Card className="border-border bg-card overflow-hidden">
         <CardContent className="p-0">
           {nearest ? (
             <>
-              <div className="flex items-center justify-between gap-3 border-b border-[#eeeae1] px-5 py-3.5">
+              <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
                 <p className="heading-font text-base font-medium text-foreground">
                   {t("考试倒计时", "Exam countdown")}
                 </p>
@@ -56,17 +56,17 @@ export function ExamCountdown() {
               <div className={laterTargets.length > 0 ? "grid lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,1fr)]" : ""}>
                 <div
                   data-countdown-size="primary"
-                  className="bg-gradient-to-br from-[#fffaf5] to-white p-6 sm:p-7"
+                  className="bg-gradient-to-br from-card to-background p-6 sm:p-7"
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="rounded-full bg-[#d17847]/10 px-2 py-0.5 text-[11px] font-medium text-[#b85f32]">
+                    <span className="rounded-full bg-cat-orange/10 px-2 py-0.5 text-[11px] font-medium text-cat-orange">
                       {t("最近目标", "Nearest target")}
                     </span>
                     {nearest.exam.is_primary ? (
-                      <Star className="h-3.5 w-3.5 fill-[#d17847] text-[#d17847]" aria-label={t("重点目标", "Priority target")} />
+                      <Star className="h-3.5 w-3.5 fill-cat-orange text-cat-orange" aria-label={t("重点目标", "Priority target")} />
                     ) : null}
                   </div>
-                  <p className="text-sm font-medium text-[#5d574f]">{nearest.exam.name}</p>
+                  <p className="text-sm font-medium text-foreground">{nearest.exam.name}</p>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="heading-font text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
                       {Math.max(nearest.daysLeft, 0)}
@@ -79,28 +79,28 @@ export function ExamCountdown() {
                   </p>
                 </div>
                 {laterTargets.length > 0 ? (
-                  <div className="grid gap-2 border-t border-[#eeeae1] bg-[#faf9f6] p-3 sm:grid-cols-2 lg:grid-cols-1 lg:border-l lg:border-t-0">
+                  <div className="grid gap-2 border-t border-border bg-muted/40 p-3 sm:grid-cols-2 lg:grid-cols-1 lg:border-l lg:border-t-0">
                     {laterTargets.map(({ exam, daysLeft }) => (
                       <div
                         key={exam.id}
                         data-countdown-size="secondary"
-                        className="flex items-center justify-between gap-4 rounded-lg border border-[#e8e4db] bg-white px-4 py-3"
+                        className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card px-4 py-3"
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             {exam.is_primary ? (
-                              <Star className="h-3 w-3 shrink-0 fill-[#d17847] text-[#d17847]" aria-label={t("重点目标", "Priority target")} />
+                              <Star className="h-3 w-3 shrink-0 fill-cat-orange text-cat-orange" aria-label={t("重点目标", "Priority target")} />
                             ) : null}
-                            <p className="truncate text-[13px] font-medium text-[#4d473f]">{exam.name}</p>
+                            <p className="truncate text-[13px] font-medium text-foreground">{exam.name}</p>
                           </div>
-                          <p className="mt-1 text-[11px] text-[#9a948a]">
+                          <p className="mt-1 text-[11px] text-muted-foreground">
                             {format(parseISO(exam.exam_date), "yyyy-MM-dd")}
                             {daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-baseline gap-1">
-                          <span className="heading-font text-2xl font-semibold text-[#5d574f]">{Math.max(daysLeft, 0)}</span>
-                          <span className="text-xs text-[#9a948a]">{t("天", "days")}</span>
+                          <span className="heading-font text-2xl font-semibold text-foreground">{Math.max(daysLeft, 0)}</span>
+                          <span className="text-xs text-muted-foreground">{t("天", "days")}</span>
                         </div>
                       </div>
                     ))}

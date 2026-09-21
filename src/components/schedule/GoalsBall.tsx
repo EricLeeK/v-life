@@ -39,7 +39,12 @@ export function GoalsBall() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full relative">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8 rounded-full relative"
+          aria-label={t("当前目标", "Current goals")}
+        >
           <Target className="h-4 w-4" />
           {totalCount > 0 && (
             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">

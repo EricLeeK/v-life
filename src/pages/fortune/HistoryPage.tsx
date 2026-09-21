@@ -63,7 +63,7 @@ export default function HistoryPage() {
                   </span>
                 </div>
                 {row.question && (
-                  <div className="mt-2 truncate text-[12px] text-[#5c564c]">{row.question}</div>
+                  <div className="mt-2 truncate text-[12px] text-muted-foreground">{row.question}</div>
                 )}
                 <div className="mt-2 line-clamp-3 text-[12px] leading-relaxed text-muted-foreground">
                   {row.reading}
@@ -88,11 +88,11 @@ export default function HistoryPage() {
           {active && (
             <div className="space-y-3 text-[13px]">
               {active.question && (
-                <div className="text-[#5c564c]">
+                <div className="text-muted-foreground">
                   {t("问题", "Question")}: {active.question}
                 </div>
               )}
-              <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-[11px] text-[#5c564c]">
+              <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-[11px] text-muted-foreground">
                 {JSON.stringify(active.payload, null, 2)}
               </pre>
               <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground">

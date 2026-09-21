@@ -7,6 +7,8 @@ import {
 } from "../_shared/hostedAi.ts";
 import { buildSystemPrompt, moduleByKey } from "../_shared/moduleRegistry.ts";
 import { listModuleRecords, getTodayPlan, MODULE_KEYS } from "../_shared/dataReader.ts";
+import { parseAgentChatContent } from "../_shared/parseAgentChat.ts";
+import { fetchUserVocab, formatUserVocabBlock } from "../_shared/userVocab.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,7 +104,12 @@ serve(async (req) => {
           return m;
         });
 
-    const systemPrompt = isFortune ? FORTUNE_SYSTEM_PROMPT : SYSTEM_PROMPT;
+    const vocabBlock = isPlainText
+      ? ""
+      : formatUserVocabBlock(await fetchUserVocab(userSb, settings));
+    const systemPrompt = isFortune
+      ? FORTUNE_SYSTEM_PROMPT
+      : `${SYSTEM_PROMPT}\n\n${vocabBlock}`;
     const dayStartHour = Number(settings?.day_start_hour) || 0;
 
     // ── ReAct tools (non-fortune only) ──────────────────────────────
@@ -243,25 +250,7 @@ serve(async (req) => {
       });
     }
 
-    let parsed: any = null;
-    try {
-      parsed = JSON.parse(content.trim());
-    } catch {
-      try {
-        const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (jsonMatch) {
-          parsed = JSON.parse(jsonMatch[1].trim());
-        }
-      } catch { /* ignore */ }
-    }
-
-    if (!parsed || typeof parsed !== "object") {
-      parsed = { operations: [], summary: content.slice(0, 500) };
-    }
-
-    if (!Array.isArray(parsed.operations)) {
-      parsed.operations = [];
-    }
+    let parsed = parseAgentChatContent(content);
 
     // ── Read-op rescue ──────────────────────────────────────────────
     // Some models misroute data reads into the operations array (action:"read_data"
@@ -308,16 +297,9 @@ serve(async (req) => {
             false,
           );
           const c2 = r2?.choices?.[0]?.message?.content || "";
-          let p2: any = null;
-          try {
-            p2 = JSON.parse(c2.trim());
-          } catch {
-            const m = c2.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (m) p2 = JSON.parse(m[1].trim());
-          }
-          if (p2 && typeof p2 === "object") {
+          const p2 = parseAgentChatContent(c2);
+          if (p2.summary || p2.operations.length > 0) {
             parsed = p2;
-            if (!Array.isArray(parsed.operations)) parsed.operations = [];
             content = c2; // reflect the corrected answer in raw
           }
         } catch {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Trash2, Edit2 } from "lucide-react";
 import { pantryHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
-import { format, differenceInDays } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
+import { useLocalDate } from "@/hooks/useLocalDate";
 
 const CATEGORIES = ["新鲜食材", "零食", "调料", "主食/干货", "饮品", "冷冻食品"] as const;
 const CATEGORY_LABELS: Record<string, string> = {
@@ -22,9 +23,27 @@ const FILTERS = ["全部", "即将过期", "已过期"] as const;
 const FILTER_LABELS: Record<string, string> = { "全部": "All", "即将过期": "Expiring Soon", "已过期": "Expired" };
 const STATUS_LABELS: Record<string, string> = { "充足": "OK", "已过期": "Expired", "即将过期": "Expiring Soon" };
 
-function getStatus(expiryDate: string | null): { label: string; color: string } {
+type PantryItem = {
+  id: string;
+  name: string;
+  category?: string | null;
+  quantity?: string | null;
+  purchase_date?: string | null;
+  expiry_date?: string | null;
+  notes?: string | null;
+};
+
+function getCategoryLabel(category: string): string {
+  return Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, category) ? CATEGORY_LABELS[category] : category;
+}
+
+function getStatus(expiryDate: string | null, today: string): { label: string; color: string } {
   if (!expiryDate) return { label: "充足", color: "bg-success/20 text-success" };
-  const days = differenceInDays(new Date(expiryDate), new Date());
+  // `expiry_date` is a calendar date from the database. Comparing parsed
+  // instants makes date-only values shift across time zones, so compare local
+  // calendar days instead.
+  const expiryDay = expiryDate.slice(0, 10);
+  const days = differenceInCalendarDays(parseISO(expiryDay), parseISO(today));
   if (days < 0) return { label: "已过期", color: "bg-destructive/20 text-destructive" };
   if (days <= 3) return { label: "即将过期", color: "bg-warning/20 text-warning" };
   return { label: "充足", color: "bg-success/20 text-success" };
@@ -32,36 +51,47 @@ function getStatus(expiryDate: string | null): { label: string; color: string } 
 
 export default function PantryPage() {
   const { t, lang } = useLang();
+  const today = useLocalDate();
   const [filter, setFilter] = useState("全部");
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<PantryItem | null>(null);
   const [form, setForm] = useState({ name: "", category: "新鲜食材" as string, quantity: "", purchase_date: "", expiry_date: "", notes: "" });
   const { toast } = useToast();
 
-  const { data: items = [], isLoading } = pantryHooks.useList();
+  const { data: rawItems = [], isLoading } = pantryHooks.useList();
+  const items = rawItems as PantryItem[];
   const createMutation = pantryHooks.useCreate();
   const updateMutation = pantryHooks.useUpdate();
   const deleteMutation = pantryHooks.useDelete();
 
-  const filtered = items.filter((item: any) => {
+  const filtered = items.filter((item: PantryItem) => {
     if (search && !item.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (filter === "即将过期") {
-      const status = getStatus(item.expiry_date);
+      const status = getStatus(item.expiry_date, today);
       return status.label === "即将过期";
     }
     if (filter === "已过期") {
-      const status = getStatus(item.expiry_date);
+      const status = getStatus(item.expiry_date, today);
       return status.label === "已过期";
     }
     return true;
   });
 
-  const grouped = CATEGORIES.reduce((acc, cat) => {
-    const catItems = filtered.filter((i: any) => i.category === cat);
-    if (catItems.length > 0) acc[cat] = catItems;
-    return acc;
-  }, {} as Record<string, any[]>);
+  // Keep the built-in order while also rendering categories introduced by AI
+  // or older data. Map avoids treating a category such as "__proto__" as an
+  // object property and silently dropping it.
+  const grouped = new Map<string, PantryItem[]>();
+  filtered.forEach((item: PantryItem) => {
+    const category = typeof item.category === "string" && item.category.trim() ? item.category : "未分类";
+    const categoryItems = grouped.get(category) || [];
+    categoryItems.push(item);
+    grouped.set(category, categoryItems);
+  });
+  const categoryOrder = [
+    ...CATEGORIES,
+    ...Array.from(grouped.keys()).filter((category) => !CATEGORIES.includes(category as (typeof CATEGORIES)[number])),
+  ];
 
   const handleSave = async () => {
     if (!form.name || !form.category) { toast({ title: t("请填写名称和分类", "Please fill name and category"), variant: "destructive" }); return; }
@@ -73,14 +103,16 @@ export default function PantryPage() {
       }
       setDialogOpen(false);
       resetForm();
-    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    } catch (e: unknown) {
+      toast({ title: t("保存失败", "Save failed"), description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    }
   };
 
   const resetForm = () => { setForm({ name: "", category: "新鲜食材", quantity: "", purchase_date: "", expiry_date: "", notes: "" }); setEditingItem(null); };
 
-  const openEdit = (item: any) => {
+  const openEdit = (item: PantryItem) => {
     setEditingItem(item);
-    setForm({ name: item.name, category: item.category, quantity: item.quantity || "", purchase_date: item.purchase_date || "", expiry_date: item.expiry_date || "", notes: item.notes || "" });
+    setForm({ name: item.name, category: item.category || "新鲜食材", quantity: item.quantity || "", purchase_date: item.purchase_date || "", expiry_date: item.expiry_date || "", notes: item.notes || "" });
     setDialogOpen(true);
   };
 
@@ -108,7 +140,10 @@ export default function PantryPage() {
                 <div><Label htmlFor="pantry-category">{t("分类", "Category")} *</Label>
                   <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                     <SelectTrigger id="pantry-category"><SelectValue /></SelectTrigger>
-                    <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{CATEGORY_LABELS[c] || c}</SelectItem>)}</SelectContent>
+                    <SelectContent>{[
+                      ...(form.category && !CATEGORIES.includes(form.category as (typeof CATEGORIES)[number]) ? [form.category] : []),
+                      ...CATEGORIES,
+                    ].map((c) => <SelectItem key={c} value={c}>{getCategoryLabel(c)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div><Label htmlFor="pantry-quantity">{t("数量", "Quantity")}</Label><Input id="pantry-quantity" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} placeholder={lang === "zh" ? "如：1袋、500g" : "e.g. 1 bag, 500g"} /></div>
@@ -123,23 +158,25 @@ export default function PantryPage() {
           </Dialog>
         </div>
 
-        {isLoading ? <p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p> : Object.keys(grouped).length === 0 ? (
+        {isLoading ? <p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p> : grouped.size === 0 ? (
           <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无食材记录", "No pantry items")}</p>
         ) : (
-          Object.entries(grouped).map(([cat, catItems]) => (
+          categoryOrder.filter((cat) => grouped.has(cat)).map((cat) => {
+            const catItems = grouped.get(cat) || [];
+            return (
             <div key={cat}>
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">{CATEGORY_LABELS[cat] || cat}</h3>
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">{getCategoryLabel(cat)}</h3>
               <div className="space-y-1">
-                {catItems.map((item: any, i: number) => {
-                  const status = getStatus(item.expiry_date);
+                {catItems.map((item: PantryItem, i: number) => {
+                  const status = getStatus(item.expiry_date, today);
                   return (
-                    <Card key={item.id} style={{ ['--i' as any]: i }} className="enter-up hover:border-primary/20 transition-colors">
+                    <Card key={item.id} style={{ "--i": i } as CSSProperties} className="enter-up hover:border-primary/20 transition-colors">
                       <CardContent className="p-3 flex items-center justify-between">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="font-medium text-sm truncate">{item.name}</span>
                           {item.quantity && <span className="text-xs text-muted-foreground">{item.quantity}</span>}
                           <Badge variant="secondary" className={`text-xs ${status.color}`}>{STATUS_LABELS[status.label] || status.label}</Badge>
-                          {item.expiry_date && <span className="text-xs text-muted-foreground">{format(new Date(item.expiry_date), "MM/dd")}</span>}
+                          {item.expiry_date && <span className="text-xs text-muted-foreground">{format(parseISO(item.expiry_date.slice(0, 10)), "MM/dd")}</span>}
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button variant="ghost" size="icon" aria-label={t("编辑食材", "Edit item")} className="h-7 w-7" onClick={() => openEdit(item)}><Edit2 className="h-3 w-3" /></Button>
@@ -151,7 +188,8 @@ export default function PantryPage() {
                 })}
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </AppLayout>

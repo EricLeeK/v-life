@@ -94,10 +94,10 @@ export default function CaloriesPage() {
           const selIdx = navDays.indexOf(selectedDate);
           const n = navDays.length;
           return (
-            <div className="relative bg-[#e6e3d9] rounded-[11px] p-[5px] shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.07)] overflow-hidden">
+            <div className="relative bg-muted rounded-[11px] p-[5px] shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.07)] dark:shadow-[inset_0_1.5px_4px_rgba(0,0,0,0.4)] overflow-hidden">
               {/* Sliding indicator */}
               <div
-                className="absolute top-[5px] bottom-[5px] bg-white rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out"
+                className="absolute top-[5px] bottom-[5px] bg-card rounded-[8px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out"
                 style={{
                   width: `calc((100% - 10px) / ${n})`,
                   left: `calc(5px + ${selIdx} * (100% - 10px) / ${n})`,
@@ -121,7 +121,7 @@ export default function CaloriesPage() {
                         {format(new Date(d), "dd")}
                       </span>
                       {isToday && (
-                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-[#5b88b5]' : 'text-muted-foreground'}`}>{t("今天", "Today")}</span>
+                        <span className={`text-[8px] font-medium leading-none mt-[3px] ${isSelected ? 'text-cat-blue' : 'text-muted-foreground'}`}>{t("今天", "Today")}</span>
                       )}
                     </button>
                   );

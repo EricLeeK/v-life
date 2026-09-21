@@ -111,7 +111,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
 
   if (wrongs.length === 0) {
     return (
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardHeader className="pb-2">
           <CardTitle className="text-base heading-font">{t("错题统计", "Wrong answer stats")}</CardTitle>
         </CardHeader>
@@ -123,7 +123,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
   }
 
   return (
-    <Card className="border-border bg-white">
+    <Card className="border-border bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font">{t("错题统计", "Wrong answer stats")}</CardTitle>
       </CardHeader>
@@ -152,17 +152,17 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
                   layout="vertical"
                   margin={{ top: 0, right: 8, left: 0, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" horizontal={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis
                     type="category"
                     dataKey="name"
                     width={76}
-                    tick={{ fontSize: 11, fill: "#1f1a14" }}
+                    tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
                   />
                   <Tooltip
                     formatter={(value: number) => [value, t("错题数", "Count")]}
-                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e1d7" }}
+                    contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" }}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20}>
                     {tagChartData
@@ -212,7 +212,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
           <div className="h-44 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis
                   dataKey="label"
                   tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
@@ -221,7 +221,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} width={28} />
                 <Tooltip
                   formatter={(value: number) => [value, t("新增", "New")]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e1d7" }}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))", background: "hsl(var(--popover))", color: "hsl(var(--popover-foreground))" }}
                 />
                 <Line
                   type="monotone"
@@ -255,10 +255,10 @@ function StatTile({
   return (
     <div className="rounded-lg bg-muted p-3">
       <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="font-mono-data text-xl mt-0.5" style={{ color: accent || "#1f1a14" }}>
+      <p className="font-mono-data text-xl mt-0.5" style={{ color: accent || "hsl(var(--foreground))" }}>
         {value}
       </p>
-      {sub && <p className="text-[10px] text-[#c06838] mt-0.5">{sub}</p>}
+      {sub && <p className="text-[10px] text-cat-orange mt-0.5">{sub}</p>}
     </div>
   );
 }

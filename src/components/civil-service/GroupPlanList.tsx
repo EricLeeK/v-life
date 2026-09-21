@@ -69,7 +69,7 @@ export function GroupPlanList({ subjectGroup }: { subjectGroup: SubjectGroup }) 
 
   return (
     <>
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2 flex-wrap">
           <CardTitle className="text-base heading-font">{t("学习计划", "Study plans")}</CardTitle>
           <div className="flex items-center gap-2">

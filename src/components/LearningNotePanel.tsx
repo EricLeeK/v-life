@@ -566,6 +566,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
                       rehypePlugins={[rehypeKatex]}
+                      components={{ h1: ({ children }) => <h2>{children}</h2> }}
                     >
                       {form.content || t("*(尚无内容)*", "*(No content yet)*")}
                     </ReactMarkdown>
@@ -779,6 +780,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
                         rehypePlugins={[rehypeKatex]}
+                        components={{ h1: ({ children }) => <h2>{children}</h2> }}
                       >
                         {generatedResult}
                       </ReactMarkdown>
@@ -813,4 +815,3 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     </div>
   );
 }
-

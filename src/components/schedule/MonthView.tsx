@@ -32,8 +32,17 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
   }, [calStart, calEnd]);
 
   const getEventsForDay = (day: Date) => {
-    const dayStr = format(day, "yyyy-MM-dd");
-    return events.filter((e: any) => format(new Date(e.start_time), "yyyy-MM-dd") === dayStr);
+    const dayStart = new Date(day);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    // Include every event whose interval intersects this calendar day. An event
+    // ending exactly at midnight belongs to the previous day only.
+    return events.filter((e: any) => {
+      const start = new Date(e.start_time);
+      const end = new Date(e.end_time);
+      return start < dayEnd && end > dayStart;
+    });
   };
 
   const weekDays = lang === "zh" ? ["一", "二", "三", "四", "五", "六", "日"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];

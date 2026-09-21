@@ -6,6 +6,10 @@ import type { DemoDataStore } from "@/data/demoSeed";
 import { pickSettingsRow } from "@/lib/pickSettingsRow";
 import { addIsoDays } from "@/lib/habits";
 import { PAST_DAILY_LOOKBACK_DAYS, selectPastIncompleteDailyTasks } from "@/lib/pastDailyTasks";
+import { useLocalDate } from "@/hooks/useLocalDate";
+import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/errorMessage";
+import { format, parseISO, addDays, startOfWeek } from "date-fns";
 
 // ============ Demo-mode helpers ============
 function useDemoQuery<T>(key: string, filter: (data: DemoDataStore) => T): { data: T | undefined; isLoading: false; error: null } {
@@ -144,6 +148,7 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
   const useCreate = () => {
     const { isDemo, addRecord } = useDemoMode();
     const qc = useQueryClient();
+    const { toast } = useToast();
     const supa = useMutation({
       mutationFn: async (item: any) => {
         const { data, error } = await (supabase.from as any)(table).insert(item).select().single();
@@ -151,6 +156,7 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
         return data;
       },
       onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+      onError: (error: unknown) => toast({ title: "保存失败", description: getErrorMessage(error), variant: "destructive" }),
     });
     if (isDemo) {
       return {
@@ -165,6 +171,7 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
   const useUpdate = () => {
     const { isDemo, updateRecord } = useDemoMode();
     const qc = useQueryClient();
+    const { toast } = useToast();
     const supa = useMutation({
       mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
         const { data, error } = await (supabase.from as any)(table).update(updates).eq("id", id).select().single();
@@ -184,6 +191,7 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
       },
       onError: (_err, _vars, context) => {
         context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+        toast({ title: "更新失败", description: getErrorMessage(_err), variant: "destructive" });
       },
       onSettled: () => qc.invalidateQueries({ queryKey: [queryKey] }),
     });
@@ -200,6 +208,7 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
   const useDelete = () => {
     const { isDemo, deleteRecord } = useDemoMode();
     const qc = useQueryClient();
+    const { toast } = useToast();
     const supa = useMutation({
       mutationFn: async (id: string) => {
         const { error } = await (supabase.from as any)(table).delete().eq("id", id);
@@ -218,6 +227,7 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
       },
       onError: (_err, _vars, context) => {
         context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
+        toast({ title: "删除失败", description: getErrorMessage(_err), variant: "destructive" });
       },
       onSettled: () => qc.invalidateQueries({ queryKey: [queryKey] }),
     });
@@ -303,13 +313,37 @@ export function useCaloriesByDate(date: string) {
   return supa;
 }
 
+/** Inclusive local calendar dates; used only when the dashboard insights are open. */
+export function useCaloriesByRange(startDate: string, endDate: string, enabled = true) {
+  const { isDemo, demoData } = useDemoMode();
+  const query = useQuery({
+    queryKey: ["calories", "range", startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("calorie_records")
+        .select("date, calories, meal_type")
+        .gte("date", startDate)
+        .lte("date", endDate);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !isDemo && enabled,
+  });
+  if (isDemo) return {
+    ...query,
+    data: enabled ? demoData.calorie_records.filter(r => r.date >= startDate && r.date <= endDate) : [],
+    isLoading: false,
+    error: null,
+  };
+  return query;
+}
+
 export function useTodaySchedule() {
   const { isDemo, demoData } = useDemoMode();
+  const date = useLocalDate();
   const supa = useQuery({
-    queryKey: ["schedule", "today"],
+    queryKey: ["schedule", "today", date],
     queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = parseISO(date);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const { data, error } = await supabase
@@ -324,8 +358,7 @@ export function useTodaySchedule() {
     enabled: !isDemo,
   });
   if (isDemo) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = parseISO(date);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const filtered = demoData.schedule_events
@@ -339,7 +372,7 @@ export function useTodaySchedule() {
   return supa;
 }
 
-export function useScheduleByRange(start: Date, end: Date) {
+export function useScheduleByRange(start: Date, end: Date, enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["schedule", "range", start.toISOString(), end.toISOString()],
@@ -353,10 +386,10 @@ export function useScheduleByRange(start: Date, end: Date) {
       if (error) throw error;
       return data;
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    const filtered = demoData.schedule_events
+    const filtered = (enabled ? demoData.schedule_events : [])
       .filter((e: any) => new Date(e.start_time) < end && new Date(e.end_time) > start)
       .sort((a: any, b: any) => a.start_time.localeCompare(b.start_time));
     return { data: filtered, isLoading: false, error: null } as any;
@@ -366,16 +399,16 @@ export function useScheduleByRange(start: Date, end: Date) {
 
 export function useExpiringPantry() {
   const { isDemo, demoData } = useDemoMode();
+  const date = useLocalDate();
+  const cutoff = format(addDays(parseISO(date), 3), "yyyy-MM-dd");
   const supa = useQuery({
-    queryKey: ["pantry", "expiring"],
+    queryKey: ["pantry", "expiring", date],
     queryFn: async () => {
-      const threeDaysLater = new Date();
-      threeDaysLater.setDate(threeDaysLater.getDate() + 3);
       const { data, error } = await supabase
         .from("pantry_items")
         .select("*")
         .not("expiry_date", "is", null)
-        .lte("expiry_date", threeDaysLater.toISOString().split("T")[0])
+        .lte("expiry_date", cutoff)
         .order("expiry_date", { ascending: true });
       if (error) throw error;
       return data;
@@ -383,9 +416,6 @@ export function useExpiringPantry() {
     enabled: !isDemo,
   });
   if (isDemo) {
-    const threeDaysLater = new Date();
-    threeDaysLater.setDate(threeDaysLater.getDate() + 3);
-    const cutoff = threeDaysLater.toISOString().split("T")[0];
     const filtered = demoData.pantry_items
       .filter((item: any) => item.expiry_date && item.expiry_date <= cutoff)
       .sort((a: any, b: any) => (a.expiry_date || "").localeCompare(b.expiry_date || ""));
@@ -394,7 +424,7 @@ export function useExpiringPantry() {
   return supa;
 }
 
-export function useOverdueDurables() {
+export function useOverdueDurables(enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["belongings_durable", "overdue"],
@@ -408,11 +438,11 @@ export function useOverdueDurables() {
         return daysUsed > item.expected_lifespan_days;
       });
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
     const today = new Date();
-    const filtered = demoData.belongings_durable.filter((item: any) => {
+    const filtered = (enabled ? demoData.belongings_durable : []).filter((item: any) => {
       const purchaseDate = new Date(item.purchase_date);
       const daysUsed = Math.floor((today.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24));
       return daysUsed > item.expected_lifespan_days;
@@ -422,7 +452,7 @@ export function useOverdueDurables() {
   return supa;
 }
 
-export function useRecentThoughts() {
+export function useRecentThoughts(enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["thoughts", "recent"],
@@ -435,10 +465,10 @@ export function useRecentThoughts() {
       if (error) throw error;
       return data;
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    const sorted = [...demoData.thoughts].sort((a: any, b: any) => b.created_at.localeCompare(a.created_at));
+    const sorted = [...(enabled ? demoData.thoughts : [])].sort((a: any, b: any) => b.created_at.localeCompare(a.created_at));
     return { data: sorted.slice(0, 2), isLoading: false, error: null } as any;
   }
   return supa;
@@ -508,9 +538,9 @@ export function useMonthFinanceSummary(year: number, month: number) {
 
 export function useTodayCalorieSummary() {
   const { isDemo, demoData } = useDemoMode();
-  const today = new Date().toISOString().split("T")[0];
+  const today = useLocalDate();
   const supa = useQuery({
-    queryKey: ["calories", "today_summary"],
+    queryKey: ["calories", "today_summary", today],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("calorie_records")
@@ -535,9 +565,9 @@ export function useTodayCalorieSummary() {
 
 export function useTodayCalorieBreakdown() {
   const { isDemo, demoData } = useDemoMode();
-  const today = new Date().toISOString().split("T")[0];
+  const today = useLocalDate();
   const supa = useQuery({
-    queryKey: ["calories", "today_breakdown"],
+    queryKey: ["calories", "today_breakdown", today],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("calorie_records")
@@ -565,7 +595,7 @@ export function useTodayCalorieBreakdown() {
   return supa;
 }
 
-export function useRecentWeightTrend() {
+export function useRecentWeightTrend(enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["weight_records", "recent_trend"],
@@ -578,10 +608,10 @@ export function useRecentWeightTrend() {
       if (error) throw error;
       return (data || []).reverse();
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    const sorted = [...demoData.weight_records].sort((a: any, b: any) => b.date.localeCompare(a.date));
+    const sorted = [...(enabled ? demoData.weight_records : [])].sort((a: any, b: any) => b.date.localeCompare(a.date));
     return { data: sorted.slice(0, 7).reverse(), isLoading: false, error: null } as any;
   }
   return supa;
@@ -642,7 +672,7 @@ export function useCreateSeriesWithInstances() {
 }
 
 export function useUpdateSeriesWithInstances() {
-  const { isDemo, updateRecord, addRecord, deleteRecord } = useDemoMode();
+  const { isDemo, demoData, updateRecord, addRecord, deleteRecord } = useDemoMode();
   const qc = useQueryClient();
   const supa = useMutation({
     mutationFn: async (params: {
@@ -680,10 +710,22 @@ export function useUpdateSeriesWithInstances() {
     return {
       mutate: (params: any) => {
         updateRecord("schedule_events", params.masterId, params.masterUpdates);
+        demoData.schedule_events
+          .filter((event: any) => event.parent_event_id === params.masterId)
+          .forEach((event: any) => deleteRecord("schedule_events", event.id));
+        params.instances.forEach((instance: any) => {
+          addRecord("schedule_events", { ...instance, parent_event_id: params.masterId, recurrence: null });
+        });
         qc.invalidateQueries({ queryKey: ["schedule"] });
       },
       mutateAsync: async (params: any) => {
         updateRecord("schedule_events", params.masterId, params.masterUpdates);
+        demoData.schedule_events
+          .filter((event: any) => event.parent_event_id === params.masterId)
+          .forEach((event: any) => deleteRecord("schedule_events", event.id));
+        params.instances.forEach((instance: any) => {
+          addRecord("schedule_events", { ...instance, parent_event_id: params.masterId, recurrence: null });
+        });
         qc.invalidateQueries({ queryKey: ["schedule"] });
       },
       isPending: false,
@@ -693,7 +735,7 @@ export function useUpdateSeriesWithInstances() {
 }
 
 export function useDeleteSeries() {
-  const { isDemo, deleteRecord } = useDemoMode();
+  const { isDemo, demoData, deleteRecord } = useDemoMode();
   const qc = useQueryClient();
   const supa = useMutation({
     mutationFn: async (masterId: string) => {
@@ -713,10 +755,16 @@ export function useDeleteSeries() {
   if (isDemo) {
     return {
       mutate: (masterId: string) => {
+        demoData.schedule_events
+          .filter((event: any) => event.parent_event_id === masterId)
+          .forEach((event: any) => deleteRecord("schedule_events", event.id));
         deleteRecord("schedule_events", masterId);
         qc.invalidateQueries({ queryKey: ["schedule"] });
       },
       mutateAsync: async (masterId: string) => {
+        demoData.schedule_events
+          .filter((event: any) => event.parent_event_id === masterId)
+          .forEach((event: any) => deleteRecord("schedule_events", event.id));
         deleteRecord("schedule_events", masterId);
         qc.invalidateQueries({ queryKey: ["schedule"] });
       },
@@ -726,13 +774,10 @@ export function useDeleteSeries() {
   return supa;
 }
 
-export function useCurrentWeekGoals() {
+export function useCurrentWeekGoals(enabled = true) {
   const { isDemo, demoData } = useDemoMode();
-  const now = new Date();
-  const day = now.getDay();
-  const monday = new Date(now);
-  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
-  const weekStart = monday.toISOString().split("T")[0];
+  const date = useLocalDate();
+  const weekStart = format(startOfWeek(parseISO(date), { weekStartsOn: 1 }), "yyyy-MM-dd");
   const supa = useQuery({
     queryKey: ["goals", "current_week", weekStart],
     queryFn: async () => {
@@ -744,10 +789,10 @@ export function useCurrentWeekGoals() {
       if (error) throw error;
       return data as any[];
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    const filtered = demoData.goals.filter((g: any) => g.type === "week" && g.period_start === weekStart);
+    const filtered = (enabled ? demoData.goals : []).filter((g: any) => g.type === "week" && g.period_start === weekStart);
     return { data: filtered, isLoading: false, error: null } as any;
   }
   return supa;
@@ -977,7 +1022,7 @@ export function useDeleteLearningNote() {
 
 // ============ Project Management Hooks ============
 
-export function useProjects() {
+export function useProjects(enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["projects"],
@@ -986,10 +1031,10 @@ export function useProjects() {
       if (error) throw error;
       return data as any[];
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    const sorted = [...demoData.projects].sort((a: any, b: any) => (b.created_at || "").localeCompare(a.created_at || ""));
+    const sorted = [...(enabled ? demoData.projects : [])].sort((a: any, b: any) => (b.created_at || "").localeCompare(a.created_at || ""));
     return { data: sorted, isLoading: false, error: null } as any;
   }
   return supa;

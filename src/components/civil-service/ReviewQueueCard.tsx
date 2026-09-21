@@ -12,7 +12,7 @@ export function ReviewQueueCard() {
   const review = useReviewCivilWrongAnswer();
 
   return (
-    <Card className="border-border bg-white">
+    <Card className="border-border bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font flex items-center gap-2">
           <BookMarked className="h-4 w-4 text-[#d17847]" />

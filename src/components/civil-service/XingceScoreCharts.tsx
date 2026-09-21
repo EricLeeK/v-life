@@ -39,7 +39,7 @@ export function XingceScoreCharts() {
     : null;
 
   return (
-    <Card className="border-border bg-white">
+    <Card className="border-border bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font">{t("套卷成绩趋势", "Paper score trends")}</CardTitle>
       </CardHeader>
@@ -79,7 +79,7 @@ export function XingceScoreCharts() {
               <div className="h-52 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                     <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                     <Tooltip />
@@ -96,7 +96,7 @@ export function XingceScoreCharts() {
               <div className="h-52 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                     <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} domain={[0, 100]} />
                     <Tooltip />

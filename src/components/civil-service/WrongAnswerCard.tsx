@@ -68,10 +68,10 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
                 className={[
                   "wrong-answer-serif inline-flex max-w-full items-baseline gap-1 rounded-md border px-2 py-1.5 text-left transition-colors",
                   isCorrect
-                    ? "border-[#5b8c44] bg-[#f0f7ec] text-[#3d6b2e]"
+                    ? "border-cat-green/60 bg-cat-green-bg text-cat-green"
                     : isSelected
-                      ? "border-[#d17847] bg-[#fdf3ed] text-foreground"
-                      : "border-border bg-white text-foreground hover:border-[#d17847]/50 hover:bg-[#faf9f6]",
+                      ? "border-cat-orange/60 bg-cat-orange-bg text-foreground"
+                      : "border-border bg-card text-foreground hover:border-cat-orange/50 hover:bg-muted/50",
                 ].join(" ")}
               >
                 <span className="shrink-0 font-medium leading-none">{opt.key}.</span>
@@ -95,16 +95,16 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
           <button
             type="button"
             onClick={() => setShowAnswer((v) => !v)}
-            className="flex items-center gap-1 text-[12px] text-[#5a9da8] hover:text-[#3d7a84]"
+            className="flex items-center gap-1 text-[12px] text-cat-teal hover:text-cat-teal/80"
           >
             {showAnswer ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             {showAnswer ? t("收起正确答案", "Hide answer") : t("查看正确答案", "Show answer")}
           </button>
           {showAnswer && (
-            <p className="mt-1 text-[13px] font-medium text-[#5b8c44]">
+            <p className="mt-1 text-[13px] font-medium text-cat-green">
               {t("正确答案", "Correct answer")}：{item.correct_answer}
               {item.user_answer && item.user_answer !== item.correct_answer && (
-                <span className="ml-2 text-[#c06838]">
+                <span className="ml-2 text-cat-orange">
                   （{t("你的选择", "Your choice")}：{item.user_answer}）
                 </span>
               )}
@@ -114,16 +114,16 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
       )}
 
       {item.wrong_reason && (
-        <details className="rounded-md border border-red-300 bg-red-50/50">
-          <summary className="cursor-pointer px-3 py-2 text-[13px] font-medium text-red-700 select-none">
+        <details className="rounded-md border border-cat-red/40 bg-cat-red-bg/50">
+          <summary className="cursor-pointer px-3 py-2 text-[13px] font-medium text-cat-red select-none">
             ❌ {t("错因分析", "Wrong reason")}
           </summary>
-          <div className="wrong-answer-serif px-3 pb-2 text-red-800">{item.wrong_reason}</div>
+          <div className="wrong-answer-serif px-3 pb-2 text-cat-red/90">{item.wrong_reason}</div>
         </details>
       )}
 
       {item.knowledge_point && (
-        <p className="text-[12px] text-[#5a9da8]">
+        <p className="text-[12px] text-cat-teal">
           {t("知识点", "Knowledge")}：{item.knowledge_point}
         </p>
       )}
@@ -142,7 +142,7 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
         <button
           type="button"
           onClick={() => setLightboxOpen(true)}
-          className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-[#5a9da8]"
+          className="inline-flex items-center gap-1 text-[12px] text-muted-foreground hover:text-cat-teal"
         >
           <ImageIcon className="h-3.5 w-3.5" />
           {t("查看原图", "View image")}

@@ -404,12 +404,13 @@ export default function SettingsPage() {
               ].map((feature) => {
                 const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);
                 return (
-                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-[#fbfbfa]">
+                  <div key={feature.id} className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-card">
                     <div>
                       <Label htmlFor={`settings-feature-${feature.id}`} className="font-medium text-sm text-foreground">{feature.name}</Label>
                     </div>
                     <Switch
                       id={`settings-feature-${feature.id}`}
+                      aria-label={feature.name}
                       checked={!isHidden}
                       onCheckedChange={(checked) => {
                         const current = (draft.hidden_features as string[] | null) || [];
@@ -496,14 +497,14 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center justify-between">
               <span>{t("AI 模型与 Key 配置", "AI Models & API Keys")}</span>
-              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-xs font-normal">
+              <Badge variant="tint-warning" className="text-xs font-normal">
                 {t("智能路由 · 成本优化", "Auto Routing · Cost Saver")}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="bg-stone-50 border border-stone-200/80 rounded-xl p-3 text-xs text-stone-600 space-y-1">
-              <p className="font-semibold text-stone-800 flex items-center gap-1">
+            <div className="bg-muted/40 border border-border rounded-xl p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-semibold text-foreground flex items-center gap-1">
                 💡 {t("自动模型分流说明", "Smart Model Routing")}
               </p>
               <p>
@@ -521,7 +522,7 @@ export default function SettingsPage() {
             </div>
 
             {/* 1. 常规模型 */}
-            <div className="space-y-3 pt-1 border-t border-stone-100">
+            <div className="space-y-3 pt-1 border-t border-border">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <h4 className="text-sm font-semibold text-foreground">
@@ -578,7 +579,7 @@ export default function SettingsPage() {
             </div>
 
             {/* 2. 视觉模型 */}
-            <div className="space-y-3 pt-3 border-t border-stone-200/80">
+            <div className="space-y-3 pt-3 border-t border-border">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-blue-500" />
                 <h4 className="text-sm font-semibold text-foreground">
@@ -633,12 +634,12 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+            <div className="pt-2 border-t border-border flex items-center justify-between">
               <div>
                 <Label htmlFor="settings-ai-mode">{t("AI 操作模式", "AI Operation Mode")}</Label>
                 <p className="text-xs text-muted-foreground">{t("确认模式：预览后执行 / 直接模式：自动执行+撤销", "Confirm: preview then execute / Direct: auto-execute + undo")}</p>
               </div>
-              <Switch id="settings-ai-mode" checked={draft.ai_mode === "direct"} onCheckedChange={(v) => update("ai_mode", v ? "direct" : "confirm")} />
+              <Switch aria-label={t("AI 操作模式", "AI Operation Mode")} id="settings-ai-mode" checked={draft.ai_mode === "direct"} onCheckedChange={(v) => update("ai_mode", v ? "direct" : "confirm")} />
             </div>
           </CardContent>
         </Card>
@@ -729,7 +730,7 @@ export default function SettingsPage() {
                 <Label htmlFor="settings-show-goals-ball">{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
                 <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
               </div>
-              <Switch id="settings-show-goals-ball" checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
+              <Switch aria-label={t("在日程中显示目标悬浮球", "Show goals ball in schedule")} id="settings-show-goals-ball" checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
             </div>
           </CardContent>
         </Card>

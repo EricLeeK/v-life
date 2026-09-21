@@ -28,7 +28,7 @@ export function XingcePaperList() {
 
   return (
     <>
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base heading-font">{t("行测套卷", "Xingce papers")}</CardTitle>
           <Button size="sm" className="bg-[#d17847] hover:bg-[#c06838] text-white" onClick={() => setAddOpen(true)}>
@@ -51,7 +51,7 @@ export function XingcePaperList() {
                     <p className="text-sm font-medium text-foreground truncate">
                       {paper.source}
                       {paper.is_mock ? (
-                        <span className="ml-2 text-[10px] text-[#d17847] bg-[#fce0c8] px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-[10px] text-cat-orange bg-cat-orange-bg px-1.5 py-0.5 rounded">
                           {t("模考", "Mock")}
                         </span>
                       ) : null}

@@ -32,8 +32,8 @@ function TaskCardInner({ task, onClick }: TaskCardProps) {
       }}
     >
       <div className="flex items-start gap-2 mb-1.5">
-        <div className="h-5 w-5 rounded-md bg-[#e1eaf4] flex items-center justify-center shrink-0 mt-0.5">
-          <CheckSquare className="h-3 w-3 text-[#5b88b5]" />
+        <div className="h-5 w-5 rounded-md bg-cat-blue-bg flex items-center justify-center shrink-0 mt-0.5">
+          <CheckSquare className="h-3 w-3 text-cat-blue" />
         </div>
         <span className="text-[13px] font-medium leading-snug flex-1 text-foreground">{task.title}</span>
       </div>
@@ -48,8 +48,8 @@ function TaskCardInner({ task, onClick }: TaskCardProps) {
           {task.priority && task.priority !== "medium" && (
             <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
               task.priority === "high"
-                ? "bg-[#fce0c8] text-[#c65d4a]"
-                : "bg-[#e1eaf4] text-[#5b88b5]"
+                ? "bg-cat-red-bg text-cat-red"
+                : "bg-cat-blue-bg text-cat-blue"
             }`}>
               <span className={`h-1 w-1 rounded-full ${priorityDot[task.priority]}`} />
               {task.priority === "high" ? t("高", "High") : t("低", "Low")}

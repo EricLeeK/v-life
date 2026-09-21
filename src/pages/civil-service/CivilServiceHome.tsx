@@ -38,7 +38,7 @@ export default function CivilServiceHome() {
             const Icon = GROUP_ICONS[g];
             return (
               <Link key={g} to={`/civil-service/${g}`}>
-                <Card className="border-border bg-white hover:border-[#d17847]/40 transition-colors h-full">
+                <Card className="border-border bg-card hover:border-[#d17847]/40 transition-colors h-full">
                   <CardContent className="p-4 flex items-center gap-3">
                     <div
                       className="h-10 w-10 rounded-lg flex items-center justify-center shrink-0"

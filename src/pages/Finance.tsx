@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Plus, Trash2, Edit2, ChevronDown, UtensilsCrossed, ShoppingBag, Bus, Home, Smartphone, HeartPulse, Shirt, Gamepad2, BookOpen, Monitor, Gem, FileText, MoreHorizontal } from "lucide-react";
@@ -15,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { convertExpense } from "@/lib/financeConversion";
 
 const CATEGORY_ICON_MAP: Record<string, React.ElementType> = {
   "餐饮": UtensilsCrossed, "日用": ShoppingBag, "交通": Bus,
@@ -61,13 +63,17 @@ function getWeekMonth(date: string): string {
 
 export default function FinancePage() {
   const { t, lang } = useLang();
+  const location = useLocation();
+  const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(openCreateFromDashboard);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" });
   const { toast } = useToast();
+  const saveInFlight = useRef(false);
+  const [saving, setSaving] = useState(false);
 
   const { data: records = [] } = useFinanceByMonth(year, month);
   const { data: settings } = useSettings();
@@ -83,6 +89,8 @@ export default function FinancePage() {
 
   const budget = settings?.monthly_budget || 5000;
   const exchangeRate = settings?.exchange_rate_jpy_to_cny || 0.048;
+  const conversion = convertExpense(Number(form.amount), form.currency, exchangeRate, editingItem);
+  const isSaving = saving || createMutation.isPending || updateMutation.isPending;
   const totalCny = monthRecords.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
   const budgetProgress = Math.min(100, (totalCny / budget) * 100);
 
@@ -107,17 +115,22 @@ export default function FinancePage() {
   }, [records, year, month]);
 
   const handleSave = async () => {
-    if (!form.name || !form.amount || !form.date) { toast({ title: t("请填写必填字段", "Please fill required fields"), variant: "destructive" }); return; }
+    if (saveInFlight.current || isSaving) return;
+    if (!form.name.trim() || !form.amount || !form.date) { toast({ title: t("请填写必填字段", "Please fill required fields"), variant: "destructive" }); return; }
+    const amount = Number(form.amount);
+    if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(conversion.amountCny) || !Number.isFinite(conversion.rate) || conversion.rate <= 0) {
+      toast({ title: t("请输入大于 0 的有效金额", "Enter a valid amount greater than zero"), variant: "destructive" }); return;
+    }
+    saveInFlight.current = true; setSaving(true);
     try {
-      const amount = Number(form.amount);
-      const rate = form.currency === "JPY" ? exchangeRate : 1;
-      const amountCny = form.currency === "JPY" ? amount * rate : amount;
+      const { rate, amountCny } = conversion;
       const payload = { name: form.name, category: form.category, amount, currency: form.currency, amount_cny: Number(amountCny.toFixed(2)), exchange_rate: rate, date: form.date, notes: form.notes || null };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
       setDialogOpen(false); setEditingItem(null);
       setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" });
     } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    finally { saveInFlight.current = false; setSaving(false); }
   };
 
   return (
@@ -132,12 +145,15 @@ export default function FinancePage() {
               <span className="text-sm font-medium w-24 text-center">{lang === "zh" ? `${year}年${month}月` : new Date(year, month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
               <Button variant="secondary" size="sm" onClick={() => { if (month === 12) { setMonth(1); setYear(year + 1); } else setMonth(month + 1); }}>→</Button>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { if (isSaving) return; setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("记一笔", "Add Expense")}</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("新增", "New")} {t("记录", "Record")}</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>{editingItem ? t("编辑", "Edit") : t("新增", "New")} {t("记录", "Record")}</DialogTitle>
+                  <DialogDescription>{t("记录名称、金额、分类和日期。", "Record the name, amount, category, and date.")}</DialogDescription>
+                </DialogHeader>
                 <div className="space-y-3">
                   <div><Label htmlFor="fin-name">{t("名称", "Name")} *</Label><Input id="fin-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
                   <div><Label htmlFor="fin-category">{t("分类", "Category")} *</Label>
@@ -159,11 +175,11 @@ export default function FinancePage() {
                     </div>
                   </div>
                   {form.currency === "JPY" && form.amount && (
-                    <p className="text-xs text-muted-foreground">≈ ¥{(Number(form.amount) * exchangeRate).toFixed(2)} CNY (汇率: {exchangeRate})</p>
+                    <p className="text-xs text-muted-foreground">≈ ¥{Number.isFinite(conversion.amountCny) ? conversion.amountCny.toFixed(2) : "—"} CNY ({t("汇率", "Rate")}: {conversion.rate})</p>
                   )}
                   <div><Label htmlFor="fin-date">{t("日期", "Date")} *</Label><Input id="fin-date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
                   <div><Label htmlFor="fin-notes">{t("备注", "Notes")}</Label><Input id="fin-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-                  <Button onClick={handleSave} className="w-full">{t("保存", "Save")}</Button>
+                  <Button onClick={handleSave} className="w-full" disabled={isSaving}>{saving ? t("保存中…", "Saving…") : t("保存", "Save")}</Button>
                 </div>
               </DialogContent>
             </Dialog>

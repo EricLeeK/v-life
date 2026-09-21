@@ -17,15 +17,15 @@ export function DemoBanner() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-10 z-[100] w-full bg-amber-50 border-b border-amber-200 px-4 flex items-center justify-between">
-      <span className="text-sm text-amber-800 font-medium flex items-center gap-1.5">
-        <Compass className="h-4 w-4 text-amber-600" />
+    <div className="fixed top-0 left-0 right-0 h-10 z-[100] w-full bg-cat-yellow-bg border-b border-cat-yellow/30 px-4 flex items-center justify-between">
+      <span className="text-sm text-cat-yellow font-medium flex items-center gap-1.5">
+        <Compass className="h-4 w-4" />
         {t("游览模式 — 数据为演示用途", "Tour Mode — Demo data only")}
       </span>
       <Button
         size="sm"
         variant="outline"
-        className="border-amber-300 text-amber-800 hover:bg-amber-100 h-7 text-xs"
+        className="border-cat-yellow/40 text-cat-yellow hover:bg-cat-yellow/10 h-7 text-xs"
         onClick={handleExit}
       >
         注册开始

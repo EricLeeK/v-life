@@ -66,29 +66,29 @@ export function DashboardInsights({
 
   // Spending insight
   insights.push({
-    icon: <Wallet className="h-4 w-4 text-[#d17847]" />,
-    iconBg: "bg-[#fce0c8]",
+    icon: <Wallet className="h-4 w-4 text-cat-orange" />,
+    iconBg: "bg-cat-orange-bg",
     value: `¥${monthlySpending.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
     label: t("本月支出", "Monthly Spending"),
     trend: spendChange !== null ? `${spendChange > 0 ? "+" : ""}${spendChange.toFixed(0)}% ${t("vs 上月", "vs last month")}` : undefined,
-    trendColor: spendChange !== null && spendChange <= 0 ? "text-[#5b8c44]" : "text-[#d17847]",
+    trendColor: spendChange !== null && spendChange <= 0 ? "text-cat-green" : "text-cat-orange",
   });
 
   // Budget remaining
   insights.push({
-    icon: <Target className="h-4 w-4 text-[#5b8c44]" />,
-    iconBg: "bg-[#dcead4]",
+    icon: <Target className="h-4 w-4 text-cat-green" />,
+    iconBg: "bg-cat-green-bg",
     value: `¥${remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
     label: t("本月剩余预算", "Budget Remaining"),
     trend: `${((remaining / monthlyBudget) * 100).toFixed(0)}%`,
-    trendColor: remaining > 0 ? "text-[#5b8c44]" : "text-[#d17847]",
+    trendColor: remaining > 0 ? "text-cat-green" : "text-cat-orange",
   });
 
   // Streak
   if (streakDays !== undefined && streakDays > 0) {
     insights.push({
-      icon: <Flame className="h-4 w-4 text-[#d17847]" />,
-      iconBg: "bg-[#fce0c8]",
+      icon: <Flame className="h-4 w-4 text-cat-orange" />,
+      iconBg: "bg-cat-orange-bg",
       value: `${streakDays}`,
       label: t("连续打卡", "Day Streak"),
       trend: streakDays >= 7 ? "🔥" : undefined,
@@ -98,20 +98,20 @@ export function DashboardInsights({
   // Calorie target
   if (weekCalorieDaysOnTarget !== undefined && weekCalorieDaysTotal !== undefined) {
     insights.push({
-      icon: <CheckCircle2 className="h-4 w-4 text-[#5b88b5]" />,
-      iconBg: "bg-[#e1eaf4]",
+      icon: <CheckCircle2 className="h-4 w-4 text-cat-blue" />,
+      iconBg: "bg-cat-blue-bg",
       value: `${weekCalorieDaysOnTarget}/${weekCalorieDaysTotal}`,
       label: t("本周热量达标", "Calorie Target Hit"),
       trend: weekCalorieDaysOnTarget >= 5 ? "✓" : undefined,
-      trendColor: "text-[#5b8c44]",
+      trendColor: "text-cat-green",
     });
   }
 
   // Goals
   if (completedGoals !== undefined && totalGoals !== undefined) {
     insights.push({
-      icon: <Target className="h-4 w-4 text-[#8b7bb8]" />,
-      iconBg: "bg-[#e7ddf1]",
+      icon: <Target className="h-4 w-4 text-cat-purple" />,
+      iconBg: "bg-cat-purple-bg",
       value: `${completedGoals}/${totalGoals}`,
       label: t("月目标完成", "Monthly Goals"),
     });

@@ -4,6 +4,7 @@ import type { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
+import { useLocalDate } from "@/hooks/useLocalDate";
 import {
   advanceReviewFields,
   initialReviewFields,
@@ -23,7 +24,7 @@ function todayStr() {
 }
 
 // ============ Exams ============
-export function useCivilExams(includeArchived = false) {
+export function useCivilExams(includeArchived = false, enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["civil_exams", includeArchived],
@@ -34,10 +35,10 @@ export function useCivilExams(includeArchived = false) {
       if (error) throw error;
       return data as CivilExam[];
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    let list = [...(demoData.civil_exams || [])];
+    let list = [...(enabled ? demoData.civil_exams || [] : [])];
     if (!includeArchived) list = list.filter((e) => !e.is_archived);
     list.sort((a, b) => a.exam_date.localeCompare(b.exam_date));
     return { data: list, isLoading: false, error: null } as typeof supa;
@@ -45,8 +46,8 @@ export function useCivilExams(includeArchived = false) {
   return supa;
 }
 
-export function usePrimaryExam() {
-  const { data: exams, ...rest } = useCivilExams(false);
+export function usePrimaryExam(enabled = true) {
+  const { data: exams, ...rest } = useCivilExams(false, enabled);
   const primary = exams?.find((e) => e.is_primary) || exams?.[0] || null;
   return { data: primary, exams, ...rest };
 }
@@ -172,7 +173,7 @@ export function useDeleteCivilExam() {
 }
 
 // ============ Plan items ============
-export function useCivilPlanItems(filters?: { plan_date?: string; subject_group?: string }) {
+export function useCivilPlanItems(filters?: { plan_date?: string; subject_group?: string }, enabled = true) {
   const { isDemo, demoData } = useDemoMode();
   const supa = useQuery({
     queryKey: ["civil_plan_items", filters],
@@ -184,10 +185,10 @@ export function useCivilPlanItems(filters?: { plan_date?: string; subject_group?
       if (error) throw error;
       return data as CivilPlanItem[];
     },
-    enabled: !isDemo,
+    enabled: !isDemo && enabled,
   });
   if (isDemo) {
-    let list = [...(demoData.civil_plan_items || [])];
+    let list = [...(enabled ? demoData.civil_plan_items || [] : [])];
     if (filters?.plan_date) list = list.filter((p) => p.plan_date === filters.plan_date);
     if (filters?.subject_group) list = list.filter((p) => p.subject_group === filters.subject_group);
     list.sort((a, b) => (a.sort_order - b.sort_order) || a.created_at!.localeCompare(b.created_at!));
@@ -196,8 +197,9 @@ export function useCivilPlanItems(filters?: { plan_date?: string; subject_group?
   return supa;
 }
 
-export function useTodayCivilPlans() {
-  return useCivilPlanItems({ plan_date: todayStr() });
+export function useTodayCivilPlans(enabled = true) {
+  const date = useLocalDate();
+  return useCivilPlanItems({ plan_date: date }, enabled);
 }
 
 export function useCreateCivilPlanItem() {

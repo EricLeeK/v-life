@@ -51,8 +51,33 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addRecord = useCallback((table: keyof DemoDataStore, record: any) => {
-    const id = record.id || generateId();
     const now = new Date().toISOString();
+    if (table === "settings") {
+      const defaultSettings = createDemoDataStore().settings;
+      const newRecord = {
+        ...defaultSettings,
+        ...record,
+        // Keep the canonical singleton id even if a caller supplies another one.
+        id: defaultSettings.id,
+        updated_at: now,
+      };
+      setDemoData((prev) => {
+        const current = prev.settings;
+        const nextSettings = {
+          ...current,
+          ...record,
+          // settings is a singleton: an "insert" updates the existing row
+          // instead of changing its object shape into an array.
+          id: current.id,
+          created_at: current.created_at ?? now,
+          updated_at: now,
+        };
+        return { ...prev, settings: nextSettings };
+      });
+      return newRecord;
+    }
+
+    const id = record.id || generateId();
     const newRecord = { id, created_at: now, updated_at: now, ...record };
     setDemoData((prev) => ({
       ...prev,
@@ -62,6 +87,17 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateRecord = useCallback((table: keyof DemoDataStore, id: string, updates: any) => {
+    if (table === "settings") {
+      setDemoData((prev) => {
+        if (prev.settings.id !== id) return prev;
+        return {
+          ...prev,
+          settings: { ...prev.settings, ...updates, id: prev.settings.id, updated_at: new Date().toISOString() },
+        };
+      });
+      return;
+    }
+
     setDemoData((prev) => ({
       ...prev,
       [table]: (prev[table] as any[]).map((item: any) =>
@@ -71,6 +107,15 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteRecord = useCallback((table: keyof DemoDataStore, id: string) => {
+    if (table === "settings") {
+      setDemoData((prev) => {
+        if (prev.settings.id !== id) return prev;
+        // Keep the singleton row and its object shape after a demo delete.
+        return { ...prev, settings: createDemoDataStore().settings };
+      });
+      return;
+    }
+
     setDemoData((prev) => ({
       ...prev,
       [table]: (prev[table] as any[]).filter((item: any) => item.id !== id),

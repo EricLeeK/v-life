@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { format } from "date-fns";
+import { format, isBefore, isEqual } from "date-fns";
 
 const HOUR_HEIGHT = 60;
 const VISIBLE_START = 0;
@@ -20,25 +20,40 @@ export function timeToY(date: Date): number {
 
 export function yToTime(y: number, dayDate: Date): Date {
   const totalMinutes = ((y / HOUR_HEIGHT) + VISIBLE_START) * 60;
-  const snapped = Math.round(totalMinutes / SNAP_MINUTES) * SNAP_MINUTES;
-  const hours = Math.floor(snapped / 60);
-  const minutes = snapped % 60;
+  const snapped = Math.max(0, Math.min(TOTAL_HOURS * 60, Math.round(totalMinutes / SNAP_MINUTES) * SNAP_MINUTES));
+  const isNextDayMidnight = snapped >= TOTAL_HOURS * 60;
+  const hours = isNextDayMidnight ? 0 : Math.floor(snapped / 60);
+  const minutes = isNextDayMidnight ? 0 : snapped % 60;
   const d = new Date(dayDate);
-  d.setHours(Math.max(0, Math.min(23, hours)), Math.min(59, minutes), 0, 0);
+  d.setHours(hours, minutes, 0, 0);
+  if (isNextDayMidnight) d.setDate(d.getDate() + 1);
   return d;
 }
 
-export function EventBlock({ event, onEdit, onDragEnd }: {
+export function EventBlock({ event, day, onEdit, onDragEnd }: {
   event: any;
+  day?: Date;
   onEdit: (e: any) => void;
   onDragEnd: (id: string, newStart: Date, newEnd: Date) => void;
 }) {
-  const startDate = new Date(event.start_time);
-  const endDate = new Date(event.end_time);
+  const eventStart = new Date(event.start_time);
+  const eventEnd = new Date(event.end_time);
+  const dayStart = day ? new Date(day) : null;
+  if (dayStart) dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = dayStart ? new Date(dayStart) : null;
+  if (dayEnd) dayEnd.setDate(dayEnd.getDate() + 1);
+  const startDate = dayStart && isBefore(eventStart, dayStart) ? dayStart : eventStart;
+  const endDate = dayEnd && isBefore(dayEnd, eventEnd) ? dayEnd : eventEnd;
+  // A malformed or zero-length record should never create a negative block.
+  const safeEndDate = isBefore(endDate, startDate) || isEqual(endDate, startDate)
+    ? new Date(startDate.getTime() + SNAP_MINUTES * 60 * 1000)
+    : endDate;
   const color = event.color || IMPORTANCE_COLORS[event.importance || "普通"] || "#0ea5e9";
 
   const top = timeToY(startDate);
-  const bottom = timeToY(endDate);
+  const bottom = dayEnd && safeEndDate.getTime() === dayEnd.getTime()
+    ? TOTAL_HOURS * HOUR_HEIGHT
+    : timeToY(safeEndDate);
   const height = Math.max(bottom - top, HOUR_HEIGHT / 4);
 
   const dragState = useRef<{ mode: "move" | "resize"; startY: number; origTop: number; origHeight: number; dragged: boolean } | null>(null);
@@ -75,7 +90,7 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
       if (wasDragged) {
         if (dragState.current.mode === "move") {
           const newTop = Math.max(0, dragState.current.origTop + dy);
-          const duration = endDate.getTime() - startDate.getTime();
+          const duration = Math.max(SNAP_MINUTES * 60 * 1000, eventEnd.getTime() - eventStart.getTime());
           const newStart = yToTime(newTop, dayDate);
           const newEnd = new Date(newStart.getTime() + duration);
           onDragEnd(event.id, newStart, newEnd);
@@ -83,7 +98,7 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
           const maxHeight = TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origTop;
           const newHeight = Math.max(HOUR_HEIGHT / 4, Math.min(maxHeight, dragState.current.origHeight + dy));
           const newEnd = yToTime(dragState.current.origTop + newHeight, dayDate);
-          onDragEnd(event.id, startDate, newEnd);
+          onDragEnd(event.id, eventStart, newEnd);
         }
       } else if (mode === "move") {
         onEdit(event);
@@ -93,14 +108,14 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
-  }, [top, height, startDate, endDate, event.id, onDragEnd, onEdit]);
+  }, [top, height, startDate, eventStart, eventEnd, event, onDragEnd, onEdit]);
 
   return (
     <div
       ref={blockRef}
       role="button"
       tabIndex={0}
-      aria-label={`${event.title} ${format(startDate, "HH:mm")} - ${format(endDate, "HH:mm")}`}
+      aria-label={`${event.title} ${format(startDate, "HH:mm")} - ${format(safeEndDate, "HH:mm")}`}
       className="absolute left-1 right-1 rounded-md cursor-pointer select-none overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       style={{
         top: `${top}px`, height: `${height}px`,
@@ -119,7 +134,7 @@ export function EventBlock({ event, onEdit, onDragEnd }: {
       <div className="px-1.5 py-0.5 overflow-hidden h-full flex flex-col">
         <span className="text-xs font-medium truncate" style={{ color }}>{event.title}</span>
         <span className="text-[10px] opacity-70" style={{ color }}>
-          {format(startDate, "HH:mm")} – {format(endDate, "HH:mm")}
+          {format(startDate, "HH:mm")} – {format(safeEndDate, "HH:mm")}
         </span>
       </div>
       <div

@@ -19,7 +19,7 @@ export function MetricStarCard({
         {value}
         <span className="ml-1 text-[12px] font-normal text-muted-foreground">/5</span>
       </p>
-      <p className="mt-1 text-[12px] text-[#c49840]">{starsText(value)}</p>
+      <p className="mt-1 text-[12px] text-cat-yellow">{starsText(value)}</p>
       {hint && <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );

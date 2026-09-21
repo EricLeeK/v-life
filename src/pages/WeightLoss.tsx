@@ -271,7 +271,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
         {targetWeight && (
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <Checkbox checked={showTarget} onCheckedChange={(v) => setShowTarget(!!v)} />
+            <Checkbox aria-label={t("显示目标体重", "Show target weight")} checked={showTarget} onCheckedChange={(v) => setShowTarget(!!v)} />
             <span className="text-muted-foreground">{t("显示目标线", "Show target line")}</span>
           </label>
         )}
@@ -308,7 +308,13 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
                 <span className="text-muted-foreground">{format(new Date(r.date), "MM/dd EEE", { locale: lang === "zh" ? zhCN : undefined })}</span>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{r.weight} kg</span>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => deleteMutation.mutate(r.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-destructive"
+                    onClick={() => deleteMutation.mutate(r.id)}
+                    aria-label={t(`删除 ${format(new Date(r.date), "MM/dd")} 体重记录`, `Delete weight record for ${format(new Date(r.date), "MM/dd")}`)}
+                  >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
@@ -462,7 +468,13 @@ function MeasurementTracker() {
                   <span className="text-xs">
                     {MEASUREMENT_FIELDS.filter(({ key }) => r[key] != null).map(({ key, label }) => `${MEASUREMENT_LABELS[label] || label}${r[key]}`).join(" / ")}
                   </span>
-                  <Button variant="ghost" size="icon" className="h-5 w-5 text-destructive" onClick={() => deleteMutation.mutate(r.id)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 text-destructive"
+                    onClick={() => deleteMutation.mutate(r.id)}
+                    aria-label={t(`删除 ${format(new Date(r.date), "MM/dd")} 围度记录`, `Delete measurement record for ${format(new Date(r.date), "MM/dd")}`)}
+                  >
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>

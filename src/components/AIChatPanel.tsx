@@ -317,6 +317,9 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const operationInFlightRef = useRef(false);
+  const historyLoadInFlightRef = useRef(false);
+  const conversationSessionRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handler = () => setIsOpen(true);
@@ -376,26 +379,35 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
   }, [sessions]);
 
   const loadSession = async (sessionId: string) => {
-    const { data: msgs } = await supabase
-      .from("ai_messages")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("created_at", { ascending: true });
+    if (loading || historyLoadInFlightRef.current) return;
+    historyLoadInFlightRef.current = true;
+    setLoading(true);
+    try {
+      const { data: msgs } = await supabase
+        .from("ai_messages")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("created_at", { ascending: true });
 
-    setMessages(
-      (msgs || []).map((m: any) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-        imageUrls: m.images || undefined,
-        operations: m.actions ? (m.actions as any).operations : undefined,
-        status: m.actions ? "executed" : undefined,
-      }))
-    );
-    setCurrentSessionId(sessionId);
-    setShowHistory(false);
+      setMessages(
+        (msgs || []).map((m: any) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          imageUrls: m.images || undefined,
+          operations: m.actions ? (m.actions as any).operations : undefined,
+          status: m.actions ? "executed" : undefined,
+        }))
+      );
+      setCurrentSessionId(sessionId);
+      setShowHistory(false);
+    } finally {
+      historyLoadInFlightRef.current = false;
+      setLoading(false);
+    }
   };
 
   const startNewSession = () => {
+    if (loading) return;
     setMessages([]);
     setCurrentSessionId(null);
     setShowHistory(false);
@@ -819,6 +831,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
 
     try {
       const sessionId = await ensureSession(text || "图片输入");
+      conversationSessionRef.current = sessionId;
 
       await saveMessage(sessionId, "user", text || "(图片)", currentImages.length > 0 ? currentImages : undefined);
 
@@ -836,6 +849,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
       if (invokeMsg) throw new Error(invokeMsg);
 
       const parsed = parseAgentChatContent({ result: data?.result, raw: data?.raw });
+      if (conversationSessionRef.current !== sessionId) return;
       const operations: Operation[] = parsed.operations || [];
       const summary: string = parsed.summary || "无法理解请求";
 
@@ -894,13 +908,15 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
       ]);
       toast({ title: t("AI 调用失败", "AI call failed"), description: e.message, variant: "destructive" });
     } finally {
+      conversationSessionRef.current = null;
       setLoading(false);
     }
   };
 
   const handleConfirmExecute = async (msgIndex: number) => {
     const msg = messages[msgIndex];
-    if (!msg?.operations) return;
+    if (!msg?.operations || operationInFlightRef.current || loading) return;
+    operationInFlightRef.current = true;
     setLoading(true);
     try {
       const { results: execResults, hasError } = await executeOperations(msg.operations);
@@ -914,6 +930,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
     } catch (e: any) {
       toast({ title: t("执行失败", "Execution failed"), description: e.message, variant: "destructive" });
     } finally {
+      operationInFlightRef.current = false;
       setLoading(false);
     }
   };
@@ -1011,10 +1028,10 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => setShowHistory(!showHistory)} aria-label={t("历史会话", "History")} title={t("历史会话", "History")}>
+          <Button variant="ghost" size="icon" disabled={loading} className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => setShowHistory(!showHistory)} aria-label={t("历史会话", "History")} title={t("历史会话", "History")}>
             <History className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={startNewSession} aria-label={t("新对话", "New chat")} title={t("新对话", "New chat")}>
+          <Button variant="ghost" size="icon" disabled={loading} className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={startNewSession} aria-label={t("新对话", "New chat")} title={t("新对话", "New chat")}>
             <Plus className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted" onClick={() => setIsOpen(false)} aria-label={t("关闭", "Close")}>
@@ -1193,7 +1210,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
                 }}
                 onPaste={handlePaste}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
+                  if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                     e.preventDefault();
                     handleSend();
                   }

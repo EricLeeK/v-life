@@ -64,7 +64,7 @@ function fieldsToJsonSchema(fields: FieldDef[]): JsonSchema {
   const required: string[] = [];
   for (const f of fields) {
     const prop: JsonSchemaProp = { type: jsonType(f), description: friendlyDesc(f) };
-    if (f.enum) prop.enum = f.enum;
+    if (f.enum && f.vocab !== "open") prop.enum = f.enum;
     properties[f.name] = prop;
     if (f.required) required.push(f.name);
   }
@@ -91,7 +91,8 @@ function listFilters(mod: ModuleDef): FilterDef[] {
   const filters: FilterDef[] = [];
   for (const f of mod.fields) {
     if (f.internal || f.updateOnly) continue;
-    if (f.enum) filters.push({ name: f.name, type: "string", description: friendlyDesc(f) });
+    if (f.enum && f.vocab !== "open") filters.push({ name: f.name, type: "string", description: friendlyDesc(f) });
+    else if (f.vocab === "open" && f.type === "string") filters.push({ name: f.name, type: "string", description: f.description || f.name });
     else if (f.type === "date") filters.push({ name: f.name, type: "string", description: friendlyDesc(f) });
     else if (f.type === "boolean") filters.push({ name: f.name, type: "boolean", description: friendlyDesc(f) });
   }

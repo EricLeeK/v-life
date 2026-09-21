@@ -76,7 +76,7 @@ function generatePeriodOptions(type: GoalType, lang: string): { value: string; l
 }
 
 function GoalColumn({ type, label }: { type: GoalType; label: string }) {
-  const icon = type === "year" ? <Target className="h-4 w-4 text-[#5b8c44]" /> : <CalendarDays className="h-4 w-4 text-[#5b88b5]" />;
+  const icon = type === "year" ? <Target className="h-4 w-4 text-cat-green" /> : <CalendarDays className="h-4 w-4 text-cat-blue" />;
   const { data: allGoals = [] } = useGoals(type);
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -189,12 +189,14 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
       <Checkbox
         checked={goal.is_completed}
         onCheckedChange={(v) => toggleMutation.mutate({ id: goal.id, is_completed: !!v })}
+        aria-label={t(`标记“${goal.title}”完成状态`, `Toggle completion for “${goal.title}”`)}
       />
       <span className={`flex-1 text-sm ${goal.is_completed ? "line-through text-muted-foreground" : ""}`}>
         {goal.title}
       </span>
       <Button variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover:opacity-100 text-destructive"
-        onClick={() => deleteMutation.mutate(goal.id)}>
+        onClick={() => deleteMutation.mutate(goal.id)}
+        aria-label={t(`删除“${goal.title}”`, `Delete “${goal.title}”`)}>
         <Trash2 className="h-3 w-3" />
       </Button>
     </div>
@@ -235,7 +237,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
         {/* Add with period selector */}
         <div className="pt-2 space-y-1">
           <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="h-7 text-xs">
+            <SelectTrigger className="h-7 text-xs" aria-label={t(`${label}周期`, `${label} period`)}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -248,8 +250,10 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
           </Select>
           <div className="flex gap-1">
             <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={t("添加目标...", "Add goal...")}
+              aria-label={t(`添加${label}`, `Add ${label}`)}
               className="h-7 text-xs" onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })} />
             <Button size="icon" className="h-7 w-7 shrink-0" disabled={!newTitle.trim()}
+              aria-label={t(`保存${label}`, `Save ${label}`)}
               onClick={() => newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })}>
               <Plus className="h-3 w-3" />
             </Button>

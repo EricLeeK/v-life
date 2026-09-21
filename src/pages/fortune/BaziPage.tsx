@@ -70,7 +70,7 @@ export default function BaziPage() {
             </p>
             <Link
               to="/settings"
-              className="mt-4 inline-flex rounded-lg bg-[#fce0c8] px-4 py-2 text-[13px] font-medium text-[#d17847]"
+              className="mt-4 inline-flex rounded-lg bg-cat-orange-bg px-4 py-2 text-[13px] font-medium text-cat-orange transition-colors hover:opacity-90"
             >
               {t("去设置", "Open Settings")}
             </Link>
@@ -91,16 +91,16 @@ export default function BaziPage() {
                   </p>
                 )}
               </div>
-              <div className="rounded-lg bg-muted px-3 py-2 text-[12px] text-[#5c564c]">
+              <div className="rounded-lg bg-muted px-3 py-2 text-[12px] text-muted-foreground">
                 {t("今日", "Today")} {todayBundle?.dayPillar} · {todayBundle?.chongsha} · {todayBundle?.zhiXing}
               </div>
               <div className="space-y-2.5">
                 {pillar!.wuxing.map((w) => (
                   <div key={w.element} className="flex items-center gap-2 text-[12px]">
-                    <span className="w-6 text-[#5c564c]">{w.element}</span>
+                    <span className="w-6 text-muted-foreground">{w.element}</span>
                     <div className="h-2 flex-1 rounded bg-muted">
                       <div
-                        className="h-2 rounded bg-[#1f1a14]"
+                        className="h-2 rounded bg-primary"
                         style={{ width: `${(w.count / maxWx) * 100}%` }}
                       />
                     </div>
@@ -108,7 +108,7 @@ export default function BaziPage() {
                   </div>
                 ))}
               </div>
-              <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void remind()} disabled={loading}>
+              <Button className="w-full" onClick={() => void remind()} disabled={loading}>
                 {loading ? t("生成中…", "Working…") : t("今日提醒", "Today's note")}
               </Button>
             </div>
@@ -123,7 +123,7 @@ export default function BaziPage() {
                   <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("今日提醒", "Today's note")}
                   </p>
-                  <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">
+                  <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                     {reading}
                   </p>
                   <SaveReadingButton

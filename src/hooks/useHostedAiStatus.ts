@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useDemoMode } from "@/contexts/DemoModeContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 function shanghaiDatePrefix(d = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
@@ -20,6 +22,8 @@ function startOfShanghaiMonthIso(d = new Date()): string {
 }
 
 export function useHostedAiStatus() {
+  const { isDemo } = useDemoMode();
+  const { user } = useAuth();
   return useQuery({
     queryKey: ["ai-hosted-status"],
     queryFn: async () => {
@@ -66,5 +70,6 @@ export function useHostedAiStatus() {
         dailyUsed: dailyUsed ?? 0,
       };
     },
+    enabled: !isDemo && Boolean(user),
   });
 }

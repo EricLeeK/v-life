@@ -17,13 +17,13 @@ export function AlmanacCard({ data, lang }: { data: AlmanacDay; lang: "zh" | "en
       </div>
       <div className="space-y-3 text-[13px]">
         <div>
-          <span className="mr-2 inline-flex rounded-full bg-[#dcead4] px-2 py-0.5 text-[10px] font-medium text-[#5b8c44]">
+          <span className="mr-2 inline-flex rounded-full bg-cat-green-bg px-2 py-0.5 text-[10px] font-medium text-cat-green">
             {lang === "zh" ? "宜" : "Good"}
           </span>
           <span className="text-foreground leading-relaxed">{data.yi.join(sep)}</span>
         </div>
         <div>
-          <span className="mr-2 inline-flex rounded-full bg-[#fce0c8] px-2 py-0.5 text-[10px] font-medium text-[#d17847]">
+          <span className="mr-2 inline-flex rounded-full bg-cat-orange-bg px-2 py-0.5 text-[10px] font-medium text-cat-orange">
             {lang === "zh" ? "忌" : "Avoid"}
           </span>
           <span className="text-foreground leading-relaxed">{data.ji.join(sep)}</span>

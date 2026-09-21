@@ -76,7 +76,7 @@ export function CivilStatsCharts({ subjectGroup }: { subjectGroup?: string }) {
   ).length;
 
   return (
-    <Card className="border-border bg-white">
+    <Card className="border-border bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-base heading-font">{t("学习统计", "Study stats")}</CardTitle>
       </CardHeader>
@@ -113,7 +113,7 @@ export function CivilStatsCharts({ subjectGroup }: { subjectGroup?: string }) {
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e4e1d7" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
               <Tooltip />

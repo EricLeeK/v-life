@@ -14,12 +14,13 @@ colors:
   destructive: "hsl(0 72% 51%)"
   success: "hsl(100 35% 40%)"
   warning: "hsl(30 70% 55%)"
-  cat-green: "hsl(100 35% 40%)"
-  cat-blue: "hsl(207 40% 53%)"
-  cat-orange: "hsl(22 65% 55%)"
-  cat-teal: "hsl(185 34% 51%)"
-  cat-purple: "hsl(256 30% 60%)"
-  cat-yellow: "hsl(40 55% 51%)"
+  cat-green: "hsl(100 45% 28%)"
+  cat-blue: "hsl(207 55% 36%)"
+  cat-orange: "hsl(22 65% 36%)"
+  cat-teal: "hsl(185 55% 28%)"
+  cat-purple: "hsl(256 45% 42%)"
+  cat-yellow: "hsl(40 70% 30%)"
+  cat-red: "hsl(0 55% 40%)"
   chart-1: "hsl(200 40% 53%)"
   chart-2: "hsl(100 35% 40%)"
   chart-3: "hsl(30 70% 55%)"
@@ -29,6 +30,21 @@ typography:
   display:
     fontFamily: "Fraunces, Instrument Serif, ui-serif, Georgia, serif"
     fontWeight: 600
+    lineHeight: 1.2
+  dashboard-display:
+    fontFamily: "Fraunces, Instrument Serif, ui-serif, Georgia, serif"
+    fontSize: "clamp(28px, 3.6vw, 44px)"
+    fontWeight: 700
+    lineHeight: 1.08
+  action-title:
+    fontFamily: "Fraunces, Instrument Serif, ui-serif, Georgia, serif"
+    fontSize: "clamp(24px, 2.4vw, 32px)"
+    fontWeight: 650
+    lineHeight: 1.15
+  section-title:
+    fontFamily: "Fraunces, Instrument Serif, ui-serif, Georgia, serif"
+    fontSize: "20px"
+    fontWeight: 650
     lineHeight: 1.2
   body:
     fontFamily: "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
@@ -60,6 +76,10 @@ typography:
   metric:
     fontFamily: "JetBrains Mono, SF Mono, Fira Code, monospace"
     fontSize: "28px"
+    fontWeight: 600
+  metric-compact:
+    fontFamily: "JetBrains Mono, SF Mono, Fira Code, monospace"
+    fontSize: "20px"
     fontWeight: 600
   mono:
     fontFamily: "JetBrains Mono, SF Mono, Fira Code, monospace"
@@ -126,6 +146,12 @@ Palette character: warm neutral paper with restrained earth accents.
 
 ### Category & Chart
 - Use Tailwind `text-cat-*`, `bg-cat-*-bg`, and `hsl(var(--chart-N))` / `chartTokens` helpers. Do not invent parallel hex maps in feature pages.
+- Category foreground tokens are deliberately darker in light mode and lighter in dark mode so compact labels retain readable contrast. Each `--cat-*-bg` token also has an explicit dark-mode value.
+
+### Dark Theme
+- Canvas `hsl(30 15% 10%)`; cards and popovers `hsl(30 15% 13%)`.
+- Use semantic surface and text utilities only: `bg-background`, `bg-card`, `bg-muted`, `text-foreground`, and `text-muted-foreground`.
+- Never use `bg-white`, Stone palette text, or fixed cream surfaces for application UI. `card-premium` uses theme tokens in both modes.
 
 **The One Ink Rule.** Primary ink is for actions and hierarchy. Accents are for category meaning, not decoration.
 
@@ -186,7 +212,7 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 - Avoid nested cards
 
 ### Inputs / Fields
-- Border `--input`, warm field wash `--field-warm` on hover where used
+- Border `--input`, `bg-background`, `text-foreground`, and `--ring`; warm field wash `--field-warm` on hover where used
 - Always pair `<Label htmlFor>` with control `id`
 - `text-base` on mobile inputs to prevent iOS zoom
 
@@ -208,3 +234,9 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 - **Don't** ship icon-only controls without accessible names.
 - **Don't** use purple-on-white marketing gradients; this product is warm ink on cream.
 - **Don't** treat Inter/Fraunces as disposable without an explicit rebrand — they are the incumbent pairing until `/impeccable typeset` changes them.
+
+## Motion
+
+- Functional hover, focus, and state transitions remain brief and visible.
+- Under `prefers-reduced-motion: reduce`, staggered entrances and infinite/decorative animation classes are disabled; scrolling becomes immediate.
+- Do not globally force every transition to `0.01ms`: that removes useful state feedback and can create brittle timing behavior.

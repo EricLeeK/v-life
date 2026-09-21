@@ -79,7 +79,12 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border bg-white">
+    <Sidebar
+      collapsible="icon"
+      role="navigation"
+      aria-label={t("主导航", "Main navigation")}
+      className="border-r border-border bg-card"
+    >
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <img src="/v-life-icon.svg" alt="V-Life" className="h-8 w-8 rounded-lg shrink-0" />
@@ -154,7 +159,7 @@ export function AppSidebar() {
                   exitDemo();
                   navigate("/auth", { replace: true });
                 }}
-                className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition-colors rounded-md font-medium"
+                className="bg-cat-yellow-bg hover:bg-cat-yellow/15 text-cat-yellow border border-cat-yellow/30 transition-colors rounded-md font-medium"
               >
                 <Compass className="h-4 w-4 shrink-0 text-amber-600" />
                 {!collapsed && <span>{t("注册开始", "Register / Start")}</span>}

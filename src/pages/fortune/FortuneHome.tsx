@@ -62,6 +62,11 @@ export default function FortuneHome() {
   }, [date, lang]);
 
   useEffect(() => {
+    if (isDemo) {
+      setHoroscope(null);
+      setHoroscopeReady(true);
+      return;
+    }
     if (cachePayload?.horoscope?.text && cachePayload.horoscope.sign === profile?.zodiac_sign) {
       setHoroscope(cachePayload.horoscope);
       setHoroscopeReady(true);
@@ -83,7 +88,7 @@ export default function FortuneHome() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.zodiac_sign, cachePayload?.horoscope, lang]);
+  }, [profile?.zodiac_sign, cachePayload?.horoscope, lang, isDemo]);
 
   const scores = useMemo(
     () =>
@@ -132,6 +137,7 @@ export default function FortuneHome() {
       if (cachedAi && !aiBody) setAiBody(cachedAi);
       return;
     }
+    if (isDemo) return;
     // Logged-in: wait until today's row is loaded (or known empty)
     if (!isDemo && cacheLoading) return;
     if (!isDemo && !cacheFetched) return;
@@ -189,37 +195,37 @@ export default function FortuneHome() {
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, lang, horoscopeReady, cacheLoading, cacheFetched, cachedAi, aiBody]);
+  }, [date, lang, horoscopeReady, cacheLoading, cacheFetched, cachedAi, aiBody, isDemo]);
 
   return (
     <AppLayout title={t("运势", "Fortune")}>
       <div className="space-y-10">
         <section>
-          <h1
+          <h2
             className="font-bold leading-[1.1] tracking-tight text-foreground heading-font"
             style={{ fontSize: "clamp(34px, 4.8vw, 64px)" }}
           >
             {t("今日运势", "Today's Fortune")}
-          </h1>
+          </h2>
           <p className="mt-2 text-[14px] text-muted-foreground">{lunarLabelForDate(date, lang)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-border bg-white px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                className="rounded-full border border-border bg-card px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground"
               >
                 {tag}
               </span>
             ))}
             {hasBirthDate && profile?.zodiac_sign && (
-              <span className="rounded-full bg-[#e1eaf4] px-2.5 py-0.5 text-[11px] font-medium text-[#5b88b5]">
+              <span className="rounded-full bg-cat-blue-bg px-2.5 py-0.5 text-[11px] font-medium text-cat-blue">
                 {lang === "zh"
                   ? ZODIAC_LABELS[profile.zodiac_sign].zh
                   : ZODIAC_LABELS[profile.zodiac_sign].en}
               </span>
             )}
             {hasBirthDate && profile?.shengxiao && (
-              <span className="rounded-full bg-[#f5e8b8] px-2.5 py-0.5 text-[11px] font-medium text-[#c49840]">
+              <span className="rounded-full bg-cat-yellow-bg px-2.5 py-0.5 text-[11px] font-medium text-cat-yellow">
                 {lang === "zh"
                   ? `属${SHENGXIAO_LABELS[profile.shengxiao].zh}`
                   : SHENGXIAO_LABELS[profile.shengxiao].en}

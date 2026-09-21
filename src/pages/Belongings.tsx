@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Edit2, TrendingDown } from "lucide-react";
@@ -38,6 +38,8 @@ export default function BelongingsPage() {
   const [dailyForm, setDailyForm] = useState({ name: "", category: "", purchase_date: "", notes: "" });
   const [durableForm, setDurableForm] = useState({ name: "", category: "电子产品", purchase_price: "", purchase_date: "", expected_lifespan_days: "", notes: "" });
   const { toast } = useToast();
+  const saveInFlight = useRef(false);
+  const [saving, setSaving] = useState(false);
 
   const { data: dailyItems = [] } = belongingsDailyHooks.useList();
   const dailyCreate = belongingsDailyHooks.useCreate();
@@ -49,49 +51,70 @@ export default function BelongingsPage() {
   const durableUpdate = belongingsDurableHooks.useUpdate();
   const durableDelete = belongingsDurableHooks.useDelete();
 
+  const isSaving = saving || dailyCreate.isPending || dailyUpdate.isPending || durableCreate.isPending || durableUpdate.isPending;
+  const resetEditor = () => {
+    setEditingItem(null);
+    setDailyForm({ name: "", category: "", purchase_date: "", notes: "" });
+    setDurableForm({ name: "", category: "电子产品", purchase_price: "", purchase_date: "", expected_lifespan_days: "", notes: "" });
+  };
+  const changeDialog = (open: boolean) => {
+    if (isSaving) return;
+    if (tab === "daily") setDailyDialog(open);
+    else setDurableDialog(open);
+    if (!open) resetEditor();
+  };
+
   const saveDailyItem = async () => {
-    if (!dailyForm.name || !dailyForm.category) { toast({ title: t("请填写名称和分类", "Please fill name and category"), variant: "destructive" }); return; }
+    if (saveInFlight.current || isSaving) return;
+    if (!dailyForm.name.trim() || !dailyForm.category.trim()) { toast({ title: t("请填写名称和分类", "Please fill name and category"), variant: "destructive" }); return; }
+    saveInFlight.current = true; setSaving(true);
     try {
       if (editingItem) await dailyUpdate.mutateAsync({ id: editingItem.id, ...dailyForm, purchase_date: dailyForm.purchase_date || null });
       else await dailyCreate.mutateAsync({ ...dailyForm, purchase_date: dailyForm.purchase_date || null });
       setDailyDialog(false); setEditingItem(null); setDailyForm({ name: "", category: "", purchase_date: "", notes: "" });
     } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    finally { saveInFlight.current = false; setSaving(false); }
   };
 
   const saveDurableItem = async () => {
-    if (!durableForm.name || !durableForm.purchase_price || !durableForm.purchase_date || !durableForm.expected_lifespan_days) {
+    if (saveInFlight.current || isSaving) return;
+    const price = Number(durableForm.purchase_price);
+    const lifespan = Number(durableForm.expected_lifespan_days);
+    if (!durableForm.name.trim() || !durableForm.purchase_date || !Number.isFinite(price) || price <= 0 || !Number.isFinite(lifespan) || lifespan <= 0) {
       toast({ title: t("请填写所有必填字段", "Please fill all required fields"), variant: "destructive" }); return;
     }
+    saveInFlight.current = true; setSaving(true);
     try {
-      const payload = { name: durableForm.name, category: durableForm.category, purchase_price: Number(durableForm.purchase_price), purchase_date: durableForm.purchase_date, expected_lifespan_days: Number(durableForm.expected_lifespan_days), notes: durableForm.notes || null };
+      const payload = { name: durableForm.name.trim(), category: durableForm.category, purchase_price: price, purchase_date: durableForm.purchase_date, expected_lifespan_days: lifespan, notes: durableForm.notes || null };
       if (editingItem) await durableUpdate.mutateAsync({ id: editingItem.id, ...payload });
       else await durableCreate.mutateAsync(payload);
       setDurableDialog(false); setEditingItem(null); setDurableForm({ name: "", category: "电子产品", purchase_price: "", purchase_date: "", expected_lifespan_days: "", notes: "" });
     } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    finally { saveInFlight.current = false; setSaving(false); }
   };
 
   return (
     <AppLayout title={t("用品管理", "Belongings")}>
       <div className="space-y-4">
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs value={tab} onValueChange={(value) => { if (isSaving) return; setTab(value); setDailyDialog(false); setDurableDialog(false); resetEditor(); }}>
           <div className="flex items-center justify-between mb-4">
             <TabsList>
               <TabsTrigger value="daily">{t("日用消耗品", "Daily Consumables")}</TabsTrigger>
               <TabsTrigger value="durable">{t("大额耐用品", "Durable Goods")}</TabsTrigger>
             </TabsList>
-            <Dialog open={tab === "daily" ? dailyDialog : durableDialog} onOpenChange={tab === "daily" ? setDailyDialog : setDurableDialog}>
+            <Dialog open={tab === "daily" ? dailyDialog : durableDialog} onOpenChange={changeDialog}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("添加", "Add")}</Button>
+                <Button size="sm" onClick={resetEditor}><Plus className="h-4 w-4 mr-1" />{t("添加", "Add")}</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("添加", "Add")} {tab === "daily" ? t("日用品", "Consumable") : t("耐用品", "Durable")}</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>{editingItem ? t("编辑", "Edit") : t("添加", "Add")} {tab === "daily" ? t("日用品", "Consumable") : t("耐用品", "Durable")}</DialogTitle><DialogDescription>{t("填写用品信息并保存。", "Enter the item details and save.")}</DialogDescription></DialogHeader>
                 {tab === "daily" ? (
                   <div className="space-y-3">
                     <div><Label htmlFor="daily-name">{t("名称", "Name")} *</Label><Input id="daily-name" value={dailyForm.name} onChange={(e) => setDailyForm({ ...dailyForm, name: e.target.value })} /></div>
                     <div><Label htmlFor="daily-category">{t("分类", "Category")} *</Label><Input id="daily-category" value={dailyForm.category} onChange={(e) => setDailyForm({ ...dailyForm, category: e.target.value })} placeholder={lang === "zh" ? "如：清洁用品" : "e.g. Cleaning"} /></div>
                     <div><Label htmlFor="daily-purchase-date">{t("购入日期", "Purchase Date")}</Label><Input id="daily-purchase-date" type="date" value={dailyForm.purchase_date} onChange={(e) => setDailyForm({ ...dailyForm, purchase_date: e.target.value })} /></div>
                     <div><Label htmlFor="daily-notes">{t("备注", "Notes")}</Label><Input id="daily-notes" value={dailyForm.notes} onChange={(e) => setDailyForm({ ...dailyForm, notes: e.target.value })} /></div>
-                    <Button onClick={saveDailyItem} className="w-full">{t("保存", "Save")}</Button>
+                    <Button onClick={saveDailyItem} className="w-full" disabled={isSaving}>{saving ? t("保存中…", "Saving…") : t("保存", "Save")}</Button>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -106,7 +129,7 @@ export default function BelongingsPage() {
                     <div><Label htmlFor="durable-purchase-date">{t("购入日期", "Purchase Date")} *</Label><Input id="durable-purchase-date" type="date" value={durableForm.purchase_date} onChange={(e) => setDurableForm({ ...durableForm, purchase_date: e.target.value })} /></div>
                     <div><Label htmlFor="durable-lifespan">{t("预期寿命", "Expected Lifespan")} ({t("天", "days")}) *</Label><Input id="durable-lifespan" type="number" value={durableForm.expected_lifespan_days} onChange={(e) => setDurableForm({ ...durableForm, expected_lifespan_days: e.target.value })} /></div>
                     <div><Label htmlFor="durable-notes">{t("备注", "Notes")}</Label><Input id="durable-notes" value={durableForm.notes} onChange={(e) => setDurableForm({ ...durableForm, notes: e.target.value })} /></div>
-                    <Button onClick={saveDurableItem} className="w-full">{t("保存", "Save")}</Button>
+                    <Button onClick={saveDurableItem} className="w-full" disabled={isSaving}>{saving ? t("保存中…", "Saving…") : t("保存", "Save")}</Button>
                   </div>
                 )}
               </DialogContent>

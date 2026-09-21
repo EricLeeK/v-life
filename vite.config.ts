@@ -4,7 +4,10 @@ import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
-export default defineConfig(() => ({
+export default defineConfig(() => {
+  // Follow static imports only: dynamic route imports belong in the runtime cache.
+  const startupScripts = new Set<string>();
+  return ({
   server: {
     host: "::",
     port: 8080,
@@ -14,6 +17,22 @@ export default defineConfig(() => ({
   },
   plugins: [
     react(),
+    {
+      name: "collect-pwa-startup-scripts",
+      generateBundle(_options, bundle) {
+        startupScripts.clear();
+        const visit = (fileName: string) => {
+          if (startupScripts.has(fileName)) return;
+          const chunk = bundle[fileName];
+          if (!chunk || chunk.type !== "chunk") return;
+          startupScripts.add(fileName);
+          chunk.imports.forEach(visit);
+        };
+        Object.values(bundle).forEach(chunk => {
+          if (chunk.type === "chunk" && (chunk.isEntry || chunk.facadeModuleId?.endsWith("/pages/Index.tsx"))) visit(chunk.fileName);
+        });
+      },
+    },
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["v-life-icon.svg", "icon-192x192.png", "icon-512x512.png"],
@@ -47,27 +66,29 @@ export default defineConfig(() => ({
         ],
       },
       workbox: {
+        importScripts: ["sw-private-cache-cleanup.js"],
         globPatterns: ["**/*.{js,css,html,svg,png,woff,woff2}"],
+        manifestTransforms: [async entries => {
+          if (startupScripts.size === 0) throw new Error("PWA startup scripts were not collected");
+          return {
+            manifest: entries.filter(entry => !entry.url.endsWith(".js") || startupScripts.has(entry.url) || entry.url === "registerSW.js"),
+            warnings: [],
+          };
+        }],
         runtimeCaching: [
           {
-            // Supabase API — Network First
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: "NetworkFirst",
+            // Cache visited, content-hashed route chunks without downloading every route at install.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /\/assets\/.*\.(js|css)$/.test(url.pathname),
+            handler: "CacheFirst",
             options: {
-              cacheName: "supabase-api",
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24, // 24h
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
+              cacheName: "app-route-assets",
+              cacheableResponse: { statuses: [200] },
+              expiration: { maxEntries: 150, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
           {
             // Images — Cache First
-            urlPattern: /\.(png|jpg|jpeg|gif|svg|webp)$/i,
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(url.pathname),
             handler: "CacheFirst",
             options: {
               cacheName: "images",
@@ -115,4 +136,5 @@ export default defineConfig(() => ({
       },
     },
   },
-}));
+});
+});

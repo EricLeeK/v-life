@@ -1,11 +1,14 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { RouteLoadBoundary } from "@/components/RouteLoadBoundary";
 import { ThemeProvider } from "next-themes";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Bot } from "lucide-react";
 import { DemoBanner } from "@/components/DemoBanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LangProvider } from "@/contexts/LanguageContext";
@@ -79,9 +82,11 @@ function FocusHomeRedirect({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
+  const location = useLocation();
   return (
     <>
       <DemoBanner />
+      <RouteLoadBoundary key={location.pathname}>
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
@@ -116,7 +121,38 @@ function AppRoutes() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </RouteLoadBoundary>
     </>
+  );
+}
+
+function DeferredAIChatPanel() {
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const open = () => setShouldLoad(true);
+    window.addEventListener("open-ai-chat", open);
+    return () => window.removeEventListener("open-ai-chat", open);
+  }, []);
+
+  if (shouldLoad) {
+    return (
+      <Suspense fallback={null}>
+        <AIChatPanel initialOpen />
+      </Suspense>
+    );
+  }
+
+  return (
+    <Button
+      type="button"
+      onClick={() => setShouldLoad(true)}
+      size="icon"
+      aria-label="打开 AI 助手 / Open AI Assistant"
+      className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+    >
+      <Bot className="h-6 w-6" />
+    </Button>
   );
 }
 
@@ -131,9 +167,7 @@ const App = () => (
             <DemoModeProvider>
               <AuthProvider>
                 <AppRoutes />
-                <Suspense fallback={null}>
-                  <AIChatPanel />
-                </Suspense>
+                <DeferredAIChatPanel />
               </AuthProvider>
             </DemoModeProvider>
           </LangProvider>

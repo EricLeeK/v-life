@@ -54,7 +54,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
 
   return (
     <>
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
           <CardTitle className="text-base heading-font">{t("错题本", "Wrong answers")}</CardTitle>
           <Button size="sm" className="bg-[#d17847] hover:bg-[#c06838] text-white" onClick={() => setAddOpen(true)}>
@@ -84,7 +84,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                 className="rounded-lg border border-border overflow-hidden"
               >
                 <div
-                  className="p-3 cursor-pointer hover:bg-[#faf9f6]"
+                  className="p-3 cursor-pointer hover:bg-muted/50"
                   onClick={() => setExpandedId(isExpanded ? null : item.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -180,7 +180,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="px-3 pb-3 border-t border-border pt-3 bg-[#faf9f6]/50">
+                  <div className="px-3 pb-3 border-t border-border pt-3 bg-muted/30">
                     <WrongAnswerCard item={item} />
                   </div>
                 )}

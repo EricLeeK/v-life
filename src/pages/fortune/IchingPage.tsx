@@ -64,7 +64,7 @@ export default function IchingPage() {
               onChange={(e) => setQuestion(e.target.value)}
               placeholder={t("心中默念一个问题（可选）", "Hold a question (optional)")}
             />
-            <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void castNow()} disabled={loading}>
+            <Button className="w-full" onClick={() => void castNow()} disabled={loading}>
               {loading ? t("解读中…", "Reading…") : t("一键起卦", "Cast")}
             </Button>
           </div>
@@ -92,11 +92,11 @@ export default function IchingPage() {
                   )}
                   <div className="mt-4 flex flex-col-reverse gap-1.5">
                     {cast.lines.map((line, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[12px] text-[#5c564c]">
+                      <div key={i} className="flex items-center gap-2 text-[12px] text-muted-foreground">
                         <span className="w-4 font-mono-data">{i + 1}</span>
-                        <div className={`h-2.5 flex-1 rounded ${line.yang ? "bg-[#1f1a14]" : "bg-[#1f1a14]/25"}`} />
+                        <div className={`h-2.5 flex-1 rounded ${line.yang ? "bg-primary" : "bg-primary/25"}`} />
                         {line.changing && (
-                          <span className="text-[#d17847]">{lang === "zh" ? "变" : "chg"}</span>
+                          <span className="text-cat-orange">{lang === "zh" ? "变" : "chg"}</span>
                         )}
                       </div>
                     ))}
@@ -106,7 +106,7 @@ export default function IchingPage() {
                   <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("解读", "Reading")}
                   </p>
-                  <p className="text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">{reading}</p>
+                  <p className="text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">{reading}</p>
                   <div className="mt-5">
                     <SaveReadingButton type="iching" question={question} payload={cast} reading={reading} />
                   </div>

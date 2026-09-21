@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-12T11:31:34Z",
+  "generatedAt": "2026-08-20T02:40:00Z",
   "title": "Design System: V-Life",
   "extensions": {
     "colorMeta": {
@@ -27,12 +27,12 @@
       "cat-orange": {
         "role": "accent",
         "displayName": "Clay Orange",
-        "canonical": "hsl(22 65% 55%)"
+        "canonical": "hsl(22 65% 36%)"
       },
       "cat-green": {
         "role": "accent",
         "displayName": "Moss Green",
-        "canonical": "hsl(100 35% 40%)"
+        "canonical": "hsl(100 45% 28%)"
       }
     },
     "typographyMeta": {
@@ -76,6 +76,11 @@
         "name": "enter-up",
         "value": "fade-up 0.5s with --i stagger",
         "purpose": "List entrance; disabled under prefers-reduced-motion."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "targeted animation disable",
+        "purpose": "Disable entrances and infinite decoration while preserving functional state feedback."
       }
     ],
     "breakpoints": [
@@ -138,7 +143,7 @@
     "northStar": "Warm Desk Ledger",
     "overview": "V-Life is a bilingual personal life OS that should feel like a well-kept desk blotter: warm cream paper, ink-dark text, hairline rules, and quiet category accents. Density favors scanability for Operate-mode tasks over marketing flourish.",
     "keyCharacteristics": [
-      "Warm cream canvas with white elevated cards",
+      "Warm cream canvas with token-based elevated cards and an explicit ink-dark theme",
       "Ink primary instead of saturated brand purple",
       "Category accents via --cat-*; charts via --chart-*",
       "Fraunces + Inter + JetBrains Mono pairing"
@@ -157,11 +162,15 @@
     ],
     "dos": [
       "Do use semantic tokens (bg-background, text-muted-foreground, text-cat-*).",
+      "Do define category foreground and background tokens for both themes.",
+      "Do disable decorative motion selectively under prefers-reduced-motion.",
       "Do keep touch targets at least 44x44px.",
       "Do pair Label htmlFor with control ids."
     ],
     "donts": [
       "Don't hard-code cream/ink hex in new UI.",
+      "Don't use bg-white or Stone palette utilities for application surfaces and text.",
+      "Don't collapse every transition globally for reduced motion.",
       "Don't invent a second category color map beside --cat-*.",
       "Don't ship icon-only controls without accessible names."
     ]

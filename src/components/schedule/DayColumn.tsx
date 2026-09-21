@@ -98,7 +98,7 @@ export function DayColumn({ day, events, onEdit, onDragEnd, onCreateAt, isToday 
           }} />
       ))}
       {events.map((event) => (
-        <EventBlock key={event.id} event={event} onEdit={onEdit} onDragEnd={onDragEnd} />
+        <EventBlock key={event.id} event={event} day={day} onEdit={onEdit} onDragEnd={onDragEnd} />
       ))}
     </div>
   );

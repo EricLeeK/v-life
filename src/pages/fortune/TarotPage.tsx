@@ -94,8 +94,8 @@ export default function TarotPage() {
                   onClick={() => setTopic(item.id)}
                   className={`rounded-lg border px-3 py-2.5 text-left text-[13px] transition-colors ${
                     topic === item.id
-                      ? "border-[#1f1a14] bg-[#1f1a14] text-white"
-                      : "border-border bg-white text-foreground hover:bg-muted"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-foreground hover:bg-muted"
                   }`}
                 >
                   {lang === "zh" ? item.zh : item.en}
@@ -109,7 +109,7 @@ export default function TarotPage() {
                 placeholder={t("写一句你的问题", "Write your question")}
               />
             )}
-            <Button className="w-full bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void draw()} disabled={loading}>
+            <Button className="w-full" onClick={() => void draw()} disabled={loading}>
               {loading ? t("解读中…", "Reading…") : t("抽牌", "Draw")}
             </Button>
           </div>
@@ -145,7 +145,7 @@ export default function TarotPage() {
                             ? "逆位"
                             : "Reversed"}
                       </p>
-                      <p className="mt-2 text-[12px] leading-snug text-[#5c564c]">
+                      <p className="mt-2 text-[12px] leading-snug text-muted-foreground">
                         {cardKeywords(c.card, c.upright, lang)}
                       </p>
                     </div>
@@ -155,7 +155,7 @@ export default function TarotPage() {
                   <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("解读", "Reading")}
                   </p>
-                  <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c] whitespace-pre-wrap">
+                  <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                     {reading}
                   </p>
                 </div>

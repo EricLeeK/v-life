@@ -104,7 +104,7 @@ export default function ZodiacPage() {
           backLabel={t("返回运势", "Back to Fortune")}
           actions={
             <Select value={sign} onValueChange={(v) => setSign(v as ZodiacSign)}>
-              <SelectTrigger className="w-[200px] bg-white">
+              <SelectTrigger className="w-[200px] bg-card">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -135,9 +135,9 @@ export default function ZodiacPage() {
               {t("未能拉取网上日运，以下为本地底稿", "Could not fetch live horoscope — draft shown")}
             </p>
           )}
-          <p className="max-w-3xl text-[15px] leading-relaxed text-[#5c564c]">{body}</p>
+          <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground">{body}</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Button className="bg-[#1f1a14] hover:bg-[#1f1a14]/90" onClick={() => void polish()} disabled={loading || loadingHoro}>
+            <Button onClick={() => void polish()} disabled={loading || loadingHoro}>
               {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}
             </Button>
             <SaveReadingButton

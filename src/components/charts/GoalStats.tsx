@@ -35,8 +35,8 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
         <Card>
           <CardContent className="p-3 text-center">
             <div className="flex items-center justify-center mb-1.5">
-              <div className="h-8 w-8 rounded-lg bg-[#e1eaf4] flex items-center justify-center">
-                <ListChecks className="h-4 w-4 text-[#5b88b5]" />
+              <div className="h-8 w-8 rounded-lg bg-cat-blue-bg flex items-center justify-center">
+                <ListChecks className="h-4 w-4 text-cat-blue" />
               </div>
             </div>
             <p className="text-xl font-semibold text-foreground font-mono-data">{total}</p>
@@ -47,8 +47,8 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
         <Card>
           <CardContent className="p-3 text-center">
             <div className="flex items-center justify-center mb-1.5">
-              <div className="h-8 w-8 rounded-lg bg-[#fce0c8] flex items-center justify-center">
-                <CheckCircle2 className="h-4 w-4 text-[#d17847]" />
+              <div className="h-8 w-8 rounded-lg bg-cat-orange-bg flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4 text-cat-orange" />
               </div>
             </div>
             <p className="text-xl font-semibold text-foreground font-mono-data">{completed}</p>

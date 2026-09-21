@@ -50,18 +50,18 @@ import {
 } from "@/hooks/useData";
 
 const RARITY_CONFIG = {
-  common: { label: "普通", labelEn: "Common", color: "bg-gray-100 text-gray-700 border-gray-300", glow: "", icon: Shield },
-  rare: { label: "稀有", labelEn: "Rare", color: "bg-blue-50 text-blue-700 border-blue-300", glow: "shadow-blue-200 shadow-md", icon: Sparkles },
-  legendary: { label: "传说", labelEn: "Legendary", color: "bg-amber-50 text-amber-700 border-amber-300", glow: "shadow-amber-200 shadow-lg", icon: Crown },
+  common: { label: "普通", labelEn: "Common", color: "bg-muted text-muted-foreground border-border", glow: "", icon: Shield },
+  rare: { label: "稀有", labelEn: "Rare", color: "bg-cat-blue-bg text-cat-blue border-cat-blue/30", glow: "shadow-blue-200/50 dark:shadow-blue-900/40 shadow-md", icon: Sparkles },
+  legendary: { label: "传说", labelEn: "Legendary", color: "bg-cat-yellow-bg text-cat-yellow border-cat-yellow/30", glow: "shadow-amber-200/50 dark:shadow-amber-900/40 shadow-lg", icon: Crown },
 };
 
 const FRAME_STYLES: Record<string, string> = {
-  bronze: "border-amber-600",
-  silver: "border-gray-400",
-  gold: "border-yellow-400 shadow-yellow-200 shadow-md",
-  crystal: "border-cyan-300 shadow-cyan-200 shadow-md",
-  flame: "border-red-500 shadow-red-300 shadow-lg animate-pulse",
-  aurora: "border-purple-400 shadow-purple-300 shadow-lg",
+  bronze: "border-amber-600/70",
+  silver: "border-gray-400/70",
+  gold: "border-yellow-400/80 shadow-yellow-200/60 dark:shadow-yellow-900/40 shadow-md",
+  crystal: "border-cyan-300/80 shadow-cyan-200/60 dark:shadow-cyan-900/40 shadow-md",
+  flame: "border-red-500/80 shadow-red-300/60 dark:shadow-red-900/40 shadow-lg animate-pulse",
+  aurora: "border-purple-400/80 shadow-purple-300/60 dark:shadow-purple-900/40 shadow-lg",
 };
 
 const EFFECT_ICONS: Record<string, typeof Star> = {
@@ -143,7 +143,7 @@ function ItemCard({
         <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
         {owned ? (
           equipped ? (
-            <Badge className="w-full justify-center bg-green-100 text-green-700 border-green-300">
+            <Badge className="w-full justify-center bg-cat-green-bg text-cat-green border-cat-green/30">
               <Check className="h-3 w-3 mr-1" />
               {t("已装备", "Equipped")}
             </Badge>
@@ -196,7 +196,7 @@ function GachaAnimation({ results, onClose }: { results: any[]; onClose: () => v
             <p className="text-sm text-muted-foreground mt-2">{shopItem?.description}</p>
           </div>
           {item.is_new && (
-            <Badge className="bg-amber-100 text-amber-700 border-amber-300">
+            <Badge className="bg-cat-yellow-bg text-cat-yellow border-cat-yellow/30">
               <Gift className="h-3 w-3 mr-1" />
               {t("新获得!", "New!")}
             </Badge>
@@ -493,8 +493,8 @@ export default function ShopPage() {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             {isPrivilege && EffectIcon ? (
-                              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-green-50">
-                                <EffectIcon className="h-5 w-5 text-green-600" />
+                              <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-cat-green-bg">
+                                <EffectIcon className="h-5 w-5 text-cat-green" />
                               </div>
                             ) : (
                               <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${(RARITY_CONFIG[item.rarity as keyof typeof RARITY_CONFIG] || RARITY_CONFIG.common).color.split(" ")[0]}`}>
@@ -516,16 +516,16 @@ export default function ShopPage() {
                         </div>
                         <p className="text-xs text-muted-foreground mb-3">{item.description}</p>
                         {inv.is_used ? (
-                          <Badge className="w-full justify-center bg-gray-100 text-gray-500">
+                          <Badge className="w-full justify-center bg-muted text-muted-foreground">
                             <Check className="h-3 w-3 mr-1" />
                             {t("已使用", "Used")}
                           </Badge>
                         ) : isPrivilege ? (
-                          <Button size="sm" className="w-full bg-green-600 hover:bg-green-700" onClick={() => handleUseCoupon(inv.id)}>
+                          <Button size="sm" className="w-full bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90" onClick={() => handleUseCoupon(inv.id)}>
                             {effectLabel ? t(effectLabel.zh, effectLabel.en) : t("使用", "Use")}
                           </Button>
                         ) : inv.is_equipped ? (
-                          <Badge className="w-full justify-center bg-green-100 text-green-700 border-green-300">
+                          <Badge className="w-full justify-center bg-cat-green-bg text-cat-green border-cat-green/30">
                             <Check className="h-3 w-3 mr-1" />
                             {t("已装备", "Equipped")}
                           </Badge>
@@ -549,18 +549,18 @@ export default function ShopPage() {
                 const config = RARITY_CONFIG[m.rarity];
                 const Icon = config.icon;
                 return (
-                  <Card key={m.id} className={m.unlocked ? "border-green-200 bg-green-50/30" : ""}>
+                  <Card key={m.id} className={m.unlocked ? "border-cat-green/30 bg-cat-green-bg/30" : ""}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${m.unlocked ? "bg-green-100" : config.color.split(" ")[0]}`}>
-                          {m.unlocked ? <Trophy className="h-5 w-5 text-green-600" /> : <Icon className="h-5 w-5" />}
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${m.unlocked ? "bg-cat-green-bg" : config.color.split(" ")[0]}`}>
+                          {m.unlocked ? <Trophy className="h-5 w-5 text-cat-green" /> : <Icon className="h-5 w-5" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-sm font-medium text-foreground">{t(m.name, m.nameEn)}</p>
                             <RarityBadge rarity={m.rarity} />
                             {m.unlocked && (
-                              <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px]">
+                              <Badge className="bg-cat-green-bg text-cat-green border-cat-green/30 text-[10px]">
                                 {t("已达成", "Unlocked")}
                               </Badge>
                             )}
@@ -593,7 +593,7 @@ export default function ShopPage() {
             <div className="py-4">
               <p className="text-sm text-foreground mb-2">{confirmBuy.name}</p>
               <p className="text-xs text-muted-foreground mb-4">{confirmBuy.description}</p>
-              <div className="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-cat-yellow-bg rounded-lg">
                 <span className="text-sm text-muted-foreground">{t("花费", "Cost")}</span>
                 <span className="flex items-center gap-1 font-semibold text-amber-600">
                   <Star className="h-4 w-4" /> {confirmBuy.price} XP
