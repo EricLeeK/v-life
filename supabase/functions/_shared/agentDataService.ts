@@ -81,7 +81,7 @@ function scopedQuery(ctx: AgentContext, mod: ModuleDef): any {
 }
 
 function applyScope(query: any, ctx: AgentContext, mod: ModuleDef): any {
-  return query.eq("user_id", ctx.userId);
+  return mod.table !== "project_tasks" && mod.table !== "learning_notes" ? query.eq("user_id", ctx.userId) : query;
 }
 
 export function createAgentDataService(ctx: AgentContext) {
