@@ -30,7 +30,7 @@ export default function AuthPage() {
   const [showForgot, setShowForgot] = useState(false);
 
   useEffect(() => {
-    if (user) navigate("/", { replace: true });
+    if (user) navigate(new URLSearchParams(window.location.search).get("returnTo") || "/", { replace: true });
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {

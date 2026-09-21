@@ -84,6 +84,8 @@ function applyScope(query: any, ctx: AgentContext, mod: ModuleDef): any {
   return mod.table !== "project_tasks" && mod.table !== "learning_notes" ? query.eq("user_id", ctx.userId) : query;
 }
 
+const RELATION_OWNED_TABLES = new Set(["project_tasks", "learning_notes"]);
+
 export function createAgentDataService(ctx: AgentContext) {
   const requirePermission = (permission: "read" | "write" | "delete") => {
     if (!ctx.permissions[permission]) fail("PERMISSION_DENIED", `${permission} permission is required`);
@@ -127,7 +129,7 @@ export function createAgentDataService(ctx: AgentContext) {
         payload.exchange_rate = rate;
         payload.amount_cny = Number((Number(payload.amount) * rate).toFixed(2));
       } else if (mod.key === "finance" && payload.currency === "CNY") { payload.exchange_rate = 1; payload.amount_cny = Number(payload.amount); }
-      if (mod.executor?.needsUserId) payload.user_id = ctx.userId;
+      if (!RELATION_OWNED_TABLES.has(mod.table)) payload.user_id = ctx.userId;
       let mutation: any = ctx.db.from(mod.table).insert(payload);
       if (mod.key === "habit_log") mutation = ctx.db.from(mod.table).upsert(payload, { onConflict: "todo_id,log_date" });
       const { data, error } = await mutation.select(projection(mod)).single();

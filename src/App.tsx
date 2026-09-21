@@ -17,6 +17,7 @@ import { useSettings } from "@/hooks/useData";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+const OAuthConsentPage = lazy(() => import("./pages/OAuthConsent"));
 
 const AIChatPanel = lazy(() => import("@/components/AIChatPanel").then(m => ({ default: m.AIChatPanel })));
 
@@ -90,6 +91,7 @@ function AppRoutes() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/oauth/consent" element={<OAuthConsentPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={<ProtectedRoute><FocusHomeRedirect><Index /></FocusHomeRedirect></ProtectedRoute>} />
           <Route path="/pantry" element={<ProtectedRoute><PantryPage /></ProtectedRoute>} />
