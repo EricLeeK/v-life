@@ -89,7 +89,17 @@ https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp
 
 部署配置、数据库权限和验收说明见 [Agent 接入与维护](docs/agent-access.md)。
 
-### 3. 管理员备份 CLI
+### 3. OAuth JSON API
+
+不支持 MCP、但支持 OAuth 2.1 的 Agent 可以使用同一份领域服务：
+
+```text
+https://shenghuo.homes/api/v1
+```
+
+提供 `/capabilities`、`/openapi.json`、`/{module}`、`/{module}/{id}`、`/{module}/export` 和 `/summary/{name}`。它与 MCP 共用登录授权、RLS、字段白名单、幂等键和审计日志；OpenAPI 由模块注册表生成。
+
+### 4. 管理员备份 CLI
 
 以下 CLI 仅供站点管理员在可信环境进行运维和备份；用户自己的 Agent 请使用上面的 OAuth MCP 接口：
 

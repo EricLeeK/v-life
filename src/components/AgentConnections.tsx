@@ -15,6 +15,7 @@ export function AgentConnections() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp-server/mcp`;
+  const apiEndpoint = `${window.location.origin}/api/v1`;
   const load = useCallback(async () => {
     if (!user) return;
     setBusy(true); setError(null);
@@ -56,6 +57,7 @@ export function AgentConnections() {
     <p className="text-sm text-muted-foreground">在 Agent 的 MCP 连接设置中填写以下地址，选择 OAuth 登录，并在 V-Life 中批准需要的数据权限。</p>
     <code className="block break-all rounded bg-muted p-3 text-xs">{endpoint}</code>
     <div className="flex gap-2"><Button variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(endpoint); setNotice('连接地址已复制。'); } catch { setError('复制失败，请手动复制上方地址。'); } }}>复制连接地址</Button><Button variant="outline" size="sm" onClick={load} disabled={busy}>{busy ? '处理中…' : '刷新连接'}</Button></div>
+    <div className="space-y-2"><p className="text-sm text-muted-foreground">需要直接调用 JSON API 时使用同一 OAuth 授权：</p><code className="block break-all rounded bg-muted p-3 text-xs">{apiEndpoint}</code><Button variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(apiEndpoint); setNotice('API 地址已复制。'); } catch { setError('复制失败，请手动复制上方地址。'); } }}>复制 API 地址</Button></div>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {notice && <p role="status" className="text-sm">{notice}</p>}
     {!loaded && !error && <p className="text-sm text-muted-foreground">正在读取连接…</p>}

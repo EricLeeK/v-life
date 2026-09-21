@@ -4,3 +4,7 @@ project_id = "veabdivlfhctseihypzl"
 # The MCP adapter performs token verification and RLS-scoped client construction itself.
 [functions.mcp-server]
 verify_jwt = false
+
+# Same OAuth middleware as MCP; the function verifies the user token itself.
+[functions.agent-api]
+verify_jwt = false
