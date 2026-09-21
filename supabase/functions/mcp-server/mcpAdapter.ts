@@ -1,0 +1,4 @@
+import { MODULES, agentMetaOf } from "../_shared/moduleRegistry.ts";
+export const MCP_VERSION = "2.0.0";
+export function buildCapabilities() { return { version: MCP_VERSION, contract: "vlife-agent-data", modules: MODULES.filter((m) => agentMetaOf(m).agentVisible).map((m) => ({ key: m.key, label: m.labelZh, operations: { list: true, get: true, create: !!agentMetaOf(m).writeFields.length, update: !!agentMetaOf(m).writeFields.length, delete: true }, readFields: agentMetaOf(m).readFields, writeFields: agentMetaOf(m).writeFields, sensitiveFieldCount: agentMetaOf(m).sensitiveFields.length, exportable: agentMetaOf(m).exportable })) }; }
+export function oauthChallenge(resource: string): Response { return new Response(JSON.stringify({ error: "unauthorized", error_description: "OAuth access token required" }), { status: 401, headers: { "content-type": "application/json", "WWW-Authenticate": `Bearer resource_metadata="${resource}/.well-known/oauth-protected-resource"` } }); }

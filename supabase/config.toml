@@ -1,1 +1,6 @@
 project_id = "veabdivlfhctseihypzl"
+
+# OAuth protected-resource discovery must reach the Edge Function before a bearer token exists.
+# The MCP adapter performs token verification and RLS-scoped client construction itself.
+[functions.mcp-server]
+verify_jwt = false
