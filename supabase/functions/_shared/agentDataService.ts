@@ -89,12 +89,17 @@ async function scope(ctx: AgentContext, mod: ModuleDef, query: any): Promise<{qu
   return {query:query.in(owner.column,ids)};
 }
 function applyFilters(mod:ModuleDef,q:any,opts:AgentListOptions){
+  if(opts.date_from&&opts.date_to&&opts.date_from>opts.date_to)fail("INVALID_INPUT","date_from must not be later than date_to");
   for(const [key,value] of Object.entries(opts.filters??{})){
     if(!agentMetaOf(mod).readFields.includes(key))fail("FIELD_NOT_ALLOWED",`Field is not readable: ${key}`);
     if(value!==undefined&&value!==null)q=q.eq(key,value);
   }
   for(const [key,method] of [["date_from","gte"],["date_to","lte"]] as const){
-    if(opts[key]!==undefined){if(!validDate(opts[key]))fail("INVALID_INPUT",`Invalid ${key}`); const field=mod.executor?.dateField; if(!field)fail("INVALID_INPUT","Module has no date filter"); q=q[method](field,opts[key]);}
+    if(opts[key]!==undefined){if(!validDate(opts[key]))fail("INVALID_INPUT",`Invalid ${key}`); const field=mod.executor?.dateField; if(!field)fail("INVALID_INPUT","Module has no date filter");
+      if(mod.fields.find(f=>f.name===field)?.type==='datetime'){
+        const value=key==='date_to'?new Date(Date.parse(opts[key]!)+86400000).toISOString().slice(0,10):opts[key];
+        q=q[key==='date_to'?'lt':'gte'](field,`${value}T00:00:00+08:00`);
+      }else q=q[method](field,opts[key]);}
   }
   return q;
 }

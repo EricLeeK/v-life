@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createAgentDataService } from './agentDataService';
 function dbMock(result: any = {data: []}) {
  const calls: any[] = []; const q: any = {};
- for (const m of ['select','eq','in','ilike','order','range','limit','insert','update','delete','upsert']) q[m] = (...args: any[]) => {calls.push([m,...args]); return q};
+ for (const m of ['select','eq','gte','lte','lt','in','ilike','order','range','limit','insert','update','delete','upsert']) q[m] = (...args: any[]) => {calls.push([m,...args]); return q};
  q.then = (resolve: any) => Promise.resolve(result).then(resolve); q.maybeSingle = async () => result; q.single = async () => result;
  return {from: vi.fn(() => q),rpc:vi.fn(async()=>({data:{data:{id:'a',title:'ok',user_id:'secret'}},error:null})),calls};
 }
@@ -33,5 +33,21 @@ describe('agent RPC and paging',()=>{
  it('does not read settings for agent finance writes',async()=>{
   const db=dbMock(); await createAgentDataService(ctx(db)).create('finance',{name:'a',amount:10,currency:'JPY',category:'餐饮',date:'2026-09-21'});
   expect(db.from).not.toHaveBeenCalled(); expect(db.rpc.mock.calls[0][1].p_payload).not.toHaveProperty('exchange_rate');
+ });
+});
+
+describe('todo completion evidence',()=>{
+ it('reads completion timestamps and filters a full Beijing calendar day',async()=>{
+  const db=dbMock({data:[{id:'today',is_completed:true,completed_at:'2026-09-24T04:00:00Z'}]});
+  const result=await createAgentDataService(ctx(db)).list('todo',{filters:{is_completed:true},date_from:'2026-09-24',date_to:'2026-09-24'});
+  expect(result.data[0].completed_at).toBe('2026-09-24T04:00:00Z');
+  expect(db.calls.find(c=>c[0]==='select')?.[1].split(',')).toContain('completed_at');
+  expect(db.calls).toContainEqual(['gte','completed_at','2026-09-24T00:00:00+08:00']);
+  expect(db.calls).toContainEqual(['lt','completed_at','2026-09-25T00:00:00+08:00']);
+ });
+ it('does not allow callers to fabricate completion timestamps',async()=>{
+  const s=createAgentDataService(ctx(dbMock()));
+  await expect(s.create('todo',{title:'a',completed_at:'2026-09-24T04:00:00Z'})).rejects.toMatchObject({code:'FIELD_NOT_ALLOWED'});
+  await expect(s.update('todo','a',{completed_at:'2026-09-24T04:00:00Z'})).rejects.toMatchObject({code:'FIELD_NOT_ALLOWED'});
  });
 });

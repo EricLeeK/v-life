@@ -204,6 +204,7 @@ export const MODULES: ModuleDef[] = [
       { name: "habit_unit", type: "string" },
       { name: "is_paused", type: "boolean" },
       { name: "is_completed", type: "boolean", updateOnly: true },
+      { name: "completed_at", type: "datetime", internal: true, description: "服务端记录的最近完成时间；null 表示未完成或历史完成时间未知。只读。" },
     ],
     matchFields: ["title", "parent_title"],
     updateFields: ["is_completed", "title", "importance", "category", "detail", "kind", "habit_type", "habit_target", "habit_unit", "is_paused"],
@@ -212,6 +213,7 @@ export const MODULES: ModuleDef[] = [
     executor: {
       nameField: "title",
       queryKeys: ["todos"],
+      dateField: "completed_at",
       resolves: { from: "parent_title", toColumn: "parent_id", targetTable: "todos", targetField: "title" },
     },
   },

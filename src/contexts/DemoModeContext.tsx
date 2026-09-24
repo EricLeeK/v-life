@@ -78,7 +78,7 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
     }
 
     const id = record.id || generateId();
-    const newRecord = { id, created_at: now, updated_at: now, ...record };
+    const newRecord = { id, created_at: now, updated_at: now, ...record, ...(table === "todos" ? { completed_at: record.is_completed ? now : null } : {}) };
     setDemoData((prev) => ({
       ...prev,
       [table]: [...(prev[table] as any[]), newRecord],
@@ -98,12 +98,18 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setDemoData((prev) => ({
-      ...prev,
-      [table]: (prev[table] as any[]).map((item: any) =>
-        item.id === id ? { ...item, ...updates, updated_at: new Date().toISOString() } : item
-      ),
-    }));
+    setDemoData((prev) => {
+      const next = { ...prev, [table]: (prev[table] as any[]).map((item: any) => item.id === id ? { ...item, ...updates, updated_at: new Date().toISOString() } : item) };
+      if (typeof updates.is_completed === "boolean" && (table === "todos" || table === "daily_tasks")) {
+        const todoId = table === "todos" ? id : prev.daily_tasks.find((task: any) => task.id === id)?.todo_id;
+        const todo = prev.todos.find((item: any) => item.id === todoId);
+        if (todo && (!todo.kind || todo.kind === "once")) {
+          next.todos = next.todos.map((item: any) => item.id === todoId ? { ...item, is_completed: updates.is_completed, completed_at: updates.is_completed ? (todo.is_completed ? todo.completed_at ?? null : new Date().toISOString()) : null } : item);
+          next.daily_tasks = next.daily_tasks.map((item: any) => item.todo_id === todoId ? { ...item, is_completed: updates.is_completed, completed_at: updates.is_completed ? item.completed_at ?? new Date().toISOString() : null } : item);
+        }
+      }
+      return next;
+    });
   }, []);
 
   const deleteRecord = useCallback((table: keyof DemoDataStore, id: string) => {

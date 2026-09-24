@@ -59,3 +59,22 @@ describe("demo record shapes", () => {
     expect(result.current.demo.demoData.todos).toHaveLength(originalCount);
   });
 });
+
+it('records completion transitions without inventing dates for legacy completed todos', () => {
+  const { result } = mount();
+  act(() => { result.current.demo.addRecord('todos', { id:'timestamp-todo',title:'test',kind:'once',is_completed:false }); });
+  const todo = () => result.current.demo.demoData.todos.find(t => t.id === 'timestamp-todo');
+  act(() => result.current.demo.updateRecord('todos','timestamp-todo',{is_completed:true}));
+  const completedAt = todo().completed_at;
+  expect(completedAt).toEqual(expect.any(String));
+  act(() => result.current.demo.updateRecord('todos','timestamp-todo',{is_completed:true,completed_at:'fake'}));
+  expect(todo().completed_at).toBe(completedAt);
+  act(() => result.current.demo.updateRecord('todos','timestamp-todo',{is_completed:false}));
+  expect(todo().completed_at).toBeNull();
+  act(() => result.current.demo.updateRecord('todos','timestamp-todo',{is_completed:true}));
+  expect(todo().completed_at).toEqual(expect.any(String));
+  // Simulate pre-migration storage rather than creating a newly completed record.
+  todo().completed_at = null;
+  act(() => result.current.demo.updateRecord('todos','timestamp-todo',{is_completed:true}));
+  expect(todo().completed_at).toBeNull();
+});

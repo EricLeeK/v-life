@@ -47,3 +47,13 @@ npm run build
 SQL 验收以事务运行并回滚，使用固定专用测试用户 UUID；不要删除 rollback。真实 OAuth 测试使用独立临时用户，测试后撤销授权并删除临时用户、客户端及其数据。
 
 未登录 `/mcp` 和 `/api/v1/*` 应返回 401，`WWW-Authenticate` 指向可读取的 OAuth metadata，而不是网关的 Missing authorization header。登录后验证初始化、工具发现、读取、创建、修改、删除、重复创建、分页导出及撤销后的 403。
+
+### 待办完成时间与每日回顾
+
+`todo.completed_at` 为服务端维护的只读时间：首次完成或撤销后重新完成时记录，重复保存已完成状态不改时间，撤销完成时清空。历史已完成项保留 `null`（完成时间未知），不能用 `created_at`、`updated_at` 或迁移时间回填。
+
+`todo_list` / HTTP todo 列表的 `date_from`、`date_to` 按 **北京时间自然日的完成时间** 筛选（起始日含、结束日全天含）；每日回顾应同时筛选 `is_completed=true` 并读取全部分页。未指定日期时返回的是跨日期清单，不能称为“今日完成”。未知完成时间单列说明；上线初期有时间证据的数量不能当作完整历史统计。
+
+`daily_task_today` 按用户业务日返回安排清单；`task_date` 不是实际完成日期。若按 `day_start_hour` 回顾业务日，需根据 `completed_at` 判断对应时间区间。一次性总待办与关联日任务不能重复计数，多个日任务按 `todo_id` 去重。撤销/重做仅保留最近完成状态和时间，不是完整事件日志。
+
+发布此能力时，先应用 `20260925001000_todo_completion_timestamp.sql`，再发布使用新版模块字段的 Edge Functions，避免新接口读取尚不存在的列。

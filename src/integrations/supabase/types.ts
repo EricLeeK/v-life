@@ -1353,6 +1353,7 @@ export type Database = {
       todos: {
         Row: {
           category: string
+          completed_at: string | null
           created_at: string
           detail: string | null
           habit_target: number | null
@@ -1371,6 +1372,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          completed_at?: string | null
           created_at?: string
           detail?: string | null
           habit_target?: number | null
@@ -1389,6 +1391,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          completed_at?: string | null
           created_at?: string
           detail?: string | null
           habit_target?: number | null
