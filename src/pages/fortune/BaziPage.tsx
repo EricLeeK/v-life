@@ -50,7 +50,7 @@ export default function BaziPage() {
       }),
     );
     setLoading(false);
-    if (res.ok) setReading(res.text);
+    if (res.ok === true) setReading(res.text);
     else toast({ title: t("AI 暂不可用，已显示底稿", "AI unavailable — draft shown"), description: res.error });
   }
 

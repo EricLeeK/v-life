@@ -27,6 +27,12 @@ export interface FieldDef {
   type: FieldType;
   required?: boolean; // required on create
   enum?: string[]; // closed enum, surfaced as a JSON-Schema `enum` and a prompt union (ignored when vocab is "open")
+  exclusiveMinimum?: number; // numeric input must be strictly greater
+  minimum?: number;
+  maximum?: number;
+  integer?: boolean;
+  nullable?: boolean;
+  aliases?: Record<string, string>; // accepted input aliases; persist canonical enum values
   /**
    * "open" = user-defined values (live 用户词表). The prompt renders a plain string
    * and must not present a fake closed enum. Closed is the default when `enum` is set.
@@ -57,7 +63,7 @@ export interface ExecutorHints {
   nameField?: string; // field used for fuzzy-match fallback (delete with empty match)
   resolves?: ResolveSpec; // foreign-key resolution by name
   queryKeys?: string[]; // React Query keys to invalidate after write
-  special?: "daily_task" | "habit_log"; // bespoke handler hook (not generic CRUD)
+  special?: "daily_task" | "habit_log" | "subscription_payment"; // bespoke handler hook (not generic CRUD)
   dateField?: string; // column used for date-range filtering in read_data (e.g. "date", "start_time")
 }
 
@@ -115,6 +121,51 @@ export function agentMetaOf(mod: ModuleDef): AgentModuleMeta {
 
 export const MODULES: ModuleDef[] = [
   {
+    key: "subscription", labelZh: "订阅", labelEn: "Subscription", headingZh: "订阅管理", table: "subscriptions", index: 23,
+    actions: { create: true, update: true, delete: true },
+    fields: [
+      { name: "name", type: "string", required: true },
+      { name: "url", type: "string", nullable: true, description: "产品官网，仅允许 http/https 地址" },
+      { name: "management_url", type: "string", nullable: true, description: "用户提供的管理/取消订阅链接，仅允许 http/https；不会代替用户取消外部服务" },
+      { name: "category", type: "string", vocab: "open", description: "开放分类，优先复用用户现有值，默认其他" },
+      { name: "plan", type: "string", nullable: true }, { name: "account", type: "string", nullable: true }, { name: "notes", type: "string", nullable: true },
+      { name: "amount", type: "number", required: true, minimum: 0, maximum: 1e12, description: "一个账期的实际报价；按量计费时为用户提供的预估金额，不能编造" },
+      { name: "currency", type: "string", required: true, enum: ["CNY", "USD", "JPY"] },
+      { name: "billing_type", type: "string", enum: ["fixed", "usage"] },
+      { name: "billing_unit", type: "string", enum: ["month", "day"] },
+      { name: "billing_interval", type: "number", integer: true, minimum: 1, maximum: 3660, description: "账期间隔正整数；月最多120，日最多3660" },
+      { name: "status", type: "string", enum: ["active", "trial", "ended"] },
+      { name: "auto_renew", type: "boolean" },
+      { name: "next_date", type: "date", required: true, description: "用户确认的下次扣费日/试用结束日/到期日；不得从月均成本推测" },
+      { name: "anchor_day", type: "number", integer: true, minimum: 1, maximum: 31 },
+      { name: "reminder_days", type: "number", integer: true, minimum: 0, maximum: 365, nullable: true, description: "提前提醒天数，默认3；null 关闭提醒" },
+    ],
+    matchFields: ["id", "name"],
+    notes: "金额和日期必须来自用户或已存记录，缺少时先询问。月均成本是预算折算，不等于当月实际支出。auto_renew=false / status=ended 只更新本地跟踪，不能承诺已取消外部订阅。确认实际付款使用 subscription_payment create，并先读取 subscription 的真实 ID；不要直接创建重复账单。",
+    executor: { nameField: "name", needsUserId: true, dateField: "next_date", queryKeys: ["subscriptions"] },
+  },
+  {
+    key: "subscription_payment", labelZh: "订阅付款", labelEn: "Subscription payment", headingZh: "确认订阅付款与历史", table: "subscription_payments", index: 24,
+    actions: { create: true },
+    fields: [
+      { name: "subscription_id", type: "string", required: true, description: "subscription_list/get 返回的真实订阅 UUID" },
+      { name: "due_date", type: "date", required: true, description: "待确认账期原 next_date，重试必须保持原值" },
+      { name: "paid_on", type: "date", required: true, description: "实际付款日期，不得是未来日期" },
+      { name: "amount", type: "number", required: true, minimum: 0, maximum: 1e12, description: "该账期实际付款金额，不得用预算估算代替" },
+      { name: "next_date", type: "date", required: true, description: "确认后的下次扣费/到期日，须晚于 due_date" },
+      { name: "record_expense", type: "boolean", description: "仅用户明确要求同时记账时为 true；默认 false，需记账写权限" },
+      { name: "exchange_rate", type: "number", nullable: true, exclusiveMinimum: 0, description: "同时记账且外币时用户确认的兑 CNY 汇率，不能自行估算" },
+      { name: "period_date", type: "date", internal: true },
+      { name: "currency", type: "string", enum: ["CNY", "USD", "JPY"], internal: true },
+      { name: "finance_record_id", type: "string", internal: true },
+      { name: "created_at", type: "datetime", internal: true },
+    ],
+    agentReadFields: ["subscription_id", "period_date", "paid_on", "amount", "currency", "next_date", "finance_record_id", "record_expense", "exchange_rate", "created_at"],
+    agentUpdateFields: [],
+    notes: "create 是确认已发生的付款，不是执行扣费。原子保存付款历史、推进日期，可选记账。同订阅同 due_date 重试只返回原付款，不重复扣费或记账；修改参数会冲突。历史只能读取，不允许直接修改或删除。",
+    executor: { special: "subscription_payment", dateField: "paid_on", queryKeys: ["subscriptions", "subscription_payments", "finance"] },
+  },
+  {
     key: "finance",
     labelZh: "记账",
     labelEn: "Finance",
@@ -153,15 +204,17 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true, update: true, delete: true },
     fields: [
       { name: "food_name", type: "string", required: true },
-      { name: "calories", type: "number", required: true },
-      { name: "meal_type", type: "string", required: true, enum: ["breakfast", "lunch", "dinner", "snack", "exercise"] },
+      { name: "calories", type: "number", required: true, exclusiveMinimum: 0, description: "热量（kcal）必须为大于 0 的正数，饮食和运动均如此。运动消耗 200 千卡填写 calories=200、meal_type=exercise，不能填 -200；系统自动按摄入减运动消耗计算净热量。" },
+      { name: "meal_type", type: "string", required: true, enum: ["breakfast", "lunch", "dinner", "snack", "exercise"],
+        aliases: { "早餐": "breakfast", "午餐": "lunch", "晚餐": "dinner", "加餐": "snack", "运动": "exercise" },
+        description: "支持中文别名：早餐→breakfast、午餐→lunch、晚餐→dinner、加餐→snack、运动→exercise；存储和返回使用英文标准值。" },
       { name: "date", type: "date", required: true },
       { name: "notes", type: "string" },
     ],
     matchFields: ["food_name", "date", "meal_type"],
     updateFields: ["food_name", "calories", "meal_type", "notes"],
     notes:
-      '运动类（meal_type="exercise"）：当用户提到运动/锻炼时，使用 meal_type="exercise"，calories 填写消耗的热量。food_name 填运动名称（如"跑步30分钟"）。你需要根据运动类型和时长自行估算消耗的大卡数。',
+      '运动类（meal_type="exercise"）：当用户提到运动/锻炼时，使用 meal_type="exercise"，calories 必须填写大于 0 的正数：消耗 200 千卡填 200，不能填 -200；系统自动扣减运动消耗，不要自行加负号。food_name 填运动名称（如"跑步30分钟"）。你需要根据运动类型和时长自行估算消耗的大卡数。',
     executor: { nameField: "food_name", queryKeys: ["calories"], dateField: "date" },
   },
   {
@@ -310,7 +363,7 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true, delete: true },
     fields: [
       { name: "weight", type: "number", required: true },
-      { name: "date", type: "date" },
+      { name: "date", type: "date", required: true },
       { name: "notes", type: "string" },
     ],
     matchFields: ["date"],
@@ -330,7 +383,7 @@ export const MODULES: ModuleDef[] = [
       { name: "chest", type: "number" },
       { name: "arm", type: "number" },
       { name: "thigh", type: "number" },
-      { name: "date", type: "date" },
+      { name: "date", type: "date", required: true },
       { name: "notes", type: "string" },
     ],
     matchFields: ["date"],
@@ -434,7 +487,7 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true, update: true, delete: true },
     fields: [
       { name: "title", type: "string", required: true },
-      { name: "plan_date", type: "date" },
+      { name: "plan_date", type: "date", required: true },
       { name: "subject_group", type: "string", enum: ["xingce", "shenlun", "mianshi", "general"] },
       { name: "subject_tag", type: "string" },
       { name: "detail", type: "string" },
@@ -459,7 +512,7 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true },
     fields: [
       { name: "studied_minutes", type: "number", required: true },
-      { name: "date", type: "date" },
+      { name: "date", type: "date", required: true },
       { name: "note", type: "string" },
     ],
     notes: "同一天重复打卡会覆盖（upsert）。",
@@ -514,7 +567,7 @@ export const MODULES: ModuleDef[] = [
     index: 18,
     actions: { create: true, update: true, delete: true },
     fields: [
-      { name: "taken_date", type: "date" },
+      { name: "taken_date", type: "date", required: true },
       { name: "source", type: "string", required: true },
       { name: "is_mock", type: "boolean" },
       { name: "verbal_total", type: "number" },
@@ -549,11 +602,22 @@ export const MODULES: ModuleDef[] = [
     headingZh: '今日待办 — 加入"今天"的任务表，区别于 todo 待办事项',
     table: "daily_tasks",
     index: 19,
-    actions: { create: true, delete: true },
+    actions: { create: true, update: true, delete: true },
+    agentVisible: true,
+    agentReadFields: ["todo_id", "task_date", "difficulty", "base_points", "is_completed", "completed_at"],
+    agentCreateFields: ["todo_id", "title", "kind", "category", "importance", "detail", "task_date"],
+    agentUpdateFields: ["is_completed"],
     fields: [
       { name: "todo_id", type: "string", description: "已命中待办的 UUID（优先用，来自 read_data/read_todo 的结果）" },
-      { name: "title", type: "string", required: true },
+      { name: "title", type: "string", description: "无 todo_id 时按标题匹配未完成待办，没有则新建；重名请用 todo_id" },
+      { name: "kind", type: "string", enum: ["once", "routine"], description: "新建总待办的种类，默认 once；习惯用 habit_log" },
+      { name: "category", type: "string", vocab: "open" },
+      { name: "importance", type: "string", enum: ["紧急", "重要", "普通", "低优先"] },
+      { name: "detail", type: "string" },
+      { name: "task_date", type: "date", description: "默认北京时间并按用户 day_start_hour 划分今天" },
+      { name: "is_completed", type: "boolean", updateOnly: true, description: "完成或撤销；一次性总待办同步，例行保留" },
     ],
+    updateFields: ["is_completed"],
     matchFields: ["title"],
     matchRequired: ["title"],
     notes:
@@ -586,11 +650,11 @@ export const MODULES: ModuleDef[] = [
     fields: [
       { name: "title", type: "string", required: true },
       { name: "content", type: "string", required: true },
-      { name: "course_name", type: "string" },
+      { name: "course_name", type: "string", required: true },
       { name: "tags", type: "array", promptType: "string[]" },
       { name: "note_date", type: "date" },
     ],
-    notes: "course_name 用课程名称（不要填 id）；系统会自动模糊匹配已存在的课程并关联。不关联课程时省略 course_name，作为独立笔记。",
+    notes: "course_name 必填，使用已存在课程的完整名称（不要填 id）；按名称精确匹配，同名时先消除歧义。",
     executor: {
       nameField: "title",
       queryKeys: ["learning_notes"],
@@ -759,7 +823,8 @@ const PROMPT_HEADER = `你是 V-Life Manager 的数据操作助手。你的唯�
 
 const PROMPT_AGENT = `## 数据读取能力（ReAct 工具调用）
 你并非"盲"的——需要查看用户数据时，**先调用工具读取，再决定操作**：
-- \`read_data(module, date_from?, date_to?, filters?, limit?)\`：读取任意模块记录。\`module\` 取值即上方「模块定义」中的 key（finance/calories/schedule/todo/…/habit_log，共 22 个）。\`filters\` 为字段→值的模糊匹配对象（如 {category:"餐饮"}）；\`date_from/date_to\` 为 YYYY-MM-DD；\`limit\` 默认 50。
+- \`read_data(module, date_from?, date_to?, filters?, limit?)\`：读取任意模块记录。\`module\` 取值即上方「模块定义」中的 key。\`filters\` 为字段→值的匹配对象（订阅 ID、日期和枚举为精确匹配，名称/分类可包含匹配）；\`date_from/date_to\` 为 YYYY-MM-DD；\`limit\` 默认 50。订阅日期对应 next_date，付款历史对应 paid_on；先读订阅获取真实 ID，再用 subscription_payment 按 subscription_id 读历史。
+- \`get_subscription_summary()\`：完整订阅汇总，月均预算、按量预估、未来30天预计扣费按币种分开；实际支出以付款历史为准。不得凭单页记录声称完整汇总。
 - \`get_today_plan()\`：读取今天已规划的任务（用于避免重复加入、查看今日安排）。
 
 ### 何时调用工具

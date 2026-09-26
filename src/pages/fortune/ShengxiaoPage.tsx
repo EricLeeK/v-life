@@ -65,7 +65,7 @@ export default function ShengxiaoPage() {
       }),
     );
     setLoading(false);
-    if (res.ok) setReading(res.text);
+    if (res.ok === true) setReading(res.text);
     else {
       setReading(rule.body);
       toast({ title: t("AI 暂不可用，已显示底稿", "AI unavailable — draft shown"), description: res.error });

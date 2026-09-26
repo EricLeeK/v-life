@@ -11,8 +11,9 @@ import {
 } from "@modules";
 
 describe("MODULES integrity", () => {
-  it("has exactly 22 modules", () => {
-    expect(MODULES).toHaveLength(22);
+  it("includes all 24 modules including subscriptions and payment confirmation", () => {
+    expect(MODULES).toHaveLength(24);
+    expect(MODULE_KEYS).toEqual(expect.arrayContaining(['subscription','subscription_payment']));
   });
 
   it("has unique keys", () => {
@@ -34,9 +35,9 @@ describe("MODULES integrity", () => {
     }
   });
 
-  it("module indices are 1..22 contiguous", () => {
+  it("module indices are 1..24 contiguous", () => {
     const indices = MODULES.map((m) => m.index).sort((a, b) => a - b);
-    expect(indices).toEqual(Array.from({ length: 22 }, (_, i) => i + 1));
+    expect(indices).toEqual(Array.from({ length: 24 }, (_, i) => i + 1));
   });
 
   it("no internal field appears in any updateFields list", () => {
@@ -88,16 +89,17 @@ describe("derived helpers", () => {
     // the two belongings modules share the "belongings" namespace → deduped to one
     expect(keys).toContain("belongings");
     expect(keys.filter((k) => k === "belongings")).toHaveLength(1);
-    // 22 modules, minus 1 because belongings_daily + belongings_durable collapse to one key
+    // Subscription confirmation also invalidates finance but adds only its history key.
     expect(keys).toContain("todo_habit_logs");
-    expect(keys).toHaveLength(21);
+    expect(keys).toContain('subscriptions');expect(keys).toContain('subscription_payments');
+    expect(keys).toHaveLength(23);
   });
 });
 
 describe("buildSystemPrompt", () => {
   const prompt = buildSystemPrompt();
 
-  it("renders all 22 module headings", () => {
+  it("renders every module heading", () => {
     for (const m of MODULES) {
       expect(prompt).toContain(`### ${m.index}. ${m.key}（${m.headingZh}）`);
     }
@@ -145,7 +147,10 @@ describe("buildSystemPrompt", () => {
 
   it("keeps internal computed columns out of the prompt", () => {
     expect(prompt).not.toContain("amount_cny");
-    expect(prompt).not.toContain("exchange_rate");
+    const financeSpec=prompt.slice(prompt.indexOf('### 1. finance'),prompt.indexOf('### 2. calories'));
+    expect(financeSpec).not.toContain("exchange_rate");
+    expect(createFieldsOf('finance').some(field=>field.name==='exchange_rate')).toBe(false);
+    expect(createFieldsOf('subscription_payment').some(field=>field.name==='exchange_rate')).toBe(true);
   });
 
   it("renders finance with the exact category constraint note", () => {

@@ -1,6 +1,9 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ExamCountdown } from "./ExamCountdown";
+
+const createExam = vi.hoisted(() => ({ mutateAsync: vi.fn(), isPending: false }));
+afterEach(() => { cleanup(); createExam.isPending = false; });
 
 const exams = [
   {
@@ -39,12 +42,19 @@ vi.mock("@/hooks/use-toast", () => ({
 
 vi.mock("@/hooks/useCivilService", () => ({
   useCivilExams: () => ({ data: exams }),
-  useCreateCivilExam: () => ({ mutateAsync: vi.fn() }),
+  useCreateCivilExam: () => createExam,
   useUpdateCivilExam: () => ({ mutate: vi.fn() }),
   useDeleteCivilExam: () => ({ mutate: vi.fn() }),
 }));
 
 describe("ExamCountdown", () => {
+  it("renders the saving state without crashing and prevents duplicate submissions", () => {
+    createExam.isPending = true;
+    render(<ExamCountdown />);
+    fireEvent.click(screen.getByRole("button", { name: "管理考试" }));
+    expect(screen.getByRole("button", { name: /^添加$/ })).toBeDisabled();
+  });
+
   it("shows every target and gives the nearest exam the largest countdown", () => {
     render(<ExamCountdown />);
 

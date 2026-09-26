@@ -1,3 +1,5 @@
+import type { Subscription, SubscriptionPayment } from "@/lib/subscriptions";
+import type { Tables } from "@/integrations/supabase/types";
 // Demo seed data for Guest Tour mode
 // Persona: 小明 (Xiao Ming) — Chinese grad student in Sapporo, Japan
 // Dates are generated dynamically relative to the current date
@@ -126,8 +128,8 @@ function fmt(d: Date, hour: number, minute = 0): string {
   return dt.toISOString();
 }
 
-function generateScheduleEvents(): typeof demoScheduleEvents {
-  const events: typeof demoScheduleEvents = [];
+function generateScheduleEvents(): Tables<"schedule_events">[] {
+  const events: Tables<"schedule_events">[] = [];
   const today = new Date();
   const dow = today.getDay(); // 0=Sun
   const mon = new Date(today);
@@ -272,8 +274,8 @@ const DINNER_OPTIONS = [
   { name: "麻辣烫", cal: 720 }, { name: "烤肉定食", cal: 700 },
 ];
 
-function generateCalorieRecords(): typeof demoCalorieRecords {
-  const records: typeof demoCalorieRecords = [];
+function generateCalorieRecords(): Tables<"calorie_records">[] {
+  const records: Tables<"calorie_records">[] = [];
   const today = new Date();
   for (let dayOffset = -13; dayOffset <= 0; dayOffset++) {
     const d = new Date(today);
@@ -307,7 +309,7 @@ function generateCalorieRecords(): typeof demoCalorieRecords {
 export const demoCalorieRecords = generateCalorieRecords();
 
 // ============ Todos ============
-export const demoTodos = [
+export const demoTodos: (Tables<"todos"> & { tags?: string[] })[] = [
   // AI学习 Category Tasks matching screenshot
   { id: "demo-t-ai-01", title: "Multi-agent PDE solving system - LEAP", detail: null, importance: "urgent", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-08T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-02", title: "秋招 agent 或者自动化开发", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
@@ -342,7 +344,17 @@ export const demoTodos = [
   { id: "demo-habit-read", title: "阅读", detail: null, importance: "普通", category: "习惯", kind: "habit", habit_type: "duration", habit_target: 30, habit_unit: "分钟", is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-20T10:00:00+09:00", updated_at: "2026-08-20T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-habit-sleep", title: "23:30 前睡觉", detail: null, importance: "普通", category: "习惯", kind: "habit", habit_type: "avoidance", habit_target: null, habit_unit: null, is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-26T10:00:00+09:00", updated_at: "2026-08-26T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-routine-email", title: "查工作邮箱", detail: null, importance: "普通", category: "工作", kind: "routine", habit_type: null, habit_target: null, habit_unit: null, is_paused: false, is_completed: false, is_archived: false, created_at: "2026-08-20T10:00:00+09:00", updated_at: "2026-08-20T10:00:00+09:00", user_id: DEMO_USER },
-];
+].map(todo => ({
+  kind: "once",
+  parent_id: null,
+  habit_type: null,
+  habit_target: null,
+  habit_unit: null,
+  is_paused: false,
+  // Legacy examples have no recorded completion time.
+  completed_at: null,
+  ...todo,
+}));
 
 // ============ Daily Tasks (Today's Todo — dynamic) ============
 function localIsoDate(daysAgo = 0): string {
@@ -354,7 +366,7 @@ function localIsoDate(daysAgo = 0): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function generateDailyTasks(): typeof demoDailyTasks {
+function generateDailyTasks(): Tables<"daily_tasks">[] {
   const dateStr = localIsoDate();
   const yesterday = localIsoDate(1);
   const dayBefore = localIsoDate(2);
@@ -369,7 +381,7 @@ function generateDailyTasks(): typeof demoDailyTasks {
     { id: DTASK_5, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000005", task_date: dateStr, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
     { id: DTASK_PAST_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000003", task_date: yesterday, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: yesterdayTs, updated_at: yesterdayTs },
     { id: DTASK_PAST_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000012", task_date: dayBefore, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: dayBeforeTs, updated_at: dayBeforeTs },
-  ];
+  ].map(task => ({ ...task, metadata: {} }));
 }
 
 export const demoDailyTasks = generateDailyTasks();
@@ -440,7 +452,7 @@ function getLastMonday(): string {
   return d.toISOString().split("T")[0];
 }
 
-function generateGoals(): typeof demoGoals {
+function generateGoals(): Tables<"goals">[] {
   const thisMon = getCurrentMonday();
   const thisMonth = getCurrentMonthStart();
   const lastMon = getLastMonday();
@@ -945,6 +957,8 @@ export interface DemoDataStore {
   weight_records: typeof demoWeightRecords;
   measurement_records: typeof demoMeasurementRecords;
   pantry_items: typeof demoPantryItems;
+  subscriptions: Subscription[];
+  subscription_payments: SubscriptionPayment[];
   belongings_daily: typeof demoBelongingsDaily;
   belongings_durable: typeof demoBelongingsDurable;
   thoughts: typeof demoThoughts;
@@ -978,6 +992,8 @@ export function createDemoDataStore(): DemoDataStore {
     weight_records: [...demoWeightRecords],
     measurement_records: [...demoMeasurementRecords],
     pantry_items: [...demoPantryItems],
+    subscriptions: demoSubscriptions(),
+    subscription_payments: [],
     belongings_daily: [...demoBelongingsDaily],
     belongings_durable: [...demoBelongingsDurable],
     thoughts: [...demoThoughts],
@@ -997,4 +1013,18 @@ export function createDemoDataStore(): DemoDataStore {
     civil_wrong_answers: [...demoCivilWrongAnswers],
     civil_xingce_papers: [...demoCivilXingcePapers],
   };
+}
+
+// Illustrative subscription plans; prices are demo data, not current provider offers.
+function demoSubscriptions(): Subscription[] {
+  const dateIn = (days: number) => {
+    const d = new Date(); d.setDate(d.getDate() + days);
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+  };
+  const base = { user_id: DEMO_USER, management_url: null, plan: null, account: "演示账号", notes: "演示数据，非真实订阅", billing_type: "fixed", billing_unit: "month", billing_interval: 1, status: "active", auto_renew: true, reminder_days: 3 } as const;
+  return [
+    { ...base, id: "d211af6d-8800-4000-8000-000000000001", name: "AI 工作台（示例）", url: "https://example.com/ai", category: "AI 工具", amount: 20, currency: "USD", next_date: dateIn(2), anchor_day: Number(dateIn(2).slice(-2)) },
+    { ...base, id: "d211af6d-8800-4000-8000-000000000002", name: "云盘（示例）", url: "https://example.com/cloud", category: "云服务", amount: 240, currency: "CNY", billing_interval: 12, next_date: dateIn(25), anchor_day: Number(dateIn(25).slice(-2)) },
+    { ...base, id: "d211af6d-8800-4000-8000-000000000003", name: "笔记软件（示例）", url: "https://example.com/notes", category: "效率工具", amount: 30, currency: "CNY", status: "trial", next_date: dateIn(3), anchor_day: Number(dateIn(3).slice(-2)) },
+  ];
 }

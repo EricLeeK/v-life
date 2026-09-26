@@ -38,7 +38,7 @@ export default function ZodiacPage() {
     void fetchHoroscope(sign, lang).then((res) => {
       if (cancelled) return;
       setLoadingHoro(false);
-      if (res.ok) setHoroscope(res.data);
+      if (res.ok === true) setHoroscope(res.data);
       else {
         setLoadError(res.error);
         toast({
@@ -88,7 +88,7 @@ export default function ZodiacPage() {
       }),
     );
     setLoading(false);
-    if (res.ok) setReading(res.text);
+    if (res.ok === true) setReading(res.text);
     else {
       setReading(horoscope?.text || rule.body);
       toast({ title: t("AI 暂不可用，已显示日运原文", "AI unavailable — raw horoscope shown"), description: res.error });

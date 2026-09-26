@@ -12,6 +12,8 @@ import { Plus, Trash2, Edit2, TrendingDown } from "lucide-react";
 import { belongingsDailyHooks, belongingsDurableHooks } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { differenceInDays, format } from "date-fns";
+import { useSearchParams } from "react-router-dom";
+import { SubscriptionPanel } from "@/components/belongings/SubscriptionPanel";
 import { useLang } from "@/contexts/LanguageContext";
 
 const DURABLE_CATEGORIES = ["电子产品", "家电", "家具", "交通工具", "其他"] as const;
@@ -31,7 +33,9 @@ function calcDurable(item: any) {
 
 export default function BelongingsPage() {
   const { t, lang } = useLang();
-  const [tab, setTab] = useState("daily");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = ["daily", "durable", "subscriptions"].includes(searchParams.get("tab") || "") ? searchParams.get("tab")! : "daily";
+  const setTab = (value: string) => setSearchParams({ tab: value }, { replace: true });
   const [dailyDialog, setDailyDialog] = useState(false);
   const [durableDialog, setDurableDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -97,12 +101,13 @@ export default function BelongingsPage() {
     <AppLayout title={t("用品管理", "Belongings")}>
       <div className="space-y-4">
         <Tabs value={tab} onValueChange={(value) => { if (isSaving) return; setTab(value); setDailyDialog(false); setDurableDialog(false); resetEditor(); }}>
-          <div className="flex items-center justify-between mb-4">
-            <TabsList>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <TabsList className="max-w-full h-auto flex-wrap">
               <TabsTrigger value="daily">{t("日用消耗品", "Daily Consumables")}</TabsTrigger>
               <TabsTrigger value="durable">{t("大额耐用品", "Durable Goods")}</TabsTrigger>
+              <TabsTrigger value="subscriptions" className="min-h-11">{t("订阅服务", "Subscriptions")}</TabsTrigger>
             </TabsList>
-            <Dialog open={tab === "daily" ? dailyDialog : durableDialog} onOpenChange={changeDialog}>
+            {tab !== "subscriptions" && <Dialog open={tab === "daily" ? dailyDialog : durableDialog} onOpenChange={changeDialog}>
               <DialogTrigger asChild>
                 <Button size="sm" onClick={resetEditor}><Plus className="h-4 w-4 mr-1" />{t("添加", "Add")}</Button>
               </DialogTrigger>
@@ -133,9 +138,10 @@ export default function BelongingsPage() {
                   </div>
                 )}
               </DialogContent>
-            </Dialog>
+            </Dialog>}
           </div>
 
+          <TabsContent value="subscriptions"><SubscriptionPanel /></TabsContent>
           <TabsContent value="daily" className="space-y-1">
             {dailyItems.length === 0 ? <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无日用品记录", "No daily items")}</p> :
               dailyItems.map((item: any, i: number) => (

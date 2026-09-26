@@ -2,7 +2,7 @@ import { differenceInCalendarDays, parseISO, format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,7 +17,7 @@ import {
   type CivilExam,
 } from "@/hooks/useCivilService";
 import { EXAM_TYPES } from "@/lib/civilServiceSubjects";
-import { Plus, Star, Archive, Trash2 } from "lucide-react";
+import { Plus, Star, Archive, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function ExamCountdown() {
@@ -167,6 +167,7 @@ function ExamManageDialog({
       <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="heading-font">{t("考试倒计时", "Exam countdown")}</DialogTitle>
+          <DialogDescription>{t("添加考试日期，管理你的备考目标。", "Add exam dates and manage your study targets.")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">

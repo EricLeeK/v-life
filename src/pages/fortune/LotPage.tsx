@@ -30,11 +30,11 @@ export default function LotPage() {
       buildFortuneUserPrompt({
         kind: "lot",
         lang,
-        facts: result,
+        facts: { ...result },
       }),
     );
     setLoading(false);
-    if (res.ok) setReading(res.text);
+    if (res.ok === true) setReading(res.text);
     else toast({ title: t("AI 暂不可用，已显示底稿", "AI unavailable — draft shown"), description: res.error });
   }
 
@@ -80,7 +80,7 @@ export default function LotPage() {
                 <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                   {reading}
                 </p>
-                <SaveReadingButton type="lot" payload={lot} reading={reading} />
+                <SaveReadingButton type="lot" payload={{ ...lot }} reading={reading} />
               </div>
             )}
           </div>

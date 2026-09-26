@@ -18,6 +18,7 @@ const SKIP = new Set(["", "未分类", "Uncategorized"]);
 export type UserVocabSnapshot = {
   todoCategories: string[];
   dailyBelongingCategories: string[];
+  subscriptionCategories?: string[];
   thoughtTags: string[];
   projectNames: string[];
   courseNames: string[];
@@ -53,6 +54,7 @@ export function emptyUserVocab(): UserVocabSnapshot {
   return {
     todoCategories: [],
     dailyBelongingCategories: [],
+    subscriptionCategories: [],
     thoughtTags: [],
     projectNames: [],
     courseNames: [],
@@ -64,6 +66,7 @@ export function formatUserVocabBlock(snap: UserVocabSnapshot): string {
   const rows: Array<[string, string[]]> = [
     ["todo.category", snap.todoCategories],
     ["belongings_daily.category", snap.dailyBelongingCategories],
+    ["subscription.category", snap.subscriptionCategories ?? []],
     ["thought.tags", snap.thoughtTags],
     ["project", snap.projectNames],
     ["course", snap.courseNames],
@@ -112,7 +115,7 @@ export async function fetchUserVocab(
   sb: VocabClient,
   settings?: { custom_thought_tags?: unknown } | null,
 ): Promise<UserVocabSnapshot> {
-  const [todoRows, dailyRows, thoughtRows, projectNames, courseNames] = await Promise.all([
+  const [todoRows, dailyRows, thoughtRows, projectNames, courseNames, subscriptionRows] = await Promise.all([
     columnValues(sb, "todos", "category"),
     columnValues(sb, "belongings_daily", "category"),
     (async () => {
@@ -126,11 +129,13 @@ export async function fetchUserVocab(
     })(),
     nameValues(sb, "projects"),
     nameValues(sb, "learning_courses"),
+    columnValues(sb, "subscriptions", "category"),
   ]);
 
   return {
     todoCategories: normalizeVocabList(todoRows),
     dailyBelongingCategories: normalizeVocabList(dailyRows),
+    subscriptionCategories: normalizeVocabList(subscriptionRows),
     thoughtTags: collectThoughtTags(thoughtRows, settings?.custom_thought_tags),
     projectNames,
     courseNames,

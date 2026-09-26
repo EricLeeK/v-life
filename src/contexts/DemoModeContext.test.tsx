@@ -78,3 +78,13 @@ it('records completion transitions without inventing dates for legacy completed 
   act(() => result.current.demo.updateRecord('todos','timestamp-todo',{is_completed:true}));
   expect(todo().completed_at).toBeNull();
 });
+
+it("unlinks a deleted expense from subscription history", () => {
+  const { result } = mount();
+  act(() => {
+    result.current.demo.addRecord("finance_records", { id: "linked-finance" });
+    result.current.demo.addRecord("subscription_payments", { id: "payment", finance_record_id: "linked-finance", record_expense: true });
+  });
+  act(() => result.current.demo.deleteRecord("finance_records", "linked-finance"));
+  expect(result.current.demo.demoData.subscription_payments.find(p => p.id === "payment")).toMatchObject({ finance_record_id: null, record_expense: true });
+});

@@ -62,7 +62,7 @@ export default function TarotPage() {
     });
     const res = await requestFortuneReading(prompt);
     setLoading(false);
-    if (res.ok) setReading(res.text);
+    if (res.ok === true) setReading(res.text);
     else {
       toast({
         title: t("AI 暂不可用，已显示底稿", "AI unavailable — showing draft"),

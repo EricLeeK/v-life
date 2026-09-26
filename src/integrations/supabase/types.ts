@@ -1247,6 +1247,138 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          exchange_rate: number | null
+          finance_record_id: string | null
+          id: string
+          next_date: string
+          paid_on: string
+          period_date: string
+          record_expense: boolean
+          subscription_id: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency: string
+          exchange_rate?: number | null
+          finance_record_id?: string | null
+          id?: string
+          next_date: string
+          paid_on: string
+          period_date: string
+          record_expense?: boolean
+          subscription_id: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          exchange_rate?: number | null
+          finance_record_id?: string | null
+          id?: string
+          next_date?: string
+          paid_on?: string
+          period_date?: string
+          record_expense?: boolean
+          subscription_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_finance_record_id_fkey"
+            columns: ["finance_record_id"]
+            isOneToOne: false
+            referencedRelation: "finance_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          account: string | null
+          amount: number
+          anchor_day: number
+          auto_renew: boolean
+          billing_interval: number
+          billing_type: string
+          billing_unit: string
+          category: string
+          created_at: string
+          currency: string
+          id: string
+          management_url: string | null
+          name: string
+          next_date: string
+          notes: string | null
+          plan: string | null
+          reminder_days: number | null
+          status: string
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          account?: string | null
+          amount: number
+          anchor_day: number
+          auto_renew?: boolean
+          billing_interval?: number
+          billing_type?: string
+          billing_unit?: string
+          category?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          management_url?: string | null
+          name: string
+          next_date: string
+          notes?: string | null
+          plan?: string | null
+          reminder_days?: number | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Update: {
+          account?: string | null
+          amount?: number
+          anchor_day?: number
+          auto_renew?: boolean
+          billing_interval?: number
+          billing_type?: string
+          billing_unit?: string
+          category?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          management_url?: string | null
+          name?: string
+          next_date?: string
+          notes?: string | null
+          plan?: string | null
+          reminder_days?: number | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       task_tags: {
         Row: {
           color: string
@@ -1533,7 +1665,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      confirm_subscription_payment: {
+        Args: {
+          p_amount: number
+          p_due_date: string
+          p_exchange_rate?: number | null
+          p_next_date: string
+          p_paid_on: string
+          p_record_expense?: boolean
+          p_subscription_id: string
+        }
+        Returns: Database["public"]["Tables"]["subscription_payments"]["Row"]
+      }
     }
     Enums: {
       [_ in never]: never

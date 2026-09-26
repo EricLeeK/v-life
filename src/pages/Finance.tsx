@@ -72,6 +72,7 @@ export default function FinancePage() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" });
   const { toast } = useToast();
+  const [usdRate, setUsdRate] = useState("");
   const saveInFlight = useRef(false);
   const [saving, setSaving] = useState(false);
 
@@ -89,7 +90,7 @@ export default function FinancePage() {
 
   const budget = settings?.monthly_budget || 5000;
   const exchangeRate = settings?.exchange_rate_jpy_to_cny || 0.048;
-  const conversion = convertExpense(Number(form.amount), form.currency, exchangeRate, editingItem);
+  const conversion = convertExpense(Number(form.amount), form.currency, form.currency === "USD" ? Number(usdRate) : exchangeRate, editingItem);
   const isSaving = saving || createMutation.isPending || updateMutation.isPending;
   const totalCny = monthRecords.reduce((sum: number, r: any) => sum + Number(r.amount_cny), 0);
   const budgetProgress = Math.min(100, (totalCny / budget) * 100);
@@ -127,7 +128,7 @@ export default function FinancePage() {
       const payload = { name: form.name, category: form.category, amount, currency: form.currency, amount_cny: Number(amountCny.toFixed(2)), exchange_rate: rate, date: form.date, notes: form.notes || null };
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
-      setDialogOpen(false); setEditingItem(null);
+      setDialogOpen(false); setEditingItem(null); setUsdRate("");
       setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" });
     } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
     finally { saveInFlight.current = false; setSaving(false); }
@@ -145,7 +146,7 @@ export default function FinancePage() {
               <span className="text-sm font-medium w-24 text-center">{lang === "zh" ? `${year}年${month}月` : new Date(year, month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</span>
               <Button variant="secondary" size="sm" onClick={() => { if (month === 12) { setMonth(1); setYear(year + 1); } else setMonth(month + 1); }}>→</Button>
             </div>
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (isSaving) return; setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
+            <Dialog open={dialogOpen} onOpenChange={(o) => { if (isSaving) return; setDialogOpen(o); if (!o) { setEditingItem(null); setUsdRate(""); setForm({ name: "", category: "餐饮", amount: "", currency: "JPY", date: new Date().toISOString().split("T")[0], notes: "" }); } }}>
               <DialogTrigger asChild>
                 <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("记一笔", "Add Expense")}</Button>
               </DialogTrigger>
@@ -170,11 +171,13 @@ export default function FinancePage() {
                         <SelectContent>
                           <SelectItem value="CNY">CNY ¥</SelectItem>
                           <SelectItem value="JPY">JPY ¥</SelectItem>
+                          <SelectItem value="USD">USD $</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  {form.currency === "JPY" && form.amount && (
+                  {form.currency === "USD" && editingItem?.currency !== "USD" && <div><Label htmlFor="fin-usd-rate">{t("人民币汇率（1 USD）", "CNY rate per USD")} *</Label><Input id="fin-usd-rate" type="number" min="0.000001" step="any" value={usdRate} onChange={e => setUsdRate(e.target.value)} placeholder={t("填写实际兑换汇率", "Actual exchange rate")} /></div>}
+                  {form.currency !== "CNY" && form.amount && (
                     <p className="text-xs text-muted-foreground">≈ ¥{Number.isFinite(conversion.amountCny) ? conversion.amountCny.toFixed(2) : "—"} CNY ({t("汇率", "Rate")}: {conversion.rate})</p>
                   )}
                   <div><Label htmlFor="fin-date">{t("日期", "Date")} *</Label><Input id="fin-date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
@@ -262,7 +265,7 @@ export default function FinancePage() {
                             <div className="flex items-center gap-2 shrink-0">
                               <div className="text-right">
                                 <span className="text-sm font-medium">¥{Number(r.amount_cny).toFixed(2)}</span>
-                                {r.currency === "JPY" && <span className="text-xs text-muted-foreground ml-1">(¥{Number(r.amount).toFixed(0)} JPY)</span>}
+                                {r.currency !== "CNY" && <span className="text-xs text-muted-foreground ml-1">({Number(r.amount).toFixed(r.currency === "JPY" ? 0 : 2)} {r.currency})</span>}
                               </div>
                               <Button variant="ghost" size="icon" aria-label={t("编辑记录", "Edit record")} className="h-7 w-7" onClick={(e) => {
                                 e.stopPropagation();

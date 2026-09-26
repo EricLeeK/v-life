@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ import {
 } from "@/hooks/useData";
 import { POINTS_FEATURE_ENABLED as POINTS } from "@/lib/featureFlags";
 import { todayPickerItems } from "@/lib/habits";
-import { groupPastDailyTasksByDate, PAST_DATE_LABELS, shouldCompleteMotherTodo } from "@/lib/pastDailyTasks";
+import { groupPastDailyTasksByDate, PAST_DATE_LABELS } from "@/lib/pastDailyTasks";
 import { HabitWidgetStack } from "@/components/HabitWidgetStack";
 
 const DIFFICULTY_CONFIG = {
@@ -170,7 +170,6 @@ export default function TodayTodoPage() {
   const estimateDifficulty = useEstimateDifficulty();
   const { data: allTodos = [] } = todoHooks.useList();
   const createTodo = todoHooks.useCreate();
-  const updateTodo = todoHooks.useUpdate();
   const { data: habitLogs = [] } = useTodoHabitLogs();
   const upsertHabitLog = useUpsertTodoHabitLog();
   const { data: settings } = useSettings();
@@ -212,7 +211,7 @@ export default function TodayTodoPage() {
     }
   }, [userPoints, settings?.day_start_hour]);
 
-  const todayTaskIds = useMemo(() => new Set(todayTasks.map((dt: any) => dt.todo_id)), [todayTasks]);
+  const todayTaskIds = useMemo(() => new Set<string>(todayTasks.map((dt: { todo_id: string }) => dt.todo_id)), [todayTasks]);
   const availableTodos = todayPickerItems(
     allTodos.filter((t: any) => {
       if (t.parent_id) return true;
@@ -399,11 +398,7 @@ export default function TodayTodoPage() {
 
   const handleCompletePast = (task: any) => {
     if (task.is_completed) return;
-    const motherId = task.todo_id || task.todos?.id;
     completeTask.mutate({ id: task.id, is_completed: true });
-    if (shouldCompleteMotherTodo(task.todos?.kind) && motherId) {
-      updateTodo.mutate({ id: motherId, is_completed: true });
-    }
   };
 
   const handleMovePastToToday = async (task: any) => {

@@ -11,6 +11,13 @@ import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errorMessage";
 import { format, parseISO, addDays, startOfWeek } from "date-fns";
 
+async function requireAuthenticatedUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error("Not authenticated");
+  return user.id;
+}
+
 // ============ Demo-mode helpers ============
 function useDemoQuery<T>(key: string, filter: (data: DemoDataStore) => T): { data: T | undefined; isLoading: false; error: null } {
   const { demoData } = useDemoMode();
@@ -193,7 +200,10 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
         context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
         toast({ title: "更新失败", description: getErrorMessage(_err), variant: "destructive" });
       },
-      onSettled: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+      onSettled: () => {
+        qc.invalidateQueries({ queryKey: [queryKey] });
+        if (table === "todos") qc.invalidateQueries({ queryKey: ["daily_tasks"] });
+      },
     });
     if (isDemo) {
       return {
@@ -229,7 +239,10 @@ function useCrudHooks(table: string, queryKey: string, defaultOrder: string = "c
         context?.snapshots?.forEach(([key, data]: any) => qc.setQueryData(key, data));
         toast({ title: "删除失败", description: getErrorMessage(_err), variant: "destructive" });
       },
-      onSettled: () => qc.invalidateQueries({ queryKey: [queryKey] }),
+      onSettled: () => {
+        qc.invalidateQueries({ queryKey: [queryKey] });
+        if (table === "finance_records") qc.invalidateQueries({ queryKey: ["subscription_payments"] });
+      },
     });
     if (isDemo) {
       return {
@@ -1504,6 +1517,7 @@ export function useUserPoints() {
   const supa = useQuery({
     queryKey: ["user_points"],
     queryFn: async () => {
+      const userId = await requireAuthenticatedUserId();
       const { data, error } = await supabase
         .from("user_points")
         .select("*")
@@ -1512,7 +1526,7 @@ export function useUserPoints() {
       if (!data) {
         const { data: created, error: createErr } = await supabase
           .from("user_points")
-          .insert({ total_points: 0, current_streak: 0, best_streak: 0 })
+          .insert({ user_id: userId, total_points: 0, current_streak: 0, best_streak: 0 })
           .select()
           .single();
         if (createErr) throw createErr;
@@ -1530,7 +1544,7 @@ export function useUserPoints() {
 }
 
 export function useAddToToday() {
-  const { isDemo, demoData } = useDemoMode();
+  const { isDemo, demoData, addRecord } = useDemoMode();
   const { data: settings } = useSettings();
   const queryClient = useQueryClient();
   return useMutation({
@@ -1539,33 +1553,28 @@ export function useAddToToday() {
       const todayStr = getLocalDateString(new Date(), offsetHours);
 
       if (isDemo) {
+        const existing = demoData.daily_tasks.find((row: any) => row.todo_id === payload.todo_id && row.task_date === todayStr);
+        if (existing) return existing;
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
         const item = { id, user_id: "demo-user", ...payload, task_date: todayStr, is_completed: false, completed_at: null, created_at: now, updated_at: now, metadata: payload.metadata || {} };
-        demoData.daily_tasks.push(item);
-        return item;
+        return addRecord("daily_tasks", item);
       }
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      const insertData = {
-        ...payload,
-        user_id: user.id,
-        task_date: todayStr,
-      };
-
-      const { data, error } = await supabase.from("daily_tasks").insert(insertData).select().single();
+      const { data, error } = await (supabase.rpc as any)("daily_task_mutate", {
+        p_operation: "create", p_payload: {...payload, task_date: todayStr},
+      });
       if (error) throw error;
-      return data;
+      return data.data;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["daily_tasks"] }); },
   });
 }
 
 export function useCompleteDailyTask() {
-  const { isDemo, demoData, updateRecord } = useDemoMode();
+  const { isDemo, updateRecord } = useDemoMode();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, is_completed, base_points, metadata }: { id: string; is_completed?: boolean; base_points?: number; metadata?: any }) => {
       if (isDemo) {
@@ -1590,14 +1599,12 @@ export function useCompleteDailyTask() {
       if (metadata !== undefined) {
         updates.metadata = metadata;
       }
-      const { data, error } = await supabase
-        .from("daily_tasks")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
+      delete updates.completed_at; // The database owns completion timestamps and mother-task sync.
+      const { data, error } = await (supabase.rpc as any)("daily_task_mutate", {
+        p_operation: "update", p_record_id: id, p_payload: updates,
+      });
       if (error) throw error;
-      return data;
+      return data.data;
     },
     onMutate: async ({ id, is_completed, base_points, metadata }) => {
       await queryClient.cancelQueries({ queryKey: ["daily_tasks"] });
@@ -1622,10 +1629,12 @@ export function useCompleteDailyTask() {
     },
     onError: (_err, _vars, context) => {
       context?.snapshots?.forEach(([key, data]: any) => queryClient.setQueryData(key, data));
+      toast({title:"更新失败",description:getErrorMessage(_err),variant:"destructive"});
     },
     // Align with todos: settle in background; do not refetch user_points on every toggle
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["daily_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
   });
 }
@@ -1699,6 +1708,7 @@ export function useRecalculatePoints() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
+      const userId = isDemo ? null : await requireAuthenticatedUserId();
       let offsetHours = 0;
       if (!isDemo) {
         const { data: settingsData } = await supabase.from('settings').select('day_start_hour').limit(1).single();
@@ -1716,10 +1726,15 @@ export function useRecalculatePoints() {
         if (!points) {
           points = {
             id: "demo-points",
+            user_id: demoData.settings.user_id,
             total_points: 0,
             current_streak: 0,
             best_streak: 0,
             last_active_date: yesterday,
+            rest_day_date: null,
+            skip_chore_active: false,
+            sleep_in_date: null,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
           demoData.user_points = [points];
@@ -1772,7 +1787,7 @@ export function useRecalculatePoints() {
         // No points record yet, create one
         const { data: created, error: cErr } = await supabase
           .from("user_points")
-          .insert({ total_points: 0, current_streak: 0, best_streak: 0, last_active_date: today })
+          .insert({ user_id: userId, total_points: 0, current_streak: 0, best_streak: 0, last_active_date: today })
           .select()
           .single();
         if (cErr) throw cErr;
@@ -1920,6 +1935,7 @@ export function useGachaPity() {
   const supa = useQuery({
     queryKey: ["gacha_pity"],
     queryFn: async () => {
+      const userId = await requireAuthenticatedUserId();
       const { data, error } = await supabase
         .from("gacha_pity")
         .select("*")
@@ -1928,7 +1944,7 @@ export function useGachaPity() {
       if (!data) {
         const { data: created, error: createErr } = await supabase
           .from("gacha_pity")
-          .insert({ pulls_since_legendary: 0, total_pulls: 0 })
+          .insert({ user_id: userId, pulls_since_legendary: 0, total_pulls: 0 })
           .select()
           .single();
         if (createErr) throw createErr;
@@ -2013,6 +2029,7 @@ export function usePullGacha() {
       }
 
       // Supabase path
+      const userId = await requireAuthenticatedUserId();
       const { data: points, error: pErr } = await supabase
         .from("user_points")
         .select("total_points")
@@ -2066,7 +2083,7 @@ export function usePullGacha() {
         const picked = pool[Math.floor(Math.random() * pool.length)];
         const { data: invItem, error: invErr } = await supabase
           .from("user_inventory")
-          .insert({ item_id: picked.id, source: "gacha_pull" })
+          .insert({ user_id: userId, item_id: picked.id, source: "gacha_pull" })
           .select("*, shop_items(*)")
           .single();
         if (invErr) throw invErr;
@@ -2088,7 +2105,7 @@ export function usePullGacha() {
       } else {
         await supabase
           .from("gacha_pity")
-          .insert({ pulls_since_legendary: pullsSinceLeg, total_pulls: pullCount });
+          .insert({ user_id: userId, pulls_since_legendary: pullsSinceLeg, total_pulls: pullCount });
       }
 
       // Deduct points
@@ -2096,7 +2113,7 @@ export function usePullGacha() {
       await supabase
         .from("user_points")
         .update({ total_points: newTotal })
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
+        .eq("user_id", userId);
 
       return results;
     },
@@ -2135,6 +2152,7 @@ export function useBuyFromShop() {
         return { ...invItem, shop_items: item };
       }
 
+      const userId = await requireAuthenticatedUserId();
       const { data: item, error: itemErr } = await supabase
         .from("shop_items")
         .select("*")
@@ -2152,7 +2170,7 @@ export function useBuyFromShop() {
 
       const { data: invItem, error: invErr } = await supabase
         .from("user_inventory")
-        .insert({ item_id: itemId, source: "shop_purchase" })
+        .insert({ user_id: userId, item_id: itemId, source: "shop_purchase" })
         .select("*, shop_items(*)")
         .single();
       if (invErr) throw invErr;
@@ -2161,7 +2179,7 @@ export function useBuyFromShop() {
       await supabase
         .from("user_points")
         .update({ total_points: newTotal })
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id);
+        .eq("user_id", userId);
 
       return invItem;
     },

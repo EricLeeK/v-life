@@ -8,7 +8,11 @@ import {
 import { buildSystemPrompt, moduleByKey } from "../_shared/moduleRegistry.ts";
 import { listModuleRecords, getTodayPlan, MODULE_KEYS } from "../_shared/dataReader.ts";
 import { parseAgentChatContent } from "../_shared/parseAgentChat.ts";
-import { fetchUserVocab, formatUserVocabBlock } from "../_shared/userVocab.ts";
+import { fetchUserVocab, formatUserVocabBlock, normalizeVocabList } from "../_shared/userVocab.ts";
+import { parseSubscriptionSnapshot, readSubscriptionSnapshot } from '../_shared/subscriptionSnapshot.ts';
+import { summarizeSubscriptions } from '../_shared/subscriptionDomain.ts';
+import { createAgentDataService } from '../_shared/agentDataService.ts';
+import { subscriptionCalendarDate } from '../_shared/subscriptionOperations.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +34,8 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, session_id, mode } = await req.json();
+    const { messages, session_id, mode, demo_subscription_snapshot } = await req.json();
+    const subscriptionSnapshot = parseSubscriptionSnapshot(demo_subscription_snapshot);
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "messages array required" }), {
         status: 400,
@@ -85,7 +90,7 @@ serve(async (req) => {
     const { apiKey, model, baseUrl } = resolved.creds;
 
     // Inject today's date into the last user message for context (agent/fortune only)
-    const today = new Date().toISOString().split("T")[0];
+    const today = subscriptionCalendarDate();
     const enrichedMessages = isNote
       ? messages
       : messages.map((m: any, i: number) => {
@@ -104,16 +109,20 @@ serve(async (req) => {
           return m;
         });
 
-    const vocabBlock = isPlainText
-      ? ""
-      : formatUserVocabBlock(await fetchUserVocab(userSb, settings));
+    const vocab = isPlainText ? null : await fetchUserVocab(userSb, settings);
+    if (vocab && subscriptionSnapshot) vocab.subscriptionCategories=normalizeVocabList(subscriptionSnapshot.subscriptions.map(row=>row.category));
+    const vocabBlock = vocab ? formatUserVocabBlock(vocab) : '';
     const systemPrompt = isFortune
       ? FORTUNE_SYSTEM_PROMPT
-      : `${SYSTEM_PROMPT}\n\n${vocabBlock}`;
+      : `${SYSTEM_PROMPT}\n\n${vocabBlock}${subscriptionSnapshot?'\n当前订阅及付款查询均为演示数据；新增/修改/付款确认只改变演示状态。':''}`;
     const dayStartHour = Number(settings?.day_start_hour) || 0;
 
     // ── ReAct tools (non-fortune only) ──────────────────────────────
     const agentTools = isPlainText ? null : [
+      {
+        type: 'function' as const,
+        function: {name:'get_subscription_summary',description:'读取完整订阅汇总：各币种月均预算、按量预估、未来30天预计扣费及待处理提醒。预算不等于实际支出，不自行换算汇率。',parameters:{type:'object',properties:{},additionalProperties:false}},
+      },
       {
         type: "function" as const,
         function: {
@@ -143,10 +152,19 @@ serve(async (req) => {
     ];
 
     // Execute a single tool call server-side (RLS-scoped via userSb).
+    async function readRecords(module: string, opts: Parameters<typeof listModuleRecords>[2]) {
+      if(subscriptionSnapshot&&['subscription','subscription_payment'].includes(module))return {data:readSubscriptionSnapshot(subscriptionSnapshot,module,opts)};
+      return listModuleRecords(userSb,module,opts);
+    }
     async function runTool(name: string, args: any): Promise<string> {
       try {
+        if (name === 'get_subscription_summary') {
+          const date=subscriptionCalendarDate();
+          if(subscriptionSnapshot)return JSON.stringify({as_of_date:date,...summarizeSubscriptions(subscriptionSnapshot.subscriptions,date),demo:true});
+          return JSON.stringify((await createAgentDataService({db:userSb,userId:user!.id,permissions:{read:true,write:false,delete:false}}).subscriptionSummary(date)).data);
+        }
         if (name === "read_data") {
-          const r = await listModuleRecords(userSb, args.module, {
+          const r = await readRecords(args.module, {
             date_from: args.date_from, date_to: args.date_to, filters: args.filters, limit: args.limit,
           });
           return r.error ? JSON.stringify({ error: r.error }) : JSON.stringify(r.data);
@@ -273,7 +291,7 @@ serve(async (req) => {
             } else {
               const mod = op.data?.module || op.module;
               if (mod && moduleByKey[mod]) {
-                const r = await listModuleRecords(userSb, mod, op.data || {});
+                const r = await readRecords(mod, op.data || {});
                 findings.push(`read_data(${mod}) → ${r.error ? "error: " + r.error : JSON.stringify(r.data)}`);
               }
             }

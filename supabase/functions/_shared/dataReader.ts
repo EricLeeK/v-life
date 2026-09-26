@@ -10,7 +10,7 @@
  * every read to the authenticated user. This module never uses the service role.
  */
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { moduleByKey, MODULE_KEYS, type ModuleDef } from "./moduleRegistry.ts";
+import { moduleByKey, MODULE_KEYS, agentMetaOf, type ModuleDef } from "./moduleRegistry.ts";
 
 export { MODULE_KEYS };
 
@@ -26,6 +26,7 @@ const READ_LIMIT_DEFAULT = 50;
 
 /** Non-internal field names of a module = columns the agent may filter on. */
 function allowedFilterCols(mod: ModuleDef): Set<string> {
+  if(mod.key==='subscription'||mod.key==='subscription_payment')return new Set(['id',...agentMetaOf(mod).readFields]);
   return new Set(mod.fields.filter((f) => !f.internal).map((f) => f.name));
 }
 
@@ -44,17 +45,19 @@ export async function listModuleRecords(
   const dateField = mod.executor?.dateField;
   const limit = Math.max(1, Math.min(opts.limit ?? READ_LIMIT_DEFAULT, READ_LIMIT_MAX));
 
-  let q = sb.from(mod.table).select("*");
+  const subscriptionModule=['subscription','subscription_payment'].includes(moduleKey);
+  let q = sb.from(mod.table).select(subscriptionModule?['id',...agentMetaOf(mod).readFields].join(','):"*");
   if (dateField && opts.date_from) q = q.gte(dateField, opts.date_from);
   if (dateField && opts.date_to) q = q.lte(dateField, opts.date_to);
 
   if (opts.filters && typeof opts.filters === "object") {
     const allowed = allowedFilterCols(mod);
     for (const [k, v] of Object.entries(opts.filters)) {
-      if (v === null || v === undefined || v === "" || !allowed.has(k)) continue;
       const f = mod.fields.find((x) => x.name === k);
+      if (v===null&&allowed.has(k)&&f?.nullable) {q=q.is(k,null);continue;}
+      if (v === null || v === undefined || v === "" || !allowed.has(k)) continue;
       // boolean / number → exact match; everything else → case-insensitive contains
-      if (f?.type === "boolean" || f?.type === "number") q = q.eq(k, v);
+      if (f?.type === "boolean" || f?.type === "number" || (['subscription','subscription_payment'].includes(moduleKey) && (k==='id'||k.endsWith('_id')||f?.type==='date'||f?.enum))) q = q.eq(k, v);
       else q = q.ilike(k, `%${String(v)}%`);
     }
   }
@@ -63,7 +66,7 @@ export async function listModuleRecords(
   const orderField = dateField ?? "created_at";
   const { data, error } = await q.order(orderField, { ascending: false }).limit(limit);
   if (error) return { error: error.message };
-  return { data: (data as Record<string, unknown>[]) ?? [] };
+  return { data: (data as unknown as Record<string, unknown>[]) ?? [] };
 }
 
 /**

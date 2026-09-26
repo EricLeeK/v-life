@@ -129,6 +129,25 @@ describe("todo habits and routines", () => {
     expect(within(leftoverCard).getByRole("button", { name: "标记为未完成" })).toHaveAttribute("aria-pressed", "true");
   });
 
+  it("completes and reopens today's one-off task together with its mother todo", async () => {
+    function SwitchablePages() {
+      const [page, setPage] = useState("today");
+      return <><button onClick={() => setPage(page === "today" ? "todos" : "today")}>切换列表</button>{page === "today" ? <TodayTodoPage /> : <TodosPage />}</>;
+    }
+    renderPage("/today", <SwitchablePages />);
+    const boxes = await screen.findAllByRole("checkbox");
+    const task = boxes.find(box => box.getAttribute("data-state") === "unchecked" && box.getAttribute("aria-label"));
+    expect(task).toBeTruthy();
+    const title = task!.getAttribute("aria-label")!;
+    fireEvent.click(task!);
+    await waitFor(() => expect(task).toHaveAttribute("data-state", "checked"));
+    fireEvent.click(screen.getByRole("button", {name:"切换列表"}));
+    const card = (await screen.findByRole("button", {name:title})).closest(".bg-card") as HTMLElement;
+    fireEvent.click(within(card).getByRole("button", {name:"标记为未完成"}));
+    fireEvent.click(screen.getByRole("button", {name:"切换列表"}));
+    expect(await screen.findByRole("checkbox", {name:title})).toHaveAttribute("data-state", "unchecked");
+  });
+
   it("moves a leftover daily task into today without completing the mother todo", async () => {
     renderPage("/today", <TodayTodoPage />);
 

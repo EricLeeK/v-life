@@ -15,6 +15,8 @@ import {
   useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks, useCaloriesByRange, useScheduleByRange,
 } from "@/hooks/useData";
 import { usePrimaryExam, useTodayCivilPlans } from "@/hooks/useCivilService";
+import { useSubscriptions } from "@/hooks/useSubscriptions";
+import { summarizeSubscriptions } from "@/lib/subscriptions";
 import { useLocalDate } from "@/hooks/useLocalDate";
 import { differenceInCalendarDays, parseISO, format, addDays, startOfWeek } from "date-fns";
 
@@ -182,6 +184,8 @@ export default function DashboardPage() {
   const { data: allTodos = [] } = todoHooks.useList();
   const pendingTodos = allTodos.filter((todo: any) => !todo.is_completed && !todo.is_archived);
   const { data: expiringPantry = [] } = useExpiringPantry();
+  const subscriptionQuery = useSubscriptions(modulesExpanded && isVisible("belongings"));
+  const subscriptionSummary = summarizeSubscriptions(subscriptionQuery.data ?? [], todayStr);
   const { data: overdueDurables = [] } = useOverdueDurables(modulesExpanded && isVisible("belongings"));
   const { data: recentThoughts = [] } = useRecentThoughts(modulesExpanded && isVisible("thoughts"));
   const weekGoalsQuery = useCurrentWeekGoals((needsDetails || needsFallbackMetrics) && isVisible("goals"));
@@ -472,10 +476,14 @@ export default function DashboardPage() {
       id: "belongings",
       icon: <Package className="h-4 w-4 text-cat-yellow" />,
       title: t("用品管理", "Belongings"),
-      description: overdueDurables.length > 0
+      description: subscriptionQuery.error ? t("订阅提醒加载失败", "Subscription alerts unavailable") : subscriptionSummary.needsAttention > 0
+        ? `${subscriptionSummary.needsAttention} ${t("项订阅需要留意", "subscriptions need attention")}`
+        : overdueDurables.length > 0
         ? `${overdueDurables.length} ${t("个已超过预期使用期", "past expected lifespan")}`
         : t("暂无超期用品", "No overdue items"),
-      onClick: () => navigate("/belongings"),
+      status: subscriptionSummary.needsAttention > 0 ? `${subscriptionSummary.needsAttention}` : undefined,
+      statusColor: "orange" as const,
+      onClick: () => navigate(subscriptionSummary.needsAttention > 0 ? "/belongings?tab=subscriptions" : "/belongings"),
     },
     isVisible("goals") && {
       id: "goals",

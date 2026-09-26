@@ -1,7 +1,8 @@
+import { buildAgentGuide, GUIDE_TOPICS, errorRecovery, type GuideTopic } from '../_shared/agentGuide.ts';
 import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.6.0';
 import { createAgentDataService, AgentDataError, type AgentContext, type AgentListOptions } from '../_shared/agentDataService.ts';
 import { buildAgentCapabilities } from '../_shared/agentCapabilities.ts';
-import { buildOpenApi, parseApiRoute } from './apiAdapter.ts';
+import { buildOpenApi, parseApiRoute, parseApiListOptions } from './apiAdapter.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const publicBaseUrl = (Deno.env.get('AGENT_API_PUBLIC_URL') ?? 'https://shenghuo.homes/api/v1').replace(/\/$/, '');
@@ -19,19 +20,7 @@ function errorStatus(code: string) {
   return 400;
 }
 
-function listOptions(url: URL): AgentListOptions {
-  const number = (name: string) => url.searchParams.has(name) ? Number(url.searchParams.get(name)) : undefined;
-  const reserved = new Set(['limit', 'offset', 'date_from', 'date_to', 'q']);
-  const filters: Record<string, unknown> = {};
-  for (const [key, value] of url.searchParams) if (!reserved.has(key)) filters[key] = value;
-  return {
-    limit: number('limit'),
-    offset: number('offset'),
-    date_from: url.searchParams.get('date_from') ?? undefined,
-    date_to: url.searchParams.get('date_to') ?? undefined,
-    filters,
-  };
-}
+const listOptions=parseApiListOptions;
 
 async function body(req: Request) {
   const length = Number(req.headers.get('content-length') ?? 0);
@@ -55,6 +44,7 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
     idempotencyKey: req.headers.get('Idempotency-Key')?.slice(0, 200) || undefined,
     permissions: { read: grant.read_enabled === true, write: grant.write_enabled === true, delete: grant.delete_enabled === true },
   };
+  const audit=async(args:Record<string,unknown>)=>{try {const {error}=await db.rpc('agent_log_operation',args);if(error)console.error('agent audit unavailable',requestId);}catch {console.error('agent audit unavailable',requestId);}};
   const service = createAgentDataService(context);
   const url = new URL(req.url);
   const route = parseApiRoute(url.pathname, req.method);
@@ -66,24 +56,30 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
   try {
     let result: unknown;
     if (route.action === 'capabilities') result = { data: buildAgentCapabilities() };
+    else if (route.action === 'guide') {
+      const topic=url.searchParams.get('topic')??'quickstart';
+      if(!GUIDE_TOPICS.includes(topic as GuideTopic))throw new AgentDataError('INVALID_INPUT','Unknown guide topic');
+      result={data:{...buildAgentGuide(topic as GuideTopic),session:{permissions:context.permissions,business_date:context.permissions.read||context.permissions.write?await service.businessDate():null,timezone:'Asia/Shanghai'}}};
+    }
     else if (route.action === 'openapi') result = { data: buildOpenApi(publicBaseUrl, authorizationServer) };
-    else if (route.action === 'summary') result = route.name === 'finance' ? await service.financeSummary(listOptions(url)) : await service.summary(route.name, listOptions(url));
+    else if (route.action === 'classifications') result=await service.classifications(route.module,listOptions(url));
+    else if (route.action === 'summary') result = route.name === 'finance' ? await service.financeSummary(listOptions(url)) : route.name==='subscription' ? await service.subscriptionSummary(url.searchParams.get('as_of_date')??undefined) : await service.summary(route.name, listOptions(url));
     else if (route.action === 'list') {
       const query = url.searchParams.get('q');
-      result = query ? await service.search(route.module, query, listOptions(url)) : await service.list(route.module, listOptions(url));
-    } else if (route.action === 'export') result = await service.export(route.module, listOptions(url));
+      result = query ? await service.search(route.module, query, listOptions(url,route.module)) : await service.list(route.module, listOptions(url,route.module));
+    } else if (route.action === 'export') result = await service.export(route.module, listOptions(url,route.module));
     else if (route.action === 'get') result = await service.get(route.module, route.id);
     else if (route.action === 'create') result = await service.create(route.module, await body(req));
     else if (route.action === 'update') result = await service.update(route.module, route.id, await body(req));
     else if (route.action === 'delete') result = await service.delete(route.module, route.id);
     else throw new AgentDataError('NOT_FOUND', 'Endpoint not found');
     const recordId = typeof (result as any)?.data?.id === 'string' ? (result as any).data.id : null;
-    await db.rpc('agent_log_operation', { p_tool_name: toolName, p_operation: route.action, p_record_id: recordId, p_request_id: requestId, p_success: true, p_error_code: null });
+    if(toolName!=='subscription_payment_create')await audit( { p_tool_name: toolName, p_operation: route.action, p_record_id: recordId, p_request_id: requestId, p_success: true, p_error_code: null });
     return response({ ok: true, ...(result as object), request_id: requestId }, 200, requestId);
   } catch (cause) {
     const caught = cause instanceof AgentDataError ? cause : new AgentDataError('INTERNAL_ERROR', 'The operation could not be completed');
-    await db.rpc('agent_log_operation', { p_tool_name: toolName, p_operation: route.action, p_record_id: 'id' in route ? route.id : null, p_request_id: requestId, p_success: false, p_error_code: caught.code });
-    return response({ ok: false, error: { code: caught.code, message: caught.message }, request_id: requestId }, errorStatus(caught.code), requestId);
+    await audit( { p_tool_name: toolName, p_operation: route.action, p_record_id: 'id' in route ? route.id : null, p_request_id: requestId, p_success: false, p_error_code: caught.code });
+    return response({ ok: false, error: { code: caught.code, message: caught.message, ...errorRecovery(caught.code) }, request_id: requestId }, errorStatus(caught.code), requestId);
   }
 });
 

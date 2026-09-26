@@ -6,6 +6,8 @@ export function contractSql() {
   const dbFields=(fields:string[])=>fields.map(f=>f===relation?.from?relation.toColumn:f);
   const c={table:m.table,actions:m.actions,ownsUserId:!['project_tasks','learning_notes'].includes(m.table),readColumns:meta.readFields,createColumns:dbFields(meta.createFields),updateColumns:dbFields(meta.updateFields)};
   if(m.key==='habit_log') c.createColumns=['todo_id','log_date','value','broken'];
+  // The public create operation invokes a dedicated transactional RPC, never raw table CRUD.
+  if(m.executor?.special==='subscription_payment'){c.actions={};c.createColumns=[];c.updateColumns=[];}
   return `insert into agent_private.module_contracts(module,contract) values ('${m.key}','${JSON.stringify(c).replaceAll("'","''")}') on conflict(module) do update set contract=excluded.contract;`;
  }).join('\n');
 }

@@ -44,7 +44,7 @@ export default function IchingPage() {
       }),
     );
     setLoading(false);
-    if (res.ok) setReading(res.text);
+    if (res.ok === true) setReading(res.text);
     else toast({ title: t("AI 暂不可用，已显示底稿", "AI unavailable — draft shown"), description: res.error });
   }
 
@@ -108,7 +108,7 @@ export default function IchingPage() {
                   </p>
                   <p className="text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">{reading}</p>
                   <div className="mt-5">
-                    <SaveReadingButton type="iching" question={question} payload={cast} reading={reading} />
+                    <SaveReadingButton type="iching" question={question} payload={{ ...cast }} reading={reading} />
                   </div>
                 </div>
               </div>

@@ -125,6 +125,8 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
     setDemoData((prev) => ({
       ...prev,
       [table]: (prev[table] as any[]).filter((item: any) => item.id !== id),
+      ...(table === "finance_records" ? { subscription_payments: prev.subscription_payments.map(payment => payment.finance_record_id === id ? { ...payment, finance_record_id: null } : payment) } : {}),
+      ...(table === "subscriptions" ? { subscription_payments: prev.subscription_payments.filter(payment => payment.subscription_id !== id) } : {}),
     }));
   }, []);
 

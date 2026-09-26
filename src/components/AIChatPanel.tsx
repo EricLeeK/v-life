@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2, Undo2, Camera } from "lucide-react";
 import { format } from "date-fns";
-import { useSettings } from "@/hooks/useData";
+import { getLocalDateString, useSettings } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
@@ -15,8 +15,9 @@ import { useClipboardImagePaste } from "@/hooks/useClipboardImagePaste";
 import { moduleByKey, tableOf, getModuleLabels, allQueryKeys } from "@modules";
 import { chartPalette } from "@/lib/chartTokens";
 import { parseAgentChatContent, sanitizeAssistantContent } from "../../supabase/functions/_shared/parseAgentChat";
-import { formatOpPreview, normalizeHabitCreate, rewriteCompleteOp, shouldSkipDailyTask } from "@/lib/habitAi";
+import { formatOpPreview, normalizeHabitCreate, rewriteCompleteOp } from "@/lib/habitAi";
 import { isPersistentKind } from "@/lib/habits";
+import { executeSubscriptionChatOperation, preserveUsdExpenseRate } from './subscriptionChatOperations';
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
 
@@ -329,8 +330,23 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
   const { toast } = useToast();
   const qc = useQueryClient();
   const { data: settings } = useSettings();
-  const { isDemo } = useDemoMode();
+  const { isDemo, demoData, addRecord, updateRecord, deleteRecord } = useDemoMode();
+  const subscriptionDemoRef = useRef({subscriptions:demoData?.subscriptions ?? [],subscription_payments:demoData?.subscription_payments ?? []});
+  useEffect(() => {subscriptionDemoRef.current={subscriptions:demoData?.subscriptions ?? [],subscription_payments:demoData?.subscription_payments ?? []};}, [demoData]);
   const aiMode = settings?.ai_mode || "confirm";
+  async function findDailyTask(match: Record<string, any>): Promise<string> {
+    if (match.id) return match.id;
+    let query = (supabase.from as any)("daily_tasks").select("id,todos!inner(title)").eq("task_date", getLocalDateString(new Date(), settings?.day_start_hour || 0));
+    if (match.todo_id) query = query.eq("todo_id",match.todo_id);
+    else if (match.title) query = query.eq("todos.title",match.title);
+    else throw new Error("缺少任务标题或 ID");
+    const {data,error} = await query.limit(2);
+    if (error) throw error;
+    if (!data?.length) throw new Error("未找到今日任务");
+    if (data.length > 1) throw new Error("存在同名今日任务，请指定 ID");
+    return data[0].id;
+  }
+
   const { t, lang } = useLang();
   const moduleLabels = getModuleLabels(t);
 
@@ -414,6 +430,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
   };
 
   const saveMessage = async (sessionId: string, role: string, content: string, images?: string[], actions?: any) => {
+    if (isDemo) return;
     await supabase.from("ai_messages").insert({
       session_id: sessionId,
       role,
@@ -426,6 +443,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
 
   const ensureSession = async (firstMessage: string): Promise<string> => {
     if (currentSessionId) return currentSessionId;
+    if (isDemo) {const id=crypto.randomUUID();setCurrentSessionId(id);return id;}
     const title = firstMessage.slice(0, 50);
     const { data, error } = await supabase
       .from("ai_sessions")
@@ -520,79 +538,26 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
         const label = moduleLabels[op.module] || op.module;
         const itemName = op.data.name || op.data.title || op.data.food_name || op.data.weight || op.data.match?.name || op.data.match?.title || "";
         try {
+          if (op.module === 'subscription' || op.module === 'subscription_payment') {
+            const result = await executeSubscriptionChatOperation(op, {db:supabase,demo:isDemo?{state:subscriptionDemoRef.current,addRecord,updateRecord,deleteRecord}:undefined});
+            if (result.createdId) createdIds.push({table:'subscriptions',id:result.createdId});
+            const verb=op.module==='subscription_payment'?t(result.duplicate?'本期付款已记录，未重复记账':'已确认付款','Payment confirmed'):op.action==='delete'?t('已删除','Deleted'):op.action==='update'?t('已更新本地订阅','Updated subscription'):t('已添加','Added');
+            results.push(`${label}: ${verb}「${result.row.name || itemName || op.data.subscription_id || ''}」`);
+            continue;
+          }
           if (op.action === "create") {
             // daily_task（今日待办）：优先用 todo_id 直接引用，否则按标题找/建 todo，再加入今天
             if (op.module === "daily_task") {
-              const { data: { user: dtUser } } = await supabase.auth.getUser();
-              if (!dtUser) throw new Error("未登录");
-              const dtTitle = String(op.data.title || "").trim();
-              const dtTodoId = String(op.data.todo_id || "").trim();
-              if (!dtTitle && !dtTodoId) throw new Error("缺少任务标题 title 或 todo_id");
-              const dtDiff = op.data.difficulty === "easy" || op.data.difficulty === "hard" ? op.data.difficulty : "medium";
-              const dtPts = op.data.base_points != null ? Number(op.data.base_points)
-                : dtDiff === "easy" ? 10 : dtDiff === "hard" ? 30 : 20;
-              const dtToday = new Date().toISOString().split("T")[0];
-              let dtTodo: any = null;
-              // 1) 优先：直接引用已命中的 todo（校验归属）
-              if (dtTodoId) {
-                const { data: byId } = await (supabase.from as any)("todos")
-                  .select("id,title,kind").eq("id", dtTodoId).eq("user_id", dtUser.id).maybeSingle();
-                dtTodo = byId;
+              const payload: Record<string, unknown> = {task_date: getLocalDateString(new Date(), settings?.day_start_hour || 0)};
+              for (const key of ["todo_id","title","kind","category","importance","detail","difficulty","base_points","complete"]) {
+                if (op.data[key] !== undefined) payload[key] = op.data[key];
               }
-              // 2) 兜底：按标题找现有 todo（未完成，优先未归档）；找不到则新建
-              if (!dtTodo) {
-                if (!dtTitle) throw new Error("缺少任务标题 title");
-                const { data: byTitle } = await (supabase.from as any)("todos")
-                  .select("id,title,kind")
-                  .eq("user_id", dtUser.id)
-                  .eq("title", dtTitle)
-                  .eq("is_completed", false)
-                  .order("is_archived", { ascending: true })
-                  .limit(1).maybeSingle();
-                dtTodo = byTitle;
-                if (!dtTodo) {
-                  const { data: newTodo, error: te } = await (supabase.from as any)("todos").insert({
-                    user_id: dtUser.id, title: dtTitle, category: "未分类", importance: "普通",
-                    kind: "once", is_completed: false, is_archived: false,
-                  }).select().single();
-                  if (te) throw te;
-                  dtTodo = newTodo;
-                  if (newTodo?.id) createdIds.push({ table: "todos", id: newTodo.id });
-                }
-              }
-              const dtDisplay = dtTodo.title || dtTitle;
-              if (shouldSkipDailyTask(dtTodo)) {
-                results.push(`${label}: 「${dtDisplay}」${t("是习惯，已在今日顶部", "is a habit already pinned today")}`);
-                continue;
-              }
-              // 已在今天则跳过（complete: true 时补勾）
-              const { data: dtExist } = await (supabase.from as any)("daily_tasks")
-                .select("id").eq("todo_id", dtTodo.id).eq("task_date", dtToday).maybeSingle();
-              if (dtExist) {
-                if (op.data.complete === true) {
-                  await (supabase.from as any)("daily_tasks").update({
-                    is_completed: true, completed_at: new Date().toISOString(),
-                  }).eq("id", dtExist.id);
-                  results.push(`${label}: ${t("已完成今日", "Completed today")}「${dtDisplay}」`);
-                } else {
-                  results.push(`${label}: 「${dtDisplay}」${t("已在今日待办", "already in today's list")}`);
-                }
-                continue;
-              }
-              const { data: dtRow, error: dtErr } = await (supabase.from as any)("daily_tasks").insert({
-                user_id: dtUser.id, todo_id: dtTodo.id, task_date: dtToday,
-                difficulty: dtDiff, base_points: dtPts,
-                is_completed: op.data.complete === true,
-                completed_at: op.data.complete === true ? new Date().toISOString() : null,
-                metadata: {},
-              }).select().single();
-              if (dtErr) throw dtErr;
-              if (dtRow?.id) createdIds.push({ table: "daily_tasks", id: dtRow.id });
-              results.push(
-                op.data.complete === true
-                  ? `${label}: ${t("已加入今日并完成", "Added and completed")}「${dtDisplay}」`
-                  : `${label}: ${t("已加入今日待办", "Added to today")}「${dtDisplay}」`,
-              );
+              const {data: result, error} = await (supabase.rpc as any)("daily_task_mutate", {p_operation:"create",p_payload:payload});
+              if (error) throw error;
+              const row = result.data;
+              if (row._todo_created) createdIds.push({table:"todos",id:row.todo_id});
+              if (row._created) createdIds.push({table:"daily_tasks",id:row.id});
+              results.push(`${label}: ${op.data.complete === true ? t("已完成今日任务", "Completed today's task") : t("已加入今日待办", "Added to today")}「${op.data.title || itemName}」`);
               continue;
             }
 
@@ -674,18 +639,10 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
           } else if (op.action === "delete") {
             // daily_task：按标题找到今天的任务并移出今日待办
             if (op.module === "daily_task") {
-              const rmTitle = String(op.data.match?.title || op.data.title || "").trim();
-              if (!rmTitle) throw new Error("缺少任务标题 title");
-              const { data: { user: rmUser } } = await supabase.auth.getUser();
-              if (!rmUser) throw new Error("未登录");
-              const rmToday = new Date().toISOString().split("T")[0];
-              const { data: rmTodo } = await (supabase.from as any)("todos")
-                .select("id").eq("user_id", rmUser.id).eq("title", rmTitle).limit(1).maybeSingle();
-              if (!rmTodo) throw new Error(`未找到任务「${rmTitle}」`);
-              const { error: rmErr } = await (supabase.from as any)("daily_tasks")
-                .delete().eq("todo_id", rmTodo.id).eq("task_date", rmToday);
-              if (rmErr) throw rmErr;
-              results.push(`${label}: ${t("已移出今日待办", "Removed from today")}「${rmTitle}」`);
+              const dailyId = await findDailyTask(op.data.match || op.data);
+              const {error} = await (supabase.rpc as any)("daily_task_mutate", {p_operation:"delete",p_record_id:dailyId});
+              if (error) throw error;
+              results.push(`${label}: ${t("已移出今日待办", "Removed from today")}「${itemName}」`);
               continue;
             }
             const match = op.data.match || {};
@@ -726,6 +683,13 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
             }
             results.push(`${label}: ${t("已删除", "Deleted")}「${itemName}」`);
           } else if (op.action === "update" && op.data.match && op.data.update) {
+            if (op.module === "daily_task") {
+              const dailyId = await findDailyTask(op.data.match);
+              const {error} = await (supabase.rpc as any)("daily_task_mutate", {p_operation:"update",p_record_id:dailyId,p_payload:op.data.update});
+              if (error) throw error;
+              results.push(`${label}: ${t("已更新", "Updated")}「${itemName}」`);
+              continue;
+            }
             if (op.module === "todo") {
               const parent = await findTodo(op.data.match);
               if (isPersistentKind(parent?.kind) && Object.prototype.hasOwnProperty.call(op.data.update, "is_completed")) {
@@ -745,7 +709,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
               delete match[ex.resolves.from];
             }
 
-            let searchQuery = (supabase.from as any)(table).select("id");
+            let searchQuery = (supabase.from as any)(table).select(op.module==='finance'?'id,currency,exchange_rate':'id');
             for (const [key, val] of Object.entries(match)) {
               if (key.endsWith("_id")) {
                 searchQuery = searchQuery.eq(key, val);
@@ -755,7 +719,8 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
             }
             const { data: found } = await searchQuery.limit(1).single();
             if (!found) throw new Error(`未找到匹配的记录`);
-            const { error } = await (supabase.from as any)(table).update(op.data.update).eq("id", found.id);
+            const updates=op.module==='finance'?preserveUsdExpenseRate(found,op.data.update):op.data.update;
+            const { error } = await (supabase.from as any)(table).update(updates).eq("id", found.id);
             if (error) throw error;
             results.push(`${label}: ${t("已更新", "Updated")}「${itemName}」`);
           } else {
@@ -779,12 +744,13 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
 
       return { results, createdIds, hasError };
     },
-    [qc, t]
+    [qc, t, isDemo, addRecord, updateRecord, deleteRecord, settings?.day_start_hour]
   );
 
   const handleUndo = async () => {
     if (recentlyCreatedIds.length === 0) return;
     for (const { table, id } of recentlyCreatedIds) {
+      if (isDemo && table === 'subscriptions') {deleteRecord('subscriptions',id);continue;}
       await (supabase.from as any)(table).delete().eq("id", id);
     }
     for (const key of WRITE_QUERY_KEYS) {
@@ -842,6 +808,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
             content: m.contentRaw || m.content,
           })),
           session_id: sessionId,
+          ...(isDemo ? {demo_subscription_snapshot:{subscriptions:[...subscriptionDemoRef.current.subscriptions],subscription_payments:[...subscriptionDemoRef.current.subscription_payments]}} : {}),
         },
       });
 
@@ -900,7 +867,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
         await saveMessage(sessionId, "assistant", summary);
       }
 
-      refetchSessions();
+      if (!isDemo) refetchSessions();
     } catch (e: any) {
       setMessages((prev) => [
         ...prev,
@@ -941,7 +908,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
     if (currentSessionId === sessionId) {
       startNewSession();
     }
-    refetchSessions();
+    if (!isDemo) refetchSessions();
   };
 
   useEffect(() => {
