@@ -29,6 +29,20 @@ dist-ssr
 # Playwright MCP auto-generated files
 .playwright-mcp/
 
+# Playwright CLI session logs, traces and recordings
+.playwright-cli/
+
+# Local verification artifacts (screenshots, exports)
+output/
+
+# Local scratch: release SQL, DB check scripts and live provider payloads
+temp/
+
+# Editor and agent tooling state
+.cursor/
+.impeccable/*
+!.impeccable/design.json
+
 # Superpowers brainstorm & local server logs
 .superpowers/
 
