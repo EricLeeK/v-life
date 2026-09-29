@@ -5,6 +5,7 @@ import { agentMetaOf, moduleByKey, type ModuleDef, type FieldDef } from "./modul
 import { mutateIdempotently } from "./agentAccess.ts";
 import { normalizeSubscription, normalizeSubscriptionPatch, normalizeSubscriptionPayment, subscriptionPaymentRpcArgs, subscriptionCalendarDate } from './subscriptionOperations.ts';
 import { summarizeSubscriptions, type Subscription } from './subscriptionDomain.ts';
+import { taskOverviewInput, taskTransferInput } from './taskWorkflows.ts';
 export interface AgentContext {
   db: SupabaseClient; userId: string; clientId?: string;
   requestId?: string; toolName?: string; idempotencyKey?: string;
@@ -116,6 +117,16 @@ function applyFilters(mod:ModuleDef,q:any,opts:AgentListOptions){
 }
 export function createAgentDataService(ctx:AgentContext){
   const permit=(key:"read"|"write"|"delete")=>{if(!ctx.permissions[key])fail("PERMISSION_DENIED",`${key} permission is required`);};
+  const workflowInput = <T>(parse:()=>T):T => {
+    try { return parse(); } catch (error) { return fail('INVALID_INPUT',(error as Error).message); }
+  };
+  async function taskWorkflowRpc(name:string,args:Record<string,unknown>) {
+    const {data,error}=await ctx.db.rpc(name,args);
+    if(error)fail('DATABASE_ERROR','Task workflow unavailable; preserve request_id and retry with the original key and arguments');
+    if(data?.error)fail(data.error.code,data.error.message);
+    if(!data?.data || typeof data.data!=='object' || Array.isArray(data.data))fail('DATABASE_ERROR','Invalid task workflow response');
+    return data;
+  }
   async function readPage(key:string,opts:AgentListOptions={},search?:string):Promise<AgentDataResult<Row[]>>{
     permit("read");const mod=moduleOrFail(key);const limit=opts.limit??50,offset=opts.offset??0;
     if(!Number.isInteger(limit)||limit<1||limit>200||!Number.isInteger(offset)||offset<0)fail("INVALID_INPUT","limit must be 1..200 and offset a non-negative integer");
@@ -191,6 +202,16 @@ export function createAgentDataService(ctx:AgentContext){
       if(error)fail("DATABASE_ERROR","Unable to load classifications; do not treat this as an empty vocabulary");
       if(!data||!Array.isArray(data.data))fail("DATABASE_ERROR","Invalid classification response");
       return {...data,...policy,data:data.data.map((v:any)=>({...v,writable:policy.allow_new||policy.presets.includes(v.value)}))};
+    },
+    async taskOverview(input:unknown={}) {
+      permit('read');
+      return await taskWorkflowRpc('daily_task_overview',workflowInput(()=>taskOverviewInput(input)));
+    },
+    async transferDailyTasks(input:unknown) {
+      permit('read');permit('write');
+      const args=workflowInput(()=>taskTransferInput(input,ctx.idempotencyKey));
+      if(args.p_mode==='move')permit('delete');
+      return await taskWorkflowRpc('daily_task_transfer',{...args,p_request_id:ctx.requestId??crypto.randomUUID()});
     },
     async businessDate():Promise<string>{
       if(!ctx.permissions.read&&!ctx.permissions.write)fail("PERMISSION_DENIED","read or write permission is required for business date");

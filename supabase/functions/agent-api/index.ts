@@ -15,7 +15,7 @@ function response(body: unknown, status = 200, requestId?: string) {
 function errorStatus(code: string) {
   if (code === 'PERMISSION_DENIED') return 403;
   if (code === 'NOT_FOUND' || code === 'MODULE_NOT_FOUND') return 404;
-  if (code === 'CONFLICT') return 409;
+  if (code === 'CONFLICT' || code === 'IDEMPOTENCY_CONFLICT') return 409;
   if (code === 'INTERNAL_ERROR' || code === 'DATABASE_ERROR') return 500;
   return 400;
 }
@@ -41,7 +41,7 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
     userId: claims.sub,
     clientId: claims.client_id,
     requestId,
-    idempotencyKey: req.headers.get('Idempotency-Key')?.slice(0, 200) || undefined,
+    idempotencyKey: req.headers.get('Idempotency-Key') ?? undefined,
     permissions: { read: grant.read_enabled === true, write: grant.write_enabled === true, delete: grant.delete_enabled === true },
   };
   const audit=async(args:Record<string,unknown>)=>{try {const {error}=await db.rpc('agent_log_operation',args);if(error)console.error('agent audit unavailable',requestId);}catch {console.error('agent audit unavailable',requestId);}};
@@ -51,11 +51,17 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
   if (route.action === 'not_found') return response({ ok: false, error: { code: 'NOT_FOUND', message: 'Endpoint not found' }, request_id: requestId }, 404, requestId);
   if (route.action === 'method_not_allowed') return response({ ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' }, request_id: requestId }, 405, requestId);
 
-  const toolName = route.action === 'summary' ? `summary_${route.name}` : 'module' in route ? `${route.module}_${route.action}` : route.action;
+  const toolName = route.action === 'task_overview' ? 'daily_task_overview' : route.action === 'task_transfer' ? 'daily_task_transfer' : route.action === 'summary' ? `summary_${route.name}` : 'module' in route ? `${route.module}_${route.action}` : route.action;
   context.toolName = toolName;
   try {
     let result: unknown;
-    if (route.action === 'capabilities') result = { data: buildAgentCapabilities() };
+    if (route.action === 'task_overview') {
+      const args:Record<string,unknown>=Object.fromEntries(url.searchParams);
+      if(typeof args.lookback_days==='string' && args.lookback_days.trim()!=='')args.lookback_days=Number(args.lookback_days);
+      result=await service.taskOverview(args);
+    }
+    else if (route.action === 'task_transfer') result=await service.transferDailyTasks(await body(req));
+    else if (route.action === 'capabilities') result = { data: buildAgentCapabilities() };
     else if (route.action === 'guide') {
       const topic=url.searchParams.get('topic')??'quickstart';
       if(!GUIDE_TOPICS.includes(topic as GuideTopic))throw new AgentDataError('INVALID_INPUT','Unknown guide topic');
@@ -74,7 +80,7 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
     else if (route.action === 'delete') result = await service.delete(route.module, route.id);
     else throw new AgentDataError('NOT_FOUND', 'Endpoint not found');
     const recordId = typeof (result as any)?.data?.id === 'string' ? (result as any).data.id : null;
-    if(toolName!=='subscription_payment_create')await audit( { p_tool_name: toolName, p_operation: route.action, p_record_id: recordId, p_request_id: requestId, p_success: true, p_error_code: null });
+    if(!['subscription_payment_create','daily_task_transfer'].includes(toolName))await audit( { p_tool_name: toolName, p_operation: route.action, p_record_id: recordId, p_request_id: requestId, p_success: true, p_error_code: null });
     return response({ ok: true, ...(result as object), request_id: requestId }, 200, requestId);
   } catch (cause) {
     const caught = cause instanceof AgentDataError ? cause : new AgentDataError('INTERNAL_ERROR', 'The operation could not be completed');

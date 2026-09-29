@@ -6,6 +6,7 @@ import { createAgentDataService, AgentDataError, type AgentContext } from '../_s
 import { AGENT_INSTRUCTIONS, GUIDE_TOPICS, buildAgentGuide, errorRecovery, moduleCanSearch, toolDescription } from '../_shared/agentGuide.ts';
 import { fieldsSchema, buildCapabilities, MCP_VERSION, financeSummaryPeriod } from './mcpAdapter.ts';
 import { objectSchema as object, listSchema, paginationSchema, recordIdSchema, idempotencySchema, validateToolInput, type Schema } from './toolSchema.ts';
+import { TASK_OVERVIEW_DESCRIPTION, TASK_OVERVIEW_SCHEMA, TASK_TRANSFER_DESCRIPTION, TASK_TRANSFER_SCHEMA } from '../_shared/taskWorkflows.ts';
 const url=Deno.env.get('SUPABASE_URL')!;
 const resource=`${url}/functions/v1/mcp-server/mcp`;
 const json=(v:any,isError=false)=>({content:[{type:'text' as const,text:JSON.stringify(v)}],structuredContent:v,isError});
@@ -21,21 +22,22 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  // Audit is already transactional for writes. Supplemental transport logging must
  // never report a successful mutation as failed or expose raw exception stacks.
  async function audit(name:string,op:string,id:unknown,success:boolean,errorCode:string|null){
-  if(success&&name==='subscription_payment_create')return; // already committed by the payment RPC
+  if(success&&['subscription_payment_create','daily_task_transfer'].includes(name))return; // transactional audit already committed
   try{
    const result=await ctx.db.rpc('agent_log_operation',{p_tool_name:name,p_operation:op,p_record_id:typeof id==='string'?id:null,p_request_id:ctx.requestId,p_success:success,p_error_code:errorCode});
    if(result.error)console.error('agent audit unavailable',ctx.requestId,result.error.code);
   }catch{console.error('agent audit unavailable',ctx.requestId);}
  }
- function register(name:string,description:string,inputSchema:Schema,op:'read'|'create'|'update'|'delete',fn:(s:ReturnType<typeof createAgentDataService>,p:any)=>Promise<any>){
-  server.tool(name,{description,inputSchema,annotations:{readOnlyHint:op==='read',destructiveHint:op==='delete',idempotentHint:op==='read',openWorldHint:false},handler:async(input:unknown={})=>{
+ function register(name:string,description:string,inputSchema:Schema,op:'read'|'create'|'update'|'delete',fn:(s:ReturnType<typeof createAgentDataService>,p:any,callCtx:AgentContext)=>Promise<any>,annotations:Record<string,boolean>={}){
+  server.tool(name,{description,inputSchema,annotations:{readOnlyHint:op==='read',destructiveHint:op==='delete',idempotentHint:op==='read',openWorldHint:false,...annotations},handler:async(input:unknown={})=>{
    let args:Record<string,any>={};
    try{
     validateToolInput(inputSchema,input);
     const {idempotency_key,...rest}=input;args=rest;
     if(headerKey!==null&&(headerKey.length<1||headerKey.length>200))throw new AgentDataError('INVALID_INPUT','Idempotency-Key must contain 1 to 200 characters');
-    const service=createAgentDataService({...ctx,toolName:name,idempotencyKey:idempotency_key??headerKey??undefined});
-    const result=await fn(service,args);
+    const callCtx={...ctx,toolName:name,idempotencyKey:idempotency_key??headerKey??undefined};
+    const service=createAgentDataService(callCtx);
+    const result=await fn(service,args,callCtx);
     await audit(name,op,result.data?.id,true,null);
     return json({ok:true,...result,request_id:ctx.requestId});
    }catch(error){
@@ -53,6 +55,8 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  register('daily_task_today','分页读取当前用户业务日的任务，不必猜测日期。返回 date、data、hasMore、nextOffset；data.id 是日任务 ID，todo_id 是总待办 ID；标题可通过 todo_get 获取。可按 todo_id 或 is_completed 精确筛选。例行与一次性在此；习惯通过 todo_list(kind="habit") 和 habit_log_list 查看。',object({...paginationSchema(),todo_id:{...recordIdSchema('todo'),description:'可选：只读指定总待办在今天的任务。'},is_completed:{type:'boolean',description:'可选：true 已完成，false 未完成；省略包含两者。'}}),'read',async(s,{limit,offset,...filters})=>{
   const date=await s.businessDate();return {...await s.list('daily_task',{limit,offset,filters:{...filters,task_date:date}}),date};
  });
+ register('daily_task_overview',TASK_OVERVIEW_DESCRIPTION,TASK_OVERVIEW_SCHEMA,'read',(s,args)=>s.taskOverview(args));
+ register('daily_task_transfer',TASK_TRANSFER_DESCRIPTION,TASK_TRANSFER_SCHEMA,'update',(s,args)=>s.transferDailyTasks(args),{destructiveHint:true,idempotentHint:true});
  for(const mod of MODULES.filter(m=>agentMetaOf(m).agentVisible)){
   const key=mod.key;
   register(`${key}_list`,toolDescription(mod,'list'),listSchema(mod),'read',(s,{limit,offset,date_from,date_to,...filters})=>s.list(key,{limit,offset,date_from,date_to,filters}));

@@ -5,9 +5,11 @@ import { toolDescription, GUIDE_TOPICS } from '../_shared/agentGuide.ts';
 import { MODULES, moduleByKey, agentMetaOf, type FieldDef, type ModuleDef } from '../_shared/moduleRegistry.ts';
 import type { AgentListOptions } from '../_shared/agentDataService.ts';
 import { AGENT_CONTRACT_VERSION } from '../_shared/agentCapabilities.ts';
+import { TASK_OVERVIEW_DESCRIPTION, TASK_OVERVIEW_SCHEMA, TASK_TRANSFER_DESCRIPTION, TASK_TRANSFER_SCHEMA } from '../_shared/taskWorkflows.ts';
 
 export type ApiRoute =
   | { action: 'capabilities' | 'openapi' | 'guide' }
+  | { action: 'task_overview' | 'task_transfer' }
   | { action: 'classifications'; module:string }
   | { action: 'summary'; name: string }
   | { action: 'list' | 'create'; module: string }
@@ -27,6 +29,8 @@ export function parseApiRoute(pathname: string, method: string): ApiRoute {
   const at = pathname.indexOf(marker);
   if (at < 0) return { action: 'not_found' };
   const parts = pathname.slice(at + marker.length).split('/').filter(Boolean).map(decodeURIComponent);
+  if(parts.length===2&&parts[0]==='daily_task'&&parts[1]==='overview')return {action:method==='GET'?'task_overview':'method_not_allowed'};
+  if(parts.length===2&&parts[0]==='daily_task'&&parts[1]==='transfer')return {action:method==='POST'?'task_transfer':'method_not_allowed'};
   if (parts.length === 1 && parts[0] === 'guide') return method === 'GET' ? { action: 'guide' } : { action: 'method_not_allowed' };
   if (parts.length === 1 && parts[0] === 'capabilities') return method === 'GET' ? { action: 'capabilities' } : { action: 'method_not_allowed' };
   if (parts.length === 1 && parts[0] === 'openapi.json') return method === 'GET' ? { action: 'openapi' } : { action: 'method_not_allowed' };
@@ -73,6 +77,9 @@ export function buildOpenApi(baseUrl: string, authorizationServer: string) {
   paths['/capabilities'] = { get: { operationId: 'capabilities', responses: okResponse() } };
   paths['/summary/{name}'] = { get: { operationId: 'summary', parameters: [{ name: 'name', in: 'path', required: true, schema: { type: 'string' } }, ...pageParameters()], responses: okResponse() } };
   paths['/summary/subscription']={get:{operationId:'subscription_summary',summary:'订阅月均预算与未来30天预计扣费，各币种独立汇总',description:'预算不等于实际支出；固定与按量预估分别返回。默认北京时间今日。',parameters:[{name:'as_of_date',in:'query',schema:{type:'string',format:'date'}}],responses:okResponse()}};
+  paths['/daily_task/overview']={get:{operationId:'daily_task_overview',summary:'完整任务概览与往期未完成',description:TASK_OVERVIEW_DESCRIPTION,parameters:Object.entries(TASK_OVERVIEW_SCHEMA.properties).map(([name,schema])=>({name,in:'query',schema})),responses:{...okResponse(),400:{description:'Invalid options or result exceeds 500 records; no partial list returned'}}}};
+  const {idempotency_key:_,...transferProperties}=TASK_TRANSFER_SCHEMA.properties;
+  paths['/daily_task/transfer']={post:{operationId:'daily_task_transfer',summary:'原子批量跨天安排',description:TASK_TRANSFER_DESCRIPTION,parameters:[{name:'Idempotency-Key',in:'header',required:true,schema:{type:'string',minLength:1,maxLength:200}}],requestBody:jsonBody({...TASK_TRANSFER_SCHEMA,properties:transferProperties,required:TASK_TRANSFER_SCHEMA.required.filter(key=>key!=='idempotency_key')}),responses:mutationResponses()}};
   return {
     openapi: '3.1.0',
     info: { title: 'V-Life Agent API', version: AGENT_CONTRACT_VERSION },

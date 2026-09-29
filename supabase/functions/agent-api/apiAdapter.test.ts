@@ -44,3 +44,18 @@ Deno.test('HTTP exposes classification discovery with matching module policy',()
  assert(doc.paths['/{module}/classifications'].get.parameters[0].schema.enum.includes('daily_task'));
  assert(doc.paths['/belongings_daily'].post.description.includes('classification_list'));
 });
+
+Deno.test('HTTP task workflows take precedence over record IDs and publish explicit retry requirements',()=>{
+ assertEquals<unknown>(parseApiRoute('/api/v1/daily_task/overview','GET'),{action:'task_overview'});
+ assertEquals<unknown>(parseApiRoute('/api/v1/daily_task/transfer','POST'),{action:'task_transfer'});
+ assertEquals(parseApiRoute('/api/v1/daily_task/transfer','DELETE'),{action:'method_not_allowed'});
+ const doc:any=buildOpenApi('https://example.test/api/v1','https://example.test/auth');
+ const get=doc.paths['/daily_task/overview'].get;
+ const post=doc.paths['/daily_task/transfer'].post;
+ assertEquals(get.operationId,'daily_task_overview');assertEquals(post.operationId,'daily_task_transfer');
+ assert(post.parameters.some((p:any)=>p.name==='Idempotency-Key'&&p.required));
+ const schema=post.requestBody.content['application/json'].schema;
+ assert(schema.required.includes('daily_task_ids'));assert(schema.required.includes('mode'));
+ assert(!schema.required.includes('idempotency_key'));assert(!schema.properties.idempotency_key);
+ assertEquals(schema.properties.daily_task_ids.maxItems,200);
+});

@@ -1,5 +1,48 @@
 # Agent 接入与维护
 
+## 任务工作流（2.6.0）
+
+已于 2026-09-28 发布；具体线上版本和验证范围见 [发布记录](agent-task-workflows-release-2026-09-28.md)。
+
+新接入的外部 Agent 优先使用两个领域工具，避免自行拼接分页、标题查询、日期计算、创建和删除。旧 CRUD 工具仍兼容。
+
+| 意图 | MCP | HTTP /api/v1 |
+| --- | --- | --- |
+| 看今日任务和往期未完成 | `daily_task_overview` | `GET /daily_task/overview` |
+| 将所选日任务跨天安排 | `daily_task_transfer` | `POST /daily_task/transfer` |
+
+`daily_task_overview({date:"today",lookback_days:3})` 返回 `data.business_date`、目标 `date`、`tasks`、`backlog` 和数量。每项包含 `daily_task_id`、`todo_id`、标题、类型、分类、安排/完成日期、`can_transfer` 和 `blocked_reason`。backlog 是**目标日之前**的未完成安排；只看昨天用 `lookback_days:1`，只看目标日用 `0`。支持 0–30 天。习惯仍通过 `habit_log` 处理。
+
+概览是一个数据库快照，不需要分页或逐项查标题。最多 500 条，`complete:true` 表示本范围完整；超出返回 `RESULT_TOO_LARGE`，不返回残缺清单。此时缩小天数，或使用底层列表完整分页读取。
+
+迁移前，按用户意图从概览选取实际 `daily_task_id`，不要传 `todo_id`。例如“把昨天没做完的任务移入今天”：
+
+```js
+daily_task_overview({date:"today",lookback_days:1})
+// 选择 backlog 中符合用户意图且 can_transfer=true 的实际日任务 ID。
+daily_task_transfer({
+  daily_task_ids:["实际日任务 UUID"],
+  target_date:"today",
+  mode:"move",
+  idempotency_key:"为本次操作生成并保存的唯一键"
+})
+```
+
+- `date` / `target_date` 支持 `today`、`tomorrow`、`yesterday` 或有效的 `YYYY-MM-DD`（1900 年起），相对日期按服务器北京时间及用户 `day_start_hour` 解释，Agent 不自行猜日期。
+- **必须明确 mode**：`move` 对应网页上箭头，移除所选旧安排，需要 read/write/delete；`copy` 保留旧安排并再次安排，需要 read/write。没有 delete 权限时不能擅自把 move 改成 copy。
+- 单次 1–200 个不重复日任务 ID。只能处理用户选定的未完成、可执行任务；暂停/归档/习惯、含活跃子任务的顶层父任务、已完成来源或已完成目标会明确拒绝。任一来源失效、越权或不符合条件时，整批不写入。多批之间不保证整体原子性。
+- 服务端复用原总待办，并对同一待办同一天去重。创建目标日记录时沿用来源难度、积分和元数据；已有目标保留原值。选择同一待办的多个旧日记录时，按**来源日期降序、ID 升序**处理，第一条创建目标，其余复用。来源已在目标日则返回 `already_on_target`。
+- 成功响应含 `data.items`（原/目标日任务 ID、标题、日期、`outcome`、`target_created`、`source_removed`），以及 `source_count`、`target_count`、`created_count`、`removed_count`、`unchanged_count` 和 `verified_at`。结果在同一事务内校验；不要把复用已有目标说成“新建”。
+- MCP **必填** `idempotency_key`；HTTP 将同一键放在必填的 `Idempotency-Key` 请求头，JSON 请求体仅含来源 ID、目标日和 mode。参数超长、空键、重复 ID、未知字段均拒绝。
+- 重试保留**原键、原始日期表达式和全部参数**。服务端先回放再解析 today/tomorrow，跨天重试不漂移。`replayed:true` 是首次操作的原回执；需要当前状态时再读 overview。换参数却复用旧键返回 `IDEMPOTENCY_CONFLICT`（HTTP 409）。失败不缓存成功回执。
+- **旧记录不是不可变历史**：一次性任务完成后，所有关联日任务同步完成；`copy` 只保留曾经安排过的记录。实际完成时间看 `completed_at`，不能把旧 `task_date` 当完成日期。
+
+客户端优先使用原生 MCP 工具及其 OAuth 能力。手写集成可走以上 JSON API，避免自行解析 MCP 的 JSON/SSE；401 的刷新流程属于 OAuth 客户端，不能把所有鉴权失败都无限重试。所有调用先检查 `ok/error`，错误不能降级成空列表。
+
+发布顺序：先应用 `20260928010000_agent_task_workflows.sql`，再部署 `mcp-server` 和 `agent-api`。新工具复用现有日任务领域函数，不批量重写既有数据。本节是代码契约，不能代替实际部署和验证记录。
+
+验证：`supabase/tests/agent_task_workflows.sql` 使用专用测试用户、真实数据库角色并最终 rollback，覆盖权限、批量回滚、目标去重、元数据保持、重试和完整概览。运行生产验证必须保留 rollback；在迁移前验证时也须将迁移包在同一回滚事务里。
+
 ## 订阅能力（2.5.0，本地实现）
 
 网页 AI、MCP 和 Agent API 共用 `subscription` 订阅模块与 `subscription_payment` 付款确认模块。此节描述代码中的接口；部署前须先应用 `20260925010000_subscriptions.sql`，再发布 `ai-chat`、`mcp-server`、`agent-api` 和网页。
