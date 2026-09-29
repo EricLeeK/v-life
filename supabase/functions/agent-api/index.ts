@@ -3,6 +3,10 @@ import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1
 import { createAgentDataService, AgentDataError, type AgentContext, type AgentListOptions } from '../_shared/agentDataService.ts';
 import { buildAgentCapabilities } from '../_shared/agentCapabilities.ts';
 import { buildOpenApi, parseApiRoute, parseApiListOptions } from './apiAdapter.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { NEWSPAPER_OPERATIONS } from '../_shared/newspaperAgent.ts';
+import { executeNewspaperOperation } from '../_shared/newspaperOperations.ts';
+import { NewspaperError } from '../_shared/newspaperTypes.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const publicBaseUrl = (Deno.env.get('AGENT_API_PUBLIC_URL') ?? 'https://shenghuo.homes/api/v1').replace(/\/$/, '');
@@ -51,11 +55,24 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
   if (route.action === 'not_found') return response({ ok: false, error: { code: 'NOT_FOUND', message: 'Endpoint not found' }, request_id: requestId }, 404, requestId);
   if (route.action === 'method_not_allowed') return response({ ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' }, request_id: requestId }, 405, requestId);
 
-  const toolName = route.action === 'task_overview' ? 'daily_task_overview' : route.action === 'task_transfer' ? 'daily_task_transfer' : route.action === 'summary' ? `summary_${route.name}` : 'module' in route ? `${route.module}_${route.action}` : route.action;
+  const toolName = route.action === 'newspaper' ? `newspaper_${route.operation}` : route.action === 'task_overview' ? 'daily_task_overview' : route.action === 'task_transfer' ? 'daily_task_transfer' : route.action === 'summary' ? `summary_${route.name}` : 'module' in route ? `${route.module}_${route.action}` : route.action;
   context.toolName = toolName;
   try {
     let result: unknown;
-    if (route.action === 'task_overview') {
+    if (route.action === 'newspaper') {
+      let input: Record<string, unknown>;
+      if (req.method === 'GET') {
+        input = {};
+        const properties = NEWSPAPER_OPERATIONS[route.operation].schema.properties;
+        for (const [key, value] of url.searchParams) {
+          const type = properties[key]?.type;
+          input[key] = type === 'integer' ? Number(value) : type === 'boolean' ? value === 'true' ? true : value === 'false' ? false : value : type === 'array' ? value.split(',').filter(Boolean) : value;
+        }
+      } else input = await body(req);
+      const admin = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false, autoRefreshToken: false } });
+      result = { data: await executeNewspaperOperation({ ...context, admin }, route.operation, input) };
+    }
+    else if (route.action === 'task_overview') {
       const args:Record<string,unknown>=Object.fromEntries(url.searchParams);
       if(typeof args.lookback_days==='string' && args.lookback_days.trim()!=='')args.lookback_days=Number(args.lookback_days);
       result=await service.taskOverview(args);
@@ -83,7 +100,7 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
     if(!['subscription_payment_create','daily_task_transfer'].includes(toolName))await audit( { p_tool_name: toolName, p_operation: route.action, p_record_id: recordId, p_request_id: requestId, p_success: true, p_error_code: null });
     return response({ ok: true, ...(result as object), request_id: requestId }, 200, requestId);
   } catch (cause) {
-    const caught = cause instanceof AgentDataError ? cause : new AgentDataError('INTERNAL_ERROR', 'The operation could not be completed');
+    const caught = cause instanceof AgentDataError || cause instanceof NewspaperError ? cause : new AgentDataError('INTERNAL_ERROR', 'The operation could not be completed');
     await audit( { p_tool_name: toolName, p_operation: route.action, p_record_id: 'id' in route ? route.id : null, p_request_id: requestId, p_success: false, p_error_code: caught.code });
     return response({ ok: false, error: { code: caught.code, message: caught.message, ...errorRecovery(caught.code) }, request_id: requestId }, errorStatus(caught.code), requestId);
   }

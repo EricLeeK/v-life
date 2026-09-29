@@ -7,6 +7,10 @@ import { AGENT_INSTRUCTIONS, GUIDE_TOPICS, buildAgentGuide, errorRecovery, modul
 import { fieldsSchema, buildCapabilities, MCP_VERSION, financeSummaryPeriod } from './mcpAdapter.ts';
 import { objectSchema as object, listSchema, paginationSchema, recordIdSchema, idempotencySchema, validateToolInput, type Schema } from './toolSchema.ts';
 import { TASK_OVERVIEW_DESCRIPTION, TASK_OVERVIEW_SCHEMA, TASK_TRANSFER_DESCRIPTION, TASK_TRANSFER_SCHEMA } from '../_shared/taskWorkflows.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { NEWSPAPER_OPERATIONS } from '../_shared/newspaperAgent.ts';
+import { executeNewspaperOperation } from '../_shared/newspaperOperations.ts';
+import { NewspaperError } from '../_shared/newspaperTypes.ts';
 const url=Deno.env.get('SUPABASE_URL')!;
 const resource=`${url}/functions/v1/mcp-server/mcp`;
 const json=(v:any,isError=false)=>({content:[{type:'text' as const,text:JSON.stringify(v)}],structuredContent:v,isError});
@@ -41,7 +45,7 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
     await audit(name,op,result.data?.id,true,null);
     return json({ok:true,...result,request_id:ctx.requestId});
    }catch(error){
-    const e=error instanceof AgentDataError?error:new AgentDataError('INTERNAL_ERROR','The operation could not be completed; preserve request_id');
+    const e=error instanceof AgentDataError||error instanceof NewspaperError?error:new AgentDataError('INTERNAL_ERROR','The operation could not be completed; preserve request_id');
     await audit(name,op,args.id,false,e.code);
     return json({ok:false,error:{code:e.code,message:e.message,...errorRecovery(e.code)},request_id:ctx.requestId},true);
    }
@@ -57,6 +61,14 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  });
  register('daily_task_overview',TASK_OVERVIEW_DESCRIPTION,TASK_OVERVIEW_SCHEMA,'read',(s,args)=>s.taskOverview(args));
  register('daily_task_transfer',TASK_TRANSFER_DESCRIPTION,TASK_TRANSFER_SCHEMA,'update',(s,args)=>s.transferDailyTasks(args),{destructiveHint:true,idempotentHint:true});
+ for(const [action,definition] of Object.entries(NEWSPAPER_OPERATIONS)){
+  const read=definition.permission==='read';
+  const schema={...definition.schema,properties:{...definition.schema.properties,...(!read?{idempotency_key:idempotencySchema}:{})}};
+  register(`newspaper_${action}`,definition.description,schema,read?'read':definition.permission==='delete'?'delete':'update',async(_service,input,callCtx)=>{
+   const admin=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
+   return {data:await executeNewspaperOperation({...callCtx,admin},action,input)};
+  },{openWorldHint:definition.paid===true,idempotentHint:read||definition.paid===true});
+ }
  for(const mod of MODULES.filter(m=>agentMetaOf(m).agentVisible)){
   const key=mod.key;
   register(`${key}_list`,toolDescription(mod,'list'),listSchema(mod),'read',(s,{limit,offset,date_from,date_to,...filters})=>s.list(key,{limit,offset,date_from,date_to,filters}));

@@ -38,6 +38,7 @@ const CivilServiceHome = lazy(() => import("./pages/civil-service/CivilServiceHo
 const CivilServiceGroup = lazy(() => import("./pages/civil-service/CivilServiceGroup"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
+const NewspapersPage = lazy(() => import("./pages/Newspapers"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const FortuneHome = lazy(() => import("./pages/fortune/FortuneHome"));
 const TarotPage = lazy(() => import("./pages/fortune/TarotPage"));
@@ -119,6 +120,7 @@ function AppRoutes() {
           <Route path="/fortune/lot" element={<ProtectedRoute><LotPage /></ProtectedRoute>} />
           <Route path="/fortune/bazi" element={<ProtectedRoute><BaziPage /></ProtectedRoute>} />
           <Route path="/fortune/history" element={<ProtectedRoute><FortuneHistoryPage /></ProtectedRoute>} />
+          <Route path="/newspapers" element={<ProtectedRoute><NewspapersPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

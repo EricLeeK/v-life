@@ -1,4 +1,5 @@
 import {
+  Newspaper,
   LayoutDashboard,
   Carrot,
   Package,
@@ -51,6 +52,7 @@ export function MobileNav() {
       ];
 
   const moreItems = [
+    { title: t("生活日报", "Newspapers"), url: "/newspapers", icon: Newspaper },
     { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
     { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },
     { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },

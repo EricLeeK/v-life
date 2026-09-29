@@ -13,6 +13,8 @@ import { parseSubscriptionSnapshot, readSubscriptionSnapshot } from '../_shared/
 import { summarizeSubscriptions } from '../_shared/subscriptionDomain.ts';
 import { createAgentDataService } from '../_shared/agentDataService.ts';
 import { subscriptionCalendarDate } from '../_shared/subscriptionOperations.ts';
+import { NEWSPAPER_CHAT_GUIDE, NEWSPAPER_OPERATIONS } from '../_shared/newspaperAgent.ts';
+import { executeNewspaperOperation } from '../_shared/newspaperOperations.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,7 +22,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = buildSystemPrompt();
+const SYSTEM_PROMPT = `${buildSystemPrompt()}\n\n${NEWSPAPER_CHAT_GUIDE}`;
 
 const FORTUNE_SYSTEM_PROMPT = `你是温柔的生活向运势助手。用户消息里的 facts 是今日参考资料（星座日运、黄历、月相、生肖关系、分数等），供你理解今日氛围后再自己组织文案。
 请据此自由写 80–150 字鼓励向短文；不必逐项点名或罗列资料里的字段，读起来像一段自然的话即可。
@@ -121,6 +123,16 @@ serve(async (req) => {
     const agentTools = isPlainText ? null : [
       {
         type: 'function' as const,
+        function: {
+          name: 'newspaper_read', description: '读取生活日报、配图风格或任务状态。不会触发 AI 生成，也不会刷新归档。',
+          parameters: { type: 'object', required: ['operation', 'input'], properties: {
+            operation: { type: 'string', enum: Object.entries(NEWSPAPER_OPERATIONS).filter(([, definition]) => definition.permission === 'read').map(([name]) => name) },
+            input: { type: 'object', description: '平铺参数：get/export 用 date YYYY-MM-DD；list 用 date_from/date_to/q/limit/offset；style_list 用空对象；image_status 用 date 或 id。' },
+          }, additionalProperties: false },
+        },
+      },
+      {
+        type: 'function' as const,
         function: {name:'get_subscription_summary',description:'读取完整订阅汇总：各币种月均预算、按量预估、未来30天预计扣费及待处理提醒。预算不等于实际支出，不自行换算汇率。',parameters:{type:'object',properties:{},additionalProperties:false}},
       },
       {
@@ -158,6 +170,11 @@ serve(async (req) => {
     }
     async function runTool(name: string, args: any): Promise<string> {
       try {
+        if (name === 'newspaper_read') {
+          if (subscriptionSnapshot) return JSON.stringify({ error: '当前为演示对话，请在日报库查看演示报纸；不可读取真实用户日报。' });
+          if (NEWSPAPER_OPERATIONS[args.operation]?.permission !== 'read') return JSON.stringify({ error: '这里只允许读取日报，写入需使用确认操作。' });
+          return JSON.stringify(await executeNewspaperOperation({ db: userSb, admin: adminSb, userId: user!.id, permissions: { read: true, write: false, delete: false } }, args.operation, args.input || {}));
+        }
         if (name === 'get_subscription_summary') {
           const date=subscriptionCalendarDate();
           if(subscriptionSnapshot)return JSON.stringify({as_of_date:date,...summarizeSubscriptions(subscriptionSnapshot.subscriptions,date),demo:true});
@@ -278,6 +295,7 @@ serve(async (req) => {
     if (!isFortune) {
       const READ_ACTIONS = new Set(["read", "read_data", "list", "query", "search", "get", "fetch", "find"]);
       const readOps = (parsed.operations || []).filter((op: any) =>
+        (op?.module === 'newspaper' && NEWSPAPER_OPERATIONS[op?.action]?.permission === 'read') ||
         READ_ACTIONS.has(String(op?.action || "").toLowerCase()) ||
         op?.module === "read_data" || op?.module === "get_today_plan"
       );
@@ -285,7 +303,9 @@ serve(async (req) => {
         const findings: string[] = [];
         for (const op of readOps) {
           try {
-            if (op.module === "get_today_plan") {
+            if (op.module === 'newspaper') {
+              findings.push(`newspaper_${op.action} → ${await runTool('newspaper_read', { operation: op.action, input: op.data || {} })}`);
+            } else if (op.module === "get_today_plan") {
               const r = await getTodayPlan(userSb, dayStartHour);
               findings.push(`get_today_plan → ${r.error ? "error: " + r.error : JSON.stringify(r.data)}`);
             } else {
@@ -309,7 +329,7 @@ serve(async (req) => {
                 content:
                   "你刚才把「读取数据」放进了 operations（系统不支持把读取当操作执行）。已代你读取到以下真实数据：\n" +
                   findings.join("\n") +
-                  "\n\n请基于这些真实数据重新回答用户：查询/统计/推荐类把答案写在 summary（operations 留空数组 []）；只有真正要新增/修改/删除记录时才输出 create/update/delete 操作。仍只输出纯 JSON。",
+                  "\n\n请基于这些真实数据重新回答用户：查询/统计/推荐类把答案写在 summary（operations 留空数组 []）；只有真正要新增/修改/删除记录时才输出 create/update/delete 操作。日报写操作使用 newspaper 模块中明确定义的 action；生成复盘或配图必须来自用户明确请求。仍只输出纯 JSON。",
               },
             ],
             false,

@@ -8,3 +8,14 @@ verify_jwt = false
 # Same OAuth middleware as MCP; the function verifies the user token itself.
 [functions.agent-api]
 verify_jwt = false
+
+# The website endpoint verifies its bearer token with Supabase Auth.
+[functions.newspaper]
+verify_jwt = false
+
+# Scheduled endpoints verify a dedicated worker secret before using service credentials.
+[functions.newspaper-archive]
+verify_jwt = false
+
+[functions.newspaper-images-worker]
+verify_jwt = false

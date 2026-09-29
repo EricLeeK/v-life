@@ -6,8 +6,10 @@ import { MODULES, moduleByKey, agentMetaOf, type FieldDef, type ModuleDef } from
 import type { AgentListOptions } from '../_shared/agentDataService.ts';
 import { AGENT_CONTRACT_VERSION } from '../_shared/agentCapabilities.ts';
 import { TASK_OVERVIEW_DESCRIPTION, TASK_OVERVIEW_SCHEMA, TASK_TRANSFER_DESCRIPTION, TASK_TRANSFER_SCHEMA } from '../_shared/taskWorkflows.ts';
+import { NEWSPAPER_OPERATIONS, newspaperHttpMethod } from '../_shared/newspaperAgent.ts';
 
 export type ApiRoute =
+  | { action: 'newspaper'; operation: string }
   | { action: 'capabilities' | 'openapi' | 'guide' }
   | { action: 'task_overview' | 'task_transfer' }
   | { action: 'classifications'; module:string }
@@ -29,6 +31,11 @@ export function parseApiRoute(pathname: string, method: string): ApiRoute {
   const at = pathname.indexOf(marker);
   if (at < 0) return { action: 'not_found' };
   const parts = pathname.slice(at + marker.length).split('/').filter(Boolean).map(decodeURIComponent);
+  if (parts[0] === 'newspaper') {
+    const operation = parts.length === 1 ? 'list' : parts.length === 2 ? parts[1] : '';
+    const expectedMethod = newspaperHttpMethod(operation);
+    return !expectedMethod ? { action: 'not_found' } : method === expectedMethod ? { action: 'newspaper', operation } : { action: 'method_not_allowed' };
+  }
   if(parts.length===2&&parts[0]==='daily_task'&&parts[1]==='overview')return {action:method==='GET'?'task_overview':'method_not_allowed'};
   if(parts.length===2&&parts[0]==='daily_task'&&parts[1]==='transfer')return {action:method==='POST'?'task_transfer':'method_not_allowed'};
   if (parts.length === 1 && parts[0] === 'guide') return method === 'GET' ? { action: 'guide' } : { action: 'method_not_allowed' };
@@ -58,6 +65,15 @@ function writeSchema(module: ModuleDef, operation: 'create' | 'update') {
 
 export function buildOpenApi(baseUrl: string, authorizationServer: string) {
   const paths: Record<string, unknown> = {};
+  for (const [operation, definition] of Object.entries(NEWSPAPER_OPERATIONS)) {
+    const read = definition.permission === 'read';
+    const path = operation === 'list' ? '/newspaper' : `/newspaper/${operation}`;
+    paths[path] = { [read ? 'get' : 'post']: {
+      operationId: `newspaper_${operation}`, summary: definition.description,
+      parameters: read ? Object.entries(definition.schema.properties).map(([name, schema]) => ({ name, in: 'query', required: definition.schema.required.includes(name), schema })) : [{ name: 'Idempotency-Key', in: 'header', required: definition.paid === true, schema: { type: 'string', minLength: 1, maxLength: 200 } }],
+      ...(!read ? { requestBody: jsonBody(definition.schema) } : {}), responses: read ? okResponse() : mutationResponses(),
+    } };
+  }
   for (const module of MODULES.filter((item) => agentMetaOf(item).agentVisible)) {
     const collection: Record<string, unknown> = {
       get: { operationId: `${module.key}_list`, summary: `分页读取${module.labelZh}`, description: toolDescription(module, 'list'), parameters: pageParameters(module), responses: okResponse() },

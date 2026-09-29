@@ -2,12 +2,13 @@ import {classificationPolicy} from './agentClassifications.ts';
 import { modulePurpose, moduleCanSearch } from './agentGuide.ts';
 import { MODULES, agentMetaOf } from './moduleRegistry.ts';
 
-export const AGENT_CONTRACT_VERSION = '2.6.0';
+export const AGENT_CONTRACT_VERSION = '2.7.0';
 
 export function buildAgentCapabilities() {
   return {
     version: AGENT_CONTRACT_VERSION,
     contract: 'vlife-agent-data',
+    newspapers: { list: 'newspaper_list', get: 'newspaper_get', export: 'newspaper_export', http: '/newspaper', generation: 'explicit_only', archived_sources: 'snapshot_explicit_refresh', date_rule: 'account timezone and day_start_hour saved with each issue', image_keys: 'website_settings_only', image_status: 'queued/submitting/running/saving/succeeded/failed/unknown; unknown must not be automatically resubmitted' },
     onboarding: { tool: 'agent_help', guide: 'vlife://guide', today_tool: 'daily_task_overview', classification_tool:'classification_list' },
     task_workflows: {
       preferred_read:{mcp:'daily_task_overview',http:'GET /daily_task/overview',complete_up_to:500,relative_dates:['today','tomorrow','yesterday'],lookback_days:{default:3,max:30}},

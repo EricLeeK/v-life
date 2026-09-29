@@ -1,4 +1,5 @@
 import {
+  Newspaper,
   LayoutDashboard,
   Carrot,
   Package,
@@ -53,6 +54,7 @@ export function AppSidebar() {
   const focusMode = (settings as any)?.app_focus_mode || "full";
 
   const mainItems = [
+    { title: t("生活日报", "Newspapers"), url: "/newspapers", icon: Newspaper },
     { title: t("首页概览", "Dashboard"), url: "/", icon: LayoutDashboard },
     { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
     { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },

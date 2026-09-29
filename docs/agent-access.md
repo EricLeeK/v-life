@@ -170,3 +170,16 @@ supabase db query --linked --file supabase/tests/agent_classifications.sql
 `daily_task_today` 按用户业务日返回安排清单；`task_date` 不是实际完成日期。若按 `day_start_hour` 回顾业务日，需根据 `completed_at` 判断对应时间区间。一次性总待办与关联日任务不能重复计数，多个日任务按 `todo_id` 去重。撤销/重做仅保留最近完成状态和时间，不是完整事件日志。
 
 发布此能力时，先应用 `20260925001000_todo_completion_timestamp.sql`，再发布使用新版模块字段的 Edge Functions，避免新接口读取尚不存在的列。
+
+### 生活报纸档案馆
+
+日报通过独立领域服务汇集记录，使用账户时区和一天起始小时；往期保存快照，只有明确调用 `newspaper_refresh` 才更新修订。读取不会触发复盘或生图。MCP 工具使用 `newspaper_` 前缀；HTTP 对应 `/api/v1/newspaper/<operation>`，只读操作为 GET，其余为 POST。`GET /api/v1/newspaper` 等同 `list`。具体参数与能力以 OpenAPI、工具 schema 为准。
+
+- `list` 按 `date_from`、`date_to`、`q` 查询，使用 `nextOffset` 继续读取；`get` 以 `date` 读取完整一期。
+- `supplement_save` 保存 `body` 原文；编辑和删除须携带读取时的 `expected_updated_at`。`source_get` 检查原记录是否可用，删除源记录不会删除快照。
+- `export` 返回 Markdown，可选择类别以及是否包含补充、复盘；不含密钥或临时私有图片链接。网页另支持包含原图文件的 ZIP。
+- `style_list/save/delete` 维护配图风格，模板支持 `{{date}}`、`{{content}}`、`{{section}}`。历史图片保留当时的风格快照。
+- `review_generate` 和 `image_generate` 必须来自用户明确请求，并携带幂等键；同一次重试复用原键和原参数。读取、刷新和自动归档均不会自动触发它们。
+- `image_status` 查询后台进度；`succeeded` 才表示原图与缩略图已保存。`unknown` 表示提交结果待确认，不可换键自动重提。`image_select` 选择历史候选，`image_caption` 修改图注。
+
+日报写操作同时要求读取授权和对应写入/删除授权。图片渠道密钥只能在网页设置中保存，由服务端保管；Agent/MCP 不开放密钥配置、读取或导出。具体部署与真实渠道验证状态见 `docs/life-newspaper-implementation.md`。

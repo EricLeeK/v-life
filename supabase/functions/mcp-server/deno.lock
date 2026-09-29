@@ -3,7 +3,9 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.14",
+    "npm:@imagemagick/magick-wasm@0.0.43": "0.0.43",
     "npm:@supabase/server@1.6.0": "1.6.0_@supabase+supabase-js@2.116.0_hono@4.13.8",
+    "npm:@supabase/supabase-js@2": "2.116.0",
     "npm:mcp-lite@0.10.0": "0.10.0"
   },
   "jsr": {
@@ -18,6 +20,9 @@
     }
   },
   "npm": {
+    "@imagemagick/magick-wasm@0.0.43": {
+      "integrity": "sha512-+Wlr3eEl4JlqLwrhAHBlf4VDzOWiFa8L2hYl7mOMXCgq896KghEnh3Go35nuZJMfmE6lX2waBZdr+u9FVluJLA=="
+    },
     "@standard-schema/spec@1.1.0": {
       "integrity": "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="
     },

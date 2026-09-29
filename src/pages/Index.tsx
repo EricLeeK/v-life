@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
 import {
-  CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
+  Newspaper, CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
   Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
   ChevronRight, ArrowRight, ChevronDown, CheckCircle2, Clock, GraduationCap, BookOpen,
   CalendarPlus, ListPlus, ReceiptText, CircleCheck, AlertTriangle,
@@ -729,6 +729,7 @@ export default function DashboardPage() {
         <section className="flex flex-col gap-1">
           <h2 className="type-dashboard-display heading-font text-foreground">{greeting}</h2>
           <p className="text-sm text-muted-foreground">{dateLabel}</p>
+          <Link to="/newspapers?date=today" className="inline-flex items-center gap-2 min-h-11 text-sm underline underline-offset-4 self-start"><Newspaper className="h-4 w-4" />{t("翻开今天的生活日报", "Open today’s newspaper")}<ArrowRight className="h-3 w-3" /></Link>
         </section>
 
         <section aria-labelledby="next-action-heading">

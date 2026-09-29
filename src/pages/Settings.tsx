@@ -1,3 +1,4 @@
+import { NewspaperSettings } from "@/components/newspaper/NewspaperSettings";
 import { AgentConnections } from "@/components/AgentConnections";
 import { useState, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
@@ -43,6 +44,7 @@ const TABLES = ["pantry_items", "belongings_daily", "belongings_durable", "sched
 // Section groups for the sticky settings nav; ids must match the <section> wrappers below.
 const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: "settings-general", zh: "通用", en: "General" },
+  { id: "settings-newspaper", zh: "日报", en: "Newspaper" },
   { id: "settings-ai", zh: "AI", en: "AI" },
   { id: "settings-schedule", zh: "日程", en: "Schedule" },
   { id: "settings-personal", zh: "个性", en: "Personal" },
@@ -431,6 +433,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
         </section>
+
+        <section id="settings-newspaper" className="scroll-mt-24 space-y-6"><NewspaperSettings /></section>
 
         <section id="settings-ai" className="scroll-mt-24 space-y-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("AI", "AI")}</h2>
