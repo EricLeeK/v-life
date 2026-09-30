@@ -621,7 +621,7 @@ export const MODULES: ModuleDef[] = [
     matchFields: ["title"],
     matchRequired: ["title"],
     notes:
-      '【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。**优先用 todo_id**。命中 kind=habit 时不要 daily_task（习惯已在今日顶部，报进度用 habit_log）。例行用 daily_task。没有 id 时给 title，系统自动按标题找/建 todo 再加入今天。',
+      '【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。**优先用 todo_id**。命中 kind=habit 时不要 daily_task（习惯已在今日顶部，报进度用 habit_log）。例行用 daily_task。没有 id 时给 title，系统自动按标题找/建 todo 再加入今天。未完成的一次性任务只会留在一个日期上，排到新的一天会移走旧的未完成记录。',
     executor: { nameField: "title", queryKeys: ["daily_tasks"], special: "daily_task", dateField: "task_date" },
   },
   {

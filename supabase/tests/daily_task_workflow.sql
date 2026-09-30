@@ -4,7 +4,7 @@ insert into public.agent_client_access(user_id,client_id,client_name,read_enable
 insert into public.todos(id,user_id,title) values('bd240000-0000-4000-8000-000000000002','ad240000-0000-4000-8000-000000000002','other user');
 select set_config('request.jwt.claims','{"sub":"ad240000-0000-4000-8000-000000000001","role":"authenticated","client_id":"daily-test"}',true);
 set local role authenticated;
-do $$ declare r jsonb; r2 jsonb; tid uuid; did uuid; routine uuid; begin
+do $$ declare r jsonb; r2 jsonb; tid uuid; did uuid; routine uuid; moved uuid; begin
 r:=public.agent_mutate('daily_task','create',null,'{"title":"new today"}','add-key');
 if r->'data'->>'todo_id' is null then raise exception 'new today task failed: %',r; end if;
 tid:=(r->'data'->>'todo_id')::uuid; did:=(r->'data'->>'id')::uuid;
@@ -25,6 +25,8 @@ r2:=public.agent_mutate('daily_task','create',null,'{"title":"routine today","ki
 routine:=(r2->'data'->>'todo_id')::uuid;
 r2:=public.agent_mutate('daily_task','update',(r2->'data'->>'id')::uuid,'{"is_completed":true}');
 if r2 ? 'error' or (select is_completed from public.todos where id=routine) then raise exception 'routine was permanently completed: %',r2; end if;
+r2:=public.agent_mutate('daily_task','create',null,jsonb_build_object('todo_id',routine,'task_date','2026-09-23'));
+if r2 ? 'error' or (select count(*) from public.daily_tasks where todo_id=routine)<>2 then raise exception 'routine should keep each day: %',r2; end if;
 r2:=public.agent_mutate('todo','update',routine,'{"is_completed":true}');
 if not (r2 ? 'error') then raise exception 'routine mother allowed complete'; end if;
 r2:=public.agent_mutate('daily_task','create',null,'{"todo_id":"bd240000-0000-4000-8000-000000000002"}');
@@ -46,9 +48,11 @@ r2:=public.agent_mutate('daily_task','create',null,'{"title":"duplicate"}');
 if not (r2 ? 'error') then raise exception 'ambiguous title chosen silently'; end if;
 r2:=public.agent_mutate('daily_task','create',null,jsonb_build_object('todo_id',tid,'task_date','2026-09-23'));
 if r2 ? 'error' then raise exception 'existing todo add failed: %',r2; end if;
-r2:=public.agent_mutate('daily_task','update',(r2->'data'->>'id')::uuid,'{"is_completed":true}');
+moved:=(r2->'data'->>'id')::uuid;
+if exists(select 1 from public.daily_tasks where id=did) or (select count(*) from public.daily_tasks where todo_id=tid)<>1 then raise exception 'open once task copied onto a second day'; end if;
+r2:=public.agent_mutate('daily_task','update',moved,'{"is_completed":true}');
 if exists(select 1 from public.daily_tasks where todo_id=tid and (not is_completed or completed_at is null)) then raise exception 'related dates inconsistent'; end if;
-r2:=public.agent_mutate('daily_task','delete',did,'{}');
+r2:=public.agent_mutate('daily_task','delete',moved,'{}');
 if r2 ? 'error' or not exists(select 1 from public.todos where id=tid and is_completed) then raise exception 'remove destroyed mother'; end if;
 begin
  insert into public.daily_tasks(user_id,todo_id,task_date) values(auth.uid(),tid,'2026-01-01');
