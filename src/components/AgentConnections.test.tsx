@@ -4,6 +4,7 @@ import { AgentConnections } from "./AgentConnections";
 
 const USER_ID = "user-1";
 const api = vi.hoisted(() => ({
+  user: { id: "user-1" },
   listGrants: vi.fn(),
   revokeGrant: vi.fn(),
   from: vi.fn(),
@@ -15,7 +16,7 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: { from: api.from, auth: { oauth: { listGrants: api.listGrants, revokeGrant: api.revokeGrant } } },
 }));
 vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ user: { id: "user-1" } }),
+  useAuth: () => ({ user: api.user }),
 }));
 
 type AccessRow = {
