@@ -5,7 +5,7 @@ export const AGENT_INSTRUCTIONS = 'V-Life manages the authorized user’s person
 
 const domains: Record<string,string> = {
  todo:'总待办/长期清单；kind=once 一次性、routine 例行、habit 习惯。创建总待办不会把一次性/例行加入今日。completed_at 是服务端完成时间；历史已完成但为 null 表示时间未知。date_from/date_to 按北京时间自然日筛选完成时间。',
- daily_task:'某个日期的一条执行任务。id 是日任务 ID；todo_id 是关联总待办 ID。',
+ daily_task:'某个日期的一条执行任务。id 是日任务 ID；todo_id 是关联总待办 ID。未完成的一次性任务同时只在一个日期上，排到新的一天会移走旧的未完成记录；例行按天各留一条。',
  habit_log:'个人习惯的当天累计记录；value 是累计值，不是增量。重复 create 覆盖当天值；没有 update。',
  finance:'账单记录；amount 为原币金额，currency 为 CNY/JPY；amount_cny/exchange_rate 由服务端计算，不可写。',
  subscription:'订阅跟踪；日期范围对应 next_date，status=active/trial/ended，分类可自定义。auto_renew=false 或 ended 仅改变本地记录，外部取消需用户访问管理链接。月均只是预算，完整分币种汇总用 subscription_summary。',
@@ -45,7 +45,7 @@ function baseToolDescription(mod:ModuleDef, op:string):string {
  if(op==='search')return `按${mod.executor?.nameField}做不区分大小写的文字包含搜索，返回分页 data/hasMore/nextOffset；不是语义搜索，也不自动选择重名记录。${date?`日期范围对应 ${date}。`:''}${modulePurpose(mod)}`;
  if(op==='get')return `按 ${id} 读取一条记录，返回 data 对象；不存在或不可见返回 NOT_FOUND。${modulePurpose(mod)}`;
  if(mod.key==='daily_task') {
-  if(op==='create')return '将总待办加入某天：提供 todo_id，或提供 title 精确匹配未完成总待办，没有则原子新建后加入。两者同时给出时 todo_id 优先。默认当前业务日，可指定 task_date。同一待办同一天不重复。同名多条须用 todo_id。习惯/暂停/归档不能加入；有未完成子任务的顶层父待办须选择子任务。返回 data.id（日任务 ID）及 data.todo_id（总待办 ID）。新建时默认 kind=once、category=未分类、importance=普通。';
+  if(op==='create')return '将总待办加入某天：提供 todo_id，或提供 title 精确匹配未完成总待办，没有则原子新建后加入。两者同时给出时 todo_id 优先。默认当前业务日，可指定 task_date。同一待办同一天不重复。未完成的一次性任务加入新日期会移走其他未完成日期，不会留下两条；例行仍保留每一天。同名多条须用 todo_id。习惯/暂停/归档不能加入；有未完成子任务的顶层父待办须选择子任务。返回 data.id（日任务 ID）及 data.todo_id（总待办 ID）。新建时默认 kind=once、category=未分类、importance=普通。';
   if(op==='update')return '按 daily_task.id 设置 is_completed=true 完成或 false 撤销。一次性总待办及其所有关联日任务同步；例行仅此日任务改变。id 不能填 todo_id；先用 daily_task_today/list 获得日任务 ID。返回更新后的 data。';
   return '按 daily_task.id 移出该日清单；保留总待办及其完成状态，不等于撤销完成。返回 data.id。';
  }
@@ -73,8 +73,8 @@ export function buildAgentGuide(topic:GuideTopic='quickstart') {
   '读取结果只含白名单字段；未返回的字段不代表数据库没有该字段。字段类型/枚举以 tools/list 的 inputSchema 为准。',
  ];
  const tasks={
-  concepts:{todo:'总待办长期条目；一次性 once、例行 routine、习惯 habit',daily_task:'一次执行记录，id 不同于 todo_id；完成一次性任务会同步所有关联日任务',habit_log:'习惯当天累计值；create 覆盖而非累加，不完成长期母卡'},
-  rules:['每日回顾必须按 completed_at 判断实际完成日期；禁止把所有 is_completed=true 计为今日完成。completed_at=null 的历史已完成项单列为完成时间未知，不得使用 updated_at 或 created_at 推测。todo 日期筛选按北京时间自然日；业务日回顾需按 day_start_hour 另行判断时间区间。daily_task.task_date 是安排日期，不是完成日期；一次性任务的多个关联日记录按 todo_id 去重，不能与总待办重复计数。','daily_task_today 查询服务器定义的今天；daily_task_list 不传日期会查所有日期。业务日按 Asia/Shanghai 减用户 day_start_hour。','daily_task_create 同一天同一总待办不重复。title 精确匹配多个未完成条目时改用 todo_id。','暂停、归档、习惯、含未完成子任务的顶层父待办不能直接加入今日。先选择可执行子任务或按用户意图解除暂停。','例行只完成当日，不改变总待办的完成状态；习惯用 habit_log_create，value 是当天累计值。','daily_task_delete 只移出清单；todo_delete 删除总待办并可能级联删除关联日任务。撤销完成使用 update(is_completed:false)，不是 delete。'],
+  concepts:{todo:'总待办长期条目；一次性 once、例行 routine、习惯 habit',daily_task:'一次执行记录，id 不同于 todo_id。未完成的一次性任务同时只有一条安排；完成会同步总待办',habit_log:'习惯当天累计值；create 覆盖而非累加，不完成长期母卡'},
+  rules:['每日回顾必须按 completed_at 判断实际完成日期；禁止把所有 is_completed=true 计为今日完成。completed_at=null 的历史已完成项单列为完成时间未知，不得使用 updated_at 或 created_at 推测。todo 日期筛选按北京时间自然日；业务日回顾需按 day_start_hour 另行判断时间区间。daily_task.task_date 是安排日期，不是完成日期。未完成的一次性任务同时只在一个日期上；把它排到新的一天会移走旧的未完成记录，已完成的日期保留。例行按天各留一条。','daily_task_today 查询服务器定义的今天；daily_task_list 不传日期会查所有日期。业务日按 Asia/Shanghai 减用户 day_start_hour。','daily_task_create 同一天同一总待办不重复。把未完成的一次性任务排到新日期是改期，不是复制。title 精确匹配多个未完成条目时改用 todo_id。','暂停、归档、习惯、含未完成子任务的顶层父待办不能直接加入今日。先选择可执行子任务或按用户意图解除暂停。','例行只完成当日，不改变总待办的完成状态；习惯用 habit_log_create，value 是当天累计值。','daily_task_delete 只移出清单；todo_delete 删除总待办并可能级联删除关联日任务。撤销完成使用 update(is_completed:false)，不是 delete。'],
   examples:[
    {intent:'把已有的买牛奶加入今天',steps:[{tool:'todo_search',arguments:{keyword:'买牛奶'}},{tool:'daily_task_create',arguments:{todo_id:'$todo.id',idempotency_key:'$new_key'}}]},
    {intent:'新建清单里没有的任务并加入今天',steps:[{tool:'daily_task_create',arguments:{title:'给花浇水',kind:'once',idempotency_key:'$new_key'}}]},
