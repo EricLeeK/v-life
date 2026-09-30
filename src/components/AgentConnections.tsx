@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { oauthClientId, revokeAgentAccess, type AgentAccess } from '@/lib/agentConnections';
+import { agentConnectionAction, oauthClientId, revokeAgentAccess, type AgentAccess } from '@/lib/agentConnections';
 
 export function AgentConnections() {
   const { user } = useAuth();
@@ -51,6 +51,20 @@ export function AgentConnections() {
     } catch (e) { setError(`未能禁止数据访问：${e instanceof Error ? e.message : String(e)}。请重试。`); }
     finally { setBusy(false); }
   };
+  const remove = async (clientId: string) => {
+    if (!user) return;
+    const record = records.find((r) => r.client_id === clientId);
+    const hasGrant = grants.some((g) => oauthClientId(g.client) === clientId);
+    if (agentConnectionAction(record?.revoked_at, hasGrant) !== 'remove') return;
+    setBusy(true); setError(null); setNotice(null);
+    try {
+      const { error: deleteError } = await supabase.from('agent_client_access' as never).delete().eq('user_id', user.id).eq('client_id', clientId);
+      if (deleteError) throw deleteError;
+      setRecords((all) => all.filter((r) => r.client_id !== clientId));
+      setNotice('已从列表移除。');
+    } catch (e) { setError(`未能移除连接：${e instanceof Error ? e.message : String(e)}。请重试。`); }
+    finally { setBusy(false); }
+  };
   const rows = new Map(records.map((r) => [r.client_id, { id: r.client_id, name: r.client_name, record: r, grant: false }]));
   for (const grant of grants) { const id = oauthClientId(grant.client); const row = rows.get(id); rows.set(id, { id, name: grant.client.name || id, record: row?.record, grant: true }); }
   return <Card><CardHeader><CardTitle className="text-base">已连接的 Agent</CardTitle></CardHeader><CardContent className="space-y-4">
@@ -62,6 +76,10 @@ export function AgentConnections() {
     {notice && <p role="status" className="text-sm">{notice}</p>}
     {!loaded && !error && <p className="text-sm text-muted-foreground">正在读取连接…</p>}
     {loaded && !error && rows.size === 0 && <p className="text-sm text-muted-foreground">还没有授权的 Agent。</p>}
-    {[...rows.values()].map((row) => <div key={row.id} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm"><div><p className="font-medium">{row.name || row.id}</p><p className="text-muted-foreground">{row.record?.revoked_at ? '数据访问已禁止' : row.record ? [row.record.read_enabled && '读取', row.record.write_enabled && '新增/修改', row.record.delete_enabled && '删除'].filter(Boolean).join(' · ') || '无数据权限' : 'OAuth 已连接，尚未授予数据权限'}</p>{row.record?.last_used_at && <p className="text-xs text-muted-foreground">最近使用：{new Date(row.record.last_used_at).toLocaleString()}</p>}</div><Button variant="destructive" size="sm" disabled={busy || (!!row.record?.revoked_at && !row.grant)} onClick={() => revoke(row.id, row.name)}>{row.record?.revoked_at && row.grant ? '重试撤销 OAuth' : '撤销连接'}</Button></div>)}
+    {[...rows.values()].map((row) => {
+      const action = agentConnectionAction(row.record?.revoked_at, row.grant);
+      const label = action === 'retry' ? '重试撤销 OAuth' : action === 'remove' ? '移除' : '撤销连接';
+      return <div key={row.id} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm"><div><p className="font-medium">{row.name || row.id}</p><p className="text-muted-foreground">{row.record?.revoked_at ? '数据访问已禁止' : row.record ? [row.record.read_enabled && '读取', row.record.write_enabled && '新增/修改', row.record.delete_enabled && '删除'].filter(Boolean).join(' · ') || '无数据权限' : 'OAuth 已连接，尚未授予数据权限'}</p>{row.record?.last_used_at && <p className="text-xs text-muted-foreground">最近使用：{new Date(row.record.last_used_at).toLocaleString()}</p>}</div><Button variant="destructive" size="sm" disabled={busy} onClick={() => (action === 'remove' ? remove(row.id) : revoke(row.id, row.name))}>{label}</Button></div>;
+    })}
   </CardContent></Card>;
 }

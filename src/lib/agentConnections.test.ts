@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { safeConsentReturnTo, approveAgent, revokeAgentAccess } from './agentConnections';
+import { safeConsentReturnTo, approveAgent, revokeAgentAccess, agentConnectionAction } from './agentConnections';
 describe('agent authorization boundaries', () => {
  it('preserves only a local consent return path', () => {
   expect(safeConsentReturnTo('/oauth/consent?authorization_id=a')).toBe('/oauth/consent?authorization_id=a');
@@ -23,5 +23,12 @@ describe('agent authorization boundaries', () => {
   const revoke = vi.fn();
   await expect(revokeAgentAccess({ block: async () => { throw Error('db failed'); }, revoke })).rejects.toThrow('db failed');
   expect(revoke).not.toHaveBeenCalled();
+ });
+ it('offers removal only after revoke, and only when no OAuth grant remains', () => {
+  expect(agentConnectionAction('2026-09-30T00:00:00.000Z', false)).toBe('remove');
+  expect(agentConnectionAction(null, false)).toBe('revoke');
+  expect(agentConnectionAction(null, true)).toBe('revoke');
+  expect(agentConnectionAction('2026-09-30T00:00:00.000Z', true)).toBe('retry');
+  expect(agentConnectionAction(undefined, false)).toBe('revoke');
  });
 });

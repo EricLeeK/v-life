@@ -19,3 +19,8 @@ export async function revokeAgentAccess({ block, revoke }: { block: () => Promis
   try { await revoke(); return { blocked: true, oauthError: null }; }
   catch (error) { return { blocked: true, oauthError: error instanceof Error ? error.message : String(error) }; }
 }
+/** Revoked rows with no remaining OAuth grant can be deleted; anything still granted stays on the revoke path. */
+export function agentConnectionAction(revokedAt: string | null | undefined, hasGrant: boolean): 'revoke' | 'retry' | 'remove' {
+  if (!revokedAt) return 'revoke';
+  return hasGrant ? 'retry' : 'remove';
+}
