@@ -56,7 +56,29 @@ export default function OAuthConsentPage() {
   };
 
   if (loading || !user) return <div className="p-8 text-center">加载中…</div>;
-  if (!authorizationId) return <div className="p-8 text-center">缺少授权请求。</div>;
+  if (!authorizationId) {
+    const looksLikeClientCallback = params.has("code") || params.has("state") || params.has("error");
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-lg">
+          <CardHeader><CardTitle>缺少授权请求</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            {looksLikeClientCallback ? (
+              <>
+                <p>当前地址像是 OAuth 客户端回调（带有 code/state），不是授权确认页需要的 authorization_id。</p>
+                <p>请把 Agent 的 redirect_uri 改成 Agent 自己的回调地址，不要写成 V-Life 的 <code>/oauth/consent</code>。授权页路径由 Supabase OAuth Server 单独配置，与客户端回调不是同一个东西。</p>
+              </>
+            ) : (
+              <>
+                <p>授权确认页必须带 <code>?authorization_id=...</code>。常见原因：直接打开了裸的 /oauth/consent，或旧链接里的 authorization_id 已过期/被消费。</p>
+                <p>请从 Agent 重新发起完整授权链接（supabase …/oauth/authorize?…），不要手动改地址栏。</p>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   return <div className="min-h-screen flex items-center justify-center bg-background p-4"><Card className="w-full max-w-lg">
     <CardHeader><CardTitle>连接 V-Life Agent</CardTitle></CardHeader>
     <CardContent className="space-y-5">
