@@ -4,47 +4,42 @@ import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { GoalsBall } from "@/components/schedule/GoalsBall";
 import { Button } from "@/components/ui/button";
+import SegmentedControl from "@/vendor/uiarc/registry/components/segmented-control/segmented-control";
+import { Combobox } from "@/vendor/uiarc/registry/components/combobox/combobox";
+import { ArcScope } from "@/components/arc/ArcScope";
+import { DateField, TimeField } from "@/components/arc/DateField";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import BottomSheet from "@/vendor/uiarc/registry/components/bottom-sheet/bottom-sheet";
 import { Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useScheduleByRange, scheduleHooks, useSettings, todoHooks,
   useCreateSeriesWithInstances, useUpdateSeriesWithInstances, useDeleteSeries,
 } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
+import ConfirmMorph from "@/vendor/uiarc/registry/components/confirm-morph/confirm-morph";
 import { format, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { DayColumn } from "@/components/schedule/DayColumn";
 import { MonthView } from "@/components/schedule/MonthView";
 import { HOUR_HEIGHT, VISIBLE_START, TOTAL_HOURS, IMPORTANCE_COLORS, timeToY } from "@/components/schedule/EventBlock";
 
+/* Event colors derive from the app's --cat-* tokens so they adapt to dark mode;
+   legacy records may still carry raw hexes picked before this palette. */
 const SCHEDULE_COLORS = [
-  "#ef4444", "#f59e0b", "#84cc16", "#22c55e",
-  "#14b8a6", "#0ea5e9", "#3b82f6", "#6366f1",
-  "#8b5cf6", "#a855f7", "#ec4899", "#f43f5e",
-  "#78716c", "#d97706", "#059669", "#7c3aed",
+  "hsl(var(--cat-red))", "hsl(var(--cat-orange))", "hsl(var(--cat-yellow))", "hsl(var(--cat-green))",
+  "hsl(var(--cat-teal))", "hsl(var(--cat-blue))", "hsl(var(--cat-purple))", "hsl(var(--muted-foreground))",
 ];
 
 const SCHEDULE_COLOR_NAMES: Record<string, { zh: string; en: string }> = {
-  "#ef4444": { zh: "红色", en: "Red" },
-  "#f59e0b": { zh: "琥珀色", en: "Amber" },
-  "#84cc16": { zh: "黄绿色", en: "Lime" },
-  "#22c55e": { zh: "绿色", en: "Green" },
-  "#14b8a6": { zh: "青色", en: "Teal" },
-  "#0ea5e9": { zh: "天蓝色", en: "Sky" },
-  "#3b82f6": { zh: "蓝色", en: "Blue" },
-  "#6366f1": { zh: "靛蓝色", en: "Indigo" },
-  "#8b5cf6": { zh: "紫色", en: "Violet" },
-  "#a855f7": { zh: "紫红色", en: "Purple" },
-  "#ec4899": { zh: "粉色", en: "Pink" },
-  "#f43f5e": { zh: "玫红", en: "Rose" },
-  "#78716c": { zh: "石灰色", en: "Stone" },
-  "#d97706": { zh: "橙色", en: "Orange" },
-  "#059669": { zh: "翠绿", en: "Emerald" },
-  "#7c3aed": { zh: "紫罗兰", en: "Violet deep" },
+  "hsl(var(--cat-red))": { zh: "红色", en: "Red" },
+  "hsl(var(--cat-orange))": { zh: "橙色", en: "Orange" },
+  "hsl(var(--cat-yellow))": { zh: "黄色", en: "Yellow" },
+  "hsl(var(--cat-green))": { zh: "绿色", en: "Green" },
+  "hsl(var(--cat-teal))": { zh: "青色", en: "Teal" },
+  "hsl(var(--cat-blue))": { zh: "蓝色", en: "Blue" },
+  "hsl(var(--cat-purple))": { zh: "紫色", en: "Purple" },
+  "hsl(var(--muted-foreground))": { zh: "石灰色", en: "Stone" },
 };
 
 type ViewMode = "1day" | "3day" | "week" | "month";
@@ -401,188 +396,179 @@ export default function SchedulePage() {
     return master?.recurrence && (master.recurrence as any).type !== "none";
   })();
 
+  const eventForm = (
+    <div className="space-y-3">
+      {incompleteTodos.length > 0 && (
+        <div>
+          <Combobox id="quick-todo-select" label={t("从待办快速选择", "Quick Pick from To-Dos")} placeholder={t("搜索待办作为标题…", "Search a to-do as title…")} onValueChange={(v) => {
+            const todo = incompleteTodos.find((t: any) => t.id === v);
+            if (todo) setForm({ ...form, title: todo.title, notes: todo.detail || form.notes });
+          }} options={incompleteTodos.map((todo: any) => {
+            const parent = todo.parent_id ? allTodos.find((p: any) => p.id === todo.parent_id) : null;
+            return { value: todo.id, label: parent ? `${parent.title} > ${todo.title}` : todo.title, keywords: [todo.title, todo.category ?? ""] };
+          })} />
+        </div>
+      )}
+      <div><Label htmlFor="event-title">{t("标题", "Title")} *</Label><Input id="event-title" className="mt-1 h-9 text-base" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label htmlFor="event-start-date">{t("开始日期", "Start Date")} *</Label><DateField id="event-start-date" label={t("开始日期", "Start Date")} value={form.start_date} onChange={(start_date) => setForm({ ...form, start_date, end_date: start_date })} /></div>
+        <div><Label htmlFor="event-start-time">{t("开始时间", "Start Time")}</Label><TimeField id="event-start-time" label={t("开始时间", "Start Time")} value={form.start_time} onChange={(start_time) => setForm({ ...form, start_time })} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label htmlFor="event-end-date">{t("结束日期", "End Date")} *</Label><DateField id="event-end-date" label={t("结束日期", "End Date")} value={form.end_date} onChange={(end_date) => setForm({ ...form, end_date })} /></div>
+        <div><Label htmlFor="event-end-time">{t("结束时间", "End Time")}</Label><TimeField id="event-end-time" label={t("结束时间", "End Time")} value={form.end_time} onChange={(end_time) => setForm({ ...form, end_time })} clearable /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div><Label htmlFor="event-importance">{t("重要性", "Importance")}</Label>
+          <select id="event-importance" value={form.importance} onChange={(e) => setForm({ ...form, importance: e.target.value })} className="native-select mt-1 w-full rounded-md border border-input bg-card px-3 text-base text-card-foreground">
+            {Object.keys(IMPORTANCE_COLORS).map((k) => <option key={k} value={k}>{t(k, { "紧急": "Urgent", "重要": "Important", "普通": "Normal", "低": "Low" }[k] || k)}</option>)}
+          </select>
+        </div>
+        <div><Label htmlFor="event-status">{t("状态", "Status")}</Label>
+          <select id="event-status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="native-select mt-1 w-full rounded-md border border-input bg-card px-3 text-base text-card-foreground">
+            <option value="未开始">{t("未开始", "Not Started")}</option>
+            <option value="进行中">{t("进行中", "In Progress")}</option>
+            <option value="已完成">{t("已完成", "Completed")}</option>
+            <option value="已取消">{t("已取消", "Cancelled")}</option>
+          </select>
+        </div>
+      </div>
+      <div><Label htmlFor="event-notes">{t("备注", "Notes")}</Label><Input id="event-notes" className="mt-1 h-9 text-base" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+      <div>
+        <Label id="event-color-label">{t("颜色", "Color")}</Label>
+        <div
+          role="group"
+          aria-labelledby="event-color-label"
+          className="flex flex-wrap gap-1.5 mt-2"
+        >
+          {SCHEDULE_COLORS.map((c) => {
+            const name = SCHEDULE_COLOR_NAMES[c];
+            const colorLabel = name ? (lang === "zh" ? name.zh : name.en) : c;
+            const selected = form.color === c;
+            return (
+              <button
+                key={c}
+                type="button"
+                aria-label={colorLabel}
+                aria-pressed={selected}
+                className="w-8 h-8 rounded-full border-2 transition-all shrink-0"
+                style={{
+                  backgroundColor: c,
+                  borderColor: selected ? "var(--foreground)" : "transparent",
+                  transform: selected ? "scale(1.15)" : "scale(1)",
+                }}
+                onClick={() => setForm({ ...form, color: c })}
+              />
+            );
+          })}
+          <button
+            type="button"
+            aria-label={t("使用默认颜色", "Use default color")}
+            aria-pressed={!form.color}
+            className="w-8 h-8 rounded-full border-2 border-dashed border-border flex items-center justify-center text-[11px] text-muted-foreground hover:border-foreground transition-colors shrink-0"
+            onClick={() => setForm({ ...form, color: "" })}
+            title={t("使用默认颜色", "Use default")}
+          >
+            ×
+          </button>
+        </div>
+        <span className="text-[11px] text-muted-foreground mt-1 block">{form.color || t("默认颜色", "Default color")}</span>
+      </div>
+      {/* Recurrence */}
+      <div>
+        <Label htmlFor="event-recurrence">{t("重复", "Repeat")}</Label>
+        <select id="event-recurrence" value={form.recurrence_type} onChange={(e) => setForm({ ...form, recurrence_type: e.target.value })} className="native-select mt-1 w-full rounded-md border border-input bg-card px-3 text-base text-card-foreground">
+          <option value="none">{t("不重复", "No repeat")}</option>
+          <option value="daily">{t("每天", "Daily")}</option>
+          <option value="weekly">{t("每周", "Weekly")}</option>
+          <option value="monthly">{t("每月", "Monthly")}</option>
+        </select>
+        {form.recurrence_type === "weekly" && (
+          <div className="flex gap-1 mt-2">
+            {(lang === "zh" ? ["一","二","三","四","五","六","日"] : ["M","T","W","T","F","S","S"]).map((d, i) => {
+              const dayNum = i + 1;
+              const selected = form.recurrence_days.includes(dayNum);
+              return (
+                <Button key={d} type="button" variant={selected ? "default" : "secondary"} size="sm" className="h-8 w-8 p-0 text-xs"
+                  aria-pressed={selected}
+                  onClick={() => setForm(f => ({ ...f, recurrence_days: selected ? f.recurrence_days.filter(x => x !== dayNum) : [...f.recurrence_days, dayNum] }))}>
+                  {d}
+                </Button>
+              );
+            })}
+          </div>
+        )}
+        {form.recurrence_type !== "none" && (
+          <div className="mt-2">
+            <Label htmlFor="event-recurrence-end" className="text-xs">{t("结束日期（可选，不填则生成未来12个月）", "End date (optional, defaults to 12 months)")}</Label>
+            <DateField id="event-recurrence-end" label={t("结束日期", "End date")} value={form.recurrence_end_date} onChange={(recurrence_end_date) => setForm({ ...form, recurrence_end_date })} />
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <Button onClick={handleSave} className="flex-1">{t("保存", "Save")}{editingIsSeries ? t("（整个系列）", " (entire series)") : ""}</Button>
+        {editingItem && (
+          <ConfirmMorph
+  className="confirm-quiet"
+            tone="danger"
+            icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+            label={<span className="sr-only">{t("删除事件", "Delete event")}</span>}
+            prompt={editingIsSeries ? t("删除整个重复系列？", "Delete the entire series?") : t("删除这个事件？", "Delete this event?")}
+            confirmLabel={t("删除", "Delete")}
+            cancelLabel={t("取消", "Cancel")}
+            doneLabel={t("已删除", "Deleted")}
+            onConfirm={handleDelete}
+          />
+        )}
+      </div>
+      {editingIsSeries && (
+        <p className="text-xs text-muted-foreground text-center">{t("编辑或删除将影响整个重复系列", "Editing or deleting will affect the entire recurring series")}</p>
+      )}
+    </div>
+  );
+
   return (
     <AppLayout title={t("日程计划", "Schedule")}>
       <div className="space-y-4">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goBack} aria-label={t("上一页", "Previous")}><ChevronLeft className="h-4 w-4" /></Button>
+          <Button variant="secondary" size="icon" className="h-9 w-9" onClick={goBack} aria-label={t("上一页", "Previous")}><ChevronLeft className="h-4 w-4" /></Button>
           <Button variant="secondary" size="sm" onClick={goToday}>{t("今天", "Today")}</Button>
-          <Button variant="secondary" size="icon" className="h-8 w-8" onClick={goForward} aria-label={t("下一页", "Next")}><ChevronRight className="h-4 w-4" /></Button>
+          <Button variant="secondary" size="icon" className="h-9 w-9" onClick={goForward} aria-label={t("下一页", "Next")}><ChevronRight className="h-4 w-4" /></Button>
           <span className="text-sm font-medium text-foreground min-w-[100px]">{headerLabel}</span>
           <div className="flex-1" />
           {settings?.show_goals_in_schedule !== false && <GoalsBall />}
-          <div className="flex gap-1 bg-muted rounded-lg p-0.5">
-            {(["1day", "3day", "week", "month"] as ViewMode[]).map((mode) => (
-              <Button key={mode} variant={viewMode === mode ? "default" : "ghost"} size="sm"
-                className="h-7 text-xs px-2.5"
-                onClick={() => setViewMode(mode)}>
-                {{ "1day": t("日", "Day"), "3day": t("3天", "3 Day"), "week": t("周", "Week"), "month": t("月", "Month") }[mode]}
-              </Button>
-            ))}
-          </div>
-          <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); resetForm(); } }}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="shrink-0" onClick={resetForm}><Plus className="h-4 w-4 mr-1" />{t("新建", "New")}</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}</DialogTitle>
-                <DialogDescription>{t("填写标题与时间，安排新的日程事件。", "Add a title and time for this schedule event.")}</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-3">
-                {incompleteTodos.length > 0 && (
-                  <div>
-                    <Label htmlFor="quick-todo-select" className="text-xs text-muted-foreground">{t("从待办快速选择", "Quick Pick from To-Dos")}</Label>
-                    <Select onValueChange={(v) => {
-                      const todo = incompleteTodos.find((t: any) => t.id === v);
-                      if (todo) setForm({ ...form, title: todo.title, notes: todo.detail || form.notes });
-                    }}>
-                      <SelectTrigger id="quick-todo-select" className="mt-1"><SelectValue placeholder={t("选择待办作为标题...", "Pick a to-do as title...")} /></SelectTrigger>
-                      <SelectContent>
-                        {incompleteTodos.map((todo: any) => {
-                          const displayTitle = (() => {
-                            if (todo.parent_id) {
-                              const parent = allTodos.find((p: any) => p.id === todo.parent_id);
-                              return parent ? `${parent.title} > ${todo.title}` : todo.title;
-                            }
-                            return todo.title;
-                          })();
-                          return (
-                            <SelectItem key={todo.id} value={todo.id}>
-                              {displayTitle}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                <div><Label htmlFor="event-title">{t("标题", "Title")} *</Label><Input id="event-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label htmlFor="event-start-date">{t("开始日期", "Start Date")} *</Label><Input id="event-start-date" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value, end_date: e.target.value })} /></div>
-                  <div><Label htmlFor="event-start-time">{t("开始时间", "Start Time")}</Label><Input id="event-start-time" type="time" value={form.start_time} onChange={(e) => setForm({ ...form, start_time: e.target.value })} /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label htmlFor="event-end-date">{t("结束日期", "End Date")} *</Label><Input id="event-end-date" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} /></div>
-                  <div><Label htmlFor="event-end-time">{t("结束时间", "End Time")}</Label><Input id="event-end-time" type="time" value={form.end_time} onChange={(e) => setForm({ ...form, end_time: e.target.value })} /></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label htmlFor="event-importance">{t("重要性", "Importance")}</Label>
-                    <Select value={form.importance} onValueChange={(v) => setForm({ ...form, importance: v })}>
-                      <SelectTrigger id="event-importance"><SelectValue /></SelectTrigger>
-                      <SelectContent>{Object.keys(IMPORTANCE_COLORS).map((k) => <SelectItem key={k} value={k}>{t(k, { "紧急": "Urgent", "重要": "Important", "普通": "Normal", "低": "Low" }[k] || k)}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label htmlFor="event-status">{t("状态", "Status")}</Label>
-                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                      <SelectTrigger id="event-status"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="未开始">{t("未开始", "Not Started")}</SelectItem>
-                        <SelectItem value="进行中">{t("进行中", "In Progress")}</SelectItem>
-                        <SelectItem value="已完成">{t("已完成", "Completed")}</SelectItem>
-                        <SelectItem value="已取消">{t("已取消", "Cancelled")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div><Label htmlFor="event-notes">{t("备注", "Notes")}</Label><Input id="event-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-                <div>
-                  <Label id="event-color-label">{t("颜色", "Color")}</Label>
-                  <div
-                    role="group"
-                    aria-labelledby="event-color-label"
-                    className="flex flex-wrap gap-1.5 mt-2"
-                  >
-                    {SCHEDULE_COLORS.map((c) => {
-                      const name = SCHEDULE_COLOR_NAMES[c];
-                      const colorLabel = name ? (lang === "zh" ? name.zh : name.en) : c;
-                      const selected = form.color === c;
-                      return (
-                        <button
-                          key={c}
-                          type="button"
-                          aria-label={colorLabel}
-                          aria-pressed={selected}
-                          className="w-7 h-7 rounded-full border-2 transition-all shrink-0 min-h-[32px] min-w-[32px]"
-                          style={{
-                            backgroundColor: c,
-                            borderColor: selected ? "var(--foreground)" : "transparent",
-                            transform: selected ? "scale(1.15)" : "scale(1)",
-                          }}
-                          onClick={() => setForm({ ...form, color: c })}
-                        />
-                      );
-                    })}
-                    <button
-                      type="button"
-                      aria-label={t("使用默认颜色", "Use default color")}
-                      aria-pressed={!form.color}
-                      className="w-7 h-7 rounded-full border-2 border-dashed border-border flex items-center justify-center text-[10px] text-muted-foreground hover:border-foreground transition-colors shrink-0 min-h-[32px] min-w-[32px]"
-                      onClick={() => setForm({ ...form, color: "" })}
-                      title={t("使用默认颜色", "Use default")}
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground mt-1 block">{form.color || t("默认颜色", "Default color")}</span>
-                </div>
-                {/* Recurrence */}
-                <div>
-                  <Label htmlFor="event-recurrence">{t("重复", "Repeat")}</Label>
-                  <Select value={form.recurrence_type} onValueChange={(v) => setForm({ ...form, recurrence_type: v })}>
-                    <SelectTrigger id="event-recurrence"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">{t("不重复", "No repeat")}</SelectItem>
-                      <SelectItem value="daily">{t("每天", "Daily")}</SelectItem>
-                      <SelectItem value="weekly">{t("每周", "Weekly")}</SelectItem>
-                      <SelectItem value="monthly">{t("每月", "Monthly")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {form.recurrence_type === "weekly" && (
-                    <div className="flex gap-1 mt-2">
-                      {(lang === "zh" ? ["一","二","三","四","五","六","日"] : ["M","T","W","T","F","S","S"]).map((d, i) => {
-                        const dayNum = i + 1;
-                        const selected = form.recurrence_days.includes(dayNum);
-                        return (
-                          <Button key={d} type="button" variant={selected ? "default" : "secondary"} size="sm" className="h-7 w-7 p-0 text-xs"
-                            aria-pressed={selected}
-                            onClick={() => setForm(f => ({ ...f, recurrence_days: selected ? f.recurrence_days.filter(x => x !== dayNum) : [...f.recurrence_days, dayNum] }))}>
-                            {d}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {form.recurrence_type !== "none" && (
-                    <div className="mt-2">
-                      <Label htmlFor="event-recurrence-end" className="text-xs">{t("结束日期（可选，不填则生成未来12个月）", "End date (optional, defaults to 12 months)")}</Label>
-                      <Input id="event-recurrence-end" type="date" value={form.recurrence_end_date} onChange={(e) => setForm({ ...form, recurrence_end_date: e.target.value })} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={handleSave} className="flex-1">{t("保存", "Save")}{editingIsSeries ? t("（整个系列）", " (entire series)") : ""}</Button>
-                  {editingItem && (
-                    <Button variant="destructive" size="icon" onClick={handleDelete} aria-label={t("删除事件", "Delete event")}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                {editingIsSeries && (
-                  <p className="text-xs text-muted-foreground text-center">{t("编辑或删除将影响整个重复系列", "Editing or deleting will affect the entire recurring series")}</p>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <ArcScope>
+            <SegmentedControl label={t("日程视图", "Schedule view")} value={viewMode} onValueChange={value => setViewMode(value as ViewMode)} options={[
+              { value: "1day", label: t("日", "Day") },
+              { value: "3day", label: t("3天", "3 Day") },
+              { value: "week", label: t("周", "Week") },
+              { value: "month", label: t("月", "Month") },
+            ]} />
+          </ArcScope>
+          <Button size="sm" className="shrink-0 h-9" onClick={() => { setEditingItem(null); resetForm(); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-1" />{t("新建", "New")}</Button>
         </div>
+
+        {/* Event form rises from the bottom, opens at the tall detent */}
+        <BottomSheet
+          open={dialogOpen}
+          onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); resetForm(); } }}
+          title={editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}
+          description={t("填写标题与时间，安排新的日程事件。", "Add a title and time for this schedule event.")}
+          detents={[0.78, 0.94]}
+          initialDetent={1}
+          className="arc-runtime"
+          closeLabel={t("关闭", "Close")}
+        >
+          {eventForm}
+        </BottomSheet>
 
         {/* Month View */}
         {viewMode === "month" ? (
           <MonthView baseDate={baseDate} events={displayEvents} onEdit={openEdit} onCreateAt={handleCreateAt} />
         ) : (
           /* Day/Week Grid View */
-          <div className="border border-border rounded-[9px] overflow-hidden bg-card overflow-x-auto">
+          <div className="border border-border rounded-lg overflow-hidden bg-card overflow-x-auto">
             <div className="min-w-[600px] sm:min-w-0">
               {/* Day headers */}
               <div className={`grid ${gridCols} border-b border-border bg-muted/40`}>
@@ -591,7 +577,7 @@ export default function SchedulePage() {
                   const isToday = format(d, "yyyy-MM-dd") === todayStr;
                   return (
                     <div key={d.toISOString()} className={`p-1.5 text-center border-l ${isToday ? "border-cat-blue/30 bg-cat-blue-bg/50" : "border-border"}`}>
-                      <div className={`text-[10px] ${isToday ? "text-cat-blue font-semibold" : "text-muted-foreground"}`}>
+                      <div className={`text-[11px] ${isToday ? "text-cat-blue font-semibold" : "text-muted-foreground"}`}>
                         {format(d, "EEE", { locale: lang === "zh" ? zhCN : undefined })}
                       </div>
                       <div className={`text-xs font-medium ${isToday ? "bg-cat-blue text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center mx-auto" : "text-foreground"}`}>
@@ -608,7 +594,7 @@ export default function SchedulePage() {
                 {/* Time gutter */}
                 <div className="relative">
                   {Array.from({ length: TOTAL_HOURS + 1 }).map((_, i) => (
-                    <div key={i} className="absolute right-1 text-[10px] text-muted-foreground"
+                    <div key={i} className="absolute right-1 text-[11px] text-muted-foreground"
                       style={{ top: `${i * HOUR_HEIGHT + 8 - 5}px`, lineHeight: "1" }}>
                       {`${String(i + VISIBLE_START).padStart(2, "0")}:00`}
                     </div>

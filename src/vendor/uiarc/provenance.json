@@ -1,0 +1,177 @@
+{
+  "repository": "https://github.com/kuratlielia/arc-library",
+  "commit": "b454cf80c5378d9d1ef846fe1c352e3068281b8d",
+  "license": "MIT",
+  "components": [
+    "segmented-control",
+    "filter-toolbar",
+    "command-palette",
+    "combobox",
+    "date-range-picker",
+    "number-field",
+    "action-button",
+    "confirm-morph",
+    "inline-edit",
+    "bottom-sheet",
+    "animated-counter",
+    "metric-card",
+    "line-chart",
+    "donut-chart",
+    "sparkline",
+    "button"
+  ],
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "1b73a3fbab233cb995e6e9b6a63d302f91975c74c1629919c8e9820902820dde"
+    },
+    {
+      "path": "lib/motion-tokens.ts",
+      "sha256": "839abae0d0767d20dad2535911fb55e9aa930d00ea0154ae6210393da641f201"
+    },
+    {
+      "path": "registry/components/action-button/action-button.module.css",
+      "sha256": "cba6d983f59e7b448b9606bbdcc2ef981111705b068aca0bf7fa522c6cd4c6ef"
+    },
+    {
+      "path": "registry/components/action-button/action-button.tsx",
+      "sha256": "cd3353e6449e6f96bf26b5a07fbb9845f1de0ea17404d452155363aed368a93b"
+    },
+    {
+      "path": "registry/components/animated-counter/animated-counter.module.css",
+      "sha256": "3cc7db9e431a6564abce8424c80ae239c76374dd131ec56206577cb838983be9"
+    },
+    {
+      "path": "registry/components/animated-counter/animated-counter.tsx",
+      "sha256": "eb0e65dd86eace501c190bbb569fa5fb50d958f9373e154913ce13641609d655"
+    },
+    {
+      "path": "registry/components/bottom-sheet/bottom-sheet.module.css",
+      "sha256": "0be8c753ba8b1c79fbb2d4d63b50308ad512c5067ced1ea57654884b6d0f20af"
+    },
+    {
+      "path": "registry/components/bottom-sheet/bottom-sheet.tsx",
+      "sha256": "497f494d1888f4858267153762ff3c712ade73b80c2f96808861abed1569cb05"
+    },
+    {
+      "path": "registry/components/button/button.module.css",
+      "sha256": "b6efc172a5943185c76e910c1d2300575091d56fe5655cb8f581cf946687e1d3"
+    },
+    {
+      "path": "registry/components/button/button.tsx",
+      "sha256": "eceff451b488f681e8c25f9aed4764588919adfd371ec5f6f54e97c9b148b962"
+    },
+    {
+      "path": "registry/components/combobox/combobox.module.css",
+      "sha256": "78a0e0bcec6cb3b16ccd44269a6dabc3b80de9c44d274f904f43f7dc8d3b19ee"
+    },
+    {
+      "path": "registry/components/combobox/combobox.tsx",
+      "sha256": "135003efc7dc5f15e8cd54fe181a5a060d9a8886fb3b53e6a79313961737688b"
+    },
+    {
+      "path": "registry/components/command-palette/command-palette.module.css",
+      "sha256": "f06e18253cecdb3797415629700b9c6c0fc0c0d4efc5504386be8ef44a47bcf8"
+    },
+    {
+      "path": "registry/components/command-palette/command-palette.tsx",
+      "sha256": "abaeb3d8156f9dee4b1712cd3286d2c4ac915453a9452c4690515b473413c310"
+    },
+    {
+      "path": "registry/components/confirm-morph/confirm-morph.module.css",
+      "sha256": "e812dddf4fa6db999bccee79967ec9f478f29a2be6323d11999ec529b7b74d99"
+    },
+    {
+      "path": "registry/components/confirm-morph/confirm-morph.tsx",
+      "sha256": "eeeb0adabfb7cc7d378710c667541df881ca2cb92ea198121d00071def2b8540"
+    },
+    {
+      "path": "registry/components/date-range-picker/date-range-picker.module.css",
+      "sha256": "fae33a7e8804574e98700a0d5282ef04d7f9fbc3851ff3323b46be563cad1a0b"
+    },
+    {
+      "path": "registry/components/date-range-picker/date-range-picker.tsx",
+      "sha256": "fb690ca0d1a31b1c1001580d53c82aba24a348626d64bc893238b139f49f61c9"
+    },
+    {
+      "path": "registry/components/donut-chart/donut-chart.module.css",
+      "sha256": "ff2b3a7611bf9e141b00bda32cec89ff943a1380f49aa99838e67e6d2a9031bd"
+    },
+    {
+      "path": "registry/components/donut-chart/donut-chart.tsx",
+      "sha256": "66bf948fabce83c9a68b78aa3e3e35e5a6af53809b58b25009248a89838ea723"
+    },
+    {
+      "path": "registry/components/filter-toolbar/filter-toolbar.module.css",
+      "sha256": "e6d408a3d31a1b32eafa21482c7b0575567b0b425a62fb92842d3ac7b6d1751e"
+    },
+    {
+      "path": "registry/components/filter-toolbar/filter-toolbar.tsx",
+      "sha256": "a7ed765cdbd2a9c9c57f24f1b89ac60c6aceb5e36f9bd5b648a9cdfee2d84dd8"
+    },
+    {
+      "path": "registry/components/inline-edit/inline-edit.module.css",
+      "sha256": "dbbe33366ea89a5f3bb5d6880801069e644c154c4aa28b7adc14ecee12593071"
+    },
+    {
+      "path": "registry/components/inline-edit/inline-edit.tsx",
+      "sha256": "0c95ddb1c6d7dc436b78a0d5919da8ed3e57c9f57fe5a084b658110373f4494f"
+    },
+    {
+      "path": "registry/components/line-chart/line-chart.module.css",
+      "sha256": "9b2ec6535e1534f345c63b3c45a430ade2807e0954c74723fc4a8b6320af8973"
+    },
+    {
+      "path": "registry/components/line-chart/line-chart.tsx",
+      "sha256": "a57d744729052ba4536f1aa068e924b3a714c242b241191dfefd7cb5f241e4b4"
+    },
+    {
+      "path": "registry/components/metric-card/metric-card.module.css",
+      "sha256": "2615b310bf55912844a8abeb0917b117c20ed6e5abaf2e397cdcd1c535c9b43e"
+    },
+    {
+      "path": "registry/components/metric-card/metric-card.tsx",
+      "sha256": "1df2f0b361bdf57a6d4b4f5219cfbde4069ddf524bef79c521d3c74c37fd52f1"
+    },
+    {
+      "path": "registry/components/number-field/number-field.module.css",
+      "sha256": "c38f20f76c078699859f9e9333d242997b3c1d8a8c89872627992e362a003035"
+    },
+    {
+      "path": "registry/components/number-field/number-field.tsx",
+      "sha256": "7452ce8e97b08dfb331459e0ccb66f3ef5fa147f4b9acc3b3934b06e37c22659"
+    },
+    {
+      "path": "registry/components/segmented-control/segmented-control.module.css",
+      "sha256": "2d63bd1089a0ecb22e2dd006c03f0c527c6b3a291e5ea556ba6de7273af445e8"
+    },
+    {
+      "path": "registry/components/segmented-control/segmented-control.tsx",
+      "sha256": "30e0038170e7b95705ddb1a27e9d10c8953022ac05662cd237564894f3a92b55"
+    },
+    {
+      "path": "registry/components/sparkline/sparkline.module.css",
+      "sha256": "da0cd0a1183dfe0df37c5e7ac12b664e0cac7c2082db6754e652d1aa5d235e2c"
+    },
+    {
+      "path": "registry/components/sparkline/sparkline.tsx",
+      "sha256": "8218dd746624f2bb2f71927117e15341ce29fa83fed96c15d0a821555e71a712"
+    },
+    {
+      "path": "registry/foundation.css",
+      "sha256": "d7dcec62d67fe81b96318dd9896d37c469b117e9e9e6a0fae5042912b786a9d0"
+    },
+    {
+      "path": "registry/motion-tokens.ts",
+      "sha256": "13af43b57ed38e5b72cfc06ff0ccc39b0593721f04840e73532893593cc61491"
+    }
+  ],
+  "upstreamRuntime": {
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "motion": "^13.4.0",
+    "lucide-react": "^1.47.0",
+    "@radix-ui/react-dialog": "^1.1.23"
+  },
+  "modifications": "None. Source, CSS Modules and motion tokens are byte-for-byte copies. Build aliases resolve original imports. Foundation selectors are scoped in a separate generated stylesheet."
+}

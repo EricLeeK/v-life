@@ -1,20 +1,24 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { unfoldPaper, visiblePaperRect, type PaperRect } from "./paperFlight";
 
-export interface NewspaperOrigin {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
+export type NewspaperOrigin = PaperRect;
+
+export interface NewspaperFlight {
+  from: PaperRect | null;
 }
+
 export function NewspaperImmersive(
-  { children, origin, useNativeTransition }: {
+  { children, flight, onFlightDone }: {
     children: React.ReactNode;
-    origin: NewspaperOrigin | null;
-    useNativeTransition: boolean;
+    /** When set, the paper is drawn out of this slot and unfolded before the print appears. */
+    flight: NewspaperFlight | null;
+    onFlightDone?: () => void;
   },
 ) {
   const ref = useRef<HTMLDivElement>(null);
+  const flown = useRef(false);
+
   useLayoutEffect(() => {
     const panel = ref.current;
     if (!panel) return;
@@ -24,37 +28,28 @@ export function NewspaperImmersive(
     document.body.style.overflow = "hidden";
     document.body.classList.add("np-immersive-open");
     if (appRoot) appRoot.inert = true;
-    panel.querySelector<HTMLElement>("[data-newspaper-back]")?.focus({
-      preventScroll: true,
-    });
-    if (
-      !useNativeTransition && origin &&
-      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      const paper = panel.querySelector<HTMLElement>(".np-paper");
-      if (paper?.animate) {
-        const rect = paper.getBoundingClientRect();
-        const sx = origin.width / rect.width;
-        const sy = origin.height /
-          Math.min(rect.height, window.innerHeight - 80);
-        paper.animate([{
-          transform: `translate(${origin.left - rect.left}px,${
-            origin.top - rect.top
-          }px) scale(${sx},${sy})`,
-          clipPath: "inset(42% 0 42% 0)",
-          opacity: .7,
-        }, { transform: "none", clipPath: "inset(0)", opacity: 1 }], {
-          duration: 760,
-          easing: "cubic-bezier(.16,1,.3,1)",
-        });
-      }
-    }
+    panel.querySelector<HTMLElement>("[data-newspaper-back]")?.focus({ preventScroll: true });
     return () => {
       document.body.style.overflow = previousOverflow;
       document.body.classList.remove("np-immersive-open");
       if (appRoot) appRoot.inert = previousInert || false;
     };
-  }, [origin, useNativeTransition]);
+  }, []);
+
+  useLayoutEffect(() => {
+    const panel = ref.current;
+    if (!panel || !flight || flown.current) return;
+    const paper = panel.querySelector<HTMLElement>(".np-paper");
+    const open = visiblePaperRect(paper);
+    if (!paper || !open) return;
+    flown.current = true;
+    panel.dataset.flight = "unfolding";
+    void unfoldPaper({ from: flight.from, paper, open, desk: panel }).finally(() => {
+      delete panel.dataset.flight;
+      onFlightDone?.();
+    });
+  });
+
   useEffect(() => {
     const panel = ref.current;
     if (!panel) return;
@@ -62,8 +57,7 @@ export function NewspaperImmersive(
       if (!panel.contains(event.target as Node)) return;
       if (event.key === "Escape") {
         event.preventDefault();
-        panel.querySelector<HTMLButtonElement>("[data-newspaper-back]")
-          ?.click();
+        panel.querySelector<HTMLButtonElement>("[data-newspaper-back]")?.click();
         return;
       }
       if (event.key !== "Tab") return;
@@ -85,6 +79,7 @@ export function NewspaperImmersive(
     panel.addEventListener("keydown", onKeyDown);
     return () => panel.removeEventListener("keydown", onKeyDown);
   }, []);
+
   return createPortal(
     <div
       ref={ref}

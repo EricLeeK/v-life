@@ -1,4 +1,5 @@
 import { NewspaperError, type NewspaperContext, type NewspaperPreferences, type NewspaperSnapshot, type NewspaperReport, type NewspaperReview, type NewspaperSupplement } from './newspaperTypes.ts';
+import { newspaperSpine } from './newspaperHeadline.ts';
 import { aggregateNewspaperSnapshot, addReportDays, assertCalendar, assertReportDate, newspaperFingerprint, reportDateAt, reportDayBounds, type NewspaperSourceRows } from './newspaperDomain.ts';
 import { generateNewspaperReview } from './newspaperReview.ts';
 type Row=Record<string,any>;
@@ -90,7 +91,7 @@ export function createNewspaperService(ctx:NewspaperContext){
       if(input.q){data=await checked(ctx.db.rpc('newspaper_search_reports',{p_query:input.q,p_date_from:dateFrom,p_date_to:dateTo,p_limit:limit,p_offset:offset}));}
       else {let q=ctx.db.from('newspaper_reports').select('*').eq('user_id',ctx.userId);if(dateFrom)q=q.gte('report_date',dateFrom);if(dateTo)q=q.lte('report_date',dateTo);data=await checked(q.order('report_date',{ascending:false}).range(offset,offset+limit));}
       const hasMore=data.length>limit;
-      const items=await Promise.all(data.slice(0,limit).map(async r=>{const sections=(r.snapshot as NewspaperSnapshot).sections;const entries=sections.flatMap(s=>s.items);const {decorateNewspaperImages}=await import('./newspaperImageService.ts');const {assets}=await decorateNewspaperImages(ctx,r.report_date);const main=assets.find(a=>a.active&&a.section_id==='main')??assets.find(a=>a.active);return {id:r.id,date:r.report_date,status:r.status,revision:r.current_revision,title:`生活日报 · ${r.report_date}`,excerpt:entries.slice(0,3).map(e=>e.title).join(' · ')||'平静的一天，暂无记录',record_count:entries.length,has_image:assets.some(a=>a.active),has_review:!!r.review,updated_at:r.updated_at,...(main?.thumbnail_url?{thumbnail_url:main.thumbnail_url}:{})};}));
+      const items=await Promise.all(data.slice(0,limit).map(async r=>{const sections=(r.snapshot as NewspaperSnapshot).sections;const entries=sections.flatMap(s=>s.items);const {decorateNewspaperImages}=await import('./newspaperImageService.ts');const {assets}=await decorateNewspaperImages(ctx,r.report_date);const main=assets.find(a=>a.active&&a.section_id==='main')??assets.find(a=>a.active);return {id:r.id,date:r.report_date,status:r.status,revision:r.current_revision,...newspaperSpine(sections),record_count:entries.length,has_image:assets.some(a=>a.active),has_review:!!r.review,updated_at:r.updated_at,...(main?.thumbnail_url?{thumbnail_url:main.thumbnail_url}:{})};}));
       return {items,hasMore,nextOffset:hasMore?offset+limit:null};
     }
     if(action==='refresh')return refresh(input);

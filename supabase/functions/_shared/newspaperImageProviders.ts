@@ -27,9 +27,19 @@ export type ImageResult = { state: "running"; id: string } | {
 export type ImageFetch = typeof fetch;
 export type ResolveHost = (hostname: string) => Promise<string[]>;
 export class ImageProviderError extends Error {
-  constructor(message: string, public definitive = false) {
+  constructor(
+    message: string,
+    public definitive = false,
+    /** The request never reached the provider, so another node may be tried safely. */
+    public unreachable = false,
+  ) {
     super(message);
   }
+}
+/** Configured node first, then the provider's other official nodes (grsai-studio's fallback order). */
+export function providerNodes(provider: ImageProvider, baseUrl?: string): string[] {
+  const first = validateProviderBaseUrl(provider, baseUrl);
+  return [first, ...PROVIDER_BASE_URLS[provider].filter((url) => url !== first)];
 }
 export function validateProviderBaseUrl(
   provider: ImageProvider,
@@ -221,6 +231,12 @@ export async function boundedBytes(
   }
   return result;
 }
+/** Only DNS and refused-connection failures prove the request never left; anything else may have been accepted. */
+function neverConnected(error: unknown): boolean {
+  const e = error as { message?: string; code?: string; cause?: { code?: string; message?: string } };
+  const text = [e?.code, e?.message, e?.cause?.code, e?.cause?.message].filter(Boolean).join(" ");
+  return /ECONNREFUSED|ENOTFOUND|EAI_AGAIN|connection refused|dns error|failed to lookup/i.test(text);
+}
 async function requestJson(
   url: string,
   headers: Record<string, string>,
@@ -237,8 +253,11 @@ async function requestJson(
       redirect: "error",
       signal: AbortSignal.timeout(timeout),
     });
-  } catch {
-    throw new ImageProviderError("图片供应商暂时无法连接。");
+  } catch (error) {
+    if ((error as Error)?.name === "TimeoutError") {
+      throw new ImageProviderError("图片供应商响应超时。");
+    }
+    throw new ImageProviderError("图片供应商暂时无法连接。", false, neverConnected(error));
   }
   if (!response.ok) {
     throw new ImageProviderError(
@@ -263,11 +282,21 @@ export async function submitImage(
   baseUrl: string,
   fetcher: ImageFetch = fetch,
 ): Promise<ImageResult> {
-  const req = buildImageRequest(options, prompt, key, refs, jobId, baseUrl);
-  return parseImageResponse(
-    options.provider,
-    await requestJson(req.url, req.headers, req.body, fetcher, options.provider === 'gemini' ? 100000 : 45000),
-  );
+  const nodes = providerNodes(options.provider, baseUrl);
+  let lastError: unknown;
+  for (const node of nodes) {
+    const req = buildImageRequest(options, prompt, key, refs, jobId, node);
+    try {
+      return parseImageResponse(
+        options.provider,
+        await requestJson(req.url, req.headers, req.body, fetcher, options.provider === 'gemini' ? 100000 : 45000),
+      );
+    } catch (error) {
+      if (!(error instanceof ImageProviderError) || !error.unreachable) throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 export async function pollImage(
   options: NewspaperImageOptions,
@@ -276,20 +305,28 @@ export async function pollImage(
   baseUrl: string,
   fetcher: ImageFetch = fetch,
 ): Promise<ImageResult> {
-  const base = validateProviderBaseUrl(options.provider, baseUrl),
-    encoded = encodeURIComponent(id);
-  const url = options.provider === "grsai"
-    ? `${base}/v1/api/result?id=${encoded}`
-    : options.provider === "openai"
-    ? `${base}/v1/responses/${encoded}`
-    : `${base}/v1beta/interactions/${encoded}`;
+  const encoded = encodeURIComponent(id);
   const headers: Record<string, string> = options.provider === "gemini"
     ? { "x-goog-api-key": key, "Api-Revision": "2026-05-20" }
     : { Authorization: `Bearer ${key}` };
-  return parseImageResponse(
-    options.provider,
-    await requestJson(url, headers, null, fetcher),
-  );
+  let lastError: unknown;
+  for (const base of providerNodes(options.provider, baseUrl)) {
+    const url = options.provider === "grsai"
+      ? `${base}/v1/api/result?id=${encoded}`
+      : options.provider === "openai"
+      ? `${base}/v1/responses/${encoded}`
+      : `${base}/v1beta/interactions/${encoded}`;
+    try {
+      return parseImageResponse(
+        options.provider,
+        await requestJson(url, headers, null, fetcher),
+      );
+    } catch (error) {
+      if (!(error instanceof ImageProviderError) || error.definitive) throw error;
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 function isPublicIp(raw: string): boolean {
   const ip = raw.toLowerCase().replace(/^\[|\]$/g, "");

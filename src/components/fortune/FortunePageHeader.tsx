@@ -18,8 +18,8 @@ export function FortunePageHeader(props: {
           {props.backLabel}
         </Link>
         <h1
-          className="font-bold leading-[1.1] tracking-tight text-foreground heading-font"
-          style={{ fontSize: "clamp(28px, 3.6vw, 48px)" }}
+          className="font-semibold leading-[1.15] tracking-tight text-foreground heading-font"
+          style={{ fontSize: "clamp(28px, 3.2vw, 42px)" }}
         >
           {props.title}
         </h1>

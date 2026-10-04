@@ -1,22 +1,11 @@
 import { useNewspaperDrafts } from "./NewspaperDraftContext";
-import { useEffect, useState } from "react";
-import {
-  Check,
-  Download,
-  ImagePlus,
-  RefreshCw,
-  SlidersHorizontal,
-  ZoomIn,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Download, ImagePlus, Maximize2, Minimize2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "./NewspaperDialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import {
   callNewspaper,
   useNewspaperCommand,
@@ -24,147 +13,216 @@ import {
   useNewspaperStyles,
 } from "@/hooks/useNewspapers";
 import { useDemoMode } from "@/contexts/DemoModeContext";
-import { ImageOptionsFields } from "./ImageOptionsFields";
+import { ImageOptionsFields, IMAGE_PROVIDER_LABELS } from "./ImageOptionsFields";
+import { NewspaperSheet } from "./NewspaperSheet";
 import {
   composeNewspaperImagePrompt,
   DEFAULT_NEWSPAPER_IMAGE_OPTIONS,
   DEFAULT_NEWSPAPER_IMAGE_PROMPT,
+  NEWSPAPER_IMAGE_MODELS,
   normalizeNewspaperImageOptions,
 } from "../../../supabase/functions/_shared/newspaperImageModels";
 import type {
   NewspaperImageAsset,
+  NewspaperImageJob,
   NewspaperImageOptions,
   NewspaperReport,
   NewspaperSectionId,
 } from "../../../supabase/functions/_shared/newspaperTypes";
 import { saveBlob } from "@/lib/newspaperExport";
 
+export type ImagePlacement = NewspaperSectionId | "main";
+
+export const PLACEMENT_LABELS: Record<ImagePlacement, string> = {
+  main: "头版",
+  chronicle: "今日纪事",
+  learning: "学习与成长",
+  finance: "收支记录",
+  health: "身体与饮食",
+  thoughts: "想法与随笔",
+};
+
+export function placementLabel(report: NewspaperReport, p: ImagePlacement) {
+  if (p === "main") return PLACEMENT_LABELS.main;
+  return report.snapshot.sections.find((s) => s.id === p)?.title ?? PLACEMENT_LABELS[p];
+}
+
+const ACTIVE_JOB = ["queued", "submitting", "running", "saving"];
+export const isRunningJob = (j: NewspaperImageJob) =>
+  ACTIVE_JOB.includes(j.status);
+
+/** Polls while any job is in flight, so finished art lands on the page without the studio open. */
+export function useImageJobPolling(report: NewspaperReport) {
+  const { isDemo } = useDemoMode();
+  const qc = useQueryClient();
+  const running = report.jobs.filter(isRunningJob).length;
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => {
+      void callNewspaper("image_status", { date: report.date }, isDemo).then(
+        () => qc.invalidateQueries({ queryKey: ["newspaper"] }),
+      ).catch(() => {});
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [running, report.date, isDemo, qc]);
+}
+
 export function NewspaperFigure(
-  { asset, onOpen }: {
+  { asset, onOpen, lead = false }: {
     asset: NewspaperImageAsset;
     onOpen: (a: NewspaperImageAsset) => void;
+    lead?: boolean;
   },
 ) {
+  const ratio = asset.width && asset.height
+    ? `${asset.width} / ${asset.height}`
+    : undefined;
+  const portrait = !lead && asset.height > asset.width * 1.1;
   return (
     <figure
-      className={`np-figure ${
-        asset.section_id === "main" ? "np-main-figure" : ""
-      }`}
+      className={lead
+        ? "np-figure np-figure-lead"
+        : portrait
+        ? "np-figure np-figure-portrait"
+        : "np-figure"}
     >
       <button
-        className="np-image-open"
-        aria-label={`放大配图：${asset.caption || "日报配图"}`}
+        type="button"
+        className="np-figure-frame"
+        aria-label={`查看配图：${asset.caption || "日报配图"}`}
         onClick={() => onOpen(asset)}
+        style={{ aspectRatio: ratio }}
       >
         {asset.url
           ? (
             <img
-              src={asset.url}
+              src={asset.thumbnail_url && !lead ? asset.thumbnail_url : asset.url}
               alt={asset.caption || "日报配图"}
-              loading="lazy"
+              loading={lead ? "eager" : "lazy"}
             />
           )
-          : (
-            <div className="np-empty-note">
-              图片链接暂不可用，请重新打开日报。
-            </div>
-          )}
-        <span>
-          <ZoomIn size={16} />查看原图
-        </span>
+          : <span className="np-figure-missing">图片链接已过期，重新打开日报即可恢复。</span>}
       </button>
-      <figcaption>{asset.caption || "未填写图注"}</figcaption>
+      <figcaption>
+        <span>{asset.caption || "未填写图注"}</span>
+        <span className="np-figure-credit">图 · {modelLabel(asset.options)}</span>
+      </figcaption>
     </figure>
   );
 }
+
+function modelLabel(options: NewspaperImageOptions) {
+  return NEWSPAPER_IMAGE_MODELS.find((m) =>
+    m.provider === options.provider && m.id === options.model
+  )?.label ?? options.model;
+}
+
+/** A reserved slot in the layout while a picture is being drawn for it. */
+export function FigurePlaceholder(
+  { job, lead = false }: { job: NewspaperImageJob; lead?: boolean },
+) {
+  return (
+    <div
+      className={lead ? "np-figure-pending np-figure-lead" : "np-figure-pending"}
+      role="status"
+    >
+      <span className="np-figure-pending-sheen" aria-hidden />
+      <p>
+        {job.status === "saving" ? "正在冲印配图" : "正在绘制配图"}
+        <small>可以继续阅读，完成后会自动排进版面</small>
+      </p>
+    </div>
+  );
+}
+
 export function NewspaperImageLightbox(
   { asset, onClose }: {
     asset: NewspaperImageAsset | null;
     onClose: () => void;
   },
 ) {
-  const [zoom, setZoom] = useState(false);
+  const [actual, setActual] = useState(false);
   return (
-    <Dialog
+    <DialogPrimitive.Root
       open={!!asset}
       onOpenChange={(open) => {
         if (!open) {
-          setZoom(false);
+          setActual(false);
           onClose();
         }
       }}
     >
-      <DialogContent className="np-image-dialog max-w-[95vw] max-h-[95vh] overflow-auto">
-        <DialogTitle>{asset?.caption || "日报配图"}</DialogTitle>
-        <DialogDescription>
-          {asset?.width} × {asset?.height} · {asset?.options.model} ·{" "}
-          {asset?.created_at ? new Date(asset.created_at).toLocaleString() : ""}
-        </DialogDescription>
-        <div className="np-lightbox-image">
-          <img
-            src={asset?.url}
-            alt={asset?.caption || "日报配图"}
-            style={{
-              maxHeight: zoom ? "none" : "70vh",
-              maxWidth: zoom ? "none" : "100%",
-              width: zoom ? `${asset?.width}px` : "auto",
-            }}
-          />
-        </div>
-        <div className="np-inline">
-          <button className="np-button" onClick={() => setZoom(!zoom)}>
-            <ZoomIn size={16} />
-            {zoom ? "适合窗口" : "原始大小"}
-          </button>
-          <button
-            className="np-button"
-            onClick={async () => {
-              if (!asset?.url) return;
-              try {
-                const response = await fetch(asset.url);
-                if (!response.ok) throw new Error("图片下载失败");
-                const blob = await response.blob();
-                const ext = blob.type.includes("svg")
-                  ? "svg"
-                  : blob.type.includes("png")
-                  ? "png"
-                  : blob.type.includes("webp")
-                  ? "webp"
-                  : "jpg";
-                saveBlob(
-                  blob,
-                  `${asset.report_date}-${asset.section_id}.${ext}`,
-                );
-              } catch (e) {
-                toast.error((e as Error).message);
-              }
-            }}
-          >
-            <Download size={16} />下载图片
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="np-lightbox-backdrop" />
+        <DialogPrimitive.Content className="np-lightbox">
+          <div className={actual ? "np-lightbox-stage np-lightbox-actual" : "np-lightbox-stage"}>
+            <img
+              src={asset?.url}
+              alt={asset?.caption || "日报配图"}
+              width={asset?.width}
+              height={asset?.height}
+            />
+          </div>
+          <div className="np-lightbox-bar">
+            <div className="np-lightbox-text">
+              <DialogPrimitive.Title>{asset?.caption || "日报配图"}</DialogPrimitive.Title>
+              <DialogPrimitive.Description>
+                {asset && `${PLACEMENT_LABELS[asset.section_id as ImagePlacement] ?? ""} · ${asset.width}×${asset.height} · ${modelLabel(asset.options)}`}
+              </DialogPrimitive.Description>
+            </div>
+            <div className="np-inline">
+              <button
+                type="button"
+                className="np-lightbox-button"
+                onClick={() => setActual(!actual)}
+              >
+                {actual ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                {actual ? "适合窗口" : "原始大小"}
+              </button>
+              <button
+                type="button"
+                className="np-lightbox-button"
+                onClick={async () => {
+                  if (!asset?.url) return;
+                  try {
+                    const response = await fetch(asset.url);
+                    if (!response.ok) throw new Error("图片下载失败");
+                    const blob = await response.blob();
+                    const ext = blob.type.includes("png")
+                      ? "png"
+                      : blob.type.includes("webp")
+                      ? "webp"
+                      : "jpg";
+                    saveBlob(blob, `${asset.report_date}-${asset.section_id}.${ext}`);
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  }
+                }}
+              >
+                <Download size={16} />下载
+              </button>
+              <DialogPrimitive.Close className="np-lightbox-button" aria-label="关闭">
+                <X size={18} />
+              </DialogPrimitive.Close>
+            </div>
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
-const labels: Record<string, string> = {
-  main: "整期主图",
-  chronicle: "今日纪事",
-  learning: "学习手记",
-  finance: "生活账本",
-  health: "身体与日常",
-  thoughts: "留给自己的话",
-};
-export function NewspaperImages(
-  { report, onOpen, requestedSection }: {
+
+export function ImageStudio(
+  { report, open, onOpenChange, placement, onPlacement, onOpenAsset }: {
     report: NewspaperReport;
-    onOpen: (a: NewspaperImageAsset) => void;
-    requestedSection?: { id: NewspaperSectionId; nonce: number };
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    placement: ImagePlacement;
+    onPlacement: (p: ImagePlacement) => void;
+    onOpenAsset: (a: NewspaperImageAsset) => void;
   },
 ) {
   const drafts = useNewspaperDrafts();
-  const [expanded, setExpanded] = useState(false);
-  const [section, setSection] = useState<NewspaperSectionId | "main">("main");
   const [styleId, setStyleId] = useState("");
   const [prompt, setPrompt] = useState<string | null>(null);
   const [options, setOptions] = useState<NewspaperImageOptions | null>(null);
@@ -172,218 +230,201 @@ export function NewspaperImages(
   const config = useNewspaperImageConfig();
   const command = useNewspaperCommand();
   const { isDemo } = useDemoMode();
-  const qc = useQueryClient();
+  const placements = useMemo<ImagePlacement[]>(() => [
+    "main",
+    ...report.snapshot.sections.filter((s) => s.items.length).map((s) => s.id),
+  ], [report.snapshot.sections]);
   const style = styles.data?.find((s) => s.id === styleId) ||
-    (styleId ? "" : styles.data?.find((s) => s.is_default));
-  let inheritedOptions = config.data || DEFAULT_NEWSPAPER_IMAGE_OPTIONS;
+    (styleId ? undefined : styles.data?.find((s) => s.is_default));
+  let inherited = config.data || DEFAULT_NEWSPAPER_IMAGE_OPTIONS;
   try {
-    if (style) {
-      inheritedOptions = normalizeNewspaperImageOptions({
-        provider: style.provider ?? undefined,
+    if (style?.provider) {
+      inherited = normalizeNewspaperImageOptions({
+        provider: style.provider,
         model: style.model ?? undefined,
         size: style.size ?? undefined,
         quality: style.quality ?? undefined,
         aspect_ratio: style.aspect_ratio ?? undefined,
-      }, inheritedOptions);
+      }, inherited);
     }
   } catch {
-    /* Existing settings will surface a validation error on generation. */
+    /* An outdated saved style falls back to the account default. */
   }
-  const chosenOptions = options || inheritedOptions;
+  const chosen = options || inherited;
   let preview = "";
   try {
     preview = composeNewspaperImagePrompt(
-      (style && style.prompt_template) || DEFAULT_NEWSPAPER_IMAGE_PROMPT,
+      style?.prompt_template || DEFAULT_NEWSPAPER_IMAGE_PROMPT,
       report,
-      section,
+      placement,
     );
   } catch (e) {
     preview = (e as Error).message;
   }
-  useEffect(() => {
-    if (requestedSection) {
-      setSection(requestedSection.id);
-      setExpanded(true);
-      setPrompt(null);
-    }
-  }, [requestedSection]);
-  const running = report.jobs.filter((j) =>
-    ["queued", "submitting", "running", "saving"].includes(j.status)
+  const busyHere = report.jobs.some((j) =>
+    j.section_id === placement && (isRunningJob(j) || j.status === "unknown")
   );
-  const uncertain = report.jobs.filter((j) => j.status === "unknown");
-  useEffect(() => {
-    if (!running.length) return;
-    const timer = setInterval(() => {
-      void callNewspaper("image_status", { date: report.date }, isDemo).then(
-        () => qc.invalidateQueries({ queryKey: ["newspaper"] }),
-      ).catch(() => {});
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [running.length, report.date, isDemo, qc]);
-  async function generate(custom = false) {
+  const needsKey = !isDemo && !config.data?.configured;
+  const providerMismatch = !isDemo && config.data?.configured &&
+    chosen.provider !== config.data.provider;
+  const candidates = report.assets.filter((a) => a.section_id === placement);
+  const jobs = report.jobs.filter((j) => j.section_id === placement);
+
+  async function generate() {
     try {
       if (!await drafts.flush()) {
         throw new Error("请先保存补充原文，再生成配图。");
       }
       if (!report.id) {
-        await command.mutateAsync({
-          action: "refresh",
-          input: { date: report.date },
-        });
+        await command.mutateAsync({ action: "refresh", input: { date: report.date } });
       }
-      const input = {
-        date: report.date,
-        section_id: custom ? section : "main",
-        ...(custom && styleId ? { style_id: styleId } : {}),
-        ...(custom && prompt !== null ? { prompt } : {}),
-        ...(custom && options ? { options } : {}),
-      };
-      await command.mutateAsync({ action: "image_generate", input });
+      await command.mutateAsync({
+        action: "image_generate",
+        input: {
+          date: report.date,
+          section_id: placement,
+          ...(styleId ? { style_id: styleId } : {}),
+          ...(prompt !== null ? { prompt } : {}),
+          ...(options ? { options } : {}),
+        },
+      });
       toast.success(
-        isDemo ? "演示配图已就绪" : "图片任务已提交，完成后会自动显示",
+        isDemo ? "演示配图已排进版面" : "已开始绘制，完成后会自动排进版面",
       );
     } catch (e) {
       toast.error((e as Error).message);
     }
   }
+
   return (
-    <section
-      id="np-image-controls"
-      className="np-image-controls"
-      aria-label="日报配图"
+    <NewspaperSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="为这期日报配图"
+      description={isDemo
+        ? "演示模式只生成版面示例，不调用真实图片服务。"
+        : "文字本身已是完整的日报，配图按需生成。每张候选都会保留，可随时换回。"}
+      footer={
+        <button
+          type="button"
+          className="np-button np-button-primary np-button-block"
+          disabled={command.isPending || busyHere || needsKey}
+          onClick={() => void generate()}
+        >
+          <ImagePlus size={16} />
+          {busyHere ? "这个位置正在绘制…" : `生成${placementLabel(report, placement)}配图`}
+        </button>
+      }
     >
-      <div className="np-split">
-        <div>
-          <h2>为这一天配一幅图</h2>
-          <p className="np-muted">
-            文字已经是一份完整的日报。配图按需生成，历史候选会保留。
-          </p>
-        </div>
-        <div className="np-inline">
-          <button
-            className="np-button np-button-primary"
-            disabled={command.isPending ||
-              running.some((j) => j.section_id === "main") ||
-              uncertain.some((j) => j.section_id === "main") ||
-              (!isDemo && !config.data?.configured)}
-            onClick={() => void generate()}
-          >
-            <ImagePlus size={16} />
-            {running.some((j) => j.section_id === "main")
-              ? "主图生成中…"
-              : "一键生成主图"}
-          </button>
-          <button
-            className="np-icon-button"
-            aria-label="配置本次配图"
-            aria-expanded={expanded}
-            onClick={() => setExpanded(!expanded)}
-          >
-            <SlidersHorizontal size={18} />
-          </button>
-        </div>
-      </div>
-      {!isDemo && !config.data?.configured && (
-        <p className="np-muted">
-          先到{" "}
-          <Link className="np-text-button" to="/settings#settings-newspaper">
-            日报设置
-          </Link>{" "}
-          保存图片服务与密钥。
+      {needsKey && (
+        <p className="np-callout">
+          还没有可用的图片服务。到
+          <Link className="np-text-link" to="/settings#settings-newspaper">设置 · 生活日报</Link>
+          保存 Grsai、OpenAI 或 Gemini 的密钥后即可生成。
         </p>
       )}
-      {isDemo && (
-        <p className="np-muted">
-          演示模式：生成的是版面示例，不调用真实 AI 服务。
-        </p>
-      )}
-      {expanded && (
-        <div className="np-image-config">
-          <div className="np-form-grid">
-            <label className="np-field">
-              配图位置<select
-                value={section}
-                onChange={(e) => {
-                  setSection(e.target.value as typeof section);
+      <fieldset className="np-sheet-group">
+        <legend>放在哪里</legend>
+        <div className="np-choice-row">
+          {placements.map((p) => {
+            const count = report.assets.filter((a) => a.section_id === p).length;
+            return (
+              <button
+                type="button"
+                key={p}
+                className="np-choice"
+                aria-pressed={placement === p}
+                onClick={() => {
+                  onPlacement(p);
                   setPrompt(null);
                 }}
               >
-                {Object.entries(labels).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </label>
-            <label className="np-field">
-              配图风格<select
-                value={styleId}
-                onChange={(e) => {
-                  setStyleId(e.target.value);
-                  setPrompt(null);
-                }}
-              >
-                <option value="">使用默认风格</option>
-                {styles.data?.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <details>
-            <summary>本次模型参数</summary>
-            <ImageOptionsFields value={chosenOptions} onChange={setOptions} />
-            <p className="np-muted">仅影响这次生成。供应商须已保存对应密钥。</p>
-          </details>
-          <label className="np-field">
-            最终提示词（本次临时编辑，不改变风格模板）<textarea
-              rows={7}
-              value={prompt ?? preview}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
-          </label>
-          <div className="np-inline">
+                {placementLabel(report, p)}
+                {count > 0 && <small>{count}</small>}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+      <fieldset className="np-sheet-group">
+        <legend>画风</legend>
+        <div className="np-choice-row">
+          <button
+            type="button"
+            className="np-choice"
+            aria-pressed={!styleId}
+            onClick={() => {
+              setStyleId("");
+              setPrompt(null);
+            }}
+          >
+            {styles.data?.find((s) => s.is_default)?.name || "默认画风"}
+          </button>
+          {styles.data?.filter((s) => !s.is_default).map((s) => (
             <button
-              className="np-button np-button-primary"
-              disabled={command.isPending || running.some((j) =>
-                j.section_id === section
-              ) || uncertain.some((j) => j.section_id === section) ||
-                (!isDemo && !config.data?.configured)}
-              onClick={() => void generate(true)}
-            >
-              生成{labels[section]}
-            </button>
-            <button
-              className="np-text-button"
+              type="button"
+              key={s.id}
+              className="np-choice"
+              aria-pressed={styleId === s.id}
               onClick={() => {
-                setOptions(null);
+                setStyleId(s.id);
                 setPrompt(null);
               }}
             >
-              还原默认参数
+              {s.name}
             </button>
-            <Link to="/settings#settings-newspaper" className="np-text-button">
-              管理风格
-            </Link>
-          </div>
+          ))}
+          <Link className="np-text-link" to="/settings#settings-newspaper">管理画风</Link>
         </div>
-      )}
-      {running.map((j) => (
-        <p className="np-job" key={j.id} role="status">
-          <RefreshCw size={14} className="animate-spin" />
-          {labels[j.section_id]}：{j.status === "saving"
-            ? "正在保存图片"
-            : "正在生成"}，离开页面后仍可回来查看。
-        </p>
-      ))}
-      {uncertain.map((j) => (
-        <p className="np-job np-error" key={j.id}>
-          这次生成的结果尚待确认，可能已被服务商接收。不会自动重新提交。<button
-            className="np-text-button"
+      </fieldset>
+      <details className="np-sheet-details">
+        <summary>
+          <span>模型与参数</span>
+          <span className="np-summary-value">
+            {IMAGE_PROVIDER_LABELS[chosen.provider]} · {modelLabel(chosen)}
+          </span>
+        </summary>
+        <ImageOptionsFields value={chosen} onChange={setOptions} compact />
+        {providerMismatch && (
+          <p className="np-muted">
+            当前保存的是 {IMAGE_PROVIDER_LABELS[config.data!.provider]} 的密钥；换用其他服务前，请先在设置中保存它的密钥。
+          </p>
+        )}
+        {options && (
+          <button type="button" className="np-text-link" onClick={() => setOptions(null)}>
+            恢复为默认参数
+          </button>
+        )}
+      </details>
+      <details className="np-sheet-details">
+        <summary>
+          <span>提示词</span>
+          <span className="np-summary-value">{prompt === null ? "按画风自动生成" : "已手动修改"}</span>
+        </summary>
+        <label className="np-field">
+          <span className="sr-only">最终提示词</span>
+          <textarea
+            rows={9}
+            value={prompt ?? preview}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+        </label>
+        <p className="np-muted">只影响这一次生成，不会改动画风模板。</p>
+        {prompt !== null && (
+          <button type="button" className="np-text-link" onClick={() => setPrompt(null)}>
+            还原自动提示词
+          </button>
+        )}
+      </details>
+      {jobs.filter((j) => j.status === "unknown").map((j) => (
+        <p className="np-callout" key={j.id}>
+          这次生成的结果尚待确认，服务商可能已经接收；为避免重复扣费不会自动重交。
+          <button
+            type="button"
+            className="np-text-link"
             onClick={async () => {
               try {
-                await command.mutateAsync({
-                  action: "image_status",
-                  input: { id: j.id },
-                });
+                await command.mutateAsync({ action: "image_status", input: { id: j.id } });
               } catch (e) {
                 toast.error((e as Error).message);
               }
@@ -393,88 +434,80 @@ export function NewspaperImages(
           </button>
         </p>
       ))}
-      {report.jobs.filter((j) => j.status === "failed").slice(0, 2).map((j) => (
+      {jobs.filter((j) => j.status === "failed").slice(0, 1).map((j) => (
         <p className="np-error" key={j.id}>
-          配图未完成：{j.error || "请检查配置后手动重试。"}
+          上一次没有画成：{j.error || "请检查配置后再试一次。"}
         </p>
       ))}
-      {!!report.assets.length && (
-        <details className="np-gallery">
-          <summary>图片候选与图注 · {report.assets.length} 张</summary>
-          <div className="np-gallery-grid">
-            {report.assets.map((asset) => (
-              <div key={asset.id}>
-                <button
-                  className="np-gallery-thumb"
-                  onClick={() => onOpen(asset)}
-                  aria-label={`查看${labels[asset.section_id]}候选图`}
-                >
-                  <img
-                    src={asset.thumbnail_url || asset.url}
-                    alt={asset.caption || "配图候选"}
-                    loading="lazy"
-                  />
-                </button>
-                <div className="np-split">
-                  <span className="np-muted">{labels[asset.section_id]}</span>
+      <section className="np-sheet-group" aria-label="候选配图">
+        <h3 className="np-sheet-heading">
+          {placementLabel(report, placement)}候选
+          <span>{candidates.length ? `${candidates.length} 张` : "还没有"}</span>
+        </h3>
+        {candidates.length
+          ? (
+            <ul className="np-candidates">
+              {candidates.map((asset) => (
+                <li key={asset.id} className={asset.active ? "np-candidate-active" : undefined}>
                   <button
-                    className="np-text-button"
-                    disabled={asset.active || command.isPending}
-                    onClick={async () => {
-                      try {
-                        await command.mutateAsync({
-                          action: "image_select",
-                          input: { date: report.date, id: asset.id },
-                        });
-                      } catch (e) {
-                        toast.error((e as Error).message);
-                      }
-                    }}
+                    type="button"
+                    className="np-candidate-thumb"
+                    onClick={() => onOpenAsset(asset)}
+                    aria-label={`查看候选：${asset.caption || "配图"}`}
                   >
-                    {asset.active
-                      ? (
-                        <>
-                          <Check size={13} />正在使用
-                        </>
-                      )
-                      : "使用这张"}
+                    <img src={asset.thumbnail_url || asset.url} alt="" loading="lazy" />
                   </button>
-                </div>
-                <label className="np-field">
-                  图注<input
-                    key={`${asset.id}-${asset.caption}`}
-                    defaultValue={asset.caption}
-                    onBlur={async (e) => {
-                      if (e.target.value === asset.caption) return;
-                      try {
-                        await command.mutateAsync({
-                          action: "image_caption",
-                          input: {
-                            date: report.date,
-                            id: asset.id,
-                            caption: e.target.value,
-                          },
-                        });
-                        toast.success("图注已保存");
-                      } catch (e) {
-                        toast.error((e as Error).message);
-                      }
-                    }}
-                  />
-                </label>
-                <details>
-                  <summary>生成记录</summary>
-                  <p className="np-muted">
-                    {asset.options.provider} / {asset.options.model} ·{" "}
-                    {asset.options.size} · {asset.options.quality}
-                  </p>
-                  <p className="np-original">{asset.prompt}</p>
-                </details>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
-    </section>
+                  <div className="np-candidate-body">
+                    <input
+                      aria-label="图注"
+                      className="np-caption-input"
+                      key={`${asset.id}-${asset.caption}`}
+                      defaultValue={asset.caption}
+                      placeholder="写一句图注"
+                      onBlur={async (e) => {
+                        if (e.target.value === asset.caption) return;
+                        try {
+                          await command.mutateAsync({
+                            action: "image_caption",
+                            input: { date: report.date, id: asset.id, caption: e.target.value },
+                          });
+                          toast.success("图注已保存");
+                        } catch (err) {
+                          toast.error((err as Error).message);
+                        }
+                      }}
+                    />
+                    <div className="np-candidate-meta">
+                      <span>{modelLabel(asset.options)}</span>
+                      {asset.active
+                        ? <span className="np-candidate-using"><Check size={13} />版面中</span>
+                        : (
+                          <button
+                            type="button"
+                            className="np-text-link"
+                            disabled={command.isPending}
+                            onClick={async () => {
+                              try {
+                                await command.mutateAsync({
+                                  action: "image_select",
+                                  input: { date: report.date, id: asset.id },
+                                });
+                              } catch (err) {
+                                toast.error((err as Error).message);
+                              }
+                            }}
+                          >
+                            用这张
+                          </button>
+                        )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
+          : <p className="np-muted">生成后会出现在这里，并自动排进版面。</p>}
+      </section>
+    </NewspaperSheet>
   );
 }

@@ -49,10 +49,13 @@ describe("Dashboard homepage", () => {
     expect(screen.getAllByText("首页概览").length).toBeGreaterThan(0);
   });
 
-  it("leads with the next action and limits the visible metrics to four", () => {
+  it("shows the week instead of a recommended task and limits the visible metrics to four", () => {
     renderDashboard();
 
-    expect(screen.getByRole("heading", { name: "下一步做什么" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "这周" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "下一步做什么" })).not.toBeInTheDocument();
+    expect(screen.queryByText("建议先做")).not.toBeInTheDocument();
+    expect(screen.queryByText("翻开今天的生活日报")).not.toBeInTheDocument();
     const metrics = screen.getByRole("region", { name: "今日关键数据" });
     expect(within(metrics).getAllByTestId("dashboard-metric")).toHaveLength(4);
   });

@@ -503,7 +503,7 @@ export function createNewspaperImageService(ctx: NewspaperContext) {
           normalizeNewspaperImageOptions(styleOptions, config),
         );
         if (NEWSPAPER_IMAGE_MODELS.find(model => model.provider === options.provider && model.id === options.model)?.available === false) {
-          throw new NewspaperError('MODEL_UNAVAILABLE', '该模型当前暂停开放，请选择 gpt-image-2-vip。');
+          throw new NewspaperError('MODEL_UNAVAILABLE', '该模型当前暂停开放，请换一个模型。');
         }
         const reference_images = refs(
           input.reference_images ?? style?.reference_images ?? [],

@@ -1,31 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
+import { format, parseISO } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { useLang } from "@/contexts/LanguageContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
-  PieChart, Pie, Cell,
-  ResponsiveContainer,
-} from "recharts";
-import { ChartTooltip } from "./ChartTooltip";
-import { chartPalette } from "@/lib/chartTokens";
-import { format, subDays } from "date-fns";
+import { ShareDonut, TrendLine } from "@/components/arc/ShareCharts";
+import type { LineChartDatum } from "@/vendor/uiarc/registry/components/line-chart/line-chart";
 
-const COLORS = {
-  get orange() { return chartPalette.orange(); },
-  get green() { return chartPalette.green(); },
-  get teal() { return chartPalette.teal(); },
-  get purple() { return chartPalette.purple(); },
-  get yellow() { return chartPalette.yellow(); },
-  get blue() { return chartPalette.blue(); },
+const MEAL_COLOR: Record<string, string> = {
+  breakfast: "hsl(var(--cat-yellow))",
+  lunch: "hsl(var(--cat-orange))",
+  dinner: "hsl(var(--cat-purple))",
+  snack: "hsl(var(--cat-teal))",
+  exercise: "hsl(var(--cat-green))",
 };
-
-const MEAL_COLORS = (): Record<string, string> => ({
-  breakfast: COLORS.yellow,
-  lunch: COLORS.orange,
-  dinner: COLORS.purple,
-  snack: COLORS.teal,
-  exercise: COLORS.green,
-});
 
 interface CalorieRecord {
   date: string;
@@ -33,127 +19,110 @@ interface CalorieRecord {
   meal_type: string;
 }
 
-export function WeeklyCalorieChart({ records, target }: {
+export function WeeklyCalorieChart({
+  days,
+  records,
+  target,
+  onDayChange,
+}: {
+  days: string[];
   records: CalorieRecord[];
   target: number;
+  onDayChange?: (date: string) => void;
+}) {
+  const { t, lang } = useLang();
+  const locale = lang === "zh" ? zhCN : undefined;
+  const hovered = useRef<string | null>(null);
+  const pressed = useRef(false);
+
+  const data = useMemo<LineChartDatum[]>(() => days.map((date) => {
+    const dayRecords = records.filter((record) => record.date === date);
+    const food = dayRecords.filter((record) => record.meal_type !== "exercise").reduce((sum, record) => sum + record.calories, 0);
+    const exercise = dayRecords.filter((record) => record.meal_type === "exercise").reduce((sum, record) => sum + record.calories, 0);
+    const parsed = parseISO(date);
+    return {
+      key: date,
+      label: format(parsed, lang === "zh" ? "M月d日 EEE" : "EEE, MMM d", { locale }),
+      axisLabel: format(parsed, "M/d"),
+      values: { food, exercise, target },
+    };
+  }), [days, records, target, lang, locale]);
+
+  return (
+    <div
+      onPointerDown={(event) => { pressed.current = event.pointerType === "mouse" ? event.button === 0 : true; }}
+      onPointerUp={(event) => {
+        const fromControl = event.target instanceof Element && event.target.closest("button");
+        if (pressed.current && !fromControl && hovered.current) onDayChange?.(hovered.current);
+        pressed.current = false;
+      }}
+      onPointerCancel={() => { pressed.current = false; }}
+    >
+    <TrendLine
+      data={data}
+      series={[
+        { key: "food", label: t("摄入", "Intake"), color: "hsl(var(--cat-orange))", area: true },
+        { key: "exercise", label: t("运动", "Exercise"), color: "hsl(var(--cat-green))", area: false },
+        { key: "target", label: t("目标", "Target"), color: "hsl(var(--cat-teal))", dashed: true, area: false },
+      ]}
+      label={t("本周热量", "Weekly calories")}
+      unit="kcal"
+      height={220}
+      formatValue={(value) => `${Math.round(value)}`}
+      formatTick={(value) => `${Math.round(value)}`}
+      emptyLabel={t("暂无数据", "No data")}
+      categoryLabel={t("日期", "Date")}
+      onActiveChange={(_index, datum) => { hovered.current = datum?.key ?? null; }}
+    />
+    </div>
+  );
+}
+
+export function MealDistributionChart({
+  records,
+  activeKey,
+  onActiveChange,
+}: {
+  records: CalorieRecord[];
+  activeKey?: string | null;
+  onActiveChange?: (key: string | null) => void;
 }) {
   const { t, lang } = useLang();
 
   const data = useMemo(() => {
-    const today = new Date();
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = subDays(today, 6 - i);
-      const dateStr = format(d, "yyyy-MM-dd");
-      const dayRecords = records.filter((r) => r.date === dateStr);
-      const food = dayRecords
-        .filter((r) => r.meal_type !== "exercise")
-        .reduce((s, r) => s + r.calories, 0);
-      const exercise = dayRecords
-        .filter((r) => r.meal_type === "exercise")
-        .reduce((s, r) => s + r.calories, 0);
-      return {
-        date: format(d, lang === "zh" ? "M/d" : "EEE"),
-        food,
-        exercise: -exercise,
-        net: food - exercise,
-      };
-    });
-  }, [records, lang]);
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">{t("本周热量", "Weekly Calories")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} tickLine={false} axisLine={false} />
-            <Tooltip content={<ChartTooltip />} />
-            <ReferenceLine y={target} stroke={COLORS.teal} strokeDasharray="5 5" strokeWidth={1} />
-            <Bar dataKey="food" stackId="cal" fill={COLORS.orange} radius={[4, 4, 0, 0]} name={t("摄入", "Intake")} />
-            <Bar dataKey="exercise" stackId="cal" fill={COLORS.green} radius={[0, 0, 4, 4]} name={t("运动", "Exercise")} />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
-  );
-}
-
-export function MealDistributionChart({ records }: { records: CalorieRecord[] }) {
-  const { t } = useLang();
-
-  const MEAL_LABELS: Record<string, string> = {
-    breakfast: t("早餐", "Breakfast"),
-    lunch: t("午餐", "Lunch"),
-    dinner: t("晚餐", "Dinner"),
-    snack: t("加餐", "Snack"),
-    exercise: t("运动", "Exercise"),
-  };
-
-  const data = useMemo(() => {
-    const map: Record<string, number> = {};
-    records.forEach((r) => {
-      map[r.meal_type] = (map[r.meal_type] || 0) + r.calories;
-    });
-    return Object.entries(map)
-      .map(([name, value]) => ({ name: MEAL_LABELS[name] || name, value, key: name }))
+    const labels: Record<string, string> = {
+      breakfast: t("早餐", "Breakfast"),
+      lunch: t("午餐", "Lunch"),
+      dinner: t("晚餐", "Dinner"),
+      snack: t("加餐", "Snack"),
+      exercise: t("运动", "Exercise"),
+    };
+    const totals = new Map<string, number>();
+    records.forEach((record) => totals.set(record.meal_type, (totals.get(record.meal_type) ?? 0) + record.calories));
+    return [...totals.entries()]
+      .filter(([, value]) => value > 0)
+      .map(([key, value]) => ({
+        key,
+        label: labels[key] || key,
+        value,
+        color: MEAL_COLOR[key] || "hsl(var(--cat-blue))",
+      }))
       .sort((a, b) => b.value - a.value);
-  }, [records, MEAL_LABELS]);
-
-  if (data.length === 0) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{t("餐次分布", "Meal Breakdown")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground text-center py-6">{t("暂无数据", "No data")}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const total = data.reduce((s, d) => s + d.value, 0);
+  }, [records, t, lang]);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm">{t("餐次分布", "Meal Breakdown")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <ResponsiveContainer width={140} height={140}>
-            <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={60} dataKey="value" stroke="none" paddingAngle={2}>
-                {data.map((entry) => {
-                  const meal = MEAL_COLORS();
-                  return <Cell key={entry.key} fill={meal[entry.key] || COLORS.blue} />;
-                })}
-              </Pie>
-              <Tooltip content={<ChartTooltip formatter={(v) => `${v} kcal`} />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex-1 space-y-1.5">
-            {data.map((item) => {
-              const meal = MEAL_COLORS();
-              return (
-              <div key={item.key} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full shrink-0" style={{ background: meal[item.key] || COLORS.blue }} />
-                  <span>{item.name}</span>
-                </span>
-                <span className="text-muted-foreground font-mono-data">
-                  {item.value} kcal <span className="text-[10px]">({((item.value / total) * 100).toFixed(0)}%)</span>
-                </span>
-              </div>
-              );
-            })}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <ShareDonut
+      data={data}
+      label={t("餐次分布", "Meal breakdown")}
+      unit="kcal"
+      formatValue={(value) => `${Math.round(value)}`}
+      totalLabel={t("合计", "Total")}
+      otherLabel={t("其他", "Other")}
+      emptyLabel={t("暂无数据", "No data")}
+      activeKey={activeKey}
+      onActiveChange={onActiveChange}
+      size={208}
+      thickness={24}
+    />
   );
 }

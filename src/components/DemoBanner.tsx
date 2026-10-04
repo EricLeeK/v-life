@@ -17,18 +17,18 @@ export function DemoBanner() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 h-10 z-[100] w-full bg-cat-yellow-bg border-b border-cat-yellow/30 px-4 flex items-center justify-between">
-      <span className="text-sm text-cat-yellow font-medium flex items-center gap-1.5">
-        <Compass className="h-4 w-4" />
-        {t("游览模式 — 数据为演示用途", "Tour Mode — Demo data only")}
+    <div className="fixed top-0 left-0 right-0 h-10 z-[100] w-full bg-foreground text-background px-4 flex items-center justify-between">
+      <span className="text-[13px] flex items-center gap-2">
+        <Compass className="h-4 w-4 opacity-70" aria-hidden />
+        {t("游览模式 · 页面中的数据均为演示，不会保存", "Tour mode · demo data, nothing is saved")}
       </span>
       <Button
         size="sm"
-        variant="outline"
-        className="border-cat-yellow/40 text-cat-yellow hover:bg-cat-yellow/10 h-7 text-xs"
+        variant="ghost"
+        className="h-7 text-xs text-background hover:bg-background/10 hover:text-background border border-background/25"
         onClick={handleExit}
       >
-        注册开始
+        {t("注册开始", "Sign up")}
       </Button>
     </div>
   );

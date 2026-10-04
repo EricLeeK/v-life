@@ -1,5 +1,7 @@
+import { newspaperSpine } from "../../supabase/functions/_shared/newspaperHeadline";
 import type {
   NewspaperEntry,
+  NewspaperImageAsset,
   NewspaperImageConfig,
   NewspaperListItem,
   NewspaperPreferences,
@@ -13,7 +15,7 @@ export interface NewspaperDemoState {
   styles: NewspaperStyle[];
   config: NewspaperImageConfig;
 }
-export const NEWSPAPER_DEMO_KEY = "vlife-newspaper-demo-v1";
+export const NEWSPAPER_DEMO_KEY = "vlife-newspaper-demo-v3";
 const stamp = () => new Date().toISOString();
 const uid = () => crypto.randomUUID();
 const options = {
@@ -76,6 +78,17 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
         "在生活的细节里找到节奏",
         "给心里的想法留一页纸",
       ];
+      const leads: [string, string][] = [
+        ["晨间散步，让一天从容开始", "沿着河边走了二十分钟，回家后整理了今天的待办。没有急着把所有事情都塞进上午。"],
+        ["把阳台的绿萝分了盆", "换了新土，剪掉两根发黄的枝条。花了半小时，弄脏了手，心情却很干净。"],
+        ["和老同学吃了一顿久违的饭", "聊到各自这几年换过的城市和工作。原来大家都在慢慢找到自己的节奏。"],
+        ["第一次完整跑完五公里", "配速不快，中途想停了两次，最后还是跑到了终点。腿很酸，但很踏实。"],
+        ["整理了一整个下午的书架", "按读过、在读、想读重新分了三层，翻出好几本忘了借给谁又还回来的书。"],
+        ["雨天在家做了一锅番茄牛腩", "炖了两个小时，屋子里都是香味。留了一盒给明天的午饭。"],
+        ["去郊外看了一场日落", "坐在山坡上等了四十分钟，天色从橙变紫，手机拍不出那种颜色。"],
+        ["把拖了很久的体检做完了", "报告大体正常，医生提醒少熬夜、多喝水。决定从这周开始十一点前睡。"],
+      ];
+      const [leadTitle, leadBody] = leads[index % leads.length];
       return {
         id: `demo-report-${day}`,
         date: day,
@@ -106,8 +119,8 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
               items: [
                 entry(
                   "walk",
-                  "晨间散步，让一天从容开始",
-                  "沿着河边走了二十分钟，回家后整理了今天的待办。没有急着把所有事情都塞进上午。",
+                  leadTitle,
+                  leadBody,
                   "daily_tasks",
                   "08:10",
                   "completed",
@@ -132,7 +145,7 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
             },
             {
               id: "learning",
-              title: "学习手记",
+              title: "学习与成长",
               items: [
                 entry(
                   "learn",
@@ -152,19 +165,19 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
             },
             {
               id: "finance",
-              title: "生活账本",
+              title: "收支记录",
               items: [
                 entry(
                   "lunch",
-                  "午餐 · ¥32",
-                  "街角小店的工作日午餐。分类：餐饮；支出：32 CNY。",
+                  "工作日午餐",
+                  "32 CNY · 餐饮\n街角小店，点了常吃的那份。",
                   "finance_records",
                   "12:30",
                 ),
                 entry(
                   "book",
-                  "书店 · ¥36",
-                  "买了一本想读很久的书。分类：学习；支出：36 CNY。",
+                  "一本想读很久的书",
+                  "36 CNY · 学习",
                   "finance_records",
                   "18:20",
                 ),
@@ -172,19 +185,19 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
             },
             {
               id: "health",
-              title: "身体与日常",
+              title: "身体与饮食",
               items: [
                 entry(
                   "meal",
-                  "今天的饮食记录",
-                  "早餐：燕麦、牛奶与鸡蛋，约 420 kcal。午餐：蔬菜、鸡肉与米饭，约 650 kcal。记录仍不完整，不据此评价全天摄入。",
+                  "燕麦、牛奶与鸡蛋",
+                  "饮食摄入：420 千卡 · 早餐",
                   "calorie_records",
                   "12:40",
                 ),
                 entry(
                   "exercise",
                   "散步 20 分钟",
-                  "下楼走一走，比一直坐着舒服。运动估算消耗 80 kcal。",
+                  "运动消耗：80 千卡 · 运动\n下楼走一走，比一直坐着舒服。",
                   "calorie_records",
                   "19:00",
                 ),
@@ -192,7 +205,7 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
             },
             {
               id: "thoughts",
-              title: "留给自己的话",
+              title: "想法与随笔",
               items: [
                 entry(
                   "thought",
@@ -225,6 +238,32 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
       };
     },
   );
+  const yesterday = reports[1];
+  if (yesterday) {
+    yesterday.assets = [
+      demoAsset(yesterday, "main", "main", "晨雾里的河岸。走慢一点，一天才有余地。", now),
+      demoAsset(yesterday, "learning", "learning", "先画出条件，再画出关系。", now),
+      demoAsset(yesterday, "thoughts", "thoughts", "傍晚走出书店，风刚好吹过来。", now),
+    ];
+    yesterday.review = {
+      overview:
+        "演示复盘：上午留给散步与整理，下午完成了项目材料的第一轮，晚上的阅读计划还没有落地。学习记录集中在逻辑判断，随想里反复出现「不着急」。",
+      achievements: [
+        "项目材料完成第一轮整理，并给重要的事留出了连续时间。",
+        "复盘了逻辑判断里「充分条件」与「必要条件」，找到读错量词的原因。",
+      ],
+      difficulties: ["晚间阅读计划没有标记完成，记录里看不出是否开始。"],
+      observations: [
+        "上午先散步再排待办，下午的完成度更高（依据：两条已完成任务都在 14:30 前）。",
+        "饮食只记录了午餐和晚餐，早餐缺失，无法判断全天摄入。",
+      ],
+      suggestions: ["睡前把明天的阅读安排在 21:30，只读二十页", "早餐也随手记一笔"],
+      source_revision: yesterday.revision,
+      source_fingerprint: yesterday.snapshot.source_fingerprint,
+      supplements_fingerprint: JSON.stringify(yesterday.supplements),
+      generated_at: now.toISOString(),
+    };
+  }
   return {
     reports,
     styles,
@@ -242,6 +281,42 @@ export function createNewspaperDemo(now = new Date()): NewspaperDemoState {
     },
   };
 }
+const DEMO_ART: Record<string, { file: string; width: number; height: number }> = {
+  main: { file: "main", width: 1600, height: 900 },
+  learning: { file: "learning", width: 1400, height: 1050 },
+  thoughts: { file: "thoughts", width: 1100, height: 1467 },
+};
+function demoAsset(
+  report: NewspaperReport,
+  section: NewspaperImageAsset["section_id"],
+  art: string,
+  caption: string,
+  now: Date,
+  extra: Partial<NewspaperImageAsset> = {},
+): NewspaperImageAsset {
+  const picked = DEMO_ART[art] ?? DEMO_ART.main;
+  const url = `/newspaper-demo/${picked.file}.webp`;
+  const id = uid();
+  return {
+    id,
+    report_date: report.date,
+    section_id: section,
+    storage_path: `demo/${id}.webp`,
+    thumbnail_path: `demo/${id}.webp`,
+    width: picked.width,
+    height: picked.height,
+    caption,
+    active: true,
+    prompt: "",
+    style_snapshot: null,
+    options,
+    source_revision: report.revision,
+    created_at: now.toISOString(),
+    url,
+    thumbnail_url: url,
+    ...extra,
+  };
+}
 export function newspaperListItem(report: NewspaperReport): NewspaperListItem {
   const items = report.snapshot.sections.flatMap((s) => s.items);
   return {
@@ -249,9 +324,7 @@ export function newspaperListItem(report: NewspaperReport): NewspaperListItem {
     date: report.date,
     status: report.status,
     revision: report.revision,
-    title: items.find((i) => i.source === "thoughts")?.title || "生活日报",
-    excerpt: items.find((i) => i.source === "thoughts")?.body ||
-      items[0]?.body || "这一天，等待你留下记录。",
+    ...newspaperSpine(report.snapshot.sections),
     record_count: items.length,
     has_image: report.assets.length > 0,
     has_review: !!report.review,
@@ -412,35 +485,26 @@ export function executeNewspaperDemo(
     return { state, data: report.review };
   }
   if (action === "image_generate") {
-    const id = uid();
     const section = input.section_id || "main";
-    const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700"><rect width="1200" height="700" fill="#e7e1d2"/><rect x="60" y="60" width="1080" height="580" fill="none" stroke="#71634c"/><path d="M60 530H1140M870 60V640" stroke="#71634c"/><text x="110" y="275" font-family="Georgia,serif" font-size="112" fill="#40382a">A DAY, KEPT.</text><text x="115" y="360" font-family="sans-serif" font-size="28" fill="#40382a">DEMO IMAGE / ${report.date}</text><text x="115" y="595" font-family="sans-serif" font-size="24" fill="#40382a">V-LIFE DAILY</text></svg>`;
-    const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     report.assets.forEach((a) => {
       if (a.section_id === section) a.active = false;
     });
-    const asset = {
-      id,
-      report_date: report.date,
-      section_id: section,
-      storage_path: `demo/${id}.svg`,
-      thumbnail_path: `demo/${id}.svg`,
-      width: 1200,
-      height: 700,
-      caption: "演示配图 · 仅展示版面，未调用 AI 服务",
-      active: true,
-      prompt: input.prompt || state.styles.find((s) =>
-        s.is_default
-      )?.prompt_template || "",
-      style_snapshot: state.styles.find((s) => s.id === input.style_id) ||
-        state.styles[0] || null,
-      options: { ...options, ...input.options },
-      source_revision: report.revision,
-      created_at: now,
-      url,
-      thumbnail_url: url,
-    };
+    const asset = demoAsset(
+      report,
+      section,
+      section in DEMO_ART ? section : "main",
+      "演示配图 · 仅展示版面，未调用 AI 服务",
+      new Date(now),
+      {
+        prompt: input.prompt || state.styles.find((s) =>
+          s.is_default
+        )?.prompt_template || "",
+        style_snapshot: state.styles.find((s) => s.id === input.style_id) ||
+          state.styles[0] || null,
+        options: { ...options, ...input.options },
+      },
+    );
+    const id = asset.id;
     report.assets.unshift(asset);
     const job = {
       id: uid(),

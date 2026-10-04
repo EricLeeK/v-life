@@ -7,17 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings, useUpdateSettings, useCaloriesByDate } from "@/hooks/useData";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Progress } from "@/components/ui/progress";
 import { Plus, Trash2, UtensilsCrossed, Timer } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, subDays, subMonths, subYears } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { ArcScope } from "@/components/arc/ArcScope";
+import { DateField } from "@/components/arc/DateField";
+import { TrendLine } from "@/components/arc/ShareCharts";
+import AnimatedCounter from "@/vendor/uiarc/registry/components/animated-counter/animated-counter";
+import SegmentedControl from "@/vendor/uiarc/registry/components/segmented-control/segmented-control";
 import { useToast } from "@/hooks/use-toast";
+import { useLocalDate } from "@/hooks/useLocalDate";
 
 // ========== Hooks ==========
 function useWeightRecords() {
@@ -59,6 +63,24 @@ function useMeasurementRecords() {
 }
 
 type TimeRange = "week" | "month" | "year";
+
+function RangeSwitch({ value, onChange }: { value: TimeRange; onChange: (value: TimeRange) => void }) {
+  const { t } = useLang();
+  return (
+    <ArcScope>
+      <SegmentedControl
+        label={t("时间范围", "Time range")}
+        value={value}
+        onValueChange={(next) => onChange(next as TimeRange)}
+        options={[
+          { value: "week", label: t("周", "Week") },
+          { value: "month", label: t("月", "Month") },
+          { value: "year", label: t("年", "Year") },
+        ]}
+      />
+    </ArcScope>
+  );
+}
 
 function filterByRange(records: any[], range: TimeRange): any[] {
   if (records.length === 0) return [];
@@ -111,34 +133,49 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
 
   const hoursLeft = Math.floor(minutesUntilSwitch / 60);
   const minsLeft = minutesUntilSwitch % 60;
-  let colorClass = minutesUntilSwitch <= 60 ? "text-yellow-500" : isEating ? "text-green-500" : "text-red-500";
+  const switchingSoon = minutesUntilSwitch <= 60;
   const formatTime = (totalMin: number) => `${String(Math.floor(totalMin / 60) % 24).padStart(2, "0")}:${String(totalMin % 60).padStart(2, "0")}`;
-  const totalPhaseMinutes = isEating ? 8 * 60 : 16 * 60;
-  const progressPercent = Math.max(0, Math.min(100, ((totalPhaseMinutes - minutesUntilSwitch) / totalPhaseMinutes) * 100));
+  const DAY = 24 * 60;
+  const windowSegments = eatingEndMin > eatingStartMin
+    ? [[eatingStartMin, eatingEndMin]]
+    : [[eatingStartMin, DAY], [0, eatingEndMin]];
+  const tone = switchingSoon ? "tone-warn" : isEating ? "text-success" : "tone-ok";
+  const phase = isEating ? t("进食窗口", "Eating window") : t("禁食中", "Fasting");
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">{t("16+8 轻断食", "16+8 Intermittent Fasting")}</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-center space-y-2">
-          <div className={`text-3xl font-bold heading-font flex items-center justify-center gap-3 ${colorClass}`}>
-            {isEating ? <UtensilsCrossed className="h-8 w-8" /> : <Timer className="h-8 w-8" />}
-            {isEating ? t("可进食", "Eating") : t("禁食中", "Fasting")}
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base">{t("16+8 轻断食", "16+8 Intermittent Fasting")}</CardTitle>
+        <span className={`status-text ${tone}`}>{switchingSoon ? t("即将切换", "Switching soon") : phase}</span>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="flex items-end gap-3">
+          {isEating ? <UtensilsCrossed className="h-5 w-5 mb-1.5 text-muted-foreground" /> : <Timer className="h-5 w-5 mb-1.5 text-muted-foreground" />}
+          <div>
+            <p className="text-xs text-muted-foreground">{isEating ? t("距离开始禁食", "Until fasting") : t("距离可以进食", "Until eating")}</p>
+            <p className="font-mono-data text-3xl font-semibold text-foreground tracking-tight" aria-live="polite">
+              {hoursLeft}<span className="text-base text-muted-foreground mx-1">{t("小时", "h")}</span>{String(minsLeft).padStart(2, "0")}<span className="text-base text-muted-foreground ml-1">{t("分", "m")}</span>
+            </p>
           </div>
-          <div className={`text-lg font-bold heading-font ${colorClass}`}>
-            {lang === "zh" ? `距离${isEating ? "禁食" : "可进食"}还有 ${hoursLeft}小时 ${minsLeft}分钟` : `${hoursLeft}h ${minsLeft}m until ${isEating ? "fasting" : "eating"}`}
+        </div>
+        <div>
+          <div className="relative h-2 bg-muted" role="img" aria-label={`${t("进食窗口", "Eating window")} ${formatTime(eatingStartMin)}–${formatTime(eatingEndMin)}`}>
+            {windowSegments.map(([from, to]) => (
+              <div key={from} className="absolute inset-y-0 bg-foreground/75" style={{ left: `${(from / DAY) * 100}%`, width: `${((to - from) / DAY) * 100}%` }} />
+            ))}
+            <div className="absolute -top-1.5 -bottom-1.5 w-0.5 bg-destructive" style={{ left: `calc(${(currentTotalMinutes / DAY) * 100}% - 1px)` }} aria-hidden />
+          </div>
+          <div className="mt-2 flex justify-between font-mono-data text-[11px] text-muted-foreground">
+            <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
           </div>
         </div>
-        <Progress value={progressPercent} className="h-3" />
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>{t("进食:", "Eating:")} {formatTime(eatingStartMin)}-{formatTime(eatingEndMin)}</span>
-          <span>{t("禁食:", "Fasting:")} {formatTime(eatingEndMin)}-{formatTime(eatingStartMin)}</span>
-        </div>
-        <div className="flex gap-2 text-xs text-muted-foreground justify-center">
-          <span className="text-green-500">{t("● 可进食", "● Eating")}</span>
-          <span className="text-yellow-500">{t("● 即将切换", "● Switching soon")}</span>
-          <span className="text-red-500">{t("● 禁食中", "● Fasting")}</span>
-        </div>
+        <p className="text-sm text-muted-foreground">
+          {t("进食", "Eat")} <span className="font-mono-data text-foreground">{formatTime(eatingStartMin)}–{formatTime(eatingEndMin)}</span>
+          <span className="mx-2 text-border">|</span>
+          {t("禁食", "Fast")} <span className="font-mono-data text-foreground">{formatTime(eatingEndMin)}–{formatTime(eatingStartMin)}</span>
+          <span className="mx-2 text-border">|</span>
+          <span className="inline-block h-2.5 w-0.5 bg-destructive align-middle mr-1.5" aria-hidden />{t("现在", "Now")}
+        </p>
       </CardContent>
     </Card>
   );
@@ -147,7 +184,7 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
 // ========== Today Calorie Summary ==========
 function TodayCalorieSummary() {
   const { t } = useLang();
-  const today = new Date().toISOString().split("T")[0];
+  const today = useLocalDate();
   const { data: records = [] } = useCaloriesByDate(today);
   const totalIntake = records.filter((r: any) => r.meal_type !== "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
   const totalBurned = records.filter((r: any) => r.meal_type === "exercise").reduce((sum: number, r: any) => sum + r.calories, 0);
@@ -159,8 +196,8 @@ function TodayCalorieSummary() {
       <CardContent>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div><div className="text-2xl font-bold text-foreground font-mono-data">{totalIntake}</div><div className="text-xs text-muted-foreground">{t("摄入 kcal", "Intake kcal")}</div></div>
-          <div><div className="text-2xl font-bold text-orange-500 font-mono-data">{totalBurned}</div><div className="text-xs text-muted-foreground">{t("消耗 kcal", "Burned kcal")}</div></div>
-          <div><div className={`text-2xl font-bold font-mono-data ${netCalories > 2000 ? "text-red-500" : "text-green-500"}`}>{netCalories}</div><div className="text-xs text-muted-foreground">{t("净摄入 kcal", "Net kcal")}</div></div>
+          <div><div className="text-2xl font-bold text-foreground font-mono-data">{totalBurned}</div><div className="text-xs text-muted-foreground">{t("消耗 kcal", "Burned kcal")}</div></div>
+          <div><div className="text-2xl font-bold text-foreground font-mono-data">{netCalories}</div><div className="text-xs text-muted-foreground">{t("净摄入 kcal", "Net kcal")}</div>{netCalories > 2000 && <div className="status-text tone-warn mt-1 justify-center">{t("高于 2000", "Above 2000")}</div>}</div>
         </div>
       </CardContent>
     </Card>
@@ -177,7 +214,8 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
   const [showTarget, setShowTarget] = useState(true);
-  const [form, setForm] = useState({ date: new Date().toISOString().split("T")[0], weight: "", notes: "" });
+  const [scrubbedWeight, setScrubbedWeight] = useState<number | null>(null);
+  const [form, setForm] = useState({ date: format(new Date(), "yyyy-MM-dd"), weight: "", notes: "" });
 
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -222,16 +260,6 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   const firstWeight = records.length > 0 ? Number(records[0].weight) : null;
   const diff = latestWeight && firstWeight ? (latestWeight - firstWeight).toFixed(1) : null;
 
-  // Calculate Y-axis domain to include target weight when showTarget is on
-  const yDomain = useMemo(() => {
-    if (!showTarget || !targetWeight || chartData.length === 0) return ["auto", "auto"] as const;
-    const weights = filteredRecords.map((r: any) => Number(r.weight));
-    const minW = Math.min(...weights, targetWeight);
-    const maxW = Math.max(...weights, targetWeight);
-    const padding = (maxW - minW) * 0.1 || 1;
-    return [Math.floor((minW - padding) * 10) / 10, Math.ceil((maxW + padding) * 10) / 10];
-  }, [showTarget, targetWeight, filteredRecords, chartData.length]);
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -243,7 +271,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
           <DialogContent>
             <DialogHeader><DialogTitle>{t("记录体重", "Log Weight")}</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label htmlFor="wl-weight-date">{t("日期", "Date")}</Label><Input id="wl-weight-date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              <div><Label htmlFor="wl-weight-date">{t("日期", "Date")}</Label><DateField id="wl-weight-date" label={t("日期", "Date")} value={form.date} onChange={(date) => setForm({ ...form, date })} /></div>
               <div><Label htmlFor="wl-weight-value">{t("体重", "Weight")} (kg)</Label><Input id="wl-weight-value" type="number" step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder={lang === "zh" ? "如 65.5" : "e.g. 65.5"} /></div>
               <div><Label htmlFor="wl-weight-notes">{t("备注", "Notes")}</Label><Input id="wl-weight-notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
               <Button className="w-full" onClick={() => {
@@ -257,9 +285,11 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
       <CardContent className="space-y-4">
         {latestWeight && (
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold text-foreground">{latestWeight} kg</span>
+            <ArcScope className="inline-flex">
+              <AnimatedCounter value={scrubbedWeight ?? latestWeight} suffix=" kg" decimals={1} locale={lang === "zh" ? "zh-CN" : "en-US"} />
+            </ArcScope>
             {diff && (
-              <span className={`text-sm font-medium ${Number(diff) < 0 ? "text-green-500" : Number(diff) > 0 ? "text-red-500" : "text-muted-foreground"}`}>
+              <span className={`text-sm font-medium ${Number(diff) < 0 ? "text-success" : Number(diff) > 0 ? "text-destructive" : "text-muted-foreground"}`}>
                 {Number(diff) > 0 ? "+" : ""}{diff} kg
               </span>
             )}
@@ -276,27 +306,33 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
           </label>
         )}
 
-        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="week">{t("周", "Week")}</TabsTrigger>
-            <TabsTrigger value="month">{t("月", "Month")}</TabsTrigger>
-            <TabsTrigger value="year">{t("年", "Year")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <RangeSwitch value={timeRange} onChange={setTimeRange} />
 
         {chartData.length >= 2 ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-              <YAxis domain={yDomain as any} tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-              <Tooltip />
-              <Line type="monotone" dataKey="Weight" stroke="#5a9da8" strokeWidth={2} dot={{ r: 2 }} />
-              {targetWeight && showTarget && (
-                <ReferenceLine y={targetWeight} stroke="#5b8c44" strokeDasharray="5 5" label={{ value: lang === "zh" ? `目标 ${targetWeight}kg` : `Target ${targetWeight}kg`, fontSize: 11, fill: "#5b8c44" }} />
-              )}
-            </LineChart>
-          </ResponsiveContainer>
+          <TrendLine
+            data={filteredRecords.map((record: any) => ({
+              key: record.date,
+              label: format(new Date(record.date), lang === "zh" ? "M月d日" : "MMM d", { locale: lang === "zh" ? zhCN : undefined }),
+              axisLabel: format(new Date(record.date), "MM/dd"),
+              values: {
+                weight: Number(record.weight),
+                ...(targetWeight && showTarget ? { target: targetWeight } : {}),
+              },
+            }))}
+            series={[
+              { key: "weight", label: t("体重", "Weight"), color: "hsl(var(--cat-teal))", area: true },
+              ...(targetWeight && showTarget ? [{ key: "target", label: t("目标", "Target"), color: "hsl(var(--cat-green))", dashed: true, area: false }] : []),
+            ]}
+            label={t("体重趋势", "Weight trend")}
+            unit="kg"
+            height={220}
+            formatValue={(value) => value.toFixed(1)}
+            emptyLabel={t("暂无数据", "No data")}
+            onActiveChange={(_index, datum) => {
+              const value = datum?.values.weight;
+              setScrubbedWeight(typeof value === "number" ? value : null);
+            }}
+          />
         ) : (
           <p className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</p>
         )}
@@ -330,11 +366,11 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
 // ========== Measurement Tracker ==========
 const MEASUREMENT_FIELDS = [
-  { key: "waist", label: "腰围", color: "#d17847" },
-  { key: "hip", label: "臀围", color: "#8b7bb8" },
-  { key: "chest", label: "胸围", color: "#5b88b5" },
-  { key: "arm", label: "臂围", color: "#5b8c44" },
-  { key: "thigh", label: "大腿围", color: "#5a9da8" },
+  { key: "waist", label: "腰围", color: "hsl(var(--cat-orange))" },
+  { key: "hip", label: "臀围", color: "hsl(var(--cat-purple))" },
+  { key: "chest", label: "胸围", color: "hsl(var(--cat-blue))" },
+  { key: "arm", label: "臂围", color: "hsl(var(--cat-green))" },
+  { key: "thigh", label: "大腿围", color: "hsl(var(--cat-teal))" },
 ] as const;
 
 function MeasurementTracker() {
@@ -345,7 +381,7 @@ function MeasurementTracker() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>("month");
-  const [form, setForm] = useState<Record<string, string>>({ date: new Date().toISOString().split("T")[0] });
+  const [form, setForm] = useState<Record<string, string>>({ date: format(new Date(), "yyyy-MM-dd") });
 
   const saveMutation = useMutation({
     mutationFn: async (payload: any) => {
@@ -406,7 +442,7 @@ function MeasurementTracker() {
           <DialogContent>
             <DialogHeader><DialogTitle>{t("记录围度", "Log Measurements")} (cm)</DialogTitle></DialogHeader>
             <div className="space-y-3">
-              <div><Label htmlFor="wl-measure-date">{t("日期", "Date")}</Label><Input id="wl-measure-date" type="date" value={form.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              <div><Label htmlFor="wl-measure-date">{t("日期", "Date")}</Label><DateField id="wl-measure-date" label={t("日期", "Date")} value={form.date || ""} onChange={(date) => setForm({ ...form, date })} /></div>
               {MEASUREMENT_FIELDS.map(({ key, label }) => (
                 <div key={key}>
                   <Label htmlFor={`wl-measure-${key}`}>{MEASUREMENT_LABELS[label] || label} (cm)</Label>
@@ -434,13 +470,7 @@ function MeasurementTracker() {
           </div>
         )}
 
-        <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="week">{t("周", "Week")}</TabsTrigger>
-            <TabsTrigger value="month">{t("月", "Month")}</TabsTrigger>
-            <TabsTrigger value="year">{t("年", "Year")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <RangeSwitch value={timeRange} onChange={setTimeRange} />
 
         {chartData.length >= 2 ? (
           <ResponsiveContainer width="100%" height={220}>

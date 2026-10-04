@@ -17,6 +17,14 @@ import {
   DEFAULT_NEWSPAPER_IMAGE_PROMPT,
 } from "../../../supabase/functions/_shared/newspaperImageModels";
 import type { NewspaperImageOptions } from "../../../supabase/functions/_shared/newspaperTypes";
+import { PROVIDER_BASE_URLS } from "../../../supabase/functions/_shared/newspaperImageProviders";
+
+const BASE_URL_LABELS: Record<string, string> = {
+  "https://grsai.dakka.com.cn": "国内节点 · grsai.dakka.com.cn",
+  "https://grsaiapi.com": "海外节点 · grsaiapi.com",
+  "https://api.openai.com": "官方 · api.openai.com",
+  "https://generativelanguage.googleapis.com": "官方 · generativelanguage.googleapis.com",
+};
 
 function PreferencesForm({ value }: { value: NewspaperPreferences }) {
   const [draft, setDraft] = useState(value);
@@ -129,21 +137,24 @@ function ConfigForm({ value }: { value: NewspaperImageConfig }) {
             ...draft,
             ...v,
             base_url: v.provider !== draft.provider
-              ? ({
-                grsai: "https://grsai.dakka.com.cn",
-                openai: "https://api.openai.com/v1",
-                gemini: "https://generativelanguage.googleapis.com",
-              }[v.provider])
+              ? PROVIDER_BASE_URLS[v.provider][0]
               : draft.base_url,
           })}
       />
       <div className="np-form-grid">
         <label className="np-field">
-          服务地址<input
-            type="url"
-            value={draft.base_url}
+          服务节点<select
+            value={PROVIDER_BASE_URLS[draft.provider].includes(draft.base_url)
+              ? draft.base_url
+              : PROVIDER_BASE_URLS[draft.provider][0]}
             onChange={(e) => setDraft({ ...draft, base_url: e.target.value })}
-          />
+          >
+            {PROVIDER_BASE_URLS[draft.provider].map((url) => (
+              <option key={url} value={url}>
+                {BASE_URL_LABELS[url] ?? url}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="np-field">
           API 密钥<input

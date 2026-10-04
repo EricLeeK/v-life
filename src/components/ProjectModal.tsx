@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField } from "@/components/arc/DateField";
 
 interface ProjectModalProps {
   open: boolean;
@@ -117,12 +118,11 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
           </div>
           <div>
             <Label htmlFor="proj-target-date" className="text-foreground text-sm">{t("目标日期", "Target Date")}</Label>
-            <Input
+            <DateField
               id="proj-target-date"
-              type="date"
+              label={t("目标日期", "Target Date")}
               value={form.target_date}
-              onChange={(e) => setForm({ ...form, target_date: e.target.value })}
-              className="border-border text-foreground"
+              onChange={(target_date) => setForm({ ...form, target_date })}
             />
           </div>
           <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">

@@ -1,6 +1,4 @@
 import { useLang } from "@/contexts/LanguageContext";
-import { Card, CardContent } from "@/components/ui/card";
-import { Target, CheckCircle2, ListChecks } from "lucide-react";
 
 interface Goal {
   is_completed: boolean;
@@ -14,48 +12,24 @@ export function GoalStats({ goals }: { goals: Goal[] }) {
   const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div>
-      <p className="text-sm font-medium text-muted-foreground mb-3">{t("目标概览", "Goal Overview")}</p>
-      <div className="grid grid-cols-3 gap-3">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="flex items-center justify-center mb-1.5">
-              <div className="h-8 w-8 rounded-lg bg-[#dcead4] flex items-center justify-center">
-                <Target className="h-4 w-4 text-[#5b8c44]" />
-              </div>
-            </div>
-            <p className="text-xl font-semibold text-foreground font-mono-data">{rate}%</p>
-            <p className="text-[11px] text-muted-foreground">{t("完成率", "Completion")}</p>
-            <div className="h-1 bg-muted rounded-full mt-2 overflow-hidden">
-              <div className="h-full rounded-full bg-[#5b8c44]" style={{ width: `${rate}%` }} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="flex items-center justify-center mb-1.5">
-              <div className="h-8 w-8 rounded-lg bg-cat-blue-bg flex items-center justify-center">
-                <ListChecks className="h-4 w-4 text-cat-blue" />
-              </div>
-            </div>
-            <p className="text-xl font-semibold text-foreground font-mono-data">{total}</p>
-            <p className="text-[11px] text-muted-foreground">{t("全部目标", "Total Goals")}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="flex items-center justify-center mb-1.5">
-              <div className="h-8 w-8 rounded-lg bg-cat-orange-bg flex items-center justify-center">
-                <CheckCircle2 className="h-4 w-4 text-cat-orange" />
-              </div>
-            </div>
-            <p className="text-xl font-semibold text-foreground font-mono-data">{completed}</p>
-            <p className="text-[11px] text-muted-foreground">{t("已完成", "Completed")}</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <section aria-label={t("目标概览", "Goal Overview")}>
+      <dl className="grid grid-cols-3 border-y border-border divide-x divide-border">
+        <div className="px-4 py-3 first:pl-1">
+          <dt className="text-xs text-muted-foreground">{t("完成率", "Completion")}</dt>
+          <dd className="mt-1 text-2xl font-semibold text-foreground font-mono-data">{rate}%</dd>
+          <div className="mt-2 h-[3px] max-w-[10rem] bg-muted" aria-hidden>
+            <div className="h-full bg-foreground/70" style={{ width: `${rate}%` }} />
+          </div>
+        </div>
+        <div className="px-4 py-3">
+          <dt className="text-xs text-muted-foreground">{t("全部目标", "Total Goals")}</dt>
+          <dd className="mt-1 text-2xl font-semibold text-foreground font-mono-data">{total}</dd>
+        </div>
+        <div className="px-4 py-3">
+          <dt className="text-xs text-muted-foreground">{t("已完成", "Completed")}</dt>
+          <dd className="mt-1 text-2xl font-semibold text-foreground font-mono-data">{completed}</dd>
+        </div>
+      </dl>
+    </section>
   );
 }

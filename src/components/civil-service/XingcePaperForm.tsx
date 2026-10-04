@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField } from "@/components/arc/DateField";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -126,7 +127,7 @@ export function XingcePaperForm({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <Label htmlFor="xingce-date">{t("做题日期", "Date")}</Label>
-          <Input id="xingce-date" type="date" value={takenDate} onChange={(e) => setTakenDate(e.target.value)} />
+          <DateField id="xingce-date" label={t("做题日期", "Date")} value={takenDate} onChange={setTakenDate} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="xingce-source">{t("套题来源", "Source")}</Label>

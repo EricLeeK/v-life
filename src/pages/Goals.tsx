@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDemoMode } from "@/contexts/DemoModeContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -76,7 +75,7 @@ function generatePeriodOptions(type: GoalType, lang: string): { value: string; l
 }
 
 function GoalColumn({ type, label }: { type: GoalType; label: string }) {
-  const icon = type === "year" ? <Target className="h-4 w-4 text-cat-green" /> : <CalendarDays className="h-4 w-4 text-cat-blue" />;
+  const icon = type === "year" ? <Target className="h-4 w-4 text-muted-foreground" /> : <CalendarDays className="h-4 w-4 text-muted-foreground" />;
   const { data: allGoals = [] } = useGoals(type);
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -203,18 +202,18 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
   );
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="pb-2">
+    <section className="flex flex-col h-full border-t border-foreground/80 pt-3">
+      <div className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm flex items-center gap-2">{icon}{label}</CardTitle>
+          <h2 className="heading-font text-base font-semibold flex items-center gap-2">{icon}{label}</h2>
           <Button variant="ghost" size="sm" className="h-6 text-xs gap-1"
             onClick={() => setShowAll(!showAll)}>
             {showAll ? <><ChevronUp className="h-3 w-3" />{t("当前", "Current")}</> : <><ChevronDown className="h-3 w-3" />{t("全部", "All")}</>}
           </Button>
         </div>
-        {!showAll && <p className="text-xs font-semibold text-primary">{formatPeriod(currentPeriodStart)}</p>}
-      </CardHeader>
-      <CardContent className="flex-1 space-y-2">
+        {!showAll && <p className="mt-0.5 text-xs text-muted-foreground font-mono-data">{formatPeriod(currentPeriodStart)}</p>}
+      </div>
+      <div className="flex-1 space-y-2">
         {!showAll ? (
           <>
             {currentGoals.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</p>}
@@ -259,8 +258,8 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
 
@@ -268,10 +267,10 @@ export default function GoalsPage() {
   const { t } = useLang();
   const { data: allGoals = [] } = useGoals();
   return (
-    <AppLayout title={t("目标", "Goals")}>
-      <div className="space-y-4">
+    <AppLayout title={t("目标", "Goals")} description={t("周、月、年，三把尺子量同一件事：你想成为什么样的人。", "Week, month, year: three rulers for the same question.")}>
+      <div className="space-y-8">
         <GoalStats goals={allGoals as any[]} />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-10">
           <GoalColumn type="week" label={t("周目标", "Weekly")} />
           <GoalColumn type="month" label={t("月目标", "Monthly")} />
           <GoalColumn type="year" label={t("年目标", "Yearly")} />

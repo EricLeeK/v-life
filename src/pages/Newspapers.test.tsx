@@ -80,20 +80,20 @@ describe("newspaper archive and reader", () => {
     },
     20000,
   );
-  it("keeps a closed month as an accessible bundle and hides its individual papers until reopened", async () => {
+  it("files papers in month drawers that hide their papers when pushed shut", async () => {
     renderPage();
     const papers = await screen.findAllByRole("button", { name: /展开 .* 生活日报/ });
     const paper = papers[0];
-    const drawer = paper.closest(".np-shelf-drawer")!;
-    const monthButton = drawer.querySelector<HTMLButtonElement>(".np-shelf-label")!;
-    fireEvent.click(monthButton);
-    expect(monthButton).toHaveAttribute("aria-expanded", "false");
-    expect(drawer.querySelector(".np-stack-reveal")).toHaveAttribute("aria-hidden", "true");
+    const drawer = paper.closest(".np-drawer")!;
+    const front = drawer.querySelector<HTMLButtonElement>(".np-drawer-front")!;
+    expect(front).toHaveAttribute("aria-expanded", "true");
+    expect(front).toHaveAccessibleName(/\d{4}年\d+月，\d+ 份日报/);
+    fireEvent.click(front);
+    expect(front).toHaveAttribute("aria-expanded", "false");
+    expect(drawer.querySelector(".np-drawer-tray")).toHaveAttribute("aria-hidden", "true");
     expect(screen.queryByRole("button", { name: paper.getAttribute("aria-label")! })).not.toBeInTheDocument();
-    const bundle = drawer.querySelector<HTMLButtonElement>(".np-month-bundle")!;
-    expect(bundle).toHaveTextContent("展开本月");
-    fireEvent.click(bundle);
-    expect(monthButton).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(front);
+    expect(front).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("button", { name: paper.getAttribute("aria-label")! })).toBeInTheDocument();
   });
   it(

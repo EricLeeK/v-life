@@ -47,6 +47,7 @@ export function newspaperFingerprint(value:unknown):string {
 const s=(v:unknown):string=>v===null||v===undefined?'':String(v);
 const n=(v:unknown):number=>Number.isFinite(Number(v))?Number(v):0;
 const text=(...values:unknown[]):string=>values.map(s).filter(Boolean).join('\n');
+const MEAL_LABELS:Record<string,string>={breakfast:'早餐',lunch:'午餐',dinner:'晚餐',snack:'加餐',exercise:'运动'};
 const routes:Record<string,string>={todos:'/todos',daily_tasks:'/today',todo_habit_logs:'/todos',projects:'/projects',project_tasks:'/projects',habit_logs:'/projects',schedule_events:'/schedule',learning_notes:'/learning-notes',civil_plan_items:'/civil-service',civil_checkins:'/civil-service',civil_wrong_answers:'/civil-service',civil_xingce_papers:'/civil-service',thoughts:'/thoughts',finance_records:'/finance',calorie_records:'/calories',weight_records:'/weight-loss',measurement_records:'/weight-loss'};
 export function aggregateNewspaperSnapshot(input:AggregateNewspaperInput):NewspaperSnapshot {
   const {date,timezone,dayStartHour,sources}=input;const bounds=reportDayBounds(date,timezone,dayStartHour);
@@ -106,7 +107,7 @@ export function aggregateNewspaperSnapshot(input:AggregateNewspaperInput):Newspa
   for(const r of rows('thoughts'))if(isDuring(r.created_at))entry('thoughts','thoughts',r,s(r.title)||'一则想法',s(r.content),'recorded',r.created_at);
   const finance=rows('finance_records').filter(r=>s(r.date)===date),calories=rows('calorie_records').filter(r=>s(r.date)===date);
   for(const r of finance)entry('finance','finance_records',r,s(r.name),text(`${n(r.amount)} ${s(r.currency)||'CNY'} · ${s(r.category)}`,r.notes),'recorded',undefined,r.date);
-  for(const r of calories)entry('health','calorie_records',r,s(r.food_name),text(`${r.meal_type==='exercise'?'运动消耗':'饮食摄入'}：${n(r.calories)} 千卡 · ${s(r.meal_type)}`,r.notes),'recorded',undefined,r.date);
+  for(const r of calories)entry('health','calorie_records',r,s(r.food_name),text(`${r.meal_type==='exercise'?'运动消耗':'饮食摄入'}：${n(r.calories)} 千卡 · ${MEAL_LABELS[s(r.meal_type)]??s(r.meal_type)}`,r.notes),'recorded',undefined,r.date);
   for(const r of rows('weight_records'))if(s(r.date)===date)entry('health','weight_records',r,'体重记录',text(`${n(r.weight)} kg`,r.notes),'recorded',undefined,r.date);
   const measures:Record<string,string>={waist:'腰围',hip:'臀围',chest:'胸围',arm:'臂围',thigh:'腿围'};
   for(const r of rows('measurement_records'))if(s(r.date)===date)entry('health','measurement_records',r,'身体围度',text(...Object.entries(measures).filter(([k])=>r[k]!=null).map(([k,v])=>`${v}：${s(r[k])} cm`),r.notes),'recorded',undefined,r.date);

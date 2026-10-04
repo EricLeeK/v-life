@@ -2,10 +2,10 @@ import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
 import {
-  Newspaper, CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
+  CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
   Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
   ChevronRight, ArrowRight, ChevronDown, CheckCircle2, Clock, GraduationCap, BookOpen,
-  CalendarPlus, ListPlus, ReceiptText, CircleCheck, AlertTriangle,
+  CalendarPlus, ListPlus, ReceiptText, CircleCheck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
@@ -16,8 +16,10 @@ import {
 } from "@/hooks/useData";
 import { usePrimaryExam, useTodayCivilPlans } from "@/hooks/useCivilService";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
-import { summarizeSubscriptions } from "@/lib/subscriptions";
+import { getSubscriptionEvent, summarizeSubscriptions } from "@/lib/subscriptions";
 import { useLocalDate } from "@/hooks/useLocalDate";
+import { ArcScope } from "@/components/arc/ArcScope";
+import AnimatedCounter from "@/vendor/uiarc/registry/components/animated-counter/animated-counter";
 import { differenceInCalendarDays, parseISO, format, addDays, startOfWeek } from "date-fns";
 
 
@@ -86,11 +88,17 @@ function MetricCard({ label, value, hint, color }: {
 }) {
   const c = color ? CAT[color] : null;
   return (
-    <div data-testid="dashboard-metric" className="min-w-0 border-t border-border pt-3">
+    <div data-testid="dashboard-metric" className="life-metric min-w-0">
       <p className="text-xs text-muted-foreground font-medium">{label}</p>
-      <p className="type-metric mt-1 text-foreground font-mono-data tracking-tight">
-        {value}
-      </p>
+      <div className="mt-1 text-foreground">
+        {typeof value === "number" ? (
+          <ArcScope className="inline-flex arc-metric">
+            <AnimatedCounter value={value} />
+          </ArcScope>
+        ) : (
+          <p className="type-metric font-mono-data tracking-tight">{value}</p>
+        )}
+      </div>
       {hint && (
         <p className={`text-caption mt-1 ${c ? c.text : "text-muted-foreground"}`}>{hint}</p>
       )}
@@ -113,15 +121,15 @@ function PipelineRow({ icon, iconColor, title, subtitle, pill, pillColor, to }: 
       to={to}
       className="w-full min-h-11 text-left flex items-center gap-3 px-4 py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-lg transition-colors group"
     >
-      <div className={`h-8 w-8 rounded-lg ${iconColor} flex items-center justify-center shrink-0`}>
+      <span data-tone={iconColor} className="flex h-5 w-5 items-center justify-center shrink-0 text-muted-foreground [&_svg]:!text-muted-foreground">
         {icon}
-      </div>
+      </span>
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-medium text-foreground truncate">{title}</p>
         {subtitle && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
       </div>
       {pill && pc && (
-        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${pc.bg} ${pc.text} shrink-0`}>
+        <span className={`status-text shrink-0 ${pc.text}`}>
           {pill}
         </span>
       )}
@@ -150,7 +158,7 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
           {icon}
         </div>
         {status && sc && (
-          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
+          <span className={`status-text ${sc.text}`}>
             {status}
           </span>
         )}
@@ -184,7 +192,7 @@ export default function DashboardPage() {
   const { data: allTodos = [] } = todoHooks.useList();
   const pendingTodos = allTodos.filter((todo: any) => !todo.is_completed && !todo.is_archived);
   const { data: expiringPantry = [] } = useExpiringPantry();
-  const subscriptionQuery = useSubscriptions(modulesExpanded && isVisible("belongings"));
+  const subscriptionQuery = useSubscriptions(isVisible("belongings"));
   const subscriptionSummary = summarizeSubscriptions(subscriptionQuery.data ?? [], todayStr);
   const { data: overdueDurables = [] } = useOverdueDurables(modulesExpanded && isVisible("belongings"));
   const { data: recentThoughts = [] } = useRecentThoughts(modulesExpanded && isVisible("thoughts"));
@@ -197,12 +205,11 @@ export default function DashboardPage() {
   const { data: allProjects = [] } = useProjects((modulesExpanded || needsFallbackMetrics) && isVisible("projects"));
   const calorieHistory = useCaloriesByRange(format(weekStart, "yyyy-MM-dd"), todayStr, insightsExpanded && isVisible("calories"));
   const { data: weekCalorieRecords = [] } = calorieHistory;
-  const scheduleHistory = useScheduleByRange(weekStart, weekEnd, insightsExpanded && (isVisible("schedule") || isVisible("learning-notes")));
+  const scheduleHistory = useScheduleByRange(weekStart, weekEnd, isVisible("schedule") || isVisible("learning-notes"));
   const { data: weekScheduleEvents = [] } = scheduleHistory;
   const insightQueries = [weekGoalsQuery, weightTrendQuery, calorieHistory, scheduleHistory];
   const insightsLoading = insightQueries.some(query => query.isLoading);
   const insightsFailed = insightQueries.some(query => query.error);
-  const updateTodo = todoHooks.useUpdate();
   const activeProjects = allProjects.filter((p: any) => p.status === "active" || p.status === "planning");
   const avgProgress = activeProjects.length > 0
     ? Math.round(activeProjects.reduce((s: number, p: any) => s + p.progress, 0) / activeProjects.length)
@@ -296,53 +303,6 @@ export default function DashboardPage() {
   }));
   const overduePantryItems = pantryItems.filter(({ days }) => days !== null && days < 0);
   const dueSoonPantryItems = pantryItems.filter(({ days }) => days !== null && days >= 0 && days <= 3);
-  const firstPantryAlert = pantryItems[0] ?? null;
-
-  const upcomingEvent = todayEvents.find((event: any) => new Date(event.start_time).getTime() > now.getTime()) ?? null;
-  const minutesUntilEvent = upcomingEvent
-    ? Math.round((new Date((upcomingEvent as any).start_time).getTime() - now.getTime()) / 60000)
-    : null;
-  const topTodo = urgentTodos[0] ?? pendingTodos[0] ?? null;
-  const eventIsSoon = minutesUntilEvent !== null && minutesUntilEvent >= 0 && minutesUntilEvent <= 120;
-
-  const primaryAction = eventIsSoon && upcomingEvent
-    ? {
-        kind: "event" as const,
-        icon: <CalendarDays className="h-5 w-5 text-cat-blue" />,
-        title: (upcomingEvent as any).title,
-        meta: `${format(new Date((upcomingEvent as any).start_time), "HH:mm")} · ${t("即将开始", "Starting soon")}`,
-        to: "/schedule",
-        action: t("查看日程", "View schedule"),
-      }
-    : topTodo
-      ? {
-          kind: "todo" as const,
-          icon: <CheckSquare className="h-5 w-5 text-cat-green" />,
-          title: topTodo.title,
-          meta: topTodo.category || t("今天优先完成", "Priority for today"),
-          to: "/todos",
-          action: t("查看待办", "View to-do"),
-        }
-      : firstPantryAlert?.days !== null && firstPantryAlert?.days < 0
-        ? {
-            kind: "pantry" as const,
-            icon: <AlertTriangle className="h-5 w-5 text-cat-orange" />,
-            title: firstPantryAlert.item.name,
-            meta: formatExpiryStatus(firstPantryAlert.days, lang),
-            to: "/pantry",
-            action: t("处理食材", "Review item"),
-          }
-        : upcomingEvent
-          ? {
-              kind: "event" as const,
-              icon: <CalendarDays className="h-5 w-5 text-cat-blue" />,
-              title: (upcomingEvent as any).title,
-              meta: format(new Date((upcomingEvent as any).start_time), "HH:mm"),
-              to: "/schedule",
-              action: t("查看日程", "View schedule"),
-            }
-          : null;
-
   const metricCards = [
     isVisible("schedule") && {
       key: "schedule",
@@ -423,7 +383,7 @@ export default function DashboardPage() {
   const lifeModuleCards = [
     isVisible("schedule") && {
       id: "schedule",
-      icon: <CalendarDays className="h-4 w-4 text-cat-blue" />,
+      icon: <CalendarDays className="h-4 w-4 text-foreground" />,
       title: t("日程计划", "Schedule"),
       description: `${todayEvents.length} ${lang === "zh" ? "个今日日程" : "events today"}`,
       status: todayEvents.length > 0 ? `${todayEvents.length}` : undefined,
@@ -432,7 +392,7 @@ export default function DashboardPage() {
     },
     isVisible("finance") && {
       id: "finance",
-      icon: <Wallet className="h-4 w-4 text-cat-orange" />,
+      icon: <Wallet className="h-4 w-4 text-foreground" />,
       title: t("记账", "Finance"),
       description: hasBudget
         ? (lang === "zh" ? `本月 ¥${totalSpending.toFixed(0)}` : `This month ¥${totalSpending.toFixed(0)}`)
@@ -443,7 +403,7 @@ export default function DashboardPage() {
     },
     isVisible("calories") && {
       id: "calories",
-      icon: <Flame className="h-4 w-4 text-cat-orange" />,
+      icon: <Flame className="h-4 w-4 text-foreground" />,
       title: t("热量记录", "Calories"),
       description: calorieTarget > 0 ? `${todayCalories} / ${calorieTarget} kcal` : t("尚未设置目标", "Target not set"),
       status: calorieTarget > 0 && remainingCalories < 0 ? t("超额", "Over") : undefined,
@@ -452,7 +412,7 @@ export default function DashboardPage() {
     },
     isVisible("todos") && {
       id: "todos",
-      icon: <CheckSquare className="h-4 w-4 text-cat-green" />,
+      icon: <CheckSquare className="h-4 w-4 text-foreground" />,
       title: t("待办事项", "To-Dos"),
       description: pendingTodos.length > 0 ? `${pendingTodos.length} ${t("个待完成", "pending")}` : t("今天没有待办", "Nothing pending today"),
       status: urgentTodos.length > 0 ? `${urgentTodos.length} ${t("紧急", "urgent")}` : undefined,
@@ -461,7 +421,7 @@ export default function DashboardPage() {
     },
     isVisible("pantry") && {
       id: "pantry",
-      icon: <Carrot className="h-4 w-4 text-cat-yellow" />,
+      icon: <Carrot className="h-4 w-4 text-foreground" />,
       title: t("食材管理", "Pantry"),
       description: overduePantryItems.length > 0
         ? `${overduePantryItems.length} ${t("个已过期", "expired")}`
@@ -474,7 +434,7 @@ export default function DashboardPage() {
     },
     isVisible("belongings") && {
       id: "belongings",
-      icon: <Package className="h-4 w-4 text-cat-yellow" />,
+      icon: <Package className="h-4 w-4 text-foreground" />,
       title: t("用品管理", "Belongings"),
       description: subscriptionQuery.error ? t("订阅提醒加载失败", "Subscription alerts unavailable") : subscriptionSummary.needsAttention > 0
         ? `${subscriptionSummary.needsAttention} ${t("项订阅需要留意", "subscriptions need attention")}`
@@ -487,7 +447,7 @@ export default function DashboardPage() {
     },
     isVisible("goals") && {
       id: "goals",
-      icon: <Target className="h-4 w-4 text-cat-green" />,
+      icon: <Target className="h-4 w-4 text-foreground" />,
       title: t("目标", "Goals"),
       description: weekGoals.length > 0
         ? `${completedGoals}/${weekGoals.length} ${t("本周已完成", "done this week")}`
@@ -498,7 +458,7 @@ export default function DashboardPage() {
     },
     isVisible("projects") && {
       id: "projects",
-      icon: <Kanban className="h-4 w-4 text-cat-blue" />,
+      icon: <Kanban className="h-4 w-4 text-foreground" />,
       title: t("项目管理", "Projects"),
       description: activeProjects.length > 0 ? `${activeProjects.length} ${t("个活跃项目", "active projects")}` : t("暂无活跃项目", "No active projects"),
       status: avgProgress > 0 ? `${avgProgress}%` : undefined,
@@ -507,7 +467,7 @@ export default function DashboardPage() {
     },
     isVisible("weight-loss") && {
       id: "weight-loss",
-      icon: <TrendingDown className="h-4 w-4 text-cat-teal" />,
+      icon: <TrendingDown className="h-4 w-4 text-foreground" />,
       title: t("减肥专项", "Weight Loss"),
       description: latestWeight !== null && Number.isFinite(latestWeight) ? `${latestWeight.toFixed(1)} kg` : t("暂无记录", "No records"),
       status: weightDiff !== null && Number.isFinite(weightDiff) ? `${weightDiff > 0 ? "+" : ""}${weightDiff.toFixed(1)}` : undefined,
@@ -516,7 +476,7 @@ export default function DashboardPage() {
     },
     isVisible("civil-service") && {
       id: "civil-service",
-      icon: <GraduationCap className="h-4 w-4 text-cat-orange" />,
+      icon: <GraduationCap className="h-4 w-4 text-foreground" />,
       title: t("考公", "Civil Service"),
       description: primaryExam
         ? `${primaryExam.name} · ${t("今日计划", "Today")} ${civilPlanDone}/${todayCivilPlans.length}`
@@ -527,21 +487,21 @@ export default function DashboardPage() {
     },
     isVisible("thoughts") && {
       id: "thoughts",
-      icon: <Lightbulb className="h-4 w-4 text-cat-purple" />,
+      icon: <Lightbulb className="h-4 w-4 text-foreground" />,
       title: t("随想", "Thoughts"),
       description: recentThoughts.length > 0 ? `${recentThoughts.length} ${t("条最近记录", "recent records")}` : t("暂无随想", "No thoughts"),
       onClick: () => navigate("/thoughts"),
     },
     isVisible("learning-notes") && {
       id: "learning-notes",
-      icon: <BookOpen className="h-4 w-4 text-cat-blue" />,
+      icon: <BookOpen className="h-4 w-4 text-foreground" />,
       title: t("学习笔记", "Learning Notes"),
       description: t("查看与优化学习笔记", "View and optimize notes"),
       onClick: () => navigate("/learning-notes"),
     },
     isVisible("fortune") && {
       id: "fortune",
-      icon: <Sparkles className="h-4 w-4 text-cat-purple" />,
+      icon: <Sparkles className="h-4 w-4 text-foreground" />,
       title: t("运势分析", "Fortune"),
       description: t("今日运势与灵感", "Today's fortune"),
       onClick: () => navigate("/fortune"),
@@ -567,6 +527,72 @@ export default function DashboardPage() {
   const showScheduleOverview = isVisible("schedule");
   const showTodosOverview = isVisible("todos");
   const showTodayOverviewSection = showScheduleOverview || showTodosOverview;
+  const weekdayLabels = lang === "zh" ? ["一", "二", "三", "四", "五", "六", "日"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekDays = Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(weekStart, index);
+    const key = format(date, "yyyy-MM-dd");
+    const count = (weekScheduleEvents as any[]).filter((event) => format(new Date(event.start_time), "yyyy-MM-dd") === key).length;
+    return { key, date, count, isToday: key === todayStr, label: weekdayLabels[index] };
+  });
+  const attention = [
+    ...(isVisible("todos") && overdueTodoCount > 0 ? [{
+      key: "overdue-todos",
+      to: "/todos",
+      title: t(`${overdueTodoCount} 项待办过了期限`, `${overdueTodoCount} to-dos are overdue`),
+      meta: "",
+      tone: "tone-danger",
+      label: t("打开逾期待办", "Open overdue to-dos"),
+    }] : []),
+    ...(isVisible("pantry") ? pantryItems
+      .filter(({ days }) => days !== null && days <= 3)
+      .sort((a, b) => (a.days ?? 99) - (b.days ?? 99))
+      .slice(0, 3)
+      .map(({ item, days }) => ({
+        key: `pantry-${item.id}`,
+        to: "/pantry",
+        title: item.name,
+        meta: formatExpiryStatus(days, lang),
+        tone: days !== null && days < 0 ? "tone-danger" : "tone-warn",
+        label: `${t("打开食材预警", "Open pantry alert")}：${item.name} ${formatExpiryStatus(days, lang)}`,
+      })) : []),
+    ...(isVisible("belongings") ? (subscriptionQuery.data ?? [])
+      .map((item) => ({ item, event: getSubscriptionEvent(item, todayStr) }))
+      .filter((row) => row.event?.needsAttention)
+      .sort((a, b) => a.item.next_date.localeCompare(b.item.next_date))
+      .slice(0, 2)
+      .map(({ item, event }) => ({
+        key: `sub-${item.id}`,
+        to: "/belongings",
+        title: item.name,
+        meta: !event || event.overdue
+          ? t("待确认", "Needs confirmation")
+          : event.days === 0
+            ? (event.kind === "trial" ? t("今天试用结束", "Trial ends today") : event.kind === "expiry" ? t("今天到期", "Expires today") : t("今天扣款", "Charge today"))
+            : event.kind === "trial"
+              ? t(`${event.days} 天后试用结束`, `Trial ends in ${event.days}d`)
+              : event.kind === "expiry"
+                ? t(`${event.days} 天后到期`, `Expires in ${event.days}d`)
+                : t(`${event.days} 天后扣款`, `Charge in ${event.days}d`),
+        tone: "tone-warn",
+        label: t(`打开订阅 ${item.name}`, `Open subscription ${item.name}`),
+      })) : []),
+    ...(isVisible("finance") && hasBudget && totalSpending > budget ? [{
+      key: "budget",
+      to: "/finance",
+      title: t("本月支出已超出预算", "Spending is over budget"),
+      meta: `¥${Math.round(totalSpending - budget)}`,
+      tone: "tone-danger",
+      label: t("打开记账", "Open finance"),
+    }] : []),
+    ...(isVisible("calories") && todayCalories > calorieTarget ? [{
+      key: "calories",
+      to: "/calories",
+      title: t("今日热量已超出", "Calories are over target"),
+      meta: `${Math.round(todayCalories - calorieTarget)} kcal`,
+      tone: "tone-warn",
+      label: t("打开热量记录", "Open calories"),
+    }] : []),
+  ].slice(0, 4);
 
   const insightCards = [
     isVisible("weight-loss") && (
@@ -724,69 +750,53 @@ export default function DashboardPage() {
   ].filter(Boolean) as React.ReactNode[];
 
   return (
-    <AppLayout title={t("首页概览", "Dashboard")}>
+    <AppLayout title={t("首页概览", "Dashboard")} header={false}>
       <div className="space-y-8 lg:space-y-10">
         <section className="flex flex-col gap-1">
-          <h2 className="type-dashboard-display heading-font text-foreground">{greeting}</h2>
+          <h1 className="type-dashboard-display heading-font text-foreground">{greeting}</h1>
           <p className="text-sm text-muted-foreground">{dateLabel}</p>
-          <Link to="/newspapers?date=today" className="inline-flex items-center gap-2 min-h-11 text-sm underline underline-offset-4 self-start"><Newspaper className="h-4 w-4" />{t("翻开今天的生活日报", "Open today’s newspaper")}<ArrowRight className="h-3 w-3" /></Link>
         </section>
 
-        <section aria-labelledby="next-action-heading">
-          <div className="mb-4">
-            <h2 id="next-action-heading" className="type-section-title heading-font">{t("下一步做什么", "What to do next")}</h2>
-            <p className="text-xs text-muted-foreground mt-1">{t("先处理最接近、最紧急的一件事", "Start with the nearest, most urgent action")}</p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)] gap-4">
-            <div className="card-premium overflow-hidden">
-              {primaryAction ? (
-                <div className="p-5 sm:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="h-11 w-11 rounded-lg bg-muted flex items-center justify-center shrink-0">{primaryAction.icon}</div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">{t("建议先做", "Recommended next")}</p>
-                      <h3 className="type-action-title mt-1 text-foreground heading-font text-balance">{primaryAction.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{primaryAction.meta}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-5">
-                    <Link to={primaryAction.to} className="min-h-11 inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-btn focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.98]">
-                      {primaryAction.action}<ArrowRight className="h-4 w-4" />
-                    </Link>
-                    {primaryAction.kind === "todo" && topTodo && (
+        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)] gap-4">
+            <div className="card-premium p-4 sm:p-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-sm font-semibold">{t("这周", "This week")}</h2>
+                <Link to="/schedule" className="text-caption text-muted-foreground underline-offset-4 hover:underline">{t("日程", "Schedule")}</Link>
+              </div>
+              <div className="mt-4 grid grid-cols-7 gap-1">
+                {weekDays.map((day) => (
+                  <Link
+                    key={day.key}
+                    to="/schedule"
+                    aria-label={day.isToday
+                      ? t(`今天 ${day.date.getDate()} 日，${day.count} 项日程`, `Today ${day.date.getDate()}, ${day.count} events`)
+                      : t(`${day.label} ${day.date.getDate()} 日，${day.count} 项日程`, `${day.label} ${day.date.getDate()}, ${day.count} events`)}
+                    aria-current={day.isToday ? "date" : undefined}
+                    className={`flex min-h-16 flex-col items-center justify-center rounded-md py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${day.isToday ? "bg-foreground text-background" : "hover:bg-muted"}`}
+                  >
+                    <span className={`text-caption ${day.isToday ? "opacity-70" : "text-muted-foreground"}`}>{day.label}</span>
+                    <span className="font-mono-data text-sm">{day.date.getDate()}</span>
+                    <span className={`mt-1 font-mono-data text-caption ${day.count === 0 ? "opacity-40" : ""}`}>{day.count}</span>
+                  </Link>
+                ))}
+              </div>
+              {attention.length > 0 && (
+                <ul className="mt-4 border-t border-border">
+                  {attention.map((item) => (
+                    <li key={item.key}>
                       <button
                         type="button"
-                        className="min-h-11 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                        onClick={() => updateTodo.mutate({ id: topTodo.id, is_completed: true })}
+                        aria-label={item.label}
+                        className="flex min-h-11 w-full items-center gap-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => navigate(item.to)}
                       >
-                        <CircleCheck className="h-4 w-4" />{t("标记完成", "Mark complete")}
+                        <span className={`status-text shrink-0 ${item.tone}`} />
+                        <span className="min-w-0 flex-1 truncate text-sm">{item.title}</span>
+                        {item.meta && <span className="shrink-0 text-caption text-muted-foreground">{item.meta}</span>}
                       </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6 flex items-start gap-4">
-                  <div className="h-11 w-11 rounded-lg bg-cat-green-bg flex items-center justify-center shrink-0"><CircleCheck className="h-5 w-5 text-cat-green" /></div>
-                  <div>
-                    <h3 className="type-action-title heading-font">{t("今天已经清空", "You're clear for today")}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{t("可以安排下一件重要的事。", "You can plan the next meaningful thing.")}</p>
-                  </div>
-                </div>
-              )}
-
-              {firstPantryAlert && primaryAction?.kind !== "pantry" && (
-                <button
-                  type="button"
-                  aria-label={`${t("打开食材预警", "Open pantry alert")}：${firstPantryAlert.item.name} ${formatExpiryStatus(firstPantryAlert.days, lang)}`}
-                  className="w-full min-h-11 border-t border-border px-5 py-3 flex items-center gap-3 text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:outline-none"
-                  onClick={() => navigate("/pantry")}
-                >
-                  <AlertTriangle className="h-4 w-4 text-cat-orange shrink-0" />
-                  <span className="text-sm font-medium truncate">{firstPantryAlert.item.name}</span>
-                  <span className="text-caption text-cat-orange ml-auto shrink-0">{formatExpiryStatus(firstPantryAlert.days, lang)}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                </button>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 
@@ -798,7 +808,7 @@ export default function DashboardPage() {
                   const Icon = action.icon;
                   return (
                     <Link key={action.key} to={action.to} aria-label={action.label} className="min-h-11 rounded-md border border-border bg-background px-3 py-2 flex items-center gap-2 text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
-                      <span className={`h-7 w-7 rounded-md flex items-center justify-center ${action.color}`}><Icon className="h-4 w-4" /></span>
+                      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span>{action.label}</span>
                     </Link>
                   );
@@ -809,12 +819,11 @@ export default function DashboardPage() {
                   className="min-h-11 rounded-md border border-border bg-background px-3 py-2 flex items-center gap-2 text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
                 >
-                  <span className="h-7 w-7 rounded-md bg-cat-purple-bg text-cat-purple flex items-center justify-center"><Sparkles className="h-4 w-4" /></span>
+                  <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>{t("AI 快速记", "AI capture")}</span>
                 </button>
               </div>
             </aside>
-          </div>
         </section>
 
         {metricCards.length > 0 && (
@@ -833,7 +842,7 @@ export default function DashboardPage() {
               {showScheduleOverview && (
                 <div className="card-premium overflow-hidden">
                   <div className="min-h-11 flex items-center justify-between gap-3 px-4 border-b border-border">
-                    <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-cat-blue" /><span className="text-sm font-semibold">{t("今日日程", "Today's Schedule")}</span></div>
+                    <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold">{t("今日日程", "Today's Schedule")}</span></div>
                     <Link to="/schedule" className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
                   </div>
                   <div className="py-1">
@@ -848,7 +857,7 @@ export default function DashboardPage() {
               {showTodosOverview && (
                 <div className="card-premium overflow-hidden">
                   <div className="min-h-11 flex items-center justify-between gap-3 px-4 border-b border-border">
-                    <div className="flex items-center gap-2"><CheckSquare className="h-4 w-4 text-cat-green" /><span className="text-sm font-semibold">{t("待办事项", "To-Dos")}</span></div>
+                    <div className="flex items-center gap-2"><CheckSquare className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold">{t("待办事项", "To-Dos")}</span></div>
                     <Link to="/todos" className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
                   </div>
                   <div className="py-1">

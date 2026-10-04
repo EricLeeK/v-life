@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField } from "@/components/arc/DateField";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -376,7 +377,7 @@ export function WrongAnswerForm({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <Label htmlFor="wrong-date">{t("做错日期", "Date")}</Label>
-          <Input id="wrong-date" type="date" value={sourceDate} onChange={(e) => setSourceDate(e.target.value)} />
+          <DateField id="wrong-date" label={t("做错日期", "Date")} value={sourceDate} onChange={setSourceDate} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="wrong-status">{t("状态", "Status")}</Label>

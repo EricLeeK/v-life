@@ -72,7 +72,7 @@ export default function TarotPage() {
   }
 
   return (
-    <AppLayout title={t("塔罗抽牌", "Tarot")}>
+    <AppLayout title={t("塔罗抽牌", "Tarot")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("塔罗抽牌", "Tarot")}

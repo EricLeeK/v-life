@@ -20,6 +20,7 @@ import { buildFeedUrl, buildWebcalUrl, generateFeedToken } from "@/lib/calendarF
 import { messageFromAiInvoke } from "@/lib/aiErrors";
 import { Upload, Download, Save, ChevronDown, Copy, RotateCcw, Link2, CalendarPlus, Ticket, Bot } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField } from "@/components/arc/DateField";
 import {
   zodiacDetailsFromBirthDate,
   zodiacFromBirthDate,
@@ -773,12 +774,11 @@ export default function SettingsPage() {
                     <>
                       <div>
                         <Label htmlFor="fp-birth-date">{t("生日（公历）", "Birthday (Gregorian)")}</Label>
-                        <Input
+                        <DateField
                           id="fp-birth-date"
-                          type="date"
+                          label={t("生日（公历）", "Birthday (Gregorian)")}
                           value={fp.birth_date || ""}
-                          onChange={(e) => {
-                            const birth_date = e.target.value;
+                          onChange={(birth_date) => {
                             setFp({
                               ...fp,
                               birth_date,

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { RouteLoadBoundary } from "@/components/RouteLoadBoundary";
 import { ThemeProvider } from "next-themes";
+import { ArcThemeSync } from "@/components/arc/ArcThemeSync";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -57,11 +58,9 @@ const queryClient = new QueryClient({
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-6 w-6 border-2 border-[#d17847] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[13px] text-muted-foreground font-medium">Loading...</p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background" role="status">
+      <div className="h-5 w-5 rounded-full border-[1.5px] border-foreground/15 border-t-foreground/70 animate-spin motion-reduce:animate-none" />
+      <span className="sr-only">加载中</span>
     </div>
   );
 }
@@ -162,6 +161,7 @@ function DeferredAIChatPanel() {
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ArcThemeSync />
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />

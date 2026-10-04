@@ -73,6 +73,41 @@ typography:
     fontFamily: "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
     fontSize: "13px"
     fontWeight: 500
+  newspaper-body:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.9
+  newspaper-deck:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "18px"
+    fontWeight: 400
+    lineHeight: 1.8
+  newspaper-headline:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(32px, 3.9vw, 54px)"
+    fontWeight: 900
+    lineHeight: 1.2
+  newspaper-headline-compact:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(28px, 8vw, 38px)"
+    fontWeight: 900
+    lineHeight: 1.2
+  newspaper-masthead:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(52px, 7.6vw, 104px)"
+    fontWeight: 900
+    lineHeight: 1.08
+  newspaper-masthead-compact:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(44px, 14vw, 64px)"
+    fontWeight: 900
+    lineHeight: 1.08
+  newspaper-archive-title:
+    fontFamily: "Fraunces, Songti SC, Noto Serif SC, ui-serif, serif"
+    fontSize: "clamp(30px, 4vw, 50px)"
+    fontWeight: 650
+    lineHeight: 1.22
   metric:
     fontFamily: "JetBrains Mono, SF Mono, Fira Code, monospace"
     fontSize: "28px"
@@ -89,6 +124,7 @@ rounded:
   sm: "calc(0.5625rem - 4px)"
   md: "calc(0.5625rem - 2px)"
   lg: "0.5625rem"
+  card: "8px"
 spacing:
   page-x: "24px"
   page-y: "24px"
@@ -194,7 +230,7 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 ## Shapes
 
 - Global radius token `--radius: 0.5625rem` (~9px)
-- Cards / premium panels often `8px`
+- Cards / premium panels use `8px`
 - Pills for badges; circular FABs for AI assistant
 - Prefer soft rectangles over heavy neumorphism
 
@@ -243,14 +279,13 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 
 ## 生活报纸档案馆（/newspapers）
 
-此处是用户指定的纸张档案馆视觉扩展，采用 Experience → Read 的转换，不沿用右侧模块面板的阅读结构。
+此处是用户指定的「档案柜 + 真实报纸」视觉扩展，采用 Experience → Read 的转换，不沿用右侧模块面板的阅读结构。
 
-- 档案架首先呈现折叠报纸的侧脊、折边与薄纸层，按月份叠放；日期和摘要保持可辨认。纸层几何阴影与透视是实体报纸语义，不是通用卡片装饰。
-- 点击从所选报纸的实际位置抽出、展开到整窗。阅读器覆盖应用侧栏、顶栏和游览条；归位恢复原列表滚动与键盘焦点。桌面原生 View Transition 720ms 展开、600ms 收回；无该能力时使用局部 Web Animations，减少动态效果时直接切换。
-- 原有 Fraunces 用于 V-Life 和日期，中文报头与栏目新增 `Songti SC, Noto Serif SC, ui-serif`。这是报纸编辑排版的限定字体栈；正文仍用现有正文体系。报头桌面 48–80px、移动端 35–40px；栏目与文章标题 18–32px；小号 9–13px 仅用于日期印记、状态和辅助信息，正文 14px / 宽松行高。
-- 纸页保持直角，表单与小按钮允许 3–9px 的轻圆角。复用 `--background`、`--card`、`--foreground`、`--border` 与语义色；阴影用现有墨色透明度。无额外品牌色。
+- **档案柜**：整个库是一只柜体（`--muted` 底、8px 圆角），每月一个抽屉。抽屉前板带标签框（年 / 月）、凹陷拉手和份数与日期范围；默认只拉开最近一个月，搜索时拉开所有命中的抽屉。抽屉拉开时托盘以约 560ms 的高度展开，报纸档案逐份竖立、前后叠放，日期索引签按四档错位露出；悬停把一份报纸抬起 12px。
+- **纸张**：报纸是新闻纸而不是屏幕卡片——纸色上叠细颗粒与横向纤维两层 SVG 噪点（`--np-grain`、`--np-fibre`），下方两层错开的薄纸边，纸面保留对折成条留下的三道水平折痕。配图做轻微的旧化（sepia / 降饱和）。深色模式降低折痕强度、桌面去掉纹理。
+- **折叠动画**：报纸在柜里是对折两次后的整宽纸条。取报时纸条从槽位淡入升起、飞到桌面，再两次向下展开（约 700 + 380 + 460ms）；收回时反向折两次、抬起、落入同一槽位并淡出，槽里的那份报纸轻微回弹落定，焦点回到它。飞行中的纸是阅读器纸面的真实克隆，揭开时没有内容跳变。实现见 `src/components/newspaper/paperFlight.ts`；减少动态效果和不支持 Web Animations 的环境直接切换。阅读器覆盖应用侧栏、顶栏和游览条；归位恢复原列表滚动与键盘焦点。
+- 原有 Fraunces 用于 V-Life 和日期（用户已确认，检测器登记了单值豁免）。中文报头与栏目使用 `Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif`，已登记为 `newspaper-*` 字体规范：正文 16px、导语 18px、头条 clamp(32px, 3.9vw, 54px)、报头 clamp(52px, 7.6vw, 104px)，紧凑版本见 frontmatter。小号 9–14px 仅用于日期印记、状态和辅助信息。
+- 纸页保持直角；印章、勾选框等印刷元素直角；按钮、抽屉、索引签用 8px。复用 `--background`、`--muted`、`--foreground`、`--border` 与语义色；阴影用墨色透明度，无额外品牌色。
 - 桌面宽窄分栏、手机单栏。图片是真实保存资产的缩略图，AI 与演示图片分别明确标识；无图、无复盘时保留完整文字阅读。
-- 手机输入框、日期和选择器使用 16px（等同现有 `text-base` 规范），避免 iOS 聚焦时自动放大；这项无障碍尺寸不属于字体漂移。
-- 月份收起保留一叠合拢纸页，显示份数与日期范围，整叠可点击展开。纸层沿用 9px/2px 的折边与 18–20px 栏目标题，属于上述报纸形态；开合以约 480ms 的高度压缩连接，不移除整块内容后留下空架。收回阅读器先让纸张平稳归位，保留实际键盘焦点但不残留抬起和框线；再次 Tab 导航显示焦点，实际指针移动恢复悬浮反馈。
-
-本轮设计检测中的既有错题正文 Times New Roman/宋体、既有 8px 卡片和暖色阴影属于原有页面，不在此功能中重写。日报的宋体、报头字号、薄纸层和直角纸页为上述限定设计，不作为全站新默认值，也不使用检测忽略配置隐藏问题。
+- 手机输入框、日期和选择器使用 16px，避免 iOS 聚焦时自动放大。
+- 收回阅读器后保留实际键盘焦点但不残留抬起和框线；再次 Tab 导航显示焦点，实际指针移动恢复悬浮反馈。

@@ -198,15 +198,15 @@ export default function FortuneHome() {
   }, [date, lang, horoscopeReady, cacheLoading, cacheFetched, cachedAi, aiBody, isDemo]);
 
   return (
-    <AppLayout title={t("运势", "Fortune")}>
+    <AppLayout title={t("运势", "Fortune")} header={false}>
       <div className="space-y-10">
         <section>
-          <h2
-            className="font-bold leading-[1.1] tracking-tight text-foreground heading-font"
-            style={{ fontSize: "clamp(34px, 4.8vw, 64px)" }}
+          <h1
+            className="font-semibold leading-[1.15] tracking-tight text-foreground heading-font"
+            style={{ fontSize: "clamp(28px, 3.2vw, 42px)" }}
           >
             {t("今日运势", "Today's Fortune")}
-          </h2>
+          </h1>
           <p className="mt-2 text-[14px] text-muted-foreground">{lunarLabelForDate(date, lang)}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {tags.map((tag) => (

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNewspaperDrafts } from "./NewspaperDraftContext";
+import { DateTimeField } from "@/components/arc/DateField";
 import { AlertCircle, Check, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNewspaperCommand } from "@/hooks/useNewspapers";
@@ -91,10 +92,10 @@ function SupplementEditor(
           input: {
             date,
             body: next.body,
-            occurred_at: next.occurred
+            occurred_at: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(next.occurred)
               ? (row && next.occurred === saved.current.occurred
                 ? row.occurred_at
-                : inputIso(next.occurred, timezone))
+                : inputIso(next.occurred.slice(0, 16), timezone))
               : null,
             ...(row ? { id: row.id, expected_updated_at: row.updated_at } : {}),
           },
@@ -145,14 +146,23 @@ function SupplementEditor(
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [status]);
+  const statusText = status === "saved"
+    ? <><Check size={13} />已保存</>
+    : status === "saving"
+    ? "保存中…"
+    : status === "dirty"
+    ? "待保存…"
+    : <><AlertCircle size={13} />保存失败</>;
   return (
-    <div className="np-supplement">
-      <label className="np-field">
-        {item ? "补充原文" : "这一天，还有什么想留下？"}
+    <div className={item ? "np-slip" : "np-slip np-slip-new"}>
+      <label className="np-slip-text">
+        <span className={item ? "sr-only" : "np-slip-label"}>
+          {item ? "补充原文" : "这一天，还有什么想留下？"}
+        </span>
         <textarea
           autoFocus={!item}
           value={body}
-          rows={item ? 4 : 5}
+          rows={item ? 3 : 4}
           placeholder="一次谈话、一段散步、心情变化……这里保留你写下的每一个字。"
           onChange={(e) => {
             setBody(e.target.value);
@@ -161,88 +171,67 @@ function SupplementEditor(
           onBlur={() => void save()}
         />
       </label>
-      <div className="np-split">
-        <label className="np-field np-time-field">
-          发生时间（{timezone}，可选）<input
-            type="datetime-local"
+      <div className="np-slip-meta">
+        <div className="np-slip-time">
+          <DateTimeField
+            label={`发生时间（${timezone}，可选）`}
             value={occurred}
-            onChange={(e) => {
-              setOccurred(e.target.value);
+            onChange={(next) => {
+              setOccurred(next);
               setStatus("dirty");
             }}
           />
-        </label>
-        <div className="np-inline">
-          <span
-            className={status === "error" ? "np-error" : "np-muted"}
-            role="status"
-          >
-            {status === "saved"
-              ? (
-                <>
-                  <Check size={13} />已保存
-                </>
-              )
-              : status === "saving"
-              ? "保存中…"
-              : status === "dirty"
-              ? "待保存…"
-              : (
-                <>
-                  <AlertCircle size={13} />保存失败
-                </>
-              )}
-          </span>
-          {item
-            ? (
-              <button
-                className="np-icon-button"
-                aria-label="删除这条补充"
-                onClick={async () => {
-                  if (!window.confirm("删除这条补充原文？")) return;
-                  try {
-                    await save();
-                    const row = current.current!;
-                    await command.mutateAsync({
-                      action: "supplement_delete",
-                      input: {
-                        date,
-                        id: row.id,
-                        expected_updated_at: row.updated_at,
-                      },
-                    });
-                  } catch (e) {
-                    toast.error((e as Error).message);
-                  }
-                }}
-              >
-                <Trash2 size={16} />
-              </button>
-            )
-            : (
-              <button
-                className="np-text-button"
-                onClick={() => {
-                  discarded.current = true;
-                  onCancel?.();
-                }}
-              >
-                取消
-              </button>
-            )}
         </div>
+        <span
+          className={status === "error" ? "np-slip-status np-error" : "np-slip-status"}
+          role="status"
+        >
+          {statusText}
+        </span>
+        {item
+          ? (
+            <button
+              type="button"
+              className="np-icon-button np-icon-quiet np-icon-danger"
+              aria-label="删除这条补充"
+              onClick={async () => {
+                if (!window.confirm("删除这条补充原文？")) return;
+                try {
+                  await save();
+                  const row = current.current!;
+                  await command.mutateAsync({
+                    action: "supplement_delete",
+                    input: {
+                      date,
+                      id: row.id,
+                      expected_updated_at: row.updated_at,
+                    },
+                  });
+                } catch (e) {
+                  toast.error((e as Error).message);
+                }
+              }}
+            >
+              <Trash2 size={15} />
+            </button>
+          )
+          : (
+            <button
+              type="button"
+              className="np-text-link"
+              onClick={() => {
+                discarded.current = true;
+                onCancel?.();
+              }}
+            >
+              取消
+            </button>
+          )}
       </div>
-      {item && (
-        <p className="np-muted">
-          首次记录于 {new Date(item.created_at).toLocaleString("zh-CN", {
-            timeZone: timezone,
-          })}
-        </p>
-      )}
       {status === "error" && (
         <p className="np-error" role="alert">
           {error}{" "}
-          <button className="np-text-button" onClick={() => void save()}>
+          <button type="button" className="np-text-link" onClick={() => void save()}>
             重试保存
           </button>
         </p>
@@ -250,38 +239,44 @@ function SupplementEditor(
     </div>
   );
 }
-export function SupplementNotebook({ report }: { report: NewspaperReport }) {
+export function SupplementNotebook(
+  { report, addSignal = 0 }: { report: NewspaperReport; addSignal?: number },
+) {
   const [adding, setAdding] = useState(false);
   const command = useNewspaperCommand();
+  const startRef = useRef<(() => Promise<void>) | undefined>(undefined);
+  startRef.current = async () => {
+    try {
+      if (!report.id) {
+        await command.mutateAsync({
+          action: "refresh",
+          input: { date: report.date },
+        });
+      }
+      setAdding(true);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+  useEffect(() => {
+    if (addSignal) void startRef.current?.();
+  }, [addSignal]);
   return (
-    <section className="np-notebook" aria-labelledby="np-supplement-heading">
-      <div className="np-split">
-        <div>
-          <h2 id="np-supplement-heading">生活的另一面</h2>
-          <p className="np-muted">
-            网站之外的经历，也值得被记住。输入后自动保存原文。
-          </p>
-        </div>
-        <button
-          className="np-button"
-          onClick={async () => {
-            try {
-              if (!report.id) {
-                await command.mutateAsync({
-                  action: "refresh",
-                  input: { date: report.date },
-                });
-              }
-              setAdding(true);
-            } catch (e) {
-              toast.error((e as Error).message);
-            }
-          }}
-          disabled={adding || command.isPending}
-        >
-          <Plus size={16} />补充记录
-        </button>
-      </div>
+    <section
+      id="np-supplements"
+      tabIndex={-1}
+      className="np-mod np-mod-notes"
+      aria-labelledby="np-supplement-heading"
+    >
+      <header className="np-mod-head">
+        <h2 id="np-supplement-heading">生活的另一面</h2>
+        <span className="np-mod-kicker">我的补充 · 原文保存</span>
+      </header>
+      {!report.supplements.length && !adding && (
+        <p className="np-notes-intro">
+          没有出现在待办和账单里的片刻，也值得留下。写下即自动保存，一字不改。
+        </p>
+      )}
       {report.supplements.map((item) => (
         <SupplementEditor
           key={item.id}
@@ -295,13 +290,18 @@ export function SupplementNotebook({ report }: { report: NewspaperReport }) {
           date={report.date}
           timezone={report.timezone}
           onCreated={() => setAdding(false)}
-          onCancel={() =>
-            setAdding(false)}
+          onCancel={() => setAdding(false)}
         />
-      )} {!report.supplements.length && !adding && (
-        <p className="np-empty-note">
-          还没有额外补充。这里留给那些没有出现在待办和账单里的片刻。
-        </p>
+      )}
+      {!adding && (
+        <button
+          type="button"
+          className="np-add-row"
+          onClick={() => void startRef.current?.()}
+          disabled={command.isPending}
+        >
+          <Plus size={15} />补充记录
+        </button>
       )}
     </section>
   );

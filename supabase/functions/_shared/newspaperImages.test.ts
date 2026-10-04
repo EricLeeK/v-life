@@ -9,6 +9,7 @@ import {
   buildImageRequest,
   fetchImageBytes,
   parseImageResponse,
+  submitImage,
   validateProviderBaseUrl,
   validatePublicImageUrl,
 } from "./newspaperImageProviders";
@@ -56,6 +57,31 @@ describe("newspaper image capabilities and provider protocols", () => {
       quality: "high",
       aspect_ratio: "auto",
     });
+    expect(
+      NEWSPAPER_IMAGE_MODELS.filter((x) => x.provider === "grsai")
+        .every((x) => x.available !== false),
+    ).toBe(true);
+  });
+  it("falls back to the other Grsai node only when the first was unreachable", async () => {
+    if (typeof AbortSignal.timeout !== "function") {
+      (AbortSignal as any).timeout = () => new AbortController().signal;
+    }
+    const seen: string[] = [];
+    const fetcher = vi.fn(async (url: string) => {
+      seen.push(new URL(url).host);
+      if (url.includes("dakka")) throw Object.assign(new TypeError("fetch failed"), { cause: { code: "ECONNREFUSED" } });
+      return new Response(JSON.stringify({ id: "task-1", status: "running" }));
+    });
+    await submitImage(opts(), "p", "k", [], "job", "https://grsai.dakka.com.cn", fetcher as any);
+    expect(seen).toEqual(["grsai.dakka.com.cn", "grsaiapi.com"]);
+
+    const timeout = vi.fn(async () => {
+      throw Object.assign(new Error("slow"), { name: "TimeoutError" });
+    });
+    await expect(
+      submitImage(opts(), "p", "k", [], "job", "https://grsai.dakka.com.cn", timeout as any),
+    ).rejects.toThrow("超时");
+    expect(timeout).toHaveBeenCalledTimes(1);
   });
   it("keeps official and Grsai quality matrices distinct", () => {
     expect(() => opts({ model: "gpt-image-2.5-flare", quality: "max" }))

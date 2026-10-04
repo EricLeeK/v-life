@@ -98,15 +98,15 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
                 </div>
                 <div className="space-y-0.5">
                   {dayEvents.slice(0, 3).map((ev: any) => {
-                    const color = ev.color || IMPORTANCE_COLORS[ev.importance || "普通"] || "#0ea5e9";
+                    const color = ev.color || IMPORTANCE_COLORS[ev.importance || "普通"] || "hsl(var(--cat-blue))";
                     return (
                       <div
                         key={ev.id}
                         role="button"
                         tabIndex={0}
                         aria-label={`${ev.title} ${format(new Date(ev.start_time), "HH:mm")}`}
-                        className="text-[10px] truncate rounded px-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                        style={{ background: color + "20", color }}
+                        className="text-[11px] truncate rounded px-1 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+                        style={{ background: `color-mix(in srgb, ${color} 14%, transparent)`, color }}
                         onClick={(e) => { e.stopPropagation(); onEdit(ev); }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
@@ -121,7 +121,7 @@ export function MonthView({ baseDate, events, onEdit, onCreateAt }: {
                     );
                   })}
                   {dayEvents.length > 3 && (
-                    <div className="text-[10px] text-muted-foreground pl-1">+{dayEvents.length - 3}</div>
+                    <div className="text-[11px] text-muted-foreground pl-1">+{dayEvents.length - 3}</div>
                   )}
                 </div>
               </div>

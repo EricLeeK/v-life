@@ -111,9 +111,22 @@ const entry = (
   qualities,
   aspect_ratios,
   reference_limit,
-  // Current channel availability, confirmed by the owner; retain all capability definitions for history.
-  available: provider !== 'grsai' || id === 'gpt-image-2-vip',
+  available: true,
 });
+const GRSAI_GROUPS: Record<string, string> = {
+  "nano-banana": "Nano Banana",
+  "nano-banana-pro": "Nano Banana Pro",
+  "gpt-image": "GPT Image",
+};
+/** Display group used by pickers; mirrors the optgroups in grsai-studio's model select. */
+export function newspaperImageModelGroup(model: NewspaperImageModel): string {
+  if (model.provider === "grsai") {
+    if (model.id.startsWith("nano-banana-pro")) return GRSAI_GROUPS["nano-banana-pro"];
+    if (model.id.startsWith("nano-banana")) return GRSAI_GROUPS["nano-banana"];
+    return GRSAI_GROUPS["gpt-image"];
+  }
+  return model.provider === "openai" ? "OpenAI" : "Gemini";
+}
 /** Grsai options mirror grsai-studio's current HTML/JS controls. Official matrices are intentionally separate. */
 export const NEWSPAPER_IMAGE_MODELS: NewspaperImageModel[] = [
   ...[
@@ -164,6 +177,7 @@ export const NEWSPAPER_IMAGE_MODELS: NewspaperImageModel[] = [
     ratios,
     14,
   ),
+  entry("gemini", "gemini-3.1-flash-lite-image", ["auto", "1K"], ["auto"], ratios, 3),
 ];
 export const DEFAULT_NEWSPAPER_IMAGE_OPTIONS: NewspaperImageOptions = {
   provider: "grsai",

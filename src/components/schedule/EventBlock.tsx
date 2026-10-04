@@ -8,7 +8,7 @@ const TOTAL_HOURS = VISIBLE_END - VISIBLE_START;
 const SNAP_MINUTES = 15;
 
 const IMPORTANCE_COLORS: Record<string, string> = {
-  "紧急": "#ef4444", "重要": "#f59e0b", "普通": "#0ea5e9", "低": "#6b7280"
+  "紧急": "hsl(var(--cat-red))", "重要": "hsl(var(--cat-orange))", "普通": "hsl(var(--cat-blue))", "低": "hsl(var(--muted-foreground))"
 };
 
 export { HOUR_HEIGHT, VISIBLE_START, VISIBLE_END, TOTAL_HOURS, SNAP_MINUTES, IMPORTANCE_COLORS };
@@ -48,7 +48,7 @@ export function EventBlock({ event, day, onEdit, onDragEnd }: {
   const safeEndDate = isBefore(endDate, startDate) || isEqual(endDate, startDate)
     ? new Date(startDate.getTime() + SNAP_MINUTES * 60 * 1000)
     : endDate;
-  const color = event.color || IMPORTANCE_COLORS[event.importance || "普通"] || "#0ea5e9";
+  const color = event.color || IMPORTANCE_COLORS[event.importance || "普通"] || "hsl(var(--cat-blue))";
 
   const top = timeToY(startDate);
   const bottom = dayEnd && safeEndDate.getTime() === dayEnd.getTime()
@@ -63,6 +63,7 @@ export function EventBlock({ event, day, onEdit, onDragEnd }: {
     e.stopPropagation();
     e.preventDefault();
     dragState.current = { mode, startY: e.clientY, origTop: top, origHeight: height, dragged: false };
+    if (blockRef.current) blockRef.current.style.transition = "none";
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragState.current || !blockRef.current) return;
@@ -93,6 +94,10 @@ export function EventBlock({ event, day, onEdit, onDragEnd }: {
           const duration = Math.max(SNAP_MINUTES * 60 * 1000, eventEnd.getTime() - eventStart.getTime());
           const newStart = yToTime(newTop, dayDate);
           const newEnd = new Date(newStart.getTime() + duration);
+          if (blockRef.current) {
+            blockRef.current.style.transition = "top 280ms cubic-bezier(0.22, 1, 0.36, 1)";
+            blockRef.current.style.top = `${timeToY(newStart)}px`;
+          }
           onDragEnd(event.id, newStart, newEnd);
         } else {
           const maxHeight = TOTAL_HOURS * HOUR_HEIGHT - dragState.current.origTop;
@@ -119,8 +124,10 @@ export function EventBlock({ event, day, onEdit, onDragEnd }: {
       className="absolute left-1 right-1 rounded-md cursor-pointer select-none overflow-hidden group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       style={{
         top: `${top}px`, height: `${height}px`,
-        background: color + "45", borderLeft: `3px solid ${color}`, zIndex: 10,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)",
+        background: `color-mix(in srgb, ${color} 30%, transparent)`,
+        boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${color} 45%, transparent)`,
+        zIndex: 10,
+        transition: "top 280ms cubic-bezier(0.22, 1, 0.36, 1)",
       }}
       onMouseDown={(e) => handleMouseDown(e, "move")}
       onKeyDown={(e) => {
@@ -133,13 +140,13 @@ export function EventBlock({ event, day, onEdit, onDragEnd }: {
     >
       <div className="px-1.5 py-0.5 overflow-hidden h-full flex flex-col">
         <span className="text-xs font-medium truncate" style={{ color }}>{event.title}</span>
-        <span className="text-[10px] opacity-70" style={{ color }}>
+        <span className="text-[11px] opacity-70" style={{ color }}>
           {format(startDate, "HH:mm")} – {format(safeEndDate, "HH:mm")}
         </span>
       </div>
       <div
         className="absolute bottom-0 left-0 right-0 h-2 cursor-s-resize opacity-0 group-hover:opacity-100 transition-opacity"
-        style={{ background: color + "40" }}
+        style={{ background: `color-mix(in srgb, ${color} 35%, transparent)` }}
         onMouseDown={(e) => handleMouseDown(e, "resize")}
       />
     </div>

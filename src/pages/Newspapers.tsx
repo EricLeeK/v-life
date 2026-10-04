@@ -5,14 +5,12 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   Archive,
   ArrowLeft,
-  ArrowUpRight,
-  CalendarDays,
-  ChevronDown,
   Newspaper,
   Search,
   Settings2,
 } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
+import { DateField } from "@/components/arc/DateField";
 import { useLang } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,25 +26,26 @@ import {
 } from "@/components/newspaper/NewspaperReader";
 import {
   NewspaperImmersive,
-  type NewspaperOrigin,
+  type NewspaperFlight,
 } from "@/components/newspaper/NewspaperImmersive";
+import {
+  foldPaper,
+  paperMotionAllowed,
+  rectOf,
+  visiblePaperRect,
+} from "@/components/newspaper/paperFlight";
 import { reportDateAt } from "../../supabase/functions/_shared/newspaperDomain";
 import type {
   NewspaperListItem,
   NewspaperReport,
 } from "../../supabase/functions/_shared/newspaperTypes";
 
-/* THESIS: Folded newspaper edges on a private archive shelf, drawn out into a full-window reading desk.
-OWN-WORLD: Warm Desk Ledger ink and paper; visible folds, fine sheet edges, serif mastheads, month drawer pulls.
-STORY: Find the date along a folded spine, draw that very paper out, read and annotate, return it to its place.
-FIRST VIEWPORT: Slim overlapping paper folds expose dates and fragments inside horizontal month drawers.
-FORM: User-pinned edge-on archive and immersive full-window newspaper. No right-pane reader or front-facing cards.
-MOTION: One shared sheet expands from its actual shelf bounds over 720ms; return reverses the path. Reduced motion is instant.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md */
-type ViewTransition = { finished: Promise<void>; skipTransition: () => void };
-type TransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => ViewTransition;
-};
+/* THESIS: A private filing cabinet of folded newspapers; one is drawn out and opened on the desk.
+STORY: Pull a month's drawer, lift a paper by its date tab, unfold it to read, fold it and file it back in its slot.
+MOTION: The paper rises out of its slot, travels, unfolds right then down; closing reverses the path into the same slot.
+Reduced motion is instant. */
+const weekdayOf = (date: string) =>
+  new Date(`${date}T12:00:00`).toLocaleDateString("zh-CN", { weekday: "long" });
 export default function NewspapersPage() {
   const { t } = useLang();
   const { isDemo } = useDemoMode();
@@ -71,18 +70,15 @@ export default function NewspapersPage() {
   const report = useNewspaper(date);
   const archiveRef = useRef<HTMLDivElement>(null);
   const scroll = useRef({ window: 0, main: 0 });
-  const lastButton = useRef<string | null>(null);
-  const restoringArchive = useRef(false);
-  const [closed, setClosed] = useState<string[]>([]);
+  const [openMonths, setOpenMonths] = useState<string[] | null>(null);
   const [restingArchive, setRestingArchive] = useState(false);
   const [silentReturnedFocus, setSilentReturnedFocus] = useState(false);
   const [locate, setLocate] = useState("");
-  const [origin, setOrigin] = useState<NewspaperOrigin | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string | null>(requested);
+  const [flight, setFlight] = useState<NewspaperFlight | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
+  const [landing, setLanding] = useState<string | null>(null);
+  const [landed, setLanded] = useState<string | null>(null);
   const [openError, setOpenError] = useState("");
-  const [nativeTransition, setNativeTransition] = useState(false);
-  const transitionRef = useRef<ViewTransition | null>(null);
   const moving = useRef(false);
   useEffect(() => {
     if (search === query) return;
@@ -113,34 +109,28 @@ export default function NewspapersPage() {
     }
     return Object.entries(result).sort(([a], [b]) => b.localeCompare(a));
   }, [loaded]);
-  useEffect(() => {
-    if (date && (!selectedDate || selectedDate === "today")) {
-      setSelectedDate(date);
-      lastButton.current = date;
-    }
-  }, [date, selectedDate]);
-  function transition(update: () => void, direction: "opening" | "closing") {
-    const reduced =
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const doc = document as TransitionDocument;
-    transitionRef.current?.skipTransition();
-    if (doc.startViewTransition && !reduced) {
-      document.documentElement.dataset.npTransition = direction;
-      const running = doc.startViewTransition(() => flushSync(update));
-      transitionRef.current = running;
-      void running.finished.catch(() => {}).finally(() => {
-        if (transitionRef.current === running) {
-          transitionRef.current = null;
-          delete document.documentElement.dataset.npTransition;
-          moving.current = false;
-        }
-      });
-      return true;
-    }
-    flushSync(update);
-    moving.current = false;
-    return false;
+  /* Only the latest drawer is pulled out at first; a search pulls out every drawer with a match. */
+  const isOpen = (month: string) =>
+    query ? true : openMonths ? openMonths.includes(month) : month === groups[0]?.[0];
+  const setMonthOpen = (month: string, open: boolean) =>
+    setOpenMonths((current) => {
+      const base = current ?? (groups[0] ? [groups[0][0]] : []);
+      return open ? [...new Set([...base, month])] : base.filter((value) => value !== month);
+    });
+  const away = requested ? date : landing;
+
+  /** The slot of a paper, only when its drawer is out and the slot can be seen. */
+  function slotRect(paperDate: string) {
+    const slot = document.getElementById(`paper-${paperDate}`);
+    if (!slot || !slot.closest(".np-drawer-open")) return null;
+    const sheet = rectOf(slot.querySelector(".np-file-sheet"));
+    if (!sheet) return null;
+    /* The file in front hides the lower part of this sheet; only the part above it is the slot. */
+    const front = slot.nextElementSibling?.getBoundingClientRect().top;
+    const height = front ? Math.min(sheet.height, front - sheet.top) : sheet.height;
+    return { ...sheet, height: Math.max(24, height) };
   }
+
   async function navigateDate(nextDate: string) {
     if (opening || moving.current) return;
     if (date) {
@@ -148,28 +138,12 @@ export default function NewspapersPage() {
       document.querySelector(".np-immersive")?.scrollTo({ top: 0 });
       return;
     }
-    const paper = document.getElementById(`paper-${nextDate}`);
-    const bounds = paper?.getBoundingClientRect();
     scroll.current = {
       window: window.scrollY,
       main: archiveRef.current?.closest("main")?.scrollTop || 0,
     };
-    lastButton.current = nextDate;
-    flushSync(() => {
-      setSelectedDate(nextDate);
-      setOpening(nextDate);
-      setOpenError("");
-      setOrigin(
-        bounds
-          ? {
-            left: bounds.left,
-            top: bounds.top,
-            width: bounds.width,
-            height: bounds.height,
-          }
-          : null,
-      );
-    });
+    setOpening(nextDate);
+    setOpenError("");
     try {
       await qc.ensureQueryData({
         queryKey: ["newspaper", isDemo ? "demo" : user?.id, "get", {
@@ -178,81 +152,73 @@ export default function NewspapersPage() {
         queryFn: () =>
           callNewspaper<NewspaperReport>("get", { date: nextDate }, isDemo),
       });
-      const native = !!(document as TransitionDocument).startViewTransition &&
-        !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      flushSync(() => setNativeTransition(native));
-      moving.current = true;
-      transition(() => {
+      flushSync(() => {
+        setFlight({ from: slotRect(nextDate) });
         setParams({ date: nextDate });
         setOpening(null);
-      }, "opening");
+      });
     } catch (error) {
       setOpening(null);
       setOpenError((error as Error).message);
-      moving.current = false;
     }
   }
+
   async function back() {
-    if (moving.current && transitionRef.current) {
-      transitionRef.current.skipTransition();
-    }
+    const panel = document.querySelector<HTMLElement>(".np-immersive");
+    if (moving.current || panel?.dataset.flight === "unfolding") return;
+    if (!date) { setParams({}); return; }
     moving.current = true;
-    setRestingArchive(true);
-    setSilentReturnedFocus(true);
-    restoringArchive.current = true;
-    const doc = document as TransitionDocument;
-    const reduced =
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!doc.startViewTransition && !reduced && origin) {
-      const paper = document.querySelector<HTMLElement>(
-        ".np-immersive .np-paper",
-      );
-      if (paper?.animate) {
-        const rect = paper.getBoundingClientRect();
-        paper.getAnimations?.().forEach((animation) => animation.cancel());
-        const animation = paper.animate([{
-          transform: "none",
-          clipPath: "inset(0)",
-          opacity: 1,
-        }, {
-          transform: `translate(${origin.left - rect.left}px,${
-            origin.top - rect.top
-          }px) scale(${origin.width / rect.width},${
-            origin.height / Math.min(rect.height, window.innerHeight - 80)
-          })`,
-          clipPath: "inset(42% 0 42% 0)",
-          opacity: .3,
-        }], {
-          duration: 520,
-          easing: "cubic-bezier(.4,0,.2,1)",
-          fill: "forwards",
-        });
-        await animation.finished.catch(() => {});
-      }
-    }
-    transition(() => setParams({}), "closing");
-  }
-  useEffect(() => {
-    if (requested || !restoringArchive.current) return;
-    let cancelled = false;
-    const restore = () => {
-      if (cancelled) return;
+    const current = date;
+    const paper = panel?.querySelector<HTMLElement>(".np-paper") ?? null;
+    const open = visiblePaperRect(paper);
+    const month = current.slice(0, 7);
+    flushSync(() => {
+      setLanding(current);
+      if (!isOpen(month)) setMonthOpen(month, true);
+      setRestingArchive(true);
+      setSilentReturnedFocus(true);
+    });
+    let settled = false;
+    const land = () => {
+      if (settled) return;
+      settled = true;
+      flushSync(() => { setLanding(null); setLanded(current); });
+      window.setTimeout(() => setLanded((value) => (value === current ? null : value)), 700);
+    };
+    const close = () => flushSync(() => { setParams({}); setFlight(null); });
+    if (panel && paper && open && paperMotionAllowed()) {
+      panel.dataset.flight = "folding";
+      await foldPaper({
+        paper,
+        open,
+        onFolded: close,
+        onLanding: land,
+        to: () => {
+          window.scrollTo({ top: scroll.current.window, behavior: "instant" as ScrollBehavior });
+          archiveRef.current?.closest("main")?.scrollTo({ top: scroll.current.main });
+          const slot = document.getElementById(`paper-${current}`);
+          const r = slot?.getBoundingClientRect();
+          if (slot && r && (r.top < 80 || r.bottom > window.innerHeight - 24)) {
+            slot.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+          }
+          return slotRect(current);
+        },
+      });
+    } else {
+      close();
       window.scrollTo({ top: scroll.current.window, behavior: "instant" as ScrollBehavior });
       archiveRef.current?.closest("main")?.scrollTo({ top: scroll.current.main });
-      document.getElementById(`paper-${lastButton.current}`)?.focus({ preventScroll: true });
-    };
-    // A native transition can reset focus when its old document snapshot is removed.
-    // Restore after that handoff and after the immersive root releases inert.
-    void (transitionRef.current?.finished.catch(() => {}) ?? Promise.resolve())
-      .then(() => requestAnimationFrame(restore));
-    restoringArchive.current = false;
-    return () => { cancelled = true; };
-  }, [requested]);
+    }
+
+    land();
+    document.getElementById(`paper-${current}`)?.focus({ preventScroll: true });
+    moving.current = false;
+  }
   const sorted = loaded.map((r) => r.date).sort();
   const index = date ? sorted.indexOf(date) : -1;
   return (
     <>
-      <AppLayout title={t("生活日报", "Life newspaper")}>
+      <AppLayout title={t("生活日报", "Life newspaper")} header={false}>
         <div
           className={`np-scope np-archive ${restingArchive ? "np-returned" : ""} ${silentReturnedFocus ? "np-returned-focus" : ""}`}
           ref={archiveRef}
@@ -268,7 +234,7 @@ export default function NewspapersPage() {
         >
           <header className="np-archive-header">
             <div>
-              <h2>{t("日报档案", "Newspaper archive")}</h2>
+              <h1>{t("日报档案", "Newspaper archive")}</h1>
               <p>
                 {t(
                   "从纸页的折边，取出属于你的一天。",
@@ -313,17 +279,13 @@ export default function NewspapersPage() {
                 if (locate) void navigateDate(locate);
               }}
             >
-              <CalendarDays size={17} />
-              <label className="sr-only" htmlFor="np-locate-date">
-                按日期找报
-              </label>
-              <input
+              <DateField
                 id="np-locate-date"
-                type="date"
+                inline
+                label="按日期找报"
                 value={locate}
                 max={today}
-                onChange={(e) => setLocate(e.target.value)}
-                required
+                onChange={setLocate}
               />
               <button
                 className="np-text-button"
@@ -365,125 +327,90 @@ export default function NewspapersPage() {
             </div>
           )}
           <div className="np-cabinet">
+            <div className="np-cabinet-top" aria-hidden="true">
+              <span>V-Life</span>
+              <span>私人生活档案 · 日报</span>
+            </div>
             {groups.map(([month, papers]) => {
-              const isClosed = closed.includes(month);
+              const open = isOpen(month);
               const dates = papers.map((paper) => paper.date).sort();
-              const toggle = () => setClosed((current) =>
-                current.includes(month) ? current.filter((value) => value !== month) : [...current, month]
-              );
+              const toggle = () => setMonthOpen(month, !open);
               return (
               <section
-                className={`np-shelf-drawer ${
-                  isClosed ? "np-drawer-shut" : ""
-                }`}
+                className={`np-drawer ${open ? "np-drawer-open" : ""}`}
                 key={month}
               >
                 <button
                   id={`month-label-${month}`}
-                  className="np-shelf-label"
-                  aria-expanded={!isClosed}
+                  className="np-drawer-front"
+                  aria-expanded={open}
                   aria-controls={`month-papers-${month}`}
+                  aria-label={`${month.slice(0, 4)}年${Number(month.slice(5))}月，${papers.length} 份日报`}
                   onClick={toggle}
                 >
-                  <span className="np-shelf-label-date">
-                    <span>{month.slice(0, 4)}</span>
-                    <strong>
-                      {Number(month.slice(5))}
-                      <small>月</small>
-                    </strong>
+                  <span className="np-drawer-holder">
+                    <span className="np-drawer-card">
+                      <small>{month.slice(0, 4)}</small>
+                      <strong>{Number(month.slice(5))}<small>月</small></strong>
+                    </span>
                   </span>
-                  <span className="np-shelf-label-count">
-                    {papers.length} 份日报
+                  <span className="np-drawer-handle" aria-hidden="true"><span /></span>
+                  <span className="np-drawer-count">
+                    <b>{papers.length} 份</b>
+                    <span>{dates[0].slice(5).replace("-", ".")} — {dates[dates.length - 1].slice(5).replace("-", ".")}</span>
                   </span>
-                  <ChevronDown size={17} />
                 </button>
-                <div className="np-drawer-body">
-                  <div className="np-bundle-reveal" aria-hidden={!isClosed} ref={(node) => { if (node) node.inert = !isClosed; }}>
-                    <div className="np-stack-clip">
-                      <button className="np-month-bundle" onClick={() => {
-                        toggle();
-                        requestAnimationFrame(() => document.getElementById(`month-label-${month}`)?.focus({ preventScroll: true }));
-                      }} tabIndex={isClosed ? 0 : -1} aria-label={`展开 ${month.slice(0, 4)}年${Number(month.slice(5))}月的 ${papers.length} 份日报`}>
-                        <span className="np-bundle-leaves" aria-hidden="true" />
-                        <span className="np-bundle-face">
-                          <span className="np-bundle-mark" aria-hidden="true">V-Life</span>
-                          <span className="np-bundle-title"><strong>{papers.length} 份日报</strong><span>{dates[0].slice(5).replace("-", ".")} — {dates[dates.length - 1].slice(5).replace("-", ".")}</span></span>
-                          <span className="np-bundle-action">展开本月 <ArrowUpRight size={17} /></span>
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                  <div id={`month-papers-${month}`} className="np-stack-reveal" aria-hidden={isClosed} ref={(node) => { if (node) node.inert = isClosed; }}>
-                    <div className="np-stack-clip">
-                  <div className="np-paper-stack">
-                    {papers.map((paper, n) => (
-                      <button
-                        id={`paper-${paper.date}`}
-                        key={paper.id || paper.date}
-                        className={`np-folded-paper np-spine ${
-                          opening === paper.date ? "np-extracting" : ""
-                        } ${
-                          requested && selectedDate === paper.date
-                            ? "np-away"
-                            : ""
-                        }`}
-                        style={{
-                          viewTransitionName:
-                            !requested && selectedDate === paper.date
-                              ? "np-sheet"
-                              : undefined,
-                          "--np-sheet-index": n % 4,
-                        } as React.CSSProperties}
-                        onClick={() => void navigateDate(paper.date)}
-                        disabled={!!opening}
-                        aria-label={`展开 ${paper.date} 生活日报`}
-                        aria-busy={opening === paper.date}
-                      >
-                        <span
-                          className="np-spine-underleaf"
-                          aria-hidden="true"
-                        />
-                        <span className="np-spine-fold" aria-hidden="true" />
-                        <span className="np-spine-face">
-                          <span className="np-spine-masthead">
-                            <b>V-Life</b>
-                            <span>生活日报</span>
-                          </span>
-                          <time className="np-spine-date" dateTime={paper.date}>
+                <div
+                  id={`month-papers-${month}`}
+                  className="np-drawer-tray"
+                  aria-hidden={!open}
+                  ref={(node) => { if (node) node.inert = !open; }}
+                >
+                  <div className="np-tray-clip">
+                    <div className="np-tray">
+                      {papers.map((paper, n) => (
+                        <button
+                          id={`paper-${paper.date}`}
+                          key={paper.id || paper.date}
+                          className={`np-file ${opening === paper.date ? "np-extracting" : ""} ${
+                            away === paper.date ? "np-away" : ""
+                          } ${landed === paper.date ? "np-landed" : ""}`}
+                          style={{ "--np-file": n, "--np-tab": n % 4 } as React.CSSProperties}
+                          onClick={() => void navigateDate(paper.date)}
+                          disabled={!!opening}
+                          aria-label={`展开 ${paper.date} 生活日报`}
+                          aria-busy={opening === paper.date}
+                        >
+                          <span className="np-file-tab">
                             <b>{paper.date.slice(8)}</b>
-                            <small>
-                              {new Date(`${paper.date}T12:00:00`)
-                                .toLocaleDateString("zh-CN", {
-                                  weekday: "short",
-                                })}
-                            </small>
-                          </time>
-                          <span className="np-spine-story">
-                            <strong>{paper.title}</strong>
-                            <span>{paper.excerpt}</span>
+                            <small>{weekdayOf(paper.date).replace("星期", "周")}</small>
                           </span>
-                          {paper.thumbnail_url && (
-                            <img
-                              className="np-spine-thumbnail"
-                              key={paper.thumbnail_url}
-                              src={paper.thumbnail_url}
-                              alt="本期配图缩略图"
-                              loading="lazy"
-                              decoding="async"
-                              onError={(event) => {
-                                event.currentTarget.style.display = "none";
-                              }}
-                            />
-                          )}
-                          <span className="np-spine-status">
-                            <span>{reportStatus(paper.status)}</span>
-                            <small>{paper.record_count} 则</small>
+                          <span className="np-file-sheet">
+                            <span className="np-file-masthead">生活日报</span>
+                            <span className="np-file-story">
+                              <strong>{paper.title}</strong>
+                              <span>{paper.excerpt}</span>
+                            </span>
+                            {paper.thumbnail_url && (
+                              <img
+                                className="np-file-thumb"
+                                key={paper.thumbnail_url}
+                                src={paper.thumbnail_url}
+                                alt="本期配图缩略图"
+                                loading="lazy"
+                                decoding="async"
+                                onError={(event) => {
+                                  event.currentTarget.style.display = "none";
+                                }}
+                              />
+                            )}
+                            <span className="np-file-status">
+                              <span>{reportStatus(paper.status)}</span>
+                              <small>{paper.record_count} 则</small>
+                            </span>
                           </span>
-                          <ArrowUpRight className="np-spine-arrow" size={18} />
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -528,8 +455,7 @@ export default function NewspapersPage() {
       </AppLayout>
       {requested && (
         <NewspaperImmersive
-          origin={origin}
-          useNativeTransition={nativeTransition}
+          flight={flight}
         >
           {(report.isLoading ||
             (requested === "today" && preferences.isLoading)) && (

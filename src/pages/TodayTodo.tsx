@@ -1,15 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { LayoutGroup, motion } from "motion/react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ArcScope } from "@/components/arc/ArcScope";
+import ActionButton from "@/vendor/uiarc/registry/components/action-button/action-button";
+import BottomSheet from "@/vendor/uiarc/registry/components/bottom-sheet/bottom-sheet";
+import SegmentedControl from "@/vendor/uiarc/registry/components/segmented-control/segmented-control";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, Sparkles, Zap, CheckCircle2, Loader2, ClipboardList, Sliders, Minus, ArrowUp } from "lucide-react";
+import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, Sparkles, Zap, Loader2, ClipboardList, Sliders, Minus, ArrowUp } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -57,7 +61,8 @@ function CircularProgress({ value, size = 64 }: { value: number; size?: number }
           cx={size / 2} cy={size / 2} r={radius}
           stroke="hsl(var(--cat-orange))" strokeWidth="4" fill="transparent"
           strokeDasharray={circumference} strokeDashoffset={offset}
-          strokeLinecap="round" className="transition-all duration-500"
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 480ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         />
       </svg>
       <span className="absolute text-sm font-semibold text-foreground font-mono-data">
@@ -114,14 +119,14 @@ function RewardPopup({ tier, onClose }: { tier: string; onClose: () => void }) {
       aria-labelledby="reward-popup-title"
     >
       <div
-        className="bg-card text-card-foreground border border-border rounded-2xl p-8 shadow-2xl text-center max-w-xs animate-in zoom-in-95 duration-300"
+        className="bg-card text-card-foreground border border-border rounded-lg p-8 shadow-overlay text-center max-w-xs animate-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <msg.icon className="h-12 w-12 mx-auto mb-4 text-[#d17847]" />
+        <msg.icon className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--cat-orange))]" />
         <h2 id="reward-popup-title" className="text-lg font-semibold text-foreground">
           {lang === "zh" ? msg.zh : msg.en}
         </h2>
-        <Button onClick={onClose} className="mt-4 bg-[#d17847] hover:bg-[#c06838] text-white">
+        <Button onClick={onClose} className="mt-4 bg-[hsl(var(--cat-orange))] hover:bg-[hsl(var(--cat-orange))] text-white">
           {lang === "zh" ? "继续" : "Continue"}
         </Button>
       </div>
@@ -156,6 +161,55 @@ const calculateXpFrom4D = (evalObj: any) => {
   return Math.round(timeScaledXP + bonus);
 };
 
+function CategoryField({ value, onChange, categories, placeholder }: {
+  value: string;
+  onChange: (value: string) => void;
+  categories: string[];
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const query = value.trim().toLowerCase();
+  const matches = categories.filter((category) => !query || category.toLowerCase().includes(query));
+  return (
+    <div className="relative min-w-0 flex-1">
+      <input
+        id="today-temp-category"
+        role="combobox"
+        aria-label={placeholder}
+        aria-expanded={open}
+        aria-controls="today-category-list"
+        value={value}
+        placeholder={placeholder}
+        onChange={(event) => { onChange(event.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-card-foreground"
+      />
+      {open && matches.length > 0 && (
+        <ul id="today-category-list" role="listbox" className="absolute left-0 right-0 top-12 z-20 max-h-40 overflow-y-auto rounded-lg border border-border bg-card py-1 shadow-[var(--shadow-raised)]">
+          {matches.map((category) => (
+            <li key={category} role="presentation">
+              <button
+                type="button"
+                role="option"
+                aria-selected={category === value}
+                className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted"
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  onChange(category);
+                  setOpen(false);
+                }}
+              >
+                {category}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function TodayTodoPage() {
   const { t, lang } = useLang();
   const { toast } = useToast();
@@ -183,7 +237,7 @@ export default function TodayTodoPage() {
   const [adjustMode, setAdjustMode] = useState(false);
   const [tempTaskTitle, setTempTaskTitle] = useState("");
   const [tempTaskImportance, setTempTaskImportance] = useState("普通");
-  const [tempTaskCategory, setTempTaskCategory] = useState("生活");
+  const [tempTaskCategory, setTempTaskCategory] = useState("");
   const [isAddingTemp, setIsAddingTemp] = useState(false);
   const [rewardTier, setRewardTier] = useState<string | null>(null);
   const [quote] = useState(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)]);
@@ -212,6 +266,14 @@ export default function TodayTodoPage() {
   }, [userPoints, settings?.day_start_hour]);
 
   const todayTaskIds = useMemo(() => new Set<string>(todayTasks.map((dt: { todo_id: string }) => dt.todo_id)), [todayTasks]);
+  const categoryOptions = useMemo(() => {
+    const names = new Set<string>();
+    (allTodos as { category?: string | null }[]).forEach((todo) => {
+      const name = todo.category?.trim();
+      if (name) names.add(name);
+    });
+    return [...names].sort((a, b) => a.localeCompare(b, "zh"));
+  }, [allTodos]);
   const availableTodos = todayPickerItems(
     allTodos.filter((t: any) => {
       if (t.parent_id) return true;
@@ -248,7 +310,7 @@ export default function TodayTodoPage() {
       setIsEstimating(false);
       setTempTaskTitle("");
       setTempTaskImportance("普通");
-      setTempTaskCategory("生活");
+      setTempTaskCategory("");
       setRecentTempIds([]);
     }
   };
@@ -259,7 +321,7 @@ export default function TodayTodoPage() {
     const title = tempTaskTitle.trim();
     if (!title) {
       toast({ title: t("请填写任务标题", "Please enter a task title"), variant: "destructive" });
-      return;
+      throw new Error("A task title is required.");
     }
     setIsAddingTemp(true);
     try {
@@ -267,7 +329,7 @@ export default function TodayTodoPage() {
         title,
         detail: null,
         importance: tempTaskImportance,
-        category: tempTaskCategory || "生活",
+        category: tempTaskCategory.trim(),
         kind: "once",
         is_completed: false,
         is_archived: false,
@@ -285,6 +347,7 @@ export default function TodayTodoPage() {
         description: err.message,
         variant: "destructive",
       });
+      throw err;
     } finally {
       setIsAddingTemp(false);
     }
@@ -369,6 +432,7 @@ export default function TodayTodoPage() {
         description: err.message,
         variant: "destructive"
       });
+      throw err;
     }
   };
 
@@ -495,10 +559,15 @@ export default function TodayTodoPage() {
     const meta = task.metadata || {};
     const has4D = meta.cognitive_level != null;
     return (
-      <Card
+      <motion.div
         key={task.id}
+        layout="position"
+        layoutId={`daily-${task.todo_id || task.id}`}
+        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      >
+      <Card
         style={{ ['--i' as any]: i }}
-        className={`enter-up bg-card border-border transition-[border-color,box-shadow,opacity] duration-200 ease-out-strong shadow-sm ${task.is_completed ? "opacity-60 bg-muted/40" : "hover:border-[#d17847]/30 hover:shadow-[var(--shadow-raised)]"}`}
+        className={`bg-card border-border shadow-sm transition-[opacity,background-color] duration-300 ease-out ${task.is_completed ? "opacity-60 bg-muted/40" : "hover:shadow-[var(--shadow-raised)]"}`}
       >
         <CardContent className="p-3 px-4">
           <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
@@ -507,7 +576,7 @@ export default function TodayTodoPage() {
                 checked={task.is_completed}
                 onCheckedChange={() => handleComplete(task)}
                 aria-label={task.todos?.title || t("完成任务", "Complete task")}
-                className="accent-[#d17847]"
+                className="accent-[hsl(var(--cat-orange))]"
               />
             </div>
             <div className="flex-1 min-w-0">
@@ -520,24 +589,24 @@ export default function TodayTodoPage() {
               {POINTS && has4D && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {(meta.attribute_tags || []).map((tag: string) => (
-                    <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-border rounded">
+                    <Badge key={tag} variant="outline" className="text-[11px] px-1.5 py-0 bg-muted text-muted-foreground border-border rounded">
                       {tag}
                     </Badge>
                   ))}
                 </div>
               )}
               {POINTS && has4D && meta.ai_encouragement && (
-                <p className="text-[10px] mt-1 italic text-muted-foreground">{meta.ai_encouragement}</p>
+                <p className="text-[11px] mt-1 italic text-muted-foreground">{meta.ai_encouragement}</p>
               )}
             </div>
 
             <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
               {POINTS && has4D && (
                 <div className="flex gap-1 mr-1 hidden md:flex">
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-cat-blue-bg text-cat-blue border-cat-blue/30">
+                  <Badge variant="outline" className="text-[11px] px-1 py-0 bg-cat-blue-bg text-cat-blue border-cat-blue/30">
                     L{meta.cognitive_level}
                   </Badge>
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-cat-purple-bg text-cat-purple border-cat-purple/30">
+                  <Badge variant="outline" className="text-[11px] px-1 py-0 bg-cat-purple-bg text-cat-purple border-cat-purple/30">
                     L{meta.willpower_level}
                   </Badge>
                 </div>
@@ -619,7 +688,7 @@ export default function TodayTodoPage() {
               </div>
               
               <div className="space-y-1">
-                <Label htmlFor="todo-adjust-feedback" className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <Label htmlFor="todo-adjust-feedback" className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                   {t("为什么不合理？ (可选)", "Why is it unreasonable? (Optional)")}
                 </Label>
                 <Input
@@ -627,7 +696,7 @@ export default function TodayTodoPage() {
                   value={adjustingFeedback}
                   onChange={(e) => setAdjustingFeedback(e.target.value)}
                   placeholder={t("例如：实际耗时更长 / 任务难度较高", "E.g., Took more effort / High cognitive load")}
-                  className="h-8 text-xs bg-card border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
+                  className="h-8 text-xs bg-card border-border focus-visible:ring-1 focus-visible:ring-[hsl(var(--cat-orange))]"
                 />
               </div>
 
@@ -642,7 +711,7 @@ export default function TodayTodoPage() {
                 </Button>
                 <Button
                   size="sm"
-                  className="h-7 text-xs bg-[#d17847] hover:bg-[#c06838] text-white font-medium"
+                  className="h-7 text-xs bg-[hsl(var(--cat-orange))] hover:bg-[hsl(var(--cat-orange))] text-white font-medium"
                   onClick={async () => {
                     try {
                       await completeTask.mutateAsync({
@@ -667,6 +736,7 @@ export default function TodayTodoPage() {
           )}
         </CardContent>
       </Card>
+      </motion.div>
     );
   };
 
@@ -680,124 +750,60 @@ export default function TodayTodoPage() {
     );
   }
 
-  return (
-    <AppLayout title={t("今日待办", "Today's Todo")}>
-      <div className="space-y-5">
-
-        {/* Header: title + compact stats */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5 text-[#d17847]" />
-            <h2 className="text-lg font-bold text-foreground">{t("今日待办", "Today's List")}</h2>
-          </div>
-          {POINTS && (
-          <div className="flex items-center gap-2 flex-wrap">
-            {[
-              { icon: Flame, value: streak, suffix: t("天", "d"), label: t("连续", "Streak") },
-              { icon: Star, value: totalPts, suffix: "", label: t("积分", "Points") },
-              { icon: Trophy, value: bestStreak, suffix: t("天", "d"), label: t("最长", "Best") },
-            ].map(({ icon: Icon, value, suffix, label }) => (
-              <div
-                key={label}
-                className="flex items-center gap-1.5 bg-card border border-border rounded-full px-2.5 py-1 shadow-sm"
-              >
-                <Icon className="h-3.5 w-3.5 text-cat-orange" />
-                <span className="text-xs font-bold text-foreground font-mono-data">
-                  {value}{suffix}
-                </span>
-                <span className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
-              </div>
-            ))}
-          </div>
-          )}
-        </div>
-
-        {/* Progress Ring + Add Button */}
-        <div className="flex items-center gap-4">
-          <CircularProgress value={progressPct} size={72} />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">
-              {completedCount} / {totalCount} {t("已完成", "completed")}
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
-              {totalCount === 0
-                ? t("今天还没有任务，快去添加吧！", "No tasks yet — add some!")
-                : completedCount === totalCount && totalCount > 0
-                  ? t("全部完成！太棒了！", "All done! Amazing!")
-                  : t("继续加油！", "Keep going!")}
-            </p>
-          </div>
-          <Dialog open={addDialogOpen} onOpenChange={handleAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-[#d17847] hover:bg-[#c06838] text-white">
-                <Plus className="h-4 w-4 mr-1" />{t("添加任务", "Add Tasks")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>{t("选择今日任务", "Pick Today's Tasks")}</DialogTitle>
-                <DialogDescription>
-                  {t("例行会排在最上面。习惯不用选，已经在今日顶部。", "Routines are listed first. Habits are already pinned above.")}
-                </DialogDescription>
-              </DialogHeader>
-
-              {/* Quick add temporary task — synced to 待办事项 */}
-              <div className="rounded-lg border border-dashed border-cat-orange/30 bg-[var(--field-warm)] p-3 space-y-2">
-                <div className="flex items-center gap-1.5">
-                  <Plus className="h-3.5 w-3.5 text-[#d17847]" />
-                  <span className="text-xs font-bold text-foreground">
-                    {t("临时加一个今日任务", "Quick-add a task for today")}
-                  </span>
-                </div>
-                <Input
-                  value={tempTaskTitle}
-                  onChange={(e) => setTempTaskTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddTempTask();
-                    }
-                  }}
-                  placeholder={t("想到什么就先记下来…", "Just type what comes to mind…")}
-                  className="h-8 text-sm bg-card border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
+  const pickTasksBody = (
+    <>
+            <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3">
+              <label htmlFor="today-temp-title" className="text-sm font-medium text-foreground">{t("新任务", "New")}</label>
+              <input
+                id="today-temp-title"
+                value={tempTaskTitle}
+                onChange={(e) => setTempTaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleAddTempTask().catch(() => undefined);
+                  }
+                }}
+                placeholder={t("想到什么就先记下来…", "Just type what comes to mind…")}
+                className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base text-card-foreground"
+              />
+              <ArcScope>
+                <SegmentedControl
+                  className="even-segments importance-segments"
+                  label={t("重要程度", "Importance")}
+                  value={tempTaskImportance}
+                  onValueChange={setTempTaskImportance}
+                  options={[
+                    { value: "紧急", label: "", accessory: <><span className="inline-block h-1.5 w-1.5 rounded-full bg-cat-red" />{t("紧急", "Urgent")}</> },
+                    { value: "重要", label: "", accessory: <><span className="inline-block h-1.5 w-1.5 rounded-full bg-cat-orange" />{t("重要", "Important")}</> },
+                    { value: "普通", label: "", accessory: <><span className="inline-block h-1.5 w-1.5 rounded-full bg-cat-blue" />{t("普通", "Normal")}</> },
+                    { value: "低优先", label: "", accessory: <><span className="inline-block h-1.5 w-1.5 rounded-full bg-muted-foreground" />{t("低优先", "Low")}</> },
+                  ]}
                 />
-                <div className="flex items-center gap-2">
-                  <select
-                    value={tempTaskImportance}
-                    onChange={(e) => setTempTaskImportance(e.target.value)}
-                    className="h-7 flex-1 text-xs rounded-md border border-border bg-card px-2 text-foreground focus:outline-none focus:ring-1 focus:ring-[#d17847]"
-                  >
-                    <option value="紧急">{t("紧急", "Urgent")}</option>
-                    <option value="重要">{t("重要", "Important")}</option>
-                    <option value="普通">{t("普通", "Normal")}</option>
-                    <option value="低优先">{t("低优先", "Low")}</option>
-                  </select>
-                  <Input
-                    value={tempTaskCategory}
-                    onChange={(e) => setTempTaskCategory(e.target.value)}
-                    placeholder={t("分类", "Category")}
-                    className="h-7 flex-1 text-xs bg-card border-border focus-visible:ring-1 focus-visible:ring-[#d17847]"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleAddTempTask}
-                    disabled={isAddingTemp || !tempTaskTitle.trim()}
-                    className="h-7 bg-[#d17847] hover:bg-[#c06838] text-white shrink-0"
-                  >
-                    {isAddingTemp ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      t("加入", "Add")
-                    )}
-                  </Button>
-                </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  {t("会同步写入“待办事项”，并自动选中加入今天。", "Will be saved to To-Dos and auto-selected for today.")}
-                </p>
+              </ArcScope>
+              <div className="flex items-center gap-2">
+                <CategoryField
+                  value={tempTaskCategory}
+                  onChange={setTempTaskCategory}
+                  categories={categoryOptions}
+                  placeholder={t("选分类，或自己写", "Pick or type a category")}
+                />
+                <ActionButton
+                  label={t("新建", "Create")}
+                  pendingLabel={t("新建中…", "Creating…")}
+                  successLabel={t("已新建", "Created")}
+                  onAction={handleAddTempTask}
+                  onActionError={() => undefined}
+                  disabled={isAddingTemp || !tempTaskTitle.trim()}
+                  className="shrink-0"
+                />
               </div>
+              <p className="text-xs text-muted-foreground">
+                {t("会同步写入“待办事项”，并自动选中加入今天。", "Will be saved to To-Dos and auto-selected for today.")}
+              </p>
+            </div>
 
-              <div className="space-y-3 max-h-80 overflow-y-auto">
+              <div className="space-y-1">
                 {displayTodos.length === 0 ? (
                   <p className="text-sm text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>
                     {t("所有待办都已完成或已添加", "All to-dos are done or already added")}
@@ -806,7 +812,7 @@ export default function TodayTodoPage() {
                   displayTodos.map((todo: any) => (
                     <label
                       key={todo.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 cursor-pointer"
+                      className={`flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors duration-200 ${selectedTodos.includes(todo.id) ? "bg-muted" : "hover:bg-muted/60"}`}
                     >
                       <input
                         type="checkbox"
@@ -818,7 +824,7 @@ export default function TodayTodoPage() {
                             setSelectedTodos(selectedTodos.filter((id) => id !== todo.id));
                           }
                         }}
-                        className="rounded accent-[#d17847]"
+                        className="h-4 w-4 rounded border-border accent-[hsl(var(--primary))]"
                       />
                       <div className="flex-1 flex flex-col justify-center min-w-0 pr-2">
                         <span className="text-sm font-medium text-foreground">
@@ -831,7 +837,7 @@ export default function TodayTodoPage() {
                           })()}
                         </span>
                         {todo.kind === "routine" && (
-                          <span className="text-[10px] text-muted-foreground">{t("例行", "Routine")}</span>
+                          <span className="text-[11px] text-muted-foreground">{t("例行", "Routine")}</span>
                         )}
                         
                         {/* 4D dimensions details display */}
@@ -918,7 +924,7 @@ export default function TodayTodoPage() {
                               >
                                 <Plus className="h-3 w-3" />
                               </Button>
-                              <span className="text-[10px] font-bold text-muted-foreground mr-1 shrink-0">XP</span>
+                              <span className="text-[11px] font-bold text-muted-foreground mr-1 shrink-0">XP</span>
                             </div>
                           )}
                         </div>
@@ -928,29 +934,92 @@ export default function TodayTodoPage() {
                 )}
               </div>
               {selectedTodos.length > 0 && (
-                <div className="flex gap-2 pt-2 border-t border-border">
+                <div className="sticky bottom-0 z-10 -mx-1 flex items-center gap-2 border-t border-border bg-card/95 px-1 py-3 backdrop-blur-sm">
+                  <span className="text-sm text-muted-foreground">{t(`已选 ${selectedTodos.length}`, `${selectedTodos.length} selected`)}</span>
                   {POINTS && !adjustMode && Object.keys(estimatedDifficulties).length === 0 && (
                     <Button variant="secondary" size="sm" onClick={handleAutoEstimate} disabled={isEstimating}>
                       {isEstimating ? (
-                        <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />{t("评估中...", "Estimating...")}</>
+                        <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />{t("评估中...", "Estimating...")}</>
                       ) : (
-                        <><Sparkles className="h-3.5 w-3.5 mr-1" />{t("AI 自动评估", "Auto Estimate")}</>
+                        <><Sparkles className="mr-1 h-3.5 w-3.5" />{t("AI 自动评估", "Auto Estimate")}</>
                       )}
                     </Button>
                   )}
                   {POINTS && !adjustMode && Object.keys(estimatedDifficulties).length > 0 && (
                     <Button variant="secondary" size="sm" onClick={() => setAdjustMode(true)}>
-                      <Zap className="h-3.5 w-3.5 mr-1" />{t("调整难度", "Adjust")}
+                      <Zap className="mr-1 h-3.5 w-3.5" />{t("调整难度", "Adjust")}
                     </Button>
                   )}
-                  <div className="flex-1" />
-                  <Button className="bg-[#d17847] hover:bg-[#c06838] text-white" size="sm" onClick={handleConfirmAdd}>
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />{t("完成", "Done")}
-                  </Button>
+                  <ActionButton
+                    label={t("完成", "Done")}
+                    pendingLabel={t("加入今天…", "Adding…")}
+                    successLabel={t("已加入", "Added")}
+                    onAction={handleConfirmAdd}
+                    onActionError={() => undefined}
+                    className="ml-auto shrink-0"
+                  />
                 </div>
               )}
-            </DialogContent>
-          </Dialog>
+    </>
+  );
+
+  return (
+    <AppLayout title={t("今日待办", "Today's Todo")}>
+      <LayoutGroup>
+      <div className="space-y-5">
+
+        {POINTS && (
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            {[
+              { icon: Flame, value: streak, suffix: t("天", "d"), label: t("连续", "Streak") },
+              { icon: Star, value: totalPts, suffix: "", label: t("积分", "Points") },
+              { icon: Trophy, value: bestStreak, suffix: t("天", "d"), label: t("最长", "Best") },
+            ].map(({ icon: Icon, value, suffix, label }) => (
+              <div
+                key={label}
+                className="flex items-center gap-1.5 bg-card border border-border rounded-full px-2.5 py-1 shadow-sm"
+              >
+                <Icon className="h-3.5 w-3.5 text-cat-orange" />
+                <span className="text-xs font-bold text-foreground font-mono-data">
+                  {value}{suffix}
+                </span>
+                <span className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        )}
+
+        {/* Progress Ring + Add Button */}
+        <div className="flex items-center gap-4">
+          <CircularProgress value={progressPct} size={72} />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-foreground">
+              {completedCount} / {totalCount} {t("已完成", "completed")}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+              {totalCount === 0
+                ? t("今天还没有任务，快去添加吧！", "No tasks yet — add some!")
+                : completedCount === totalCount && totalCount > 0
+                  ? t("全部完成！太棒了！", "All done! Amazing!")
+                  : t("继续加油！", "Keep going!")}
+            </p>
+          </div>
+          <Button onClick={() => handleAddDialogOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />{t("添加任务", "Add Tasks")}
+          </Button>
+          <BottomSheet
+            open={addDialogOpen}
+            onOpenChange={handleAddDialogOpen}
+            title={t("选择今日任务", "Pick Today's Tasks")}
+            detents={[0.78, 0.94]}
+            initialDetent={1}
+            className="arc-runtime"
+            closeLabel={t("关闭", "Close")}
+          >
+            {pickTasksBody}
+          </BottomSheet>
         </div>
 
         <HabitWidgetStack
@@ -983,15 +1052,15 @@ export default function TodayTodoPage() {
                     {group.tasks.filter((t: any) => t.is_completed).length} / {group.tasks.length}
                   </Badge>
                 </div>
-                <div className="p-2 space-y-2 bg-muted/20">
-                  {group.tasks.map((task: any, i: number) => renderTaskRow(task, i))}
+                <div className="space-y-2 bg-muted/20 p-2">
+                  {[...group.tasks].sort((a, b) => Number(a.is_completed) - Number(b.is_completed)).map((task: any, i: number) => renderTaskRow(task, i))}
                 </div>
               </Card>
             ))}
             
             {ungroupedTasks.length > 0 && (
               <div className="space-y-2">
-                {ungroupedTasks.map((task: any, i: number) => renderTaskRow(task, i))}
+                {[...ungroupedTasks].sort((a, b) => Number(a.is_completed) - Number(b.is_completed)).map((task: any, i: number) => renderTaskRow(task, i))}
               </div>
             )}
           </div>
@@ -1002,7 +1071,7 @@ export default function TodayTodoPage() {
             <CollapsibleTrigger asChild>
               <Button
                 variant="ghost"
-                className="group h-auto w-full justify-between rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                className="group h-auto w-full justify-between rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted/40 hover:text-foreground"
               >
                 <span className="flex items-center gap-2">
                   {t("往期未完成", "Leftover from past days")}
@@ -1020,7 +1089,8 @@ export default function TodayTodoPage() {
                       {t(PAST_DATE_LABELS[group.label].zh, PAST_DATE_LABELS[group.label].en)}
                     </h3>
                     {group.tasks.map((task: any) => (
-                      <Card key={task.id} className="bg-card border-border shadow-sm">
+                      <motion.div key={task.id} layout="position" layoutId={`daily-${task.todo_id || task.id}`} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}>
+                      <Card className="bg-card border-border shadow-sm">
                         <CardContent className="p-3 px-4">
                           <div className="flex items-center gap-3">
                             <Checkbox
@@ -1052,6 +1122,7 @@ export default function TodayTodoPage() {
                           </div>
                         </CardContent>
                       </Card>
+                      </motion.div>
                     ))}
                   </section>
                 ))}
@@ -1062,7 +1133,7 @@ export default function TodayTodoPage() {
 
         {/* Live Earnings & Settle Estimate Card */}
         {POINTS && (
-        <Card className="overflow-hidden border-border bg-gradient-to-br from-[#fdfbf7] via-[#fbf6ef] to-[#f5ebd7] dark:from-[#282219] dark:via-[#241f18] dark:to-[#2b2317] shadow-sm relative">
+        <Card className="overflow-hidden border-border bg-gradient-to-br from-[hsl(var(--card))] via-[hsl(var(--background))] to-[hsl(var(--muted))] dark:from-[hsl(var(--card))] dark:via-[hsl(var(--background))] dark:to-[hsl(var(--muted))] shadow-sm relative">
           <div className="absolute top-0 right-0 p-3 opacity-[0.08]">
             <Sparkles className="h-20 w-20 text-cat-orange" />
           </div>
@@ -1074,14 +1145,14 @@ export default function TodayTodoPage() {
                   {t("今日积分结算看板", "Today's Settlement Board")}
                 </span>
               </div>
-              <Badge variant="outline" className="bg-cat-orange-bg text-cat-orange border-cat-orange/25 text-[10px] py-0.5 px-2 font-mono font-semibold">
+              <Badge variant="outline" className="bg-cat-orange-bg text-cat-orange border-cat-orange/25 text-[11px] py-0.5 px-2 font-mono font-semibold">
                 {t("结算时间: 00:00 (自动)", "Settle: 00:00 (Auto)")}
               </Badge>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="space-y-1">
-                <span className="text-[10px] text-muted-foreground block font-medium uppercase tracking-wide">
+                <span className="text-[11px] text-muted-foreground block font-medium uppercase tracking-wide">
                   {t("今日已赚得", "Earned Today So Far")}
                 </span>
                 <span className="text-2xl font-black text-cat-orange block font-mono leading-none tracking-tight">
@@ -1093,7 +1164,7 @@ export default function TodayTodoPage() {
               </div>
 
               <div className="space-y-1">
-                <span className="text-[10px] text-muted-foreground block font-medium uppercase tracking-wide">
+                <span className="text-[11px] text-muted-foreground block font-medium uppercase tracking-wide">
                   {t("今日将结算 (当前状态)", "Estimated Settle (As-Is)")}
                 </span>
                 <span className="text-2xl font-black text-cat-blue block font-mono leading-none tracking-tight">
@@ -1105,11 +1176,11 @@ export default function TodayTodoPage() {
               </div>
 
               <div className="col-span-2 sm:col-span-1 space-y-1 bg-card/50 border border-border/40 rounded-lg p-2.5">
-                <span className="text-[10px] text-muted-foreground block font-medium uppercase tracking-wide">
+                <span className="text-[11px] text-muted-foreground block font-medium uppercase tracking-wide">
                   {t("完美完成奖励估算", "Perfect Run Potential")}
                 </span>
                 <span className="text-lg font-bold text-cat-orange block font-mono leading-none tracking-tight">
-                  {potentialTotalToday} <span className="text-[10px] font-semibold text-muted-foreground">XP</span>
+                  {potentialTotalToday} <span className="text-[11px] font-semibold text-muted-foreground">XP</span>
                 </span>
                 <span className="text-[9px] text-muted-foreground block leading-relaxed mt-0.5">
                   {t(`若100%完成今日全部任务`, `If 100% completed today's tasks`)}
@@ -1130,11 +1201,11 @@ export default function TodayTodoPage() {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <Card className="bg-card border-border mt-2 shadow-sm rounded-xl overflow-hidden">
+            <Card className="bg-card border-border mt-2 shadow-sm rounded-lg overflow-hidden">
               <CardContent className="p-5 space-y-4 text-xs leading-relaxed text-muted-foreground">
                 <div className="border-b border-border/60 pb-3">
                   <h4 className="font-bold text-sm mb-2 text-foreground flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-[#d17847]" />
+                    <Sparkles className="h-4 w-4 text-[hsl(var(--cat-orange))]" />
                     {t("日程游戏化 AI 裁判长：四维评估矩阵", "Game Life AI Referee: 4D Evaluation Matrix")}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
@@ -1218,6 +1289,7 @@ export default function TodayTodoPage() {
         </Collapsible>
         )}
       </div>
+      </LayoutGroup>
 
       {/* Reward Popup */}
       {POINTS && rewardTier && <RewardPopup tier={rewardTier} onClose={() => setRewardTier(null)} />}

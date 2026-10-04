@@ -1,0 +1,273 @@
+/* Shared dashboard surfaces. Radius stays with the original cards; motion stays on the controls inside. */
+.life-stage,
+.life-metric {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
+.life-stage {
+  padding: 1rem;
+}
+
+.life-metric {
+  padding: 0.75rem 1rem;
+}
+
+/* The donut only puts its legend beside the ring when an ancestor is the container. */
+.share-donut {
+  container-type: inline-size;
+  width: 100%;
+  max-width: 32rem;
+}
+
+.arc-runtime .even-segments {
+  display: flex;
+  width: 100%;
+}
+
+.arc-runtime .even-segments > div {
+  display: flex;
+  width: 100%;
+}
+
+.arc-runtime .even-segments button {
+  flex: 1 1 0;
+  justify-content: center;
+  text-align: center;
+}
+
+.arc-runtime .importance-segments button[aria-pressed="true"] > span:first-child {
+  border-color: transparent;
+}
+
+.arc-runtime .importance-segments button[data-value="紧急"][aria-pressed="true"] > span:first-child {
+  background: hsl(var(--cat-red-bg));
+  box-shadow: inset 0 0 0 1px hsl(var(--cat-red) / 0.28);
+}
+.arc-runtime .importance-segments button[data-value="重要"][aria-pressed="true"] > span:first-child {
+  background: hsl(var(--cat-orange-bg));
+  box-shadow: inset 0 0 0 1px hsl(var(--cat-orange) / 0.28);
+}
+.arc-runtime .importance-segments button[data-value="普通"][aria-pressed="true"] > span:first-child {
+  background: hsl(var(--cat-blue-bg));
+  box-shadow: inset 0 0 0 1px hsl(var(--cat-blue) / 0.28);
+}
+.arc-runtime .importance-segments button[data-value="低优先"][aria-pressed="true"] > span:first-child {
+  background: hsl(var(--muted));
+  box-shadow: inset 0 0 0 1px hsl(var(--muted-foreground) / 0.28);
+}
+
+.native-select {
+  appearance: none;
+  height: 2.25rem;
+  padding-right: 2.25rem;
+  line-height: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23665c52' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+}
+
+/* Coarse pointers get the 44px touch floor, matching arc --control-height-md. */
+@media (pointer: coarse) {
+  .native-select {
+    height: 2.75rem;
+    line-height: 2.75rem;
+  }
+}
+
+.dark .native-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23b3a998' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5'/%3E%3C/svg%3E");
+}
+
+/* Filter triggers sit next to the segmented control: one height ladder (32px sm). */
+.todo-filter-fit [data-filter-trigger] {
+  min-height: 2rem;
+}
+
+.todo-filter-fit > [role="group"] {
+  width: auto;
+  flex: none;
+  min-height: 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.date-field {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.date-field:has([data-open]) {
+  z-index: 40;
+}
+
+.date-field > * {
+  min-width: 100%;
+}
+
+.date-field button[aria-haspopup="dialog"] {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.date-field-inline {
+  width: auto;
+}
+
+.date-field-inline > * {
+  min-width: 11rem;
+}
+
+.date-field-inline button[aria-haspopup="dialog"] {
+  width: auto;
+}
+
+.date-field-up [data-open] > div {
+  top: auto;
+  bottom: 0;
+}
+
+/* Incoming and outgoing months share one cell. Block flow was stacking them and doubling the calendar height. */
+.arc-runtime [aria-label="Previous month"] + [aria-label="Next month"] + div {
+  display: grid;
+}
+
+.arc-runtime [aria-label="Previous month"] + [aria-label="Next month"] + div > div {
+  grid-area: 1 / 1;
+}
+
+.arc-runtime:has(.date-field [data-open]),
+[role="dialog"]:has(.date-field [data-open]) {
+  overflow: visible;
+}
+
+.arc-runtime:has(.date-field [data-open]) > div {
+  overflow: visible;
+}
+
+.todo-fold {
+  position: relative;
+  isolation: isolate;
+}
+
+.todo-fold-head {
+  position: relative;
+  z-index: 1;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  transition: background-color 260ms cubic-bezier(0.22, 1, 0.36, 1), border-color 260ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.todo-fold-head:hover {
+  background: hsl(var(--muted) / 0.4);
+}
+
+.todo-fold::before,
+.todo-fold::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 2.625rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  background: hsl(var(--card));
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0);
+  transition: opacity 160ms ease, transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.todo-fold::before {
+  z-index: 0;
+  left: 0.625rem;
+  right: 0.625rem;
+}
+
+.todo-fold::after {
+  z-index: -1;
+  left: 1.25rem;
+  right: 1.25rem;
+}
+
+.todo-fold[data-folded] {
+  margin-bottom: 0.875rem;
+}
+
+.todo-fold[data-folded] .todo-fold-head {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+  box-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.05),
+    0 6px 16px -6px hsl(var(--foreground) / 0.14),
+    0 18px 32px -20px hsl(var(--foreground) / 0.2);
+}
+
+.todo-fold[data-folded] .todo-fold-head:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 2px hsl(var(--foreground) / 0.05),
+    0 10px 22px -8px hsl(var(--foreground) / 0.18),
+    0 24px 40px -22px hsl(var(--foreground) / 0.24);
+}
+
+.todo-fold[data-folded]::before {
+  opacity: 1;
+  transform: translateY(5px);
+  box-shadow: 0 4px 10px -6px hsl(var(--foreground) / 0.14);
+  transition-delay: 80ms;
+}
+
+.todo-fold[data-folded]::after {
+  opacity: 0.85;
+  transform: translateY(10px);
+  box-shadow: 0 4px 10px -6px hsl(var(--foreground) / 0.12);
+  transition-delay: 140ms;
+}
+
+.todo-fold-chevron {
+  transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.todo-fold[data-folded] .todo-fold-chevron {
+  transform: rotate(-90deg);
+}
+
+.todo-fold-list {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease 70ms;
+}
+
+.todo-fold[data-folded] .todo-fold-list {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 140ms ease;
+}
+
+.todo-fold-list > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.meal-band {
+  border-radius: 8px;
+  transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1), background-color 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.meal-band[data-quiet="true"] {
+  opacity: 0.38;
+}
+
+.meal-band[data-active="true"] {
+  background: hsl(var(--muted) / 0.55);
+}

@@ -55,7 +55,7 @@ export default function BaziPage() {
   }
 
   return (
-    <AppLayout title={t("八字日柱", "BaZi Day Pillar")}>
+    <AppLayout title={t("八字日柱", "BaZi Day Pillar")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("八字日柱", "BaZi Day Pillar")}
