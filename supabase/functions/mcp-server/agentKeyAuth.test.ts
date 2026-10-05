@@ -66,3 +66,14 @@ Deno.test('accepts the standard CLI private JWK without an alg field but rejects
   const { d: _private, ...publicJwk } = jwk;
   await assertRejects(() => authenticateApiKey(key, { ...dependencies(), signingJwk: JSON.stringify(publicJwk) }), AgentAuthError, 'API_KEY_AUTH_NOT_CONFIGURED');
 });
+Deno.test('accepts Supabase CLI JWK key_ops while importing only the private signing operation', async () => {
+  const deps = dependencies();
+  deps.signingJwk = JSON.stringify({ ...jwk, use: 'sig', key_ops: ['sign', 'verify'], ext: true });
+  const result = await authenticateApiKey(key, deps);
+  const { payload } = await jwtVerify(result.token, pair.publicKey, { currentDate: deps.now() });
+  assertEquals(payload.sub, identity.user_id);
+  assertEquals(Number(payload.exp) - Number(payload.iat), 60);
+});
+Deno.test('does not expand a JWK that explicitly excludes signing', async () => {
+  await assertRejects(() => authenticateApiKey(key, { ...dependencies(), signingJwk: JSON.stringify({ ...jwk, key_ops: ['verify'] }) }), AgentAuthError, 'API_KEY_AUTH_NOT_CONFIGURED');
+});

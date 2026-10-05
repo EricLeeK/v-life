@@ -1,6 +1,6 @@
 # Agent API Key 重构交付记录
 
-2026 年 10 月 5 日。本地实现和验证已完成，正式环境尚未部署。此记录供维护者检查实现、执行发布和处理回退；不能作为线上连接已经成功的证明。
+2026 年 10 月 5 日 22:10（北京时间），正式后端发布及端到端验证已完成。生产项目为 `veabdivlfhctseihypzl`，`mcp-server` 版本 24、`agent-api` 版本 14。网站此前已发布新版设置页，本次补齐数据库迁移、签名配置和两个接入接口。
 
 本次将 API Key 作为设置页的默认 Agent 连接方式，解决手工配置 OAuth 回调、授权跳转和刷新令牌带来的接入负担。支持 Bearer Token 或自定义 Authorization 请求头的客户端，复制一次 Key 即可使用 MCP 或 HTTP API。只支持 OAuth 的客户端仍使用兼容入口。
 
@@ -46,21 +46,46 @@ MCP 和 HTTP 共用 `withAgentAuth`。Edge 每个请求验证摘要和当前权�
 - [手机生成结果](assets/agent-connection/key-created-mobile.jpg)
 - [深色界面](assets/agent-connection/settings-dark.png)
 
-以上未验证真实 Supabase 签名信任、生产数据库部署、真实账户生成 Key、Hermes 客户端配置或真实 MCP 工具执行。这些必须在发布时完成。
+以上表格记录开发阶段验证。发布时另外通过了签名兼容及入口认证的 12 项 Deno 测试，以及两个 Edge 入口和验证脚本的类型检查。
+
+## 正式环境验证
+
+先在正式 PostgreSQL 中把新迁移、API Key 权限测试和旧 OAuth 回归放入同一事务，全部通过后回滚。随后单独应用 `20261005010000_agent_api_keys.sql`，在同一事务记录迁移版本并通知 PostgREST 重载 schema；未应用其他待迁移文件。
+
+使用两个临时 Auth 账户，经真实登录取得浏览器令牌，再通过与设置页相同的 RPC 创建 Key。以下 12 组检查全部通过，HTTP 和 MCP 都请求正式地址：
+
+| 检查 | 结果 |
+| --- | --- |
+| 既有网站认证 | 密码登录与浏览器身份读取成功 |
+| Key 管理 | 永久、指定到期时间的 Key 创建成功；列表正常读取，未暴露完整 Key |
+| MCP 与 HTTP 接入 | MCP 初始化、工具发现、`agent_help` 和 HTTP guide 成功，权限一致 |
+| OAuth 兼容 | 带 OAuth `client_id` 的可信 JWT 与旧类型授权记录通过两个入口；未重走第三方授权码交换 |
+| 网站域名兼容 | `https://shenghuo.homes/api/v1/guide` 返回成功 |
+| 数据操作 | HTTP 新建、相同幂等键重试、MCP 读取与修改成功 |
+| 权限限制 | 只读 Key 的写入、删除被拒绝；Agent 身份不能发放 Key 或读取私密设置 |
+| 用户隔离 | 另一账户不能读取测试记录或撤销其 Key |
+| 管理状态 | 最近使用时间更新；允许删除的 Key 可以删除自己的测试记录 |
+| 到期 | 等待短期 Key 自然到期后，HTTP 和 MCP 均返回 `401 API_KEY_INVALID` |
+| 撤销 | 撤销后两个入口均返回 401，内部身份的数据库权限也立即失效 |
+| OAuth discovery | 原有发现端点正常返回授权服务器 |
+
+测试账户及其 Key、摘要和业务记录已清理，并再次查询确认无残留。本轮未操作实际用户的生活记录，也未替用户创建日常使用的 Key。尚未验证 Hermes 等具体客户端的设置界面；客户端需要支持 Bearer Token 或自定义 Authorization 请求头。
 
 ## 正式环境部署条件
 
-只读检查确认：项目 `veabdivlfhctseihypzl` 当前公开签名算法为 ES256，Edge secrets 列表中尚无 `AGENT_JWT_SIGNING_JWK`。现有公开 JWKS 不能用于签名，也无法从 Supabase 取出现有托管私钥。
+发布前确认了故障原因：新界面已上线，数据库缺少 `credential_type` 等字段和创建函数，两个 Edge 函数仍为旧版，且缺少 `AGENT_JWT_SIGNING_JWK`。因此生成和列表请求都失败，重复刷新不能补齐服务端部署。
 
-服务需要一个 Supabase Auth 信任的私有 P-256 ES256 JWK，`kid` 必须与已激活的签名公钥一致，并以 `AGENT_JWT_SIGNING_JWK` 保存为 Edge secret。它不能出现在前端环境变量、仓库、命令行参数、截图或日志中。Supabase 官方支持导入自有签名密钥并用它签发外部 JWT，见 [JWT 文档](https://supabase.com/docs/guides/auth/jwts) 和 [签名密钥文档](https://supabase.com/docs/guides/auth/signing-keys)。
+现已导入独立的私有 P-256 ES256 JWK，并将其保存为 Edge secret `AGENT_JWT_SIGNING_JWK`。`kid` 与项目已信任的公钥匹配。新密钥保留为 `standby`，正式 Data API 和两个 Edge 入口均已实测接受其签名；原有 `in_use` 登录签名密钥和旧验证密钥保持原状态，无需切换网站登录签名。Supabase 的公开 JWKS 只能验签，不能用来签名，也无法取出现有托管私钥。官方说明见 [JWT 文档](https://supabase.com/docs/guides/auth/jwts) 和 [签名密钥文档](https://supabase.com/docs/guides/auth/signing-keys)。
 
-导入和激活会修改正式项目的认证签名配置。这一步与生产数据库迁移、服务发布一起，在执行前向项目所有者确认。保留已有签名密钥的验证能力，不撤销旧密钥；先验证既有登录与 OAuth，再启用新界面。这里的确认是对生产认证配置变更的发布控制，不是本地开发步骤。
+真实部署还发现 Supabase CLI 输出的 `key_ops: ["sign", "verify"]` 会被 Web Crypto 的 EC 私钥导入拒绝，造成 `API_KEY_AUTH_NOT_CONFIGURED`。认证层现验证密钥允许签名，再将导入用途收窄为 `sign`；只允许验签的密钥仍被拒绝。新增回归测试先复现失败，再验证修复与真实线上调用。
+
+私钥不能出现在前端环境变量、仓库、命令行参数、截图或日志中。项目所有者已明确授权本次后端发布，包括数据库迁移、签名配置及接口部署。
 
 ## 发布顺序
 
 1. 从已审查的文件集合准备独立发布来源。当前工作区还有其他任务的改动，不能直接全量提交或发布整个工作区。
 2. 检查生产迁移记录和依赖，只应用 `20261005010000_agent_api_keys.sql`。不要无差别执行所有待迁移文件或修改无关迁移记录。
-3. 安全生成并导入私有 ES256 JWK，按 Supabase 流程激活，等待签名公钥传播并检查 `kid`。保留旧密钥，验证旧登录和 OAuth 仍可用，再配置对应 Edge secret。
+3. 安全生成并导入私有 ES256 JWK，检查 `kid` 和 Data API 的实际签名接受情况。若 `standby` 已被信任，无需切换全站登录签名。保留旧密钥，验证旧登录和 OAuth 仍可用，再配置对应 Edge secret。
 4. 部署 `mcp-server` 和 `agent-api`。两个函数继续使用应用层认证；`verify_jwt=false` 不能替代 `withAgentAuth`。先确认原有 OAuth discovery 和调用仍可用。
 5. 在可审阅的预览版本中，用正式账户创建短期只读 Key，执行 `scripts/verify-agent-key.ts`。脚本通过环境接收 `SUPABASE_URL` 和 `VLIFE_AGENT_API_KEY`，只验证 MCP 初始化、工具发现、使用指南与 HTTP 指南，且检查两边权限一致；不写入生活数据，也不输出凭证。不要将 Key 放到命令行参数。
 6. 撤销测试 Key，确认两个接口对该 Key 返回 401；额外检查一把已到期 Key。实际 Hermes 配置采用 Bearer API Key 或 Authorization 请求头，调用指南并查看最近使用时间。
