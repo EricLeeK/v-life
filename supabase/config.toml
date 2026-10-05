@@ -1,11 +1,11 @@
 project_id = "veabdivlfhctseihypzl"
 
-# OAuth protected-resource discovery must reach the Edge Function before a bearer token exists.
-# The MCP adapter performs token verification and RLS-scoped client construction itself.
+# OAuth discovery and opaque API Keys must reach the shared authentication adapter.
+# It verifies either credential and constructs an RLS-scoped client itself.
 [functions.mcp-server]
 verify_jwt = false
 
-# Same OAuth middleware as MCP; the function verifies the user token itself.
+# Same API Key / OAuth authentication as MCP.
 [functions.agent-api]
 verify_jwt = false
 

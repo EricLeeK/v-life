@@ -18,6 +18,8 @@ Deno.test('OpenAPI is registry-derived and does not expose identity or sensitive
   assert(!JSON.stringify(document).includes('user_id'));
   assert(!JSON.stringify(document).includes('ai_api_key'));
   assertEquals(document.components.securitySchemes.oauth2.flows.authorizationCode.tokenUrl, 'https://example.supabase.co/auth/v1/token');
+  assertEquals(document.components.securitySchemes.apiKey.scheme, 'bearer');
+  assertEquals(document.security, [{ apiKey: [] }, { oauth2: [] }]);
 });
 
 Deno.test('HTTP onboarding and write schemas agree with MCP task workflows',()=>{

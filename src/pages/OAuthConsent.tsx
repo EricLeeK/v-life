@@ -56,7 +56,13 @@ export default function OAuthConsentPage() {
   };
 
   if (loading || !user) return <div className="p-8 text-center">加载中…</div>;
-  if (!authorizationId) return <div className="p-8 text-center">缺少授权请求。</div>;
+  if (!authorizationId) return <div className="min-h-screen flex items-center justify-center bg-background p-4"><Card className="w-full max-w-lg">
+    <CardHeader><CardTitle>这个连接没有完成</CardTitle></CardHeader>
+    <CardContent className="space-y-4">
+      <p className="text-sm leading-relaxed text-muted-foreground">此页面用于确认 Agent 发起的授权请求，不能用作 Agent 的回调地址。你可以在设置中生成 API Key，复制给 Agent 直接连接。</p>
+      <Button onClick={() => navigate('/settings#agent-connections')}>用 API Key 连接</Button>
+    </CardContent>
+  </Card></div>;
   return <div className="min-h-screen flex items-center justify-center bg-background p-4"><Card className="w-full max-w-lg">
     <CardHeader><CardTitle>连接 V-Life Agent</CardTitle></CardHeader>
     <CardContent className="space-y-5">

@@ -1,5 +1,19 @@
 # Agent 接入与维护
 
+## API Key 连接（2.8.0，待部署）
+
+首次使用可阅读 [网站与 Agent 用户新手教程](agent-connection-beginner-guide.md)，包含生成 Key、两种配置方法、连接验证及常见问题。
+
+设置 → Agent 连接现在以 API Key 为默认入口。填写连接名称，选择读取、新增/修改、删除权限，以及 30 天、90 天、指定日期或永久有效。自选日期包含当天，按北京时间次日 00:00 失效。生成后可复制 Key、给 Agent 的完整说明或 MCP JSON 配置；完整 Key 只返回一次，收起/离开页面后不能再次读取。
+
+支持自定义请求头或 Bearer Token 的客户端使用 `Authorization: Bearer vlife_…`，不需要 OAuth 回调、浏览器 Session、刷新令牌或客户端注册。MCP 地址仍是 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp`；直接 HTTP 地址为 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/agent-api/api/v1`，正式域名 `/api/v1` 也兼容。只支持 OAuth 的客户端继续使用折叠的兼容入口。
+
+创建、过期和撤销由数据库管理。私有表仅保存 SHA-256 摘要，公开列表仅展示名称、前缀、权限、有效期和最近使用时间。撤销会删除摘要，不能通过恢复元数据重新启用。最多保留 50 个仍有效的 Key。Agent 不能生成或管理其他 Key，也不能读取私密设置。
+
+服务端每次请求重新验证摘要，再换成仅在本次请求内部使用的短期用户 JWT，继续执行已有 RLS、领域 RPC、审计和幂等检查；业务数据操作不使用 service-role。长任务在内部 token 到期前按需续签并重新验证 Key。过期/撤销返回 `401 API_KEY_INVALID`；配置或认证数据库故障返回 `503`，不会错误提示用户反复换 Key。永久 Key 只表示不自动到期，仍可随时撤销。
+
+部署条件、验证证据和回退方式见 [API Key 重构交付记录](agent-api-keys-2026-10-05.md)。本节描述本地实现，不代表线上已经启用。
+
 ## 任务工作流（2.6.0）
 
 已于 2026-09-28 发布；具体线上版本和验证范围见 [发布记录](agent-task-workflows-release-2026-09-28.md)。
@@ -37,7 +51,7 @@ daily_task_transfer({
 - 重试保留**原键、原始日期表达式和全部参数**。服务端先回放再解析 today/tomorrow，跨天重试不漂移。`replayed:true` 是首次操作的原回执；需要当前状态时再读 overview。换参数却复用旧键返回 `IDEMPOTENCY_CONFLICT`（HTTP 409）。失败不缓存成功回执。
 - **旧记录不是不可变历史**：一次性任务完成后，所有关联日任务同步完成；`copy` 只保留曾经安排过的记录。实际完成时间看 `completed_at`，不能把旧 `task_date` 当完成日期。
 
-客户端优先使用原生 MCP 工具及其 OAuth 能力。手写集成可走以上 JSON API，避免自行解析 MCP 的 JSON/SSE；401 的刷新流程属于 OAuth 客户端，不能把所有鉴权失败都无限重试。所有调用先检查 `ok/error`，错误不能降级成空列表。
+客户端优先使用原生 MCP 工具，支持 Bearer Token 时使用 API Key。手写集成可走以上 JSON API，避免自行解析 MCP 的 JSON/SSE；OAuth Token 的刷新属于 OAuth 客户端，API Key 的 401 应检查过期和撤销状态，不能把所有鉴权失败都无限重试。所有调用先检查 `ok/error`，错误不能降级成空列表。
 
 发布顺序：先应用 `20260928010000_agent_task_workflows.sql`，再部署 `mcp-server` 和 `agent-api`。新工具复用现有日任务领域函数，不批量重写既有数据。本节是代码契约，不能代替实际部署和验证记录。
 
@@ -65,7 +79,7 @@ MCP 使用 `subscription_payment_create`；HTTP 使用 `POST /subscription_payme
 
 ## 用户连接
 
-在支持远程 MCP 和 OAuth 的客户端添加 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp`，完成网站登录，选择读取、新增/修改和删除权限。用户不提供 API Key 或浏览器 Session。设置 → 数据 → 已连接的 Agent 可复制地址、查看权限和撤销；撤销先禁止数据请求，再撤销 OAuth grant，失败可重试。
+默认连接方式见上方 API Key 章节。只支持远程 MCP 和 OAuth 的客户端添加 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp`，完成网站登录，选择读取、新增/修改和删除权限。设置 → Agent 连接 → 其他连接方式可查看和撤销 OAuth 连接；撤销先禁止数据请求，再撤销 OAuth grant，失败可重试。任何方式都不需要提供浏览器 Session。
 
 只支持 HTTP/OpenAPI 的 Agent 使用 `https://shenghuo.homes/api/v1`。首次未登录请求会返回 OAuth protected-resource discovery；授权后可读取 `/openapi.json` 和 `/capabilities`，再调用 `/{module}`、`/{module}/{id}`、`/{module}/export`、`/summary/{name}`。写请求用 `Idempotency-Key`，响应携带 `X-Request-Id`。
 
@@ -98,7 +112,7 @@ supabase functions deploy agent-api --use-api --no-verify-jwt
 vercel deploy --prod
 ```
 
-`verify_jwt=false` 只关闭网关校验，函数内的官方用户 JWT middleware 仍强制认证。`MCP_ALLOWED_ORIGINS` 可配置浏览器型 MCP 客户端来源；无 Origin 的原生客户端正常连接。
+`verify_jwt=false` 只关闭网关校验，函数内的 API Key / OAuth 共用入口仍强制认证。`MCP_ALLOWED_ORIGINS` 可配置浏览器型 MCP 客户端来源；无 Origin 的原生客户端正常连接。
 
 新增模块后运行 `deno run scripts/agent-contract.ts` 生成数据库写入白名单迁移；确认所有权、字段和表 RLS 后再发布。MCP 工具和 capability 自动来自注册表，数据库合同采用迁移发布，避免任意客户端扩大权限。
 

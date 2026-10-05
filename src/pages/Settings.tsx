@@ -47,6 +47,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
   { id: "settings-general", zh: "通用", en: "General" },
   { id: "settings-newspaper", zh: "日报", en: "Newspaper" },
   { id: "settings-ai", zh: "AI", en: "AI" },
+  { id: "agent-connections", zh: "Agent 连接", en: "Agent connections" },
   { id: "settings-schedule", zh: "日程", en: "Schedule" },
   { id: "settings-personal", zh: "个性", en: "Personal" },
   { id: "settings-health", zh: "健康·财务", en: "Health · Finance" },
@@ -652,6 +653,8 @@ export default function SettingsPage() {
 
         </section>
 
+        <AgentConnections />
+
         <section id="settings-schedule" className="scroll-mt-24 space-y-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("日程", "Schedule")}</h2>
         {/* Calendar Sync (Apple Calendar subscription) */}
@@ -928,7 +931,6 @@ export default function SettingsPage() {
 
         <section id="settings-data" className="scroll-mt-24 space-y-6">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("数据", "Data")}</h2>
-        <AgentConnections />
         {/* Data Management */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("数据管理", "Data Management")}</CardTitle></CardHeader>

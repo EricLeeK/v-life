@@ -100,9 +100,9 @@ export function buildOpenApi(baseUrl: string, authorizationServer: string) {
     openapi: '3.1.0',
     info: { title: 'V-Life Agent API', version: AGENT_CONTRACT_VERSION },
     servers: [{ url: baseUrl }],
-    security: [{ oauth2: [] }],
+    security: [{ apiKey: [] }, { oauth2: [] }],
     paths,
-    components: { securitySchemes: { oauth2: { type: 'oauth2', flows: { authorizationCode: { authorizationUrl: `${authorizationServer}/authorize`, tokenUrl: `${authorizationServer}/token`, scopes: {} } } } } },
+    components: { securitySchemes: { apiKey: { type: 'http', scheme: 'bearer', bearerFormat: 'V-Life API Key', description: 'Create an API Key in V-Life Settings → Agent connections. Send Authorization: Bearer vlife_…; keys can expire or be revoked.' }, oauth2: { type: 'oauth2', flows: { authorizationCode: { authorizationUrl: `${authorizationServer}/authorize`, tokenUrl: `${authorizationServer}/token`, scopes: {} } } } } },
   };
 }
 
@@ -117,5 +117,5 @@ function pageParameters(module?: ModuleDef) {
 }
 function idempotencyParameter() { return [{ name: 'Idempotency-Key', in: 'header', schema: { type: 'string', maxLength: 200 } }]; }
 function jsonBody(schema: unknown) { return { required: true, content: { 'application/json': { schema } } }; }
-function okResponse() { return { 200: { description: 'Success', content: { 'application/json': { schema: { type: 'object' } } } }, 401: { description: 'OAuth required' }, 403: { description: 'Permission denied' } }; }
+function okResponse() { return { 200: { description: 'Success', content: { 'application/json': { schema: { type: 'object' } } } }, 401: { description: 'API Key or OAuth token required; key may be expired or revoked' }, 403: { description: 'Permission denied' } }; }
 function mutationResponses() { return { ...okResponse(), 400: { description: 'Invalid input' }, 404: { description: 'Record not found' }, 409: { description: 'Conflict' } }; }

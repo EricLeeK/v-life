@@ -1,6 +1,6 @@
 import { CLASSIFICATION_MODULES, CLASSIFICATION_WORKFLOW } from '../_shared/agentClassifications.ts';
 import { McpServer, StreamableHttpTransport } from 'mcp-lite';
-import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.6.0';
+import { withAgentAuth } from '../_shared/agentAuth.ts';
 import { MODULES, agentMetaOf } from '../_shared/moduleRegistry.ts';
 import { createAgentDataService, AgentDataError, type AgentContext } from '../_shared/agentDataService.ts';
 import { AGENT_INSTRUCTIONS, GUIDE_TOPICS, buildAgentGuide, errorRecovery, moduleCanSearch, toolDescription } from '../_shared/agentGuide.ts';
@@ -89,17 +89,10 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  server.resource('vlife://guide',{name:'vlife_agent_guide',description:'V-Life Agent 使用指南：工作流、ID区分、示例、分页、权限与错误恢复。当前授权与业务日期请调用 agent_help。',mimeType:'application/json'},async()=>({contents:[{type:'text',uri:'vlife://guide',mimeType:'application/json',text:JSON.stringify(Object.fromEntries(GUIDE_TOPICS.map(topic=>[topic,buildAgentGuide(topic)])))}]}));
  return server;
 }
-const authenticated=withSupabase({auth:'user'},async(req,auth)=>{
- const claims=auth.jwtClaims;
- if(!claims?.sub||typeof claims.client_id!=='string')return Response.json({error:'OAUTH_TOKEN_REQUIRED'},{status:403});
- const db=auth.supabase as any;
- const {data:grant,error}=await db.from('agent_client_access').select('read_enabled,write_enabled,delete_enabled,revoked_at').eq('user_id',claims.sub).eq('client_id',claims.client_id).maybeSingle();
- if(error||!grant||grant.revoked_at)return Response.json({error:'AGENT_ACCESS_DENIED'},{status:403});
- const ctx:AgentContext={db:db as any,userId:claims.sub,clientId:claims.client_id,requestId:crypto.randomUUID(),permissions:{read:grant.read_enabled===true,write:grant.write_enabled===true,delete:grant.delete_enabled===true}};
+const protectedHandler=withAgentAuth(resource,async(req,ctx)=>{
  const server=serverFor(ctx,req.headers.get('Idempotency-Key'));
  const transport=new StreamableHttpTransport();return transport.bind(server)(req);
 });
-const protectedHandler=withOAuthProtectedResource({resourceServer:resource,authorizationServer:`${url}/auth/v1`},authenticated);
 export async function handleRequest(req:Request){
  const origin=req.headers.get('origin');
  const allowed=(Deno.env.get('MCP_ALLOWED_ORIGINS')??'https://shenghuo.homes,http://localhost:6274,http://localhost:5173').split(',');

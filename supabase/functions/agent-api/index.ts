@@ -1,5 +1,5 @@
 import { buildAgentGuide, GUIDE_TOPICS, errorRecovery, type GuideTopic } from '../_shared/agentGuide.ts';
-import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.6.0';
+import { withAgentAuth } from '../_shared/agentAuth.ts';
 import { createAgentDataService, AgentDataError, type AgentContext, type AgentListOptions } from '../_shared/agentDataService.ts';
 import { buildAgentCapabilities } from '../_shared/agentCapabilities.ts';
 import { buildOpenApi, parseApiRoute, parseApiListOptions } from './apiAdapter.ts';
@@ -9,8 +9,8 @@ import { executeNewspaperOperation } from '../_shared/newspaperOperations.ts';
 import { NewspaperError } from '../_shared/newspaperTypes.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const publicBaseUrl = (Deno.env.get('AGENT_API_PUBLIC_URL') ?? 'https://shenghuo.homes/api/v1').replace(/\/$/, '');
 const authorizationServer = `${supabaseUrl}/auth/v1`;
+const publicBaseUrl = (Deno.env.get('AGENT_API_PUBLIC_URL') ?? 'https://shenghuo.homes/api/v1').replace(/\/$/, '');
 
 function response(body: unknown, status = 200, requestId?: string) {
   return Response.json(body, { status, headers: { 'Cache-Control': 'no-store', ...(requestId ? { 'X-Request-Id': requestId } : {}) } });
@@ -32,22 +32,8 @@ async function body(req: Request) {
   try { return await req.json(); } catch { throw new AgentDataError('INVALID_INPUT', 'Request body must be valid JSON'); }
 }
 
-const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
-  const claims = auth.jwtClaims;
-  if (!claims?.sub || typeof claims.client_id !== 'string') return response({ ok: false, error: { code: 'OAUTH_TOKEN_REQUIRED', message: 'OAuth user token with client_id is required' } }, 403);
-  const db = auth.supabase as any;
-  const { data: grant, error } = await db.from('agent_client_access').select('read_enabled,write_enabled,delete_enabled,revoked_at').eq('user_id', claims.sub).eq('client_id', claims.client_id).maybeSingle();
-  if (error || !grant || grant.revoked_at) return response({ ok: false, error: { code: 'AGENT_ACCESS_DENIED', message: 'Agent access has not been granted or was revoked' } }, 403);
-
-  const requestId = req.headers.get('X-Request-Id')?.slice(0, 200) || crypto.randomUUID();
-  const context: AgentContext = {
-    db,
-    userId: claims.sub,
-    clientId: claims.client_id,
-    requestId,
-    idempotencyKey: req.headers.get('Idempotency-Key') ?? undefined,
-    permissions: { read: grant.read_enabled === true, write: grant.write_enabled === true, delete: grant.delete_enabled === true },
-  };
+const protectedHandler = withAgentAuth(publicBaseUrl, async (req, context) => {
+  const { db, requestId } = context;
   const audit=async(args:Record<string,unknown>)=>{try {const {error}=await db.rpc('agent_log_operation',args);if(error)console.error('agent audit unavailable',requestId);}catch {console.error('agent audit unavailable',requestId);}};
   const service = createAgentDataService(context);
   const url = new URL(req.url);
@@ -106,7 +92,6 @@ const authenticated = withSupabase({ auth: 'user' }, async (req, auth) => {
   }
 });
 
-const protectedHandler = withOAuthProtectedResource({ resourceServer: publicBaseUrl, authorizationServer }, authenticated);
 
 export async function handleRequest(req: Request) {
   const origin = req.headers.get('origin');

@@ -6,6 +6,7 @@
     "npm:@imagemagick/magick-wasm@0.0.43": "0.0.43",
     "npm:@supabase/server@1.6.0": "1.6.0_@supabase+supabase-js@2.116.0_hono@4.13.8",
     "npm:@supabase/supabase-js@2": "2.116.0",
+    "npm:jose@6": "6.2.12",
     "npm:mcp-lite@0.10.0": "0.10.0"
   },
   "jsr": {

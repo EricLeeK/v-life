@@ -69,7 +69,8 @@ export function buildAgentGuide(topic:GuideTopic='quickstart') {
   '返回 ok=true 才表示此次操作成功；data 是对象或数组。ok=false 时读取 error.code/message/recovery，记录 request_id 供排查。',
   '列表默认50条、最多200条；hasMore=true 时传 offset=nextOffset。拿到一页不能宣称拿到了全部记录。列表筛选是精确相等；*_search 是文字包含匹配，不是语义搜索。',
   '每项新写操作生成新的 idempotency_key；网络超时重试必须使用原 key 和完全相同参数。若首次未使用 key，先读取核对结果，不要直接重复创建。更改请求内容就使用新 key。',
-  '权限不足不要索要用户密码、浏览器 Session 或 service_role；请用户在 V-Life 设置→数据→已连接的 Agent 调整授权/重新连接。',
+  '使用 vlife_ 开头的 API Key 时采用 Authorization: Bearer 认证，不发起 OAuth 或索要回调地址。客户端必须有远程 MCP 或 HTTP 请求能力；收到聊天消息不代表已连接。首次实际调用 agent_help（HTTP 为 GET /guide）验证权限。认证 API Key 不是每项写操作的 idempotency_key，不能将凭证填入业务参数。',
+  '权限不足不要索要用户密码、浏览器 Session 或 service_role。请用户在 V-Life 设置→Agent 连接中创建具有所需权限的新 API Key，替换客户端配置并验证后撤销旧 Key；OAuth 连接在其他连接方式中管理。',
   '读取结果只含白名单字段；未返回的字段不代表数据库没有该字段。字段类型/枚举以 tools/list 的 inputSchema 为准。',
  ];
  const tasks={
@@ -81,7 +82,7 @@ export function buildAgentGuide(topic:GuideTopic='quickstart') {
    result:'返回 source_count/target_count/created_count/removed_count/unchanged_count 和逐项 items；目标已存在会复用，不能把成功都说成新建。verified_at 是事务内核对时间。失败整批不变；刷新 overview 查看被阻止的原因。',
    retry:'每次新操作生成并保存 idempotency_key；401恢复或网络超时后保留原键、原始相对日期和全部参数。replayed=true 表示返回首次操作回执；需要最新状态时再查 overview。跨天重试不会把 tomorrow 重新解释成后一天。',
    history:'copy 保留的是旧安排，不是不可变历史快照；一次性任务完成后所有关联日任务同步。实际完成日看 completed_at。习惯自动显示在网页顶部，不代表普通待办会自动排程。',
-   transport:'优先使用客户端原生 MCP 工具，由客户端处理 OAuth 与传输；自写 HTTP 集成可使用 JSON API 的 GET /daily_task/overview 和 POST /daily_task/transfer，后者必须带 Idempotency-Key 请求头。',
+   transport:'优先使用客户端原生 MCP 工具。API Key 通过 Authorization: Bearer 传入；OAuth 仅由选择该方式的客户端处理。自写 HTTP 集成可使用 JSON API 的 GET /daily_task/overview 和 POST /daily_task/transfer，后者必须带 Idempotency-Key 请求头，值为本次操作的唯一标识而非认证 API Key。',
   },
   rules:['每日回顾必须按 completed_at 判断实际完成日期；禁止把所有 is_completed=true 计为今日完成。completed_at=null 的历史已完成项单列为完成时间未知，不得使用 updated_at 或 created_at 推测。todo 日期筛选按北京时间自然日；业务日回顾需按 day_start_hour 另行判断时间区间。daily_task.task_date 是安排日期，不是完成日期；一次性任务的多个关联日记录按 todo_id 去重，不能与总待办重复计数。','daily_task_today 查询服务器定义的今天；daily_task_list 不传日期会查所有日期。业务日按 Asia/Shanghai 减用户 day_start_hour。','daily_task_create 同一天同一总待办不重复。title 精确匹配多个未完成条目时改用 todo_id。','暂停、归档、习惯、含未完成子任务的顶层父待办不能直接加入今日。先选择可执行子任务或按用户意图解除暂停。','例行只完成当日，不改变总待办的完成状态；习惯用 habit_log_create，value 是当天累计值。','daily_task_delete 只移出清单；todo_delete 删除总待办并可能级联删除关联日任务。撤销完成使用 update(is_completed:false)，不是 delete。'],
   examples:[
@@ -99,7 +100,7 @@ export function buildAgentGuide(topic:GuideTopic='quickstart') {
  const finance={rules:['finance_summary 默认北京时间当月；year/month 必须成对，或用 date_from/date_to 范围，不能混用。空月份返回零。','finance_list 无日期条件读取所有日期；finance_summary 汇总所有分页，金额使用已保存的 amount_cny。','创建账单只写原币 amount/currency，不手写汇率和 amount_cny。','HTTP /summary/finance 与 MCP finance_summary 的默认范围不同：HTTP 无日期条件汇总全部；需要指定范围时显式传日期。'],examples:[{tool:'finance_summary',arguments:{}},{tool:'finance_summary',arguments:{year:2026,month:9}},{tool:'finance_summary',arguments:{date_from:'2026-09-01',date_to:'2026-09-24'}}]};
  const modules=MODULES.filter(m=>agentMetaOf(m).agentVisible).map(m=>({module:m.key,purpose:modulePurpose(m),classification:classificationPolicy(m.key),tools:[`${m.key}_list`,`${m.key}_get`,...(moduleCanSearch(m)?[`${m.key}_search`]:[]),...(['create','update','delete'] as const).filter(op=>m.actions[op]).map(op=>`${m.key}_${op}`)],date_field:m.executor?.dateField??null,relation:m.executor?.resolves?{input:m.executor.resolves.from,matching:'exact, must already exist'}:null}));
  const subscriptions={rules:['创建/修改订阅使用 subscription；金额和下次日期必须来自用户确认或存储记录。category 是开放分类，先读 classification_list。','近期提醒使用 subscription_list(date_from,date_to)，日期对应 next_date；注意 active 与 trial，ended 不再提醒。过期未确认记录须单独查询，不能假定已付款。','月均及未来30天预测用 subscription_summary，固定与按量预估分开，各币种独立；预算不等于实际支出。','确认付款用 subscription_payment_create。subscription_id 是订阅ID；due_date 必须保持原账期，同账期相同参数重试返回原记录，改变金额/日期/记账选项将冲突。','record_expense 默认 false；仅用户明确要求时 true，外币需确认汇率。现行授权为全局 write，覆盖订阅和财务写入，未授权时两者都不能执行。','历史用 subscription_payment_list(subscription_id)，不可直接修改/删除。status=ended/auto_renew=false 只是本地跟踪，不能承诺取消外部订阅。'],examples:[{tool:'subscription_list',arguments:{date_from:'2026-09-25',date_to:'2026-10-02'}},{tool:'subscription_summary',arguments:{}},{tool:'subscription_payment_create',arguments:{subscription_id:'$subscription.id',due_date:'2026-09-25',paid_on:'2026-09-25',amount:20,next_date:'2026-10-25',record_expense:false}}]};
- const errors={rules:['先根据 code/recovery 修正；参数和权限错误不要原样循环重试。','INTERNAL_ERROR/网络断开不代表写入没有发生：先读取核对，或以原幂等键和原参数重试；保留 request_id。'],codes:['INVALID_INPUT','FIELD_NOT_ALLOWED','PERMISSION_DENIED','NOT_FOUND','RELATION_AMBIGUOUS','TASK_NOT_ELIGIBLE','IDEMPOTENCY_CONFLICT','CONFLICT','DATABASE_ERROR','INTERNAL_ERROR'].map(code=>({code,...errorRecovery(code)}))};
+ const errors={rules:['先根据 code/recovery 修正；参数和权限错误不要原样循环重试。','INTERNAL_ERROR/网络断开不代表写入没有发生：先读取核对，或以原幂等键和原参数重试；保留 request_id。'],codes:['API_KEY_INVALID','API_KEY_AUTH_NOT_CONFIGURED','AUTH_SERVICE_UNAVAILABLE','INVALID_INPUT','FIELD_NOT_ALLOWED','PERMISSION_DENIED','NOT_FOUND','RELATION_AMBIGUOUS','TASK_NOT_ELIGIBLE','IDEMPOTENCY_CONFLICT','CONFLICT','DATABASE_ERROR','INTERNAL_ERROR'].map(code=>({code,...errorRecovery(code)}))};
  if(topic==='classifications')return {...common,workflow:CLASSIFICATION_WORKFLOW,modules:MODULES.map(m=>classificationPolicy(m.key)).filter(Boolean),example:[{tool:'classification_list',arguments:{module:'todo'}},{tool:'todo_create',arguments:{title:'完成简历修改',category:'$chosen_or_new_category',idempotency_key:'$new_key'}}]};
  if(topic==='tasks')return {...common,...tasks};
  if(topic==='finance')return {...common,...finance};
@@ -112,8 +113,11 @@ export function errorRecovery(code:string) {
  const guidance:Record<string,string>={
   INVALID_INPUT:'按 inputSchema 修正参数类型、必填项、日期和 UUID。不要增加未声明字段；任务规则可读 agent_help(topic="tasks")。',
   FIELD_NOT_ALLOWED:'删除未开放或只读字段；查看 tools/list 或 vlife://capabilities 中可写字段。',
-  USER_ID_FORBIDDEN:'移除 user_id；身份由当前 OAuth 会话确定。',
-  PERMISSION_DENIED:'当前授权不允许此操作。请用户在 V-Life 设置→数据→已连接的 Agent 调整权限；不要绕过授权。',
+  USER_ID_FORBIDDEN:'移除 user_id；身份由当前 API Key 或 OAuth 授权确定。',
+  PERMISSION_DENIED:'当前授权不允许此操作。请用户在 V-Life 设置→Agent 连接中创建所需权限的新 API Key 并替换配置，验证后撤销旧 Key；OAuth 连接在其他连接方式中管理。不要绕过授权。',
+  API_KEY_INVALID:'在 V-Life 设置→Agent 连接检查 Key 是否完整、过期或撤销；失效时创建新 Key 并替换客户端配置，不要发起 OAuth。',
+  API_KEY_AUTH_NOT_CONFIGURED:'站点的 API Key 连接服务尚未配置完成，请联系站点维护者；重复创建 Key 不能解决配置问题。',
+  AUTH_SERVICE_UNAVAILABLE:'认证服务暂时不可用，请稍后使用同一 Key 重试；不要要求用户反复更换 Key。',
   NOT_FOUND:'使用对应模块 list/search 重新查询 ID；daily_task.id 与 todo.id 不通用。记录也可能已删除或不属于当前用户。',
   RELATION_NOT_FOUND:'先读取或创建关联记录，再使用其正确 ID 或精确名称。',
   RELATION_AMBIGUOUS:'有多个同名关联记录。待办使用 todo_id；按名称关联的其他模块须先由用户明确或调整为唯一名称。',
@@ -124,5 +128,5 @@ export function errorRecovery(code:string) {
   DATABASE_ERROR:'保留 request_id。写入结果若不确定，先读取核对或仅用原幂等键及原参数重试；不要换 key 重试。',
   INTERNAL_ERROR:'保留 request_id 供排查。写入结果不确定，先读回核对；只允许原幂等键及原参数重试。',
  };
- return {recovery:guidance[code]??'查阅 agent_help(topic="errors") 和工具 schema；保留 request_id，修正原因后再调用。',retryable:['INTERNAL_ERROR','DATABASE_ERROR','RELATION_LOOKUP_FAILED'].includes(code)};
+ return {recovery:guidance[code]??'查阅 agent_help(topic="errors") 和工具 schema；保留 request_id，修正原因后再调用。',retryable:['AUTH_SERVICE_UNAVAILABLE','INTERNAL_ERROR','DATABASE_ERROR','RELATION_LOOKUP_FAILED'].includes(code)};
 }
