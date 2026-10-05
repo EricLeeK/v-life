@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>边缘函数 · 为什么叫边缘</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;600;800&family=Noto+Serif+SC:wght@600;700&family=Red+Hat+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #152238;
+      --ink: #1a1712;
+      --paper: #efe6d4;
+      --paper-2: #e4d8c0;
+      --rule: #cbbda3;
+      --magenta: #c43d8a;
+      --cyan: #2aa9c4;
+      --gold: #d4a24a;
+      --foam: #f4efe6;
+      --muted: #5c5346;
+      --focus: #d4a24a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Albert Sans", "Noto Sans SC", sans-serif;
+      font-size: 17px;
+      line-height: 1.55;
+    }
+    button, select { font: inherit; }
+    a { color: #1a6f82; }
+    :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+    .skip { position: absolute; left: -999px; top: 8px; }
+    .skip:focus { left: 8px; background: var(--navy); color: var(--foam); padding: 8px 12px; z-index: 20; }
+
+    .hero {
+      background: var(--navy);
+      color: var(--foam);
+      padding: 36px 28px 0;
+    }
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 700;
+      font-size: clamp(2rem, 4vw, 3.1rem);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      margin: 0 0 12px;
+    }
+    .lead {
+      margin: 0 0 22px;
+      max-width: 62ch;
+      color: #d7cbb6;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+    .mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border: 1px solid #3b5074;
+      background: #102033;
+    }
+    .mode button {
+      border: 0;
+      background: transparent;
+      color: #c9c0b0;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .mode button[aria-pressed="true"] {
+      background: var(--paper);
+      color: var(--ink);
+    }
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.78rem;
+      color: #b7ad9c;
+      font-weight: 600;
+    }
+    select, .check {
+      background: #102033;
+      color: var(--foam);
+      border: 1px solid #3b5074;
+      padding: 8px 10px;
+    }
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #d7cbb6;
+      font-size: 0.92rem;
+      font-weight: 400;
+      cursor: pointer;
+    }
+    .check input { accent-color: var(--gold); }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+      font-size: 0.88rem;
+      color: #d7cbb6;
+      margin-bottom: 8px;
+    }
+    .swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 6px;
+      vertical-align: -1px;
+    }
+    .swatch.gold { background: var(--gold); }
+    .swatch.cyan { background: var(--cyan); }
+    .swatch.magenta { background: var(--magenta); }
+
+    .map-wrap {
+      background: #102033;
+      border: 1px solid #3b5074;
+    }
+    .map-wrap svg { display: block; width: 100%; height: auto; }
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      background: #3b5074;
+      font-family: "Red Hat Mono", monospace;
+      font-size: 12px;
+    }
+    .hud div { background: #102033; padding: 10px 12px; }
+    .hud span {
+      display: block;
+      color: #8f9bb3;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .hud strong { font-weight: 600; color: var(--foam); font-size: 13px; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 56px 28px 0; }
+    section { margin-bottom: 56px; }
+    h2 {
+      font-family: "Noto Serif SC", serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      line-height: 1.2;
+      margin: 0 0 12px;
+      letter-spacing: -0.02em;
+    }
+    .measure { max-width: 68ch; }
+    .measure p { margin: 0 0 1em; color: #3a3328; }
+
+    .cut {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 36px;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .cut svg { width: 100%; height: auto; display: block; }
+    .cut figcaption { font-size: 0.92rem; color: var(--muted); margin-top: 8px; }
+    .layer-note { border-top: 1px solid var(--rule); padding-top: 16px; min-height: 10rem; }
+    .layer-note h3 { font-family: "Noto Serif SC", serif; margin: 0 0 8px; font-size: 1.25rem; }
+    .layer-note p { margin: 0 0 1em; color: #3a3328; }
+    .keys { font-size: 0.88rem; color: var(--muted); }
+
+    .where {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+      margin-top: 24px;
+    }
+    .where article { padding: 22px 20px 26px; }
+    .where article + article { border-left: 1px solid var(--rule); }
+    .where h3 { font-family: "Noto Serif SC", serif; margin: 0 0 10px; font-size: 1.2rem; }
+    .where p { margin: 0 0 12px; color: #3a3328; font-size: 0.95rem; }
+    .where ul { margin: 0; padding-left: 1.1em; color: #3a3328; }
+    code {
+      font-family: "Red Hat Mono", monospace;
+      font-size: 0.84em;
+      background: var(--paper-2);
+      padding: 0 4px;
+    }
+
+    .life {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-top: 24px;
+      border: 1px solid var(--ink);
+    }
+    .life ol { display: contents; margin: 0; padding: 0; }
+    .life li { list-style: none; padding: 16px 14px 18px; }
+    .life li + li { border-left: 1px solid var(--rule); }
+    .life strong { display: block; font-family: "Noto Serif SC", serif; margin-bottom: 8px; }
+    .life p { margin: 0; font-size: 0.92rem; color: #3a3328; }
+
+    .vlife { margin-top: 24px; border: 1px solid var(--ink); }
+    .path { width: 100%; height: auto; display: block; background: #f7f1e4; }
+    .vlife .cap { padding: 18px 22px 22px; }
+
+    .glossary { width: 100%; border-collapse: collapse; font-size: 0.95rem; margin-top: 20px; }
+    .glossary th, .glossary td {
+      text-align: left;
+      vertical-align: top;
+      padding: 10px 12px 10px 0;
+      border-bottom: 1px solid var(--rule);
+    }
+    .glossary th { font-family: "Noto Serif SC", serif; font-weight: 700; width: 22%; }
+
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+    .ghost {
+      background: transparent;
+      border: 1px solid var(--ink);
+      color: var(--ink);
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 28px 64px;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 920px) {
+      .hud, .cut, .where, .life { grid-template-columns: 1fr; }
+      .where article + article, .life li + li { border-left: 0; border-top: 1px solid var(--rule); }
+    }
+  </style>
+</head>
+<body>
+  <!--
+    THESIS: 边缘是地壳，不是地核。用静态 SVG 对照路径，不用三维、不播动画。
+    OWN-WORLD: 夜航图海军蓝舞台 + 米纸正文。
+    STORY: 切换模式立刻看见远近，再点切面看层次，最后对上 V-Life 部署。
+    FIRST VIEWPORT: 标题、三键模式、城市、平面航图、四格数字。
+    FORM: 独立教学页。
+  -->
+  <a class="skip" href="#read">跳到文字讲解</a>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>边缘，是地壳，不是地核。</h1>
+      <p class="lead">函数仍是服务端代码。变的是执行位置：从一座远方机房，变成环绕用户的一圈就近节点。切换模式，图上的路径立刻换——品红走中心，青走最近的边缘。</p>
+      <div class="controls">
+        <div class="mode" role="group" aria-label="路由模式">
+          <button type="button" data-mode="core" aria-pressed="false">只走中心</button>
+          <button type="button" data-mode="edge" aria-pressed="false">只走边缘</button>
+          <button type="button" data-mode="compare" aria-pressed="true">对照</button>
+        </div>
+        <label class="field">你在
+          <select id="city"></select>
+        </label>
+        <label class="check"><input type="checkbox" id="need-db" /> 函数还要读数据库</label>
+      </div>
+      <div class="legend">
+        <div><i class="swatch magenta"></i><b>品红</b> 你 → 唯一区域机房</div>
+        <div><i class="swatch cyan"></i><b>青</b> 你 → 最近执行点</div>
+        <div><i class="swatch gold"></i><b>金虚线</b> 边缘仍要回核读库</div>
+      </div>
+      <div class="map-wrap">
+        <svg id="map" viewBox="0 0 960 460" role="img" aria-label="平面航图：城市、边缘节点与中心机房">
+          <rect width="960" height="460" fill="#102033" />
+          <g id="graticule" fill="none" stroke="#3b5074" stroke-width="1"></g>
+          <g id="routes" fill="none"></g>
+          <g id="nodes"></g>
+          <g id="labels" font-family="Noto Serif SC, serif" font-size="13" fill="#efe6d4"></g>
+        </svg>
+        <div class="hud">
+          <div><span>路径</span><strong id="m-path">—</strong></div>
+          <div><span>距离</span><strong id="m-dist">—</strong></div>
+          <div><span>光在光纤里</span><strong id="m-light">—</strong></div>
+          <div><span>你看到的等待</span><strong id="m-wait">—</strong></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="read">
+    <section>
+      <h2>这个词为什么叫「边缘」</h2>
+      <div class="measure">
+        <p>互联网把机房分成两层：<b>核</b>是少数几个大区域，数据、密钥、模型网关往往集中在这里；<b>边</b>是 CDN 那种铺开的小节点，离你家最近的那一跳。边缘函数，就是把一小段后端放到这些节点上，有请求才醒，跑完就睡。</p>
+        <p>点切面里的每一层。名称来自网络拓扑，不是营销：你站在地表，边缘贴着你，中心在球心里。</p>
+      </div>
+      <div class="cut">
+        <figure>
+          <svg id="earth-cut" viewBox="0 0 640 460" role="img" aria-label="地球切面：地表、地壳边缘、地幔骨干、地核中心">
+            <rect width="640" height="460" fill="#efe6d4" />
+            <g transform="translate(250 230)">
+              <circle r="70" fill="#d4a24a" fill-opacity=".92" stroke="#1a1712" stroke-width="1.5" pointer-events="none" />
+              <circle r="132" fill="#c4a574" fill-opacity=".35" stroke="#1a1712" stroke-width="1.2" pointer-events="none" />
+              <circle r="176" fill="#2aa9c4" fill-opacity=".16" stroke="#2aa9c4" stroke-width="8" pointer-events="none" />
+              <circle r="176" fill="none" stroke="#1a1712" stroke-width="1.2" pointer-events="none" />
+              <circle data-layer="core" r="70" fill="transparent" style="cursor:pointer" />
+              <circle data-layer="mantle" r="101" fill="none" stroke="transparent" stroke-width="62" style="cursor:pointer" />
+              <circle data-layer="crust" r="154" fill="none" stroke="transparent" stroke-width="44" style="cursor:pointer" />
+              <g data-layer="surface" style="cursor:pointer">
+                <circle cx="0" cy="-188" r="18" fill="transparent" />
+                <circle cx="0" cy="-188" r="9" fill="#1a1712" />
+                <circle cx="0" cy="-198" r="5" fill="#1a1712" />
+              </g>
+              <path id="cut-core" d="M0 -176 Q 90 -70 0 0" fill="none" stroke="#c43d8a" stroke-width="3" stroke-dasharray="6 5" />
+              <path id="cut-edge" d="M0 -176 A 176 176 0 0 1 118 -130" fill="none" stroke="#2aa9c4" stroke-width="5" />
+              <path id="cut-db" d="M118 -130 Q 80 -40 0 0" fill="none" stroke="#d4a24a" stroke-width="2" stroke-dasharray="5 4" />
+            </g>
+            <g font-family="Noto Serif SC, serif" fill="#1a1712" style="cursor:pointer">
+              <text data-layer="surface" x="455" y="86" font-size="18">地表 · 你的浏览器</text>
+              <text data-layer="crust" x="455" y="168" font-size="18" fill="#1a6f82">地壳 · 边缘节点</text>
+              <text data-layer="mantle" x="455" y="248" font-size="18">地幔 · 骨干网</text>
+              <text data-layer="core" x="455" y="328" font-size="18" fill="#8a6a24">地核 · 中心区域</text>
+            </g>
+            <g font-family="Albert Sans, sans-serif" font-size="12" fill="#5c5346" style="cursor:pointer">
+              <text data-layer="surface" x="455" y="106">点这里：页面、本地状态</text>
+              <text data-layer="crust" x="455" y="188">点这里：边缘函数执行</text>
+              <text data-layer="mantle" x="455" y="268">只传，不跑你的业务代码</text>
+              <text data-layer="core" x="455" y="348">数据库、对象存储常在这</text>
+            </g>
+          </svg>
+          <figcaption>切面是比喻：边缘节点并不镶在地壳上，但「贴着用户、环绕核」是对的。切面里的路径随上方模式切换。</figcaption>
+        </figure>
+        <div class="layer-note" id="layer-note">
+          <h3>地壳 · 边缘节点</h3>
+          <p>请求先到达离你最近的接入点。边缘函数在这一层醒来：验登录、拼提示词、调模型。密钥留在服务端，浏览器看不见。</p>
+          <p class="keys">键盘 1 地表 · 2 地壳 · 3 地幔 · 4 地核。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>三段代码，住在三个地方</h2>
+      <div class="measure">
+        <p>「无服务器」不是没有机器，是你不租整台机、不保活进程。有人点一下，平台才在某个节点拉起你的函数。V-Life 的 AI 助手正好跨过这三层。</p>
+      </div>
+      <div class="where">
+        <article>
+          <h3>浏览器</h3>
+          <p>用户的电脑或手机。改这里，<code>npm run dev</code> 立刻能看见。</p>
+          <ul>
+            <li><code>AIChatPanel.tsx</code> 画气泡、点确认</li>
+            <li>不能放模型密钥</li>
+            <li>只能 <code>invoke("ai-chat")</code></li>
+          </ul>
+        </article>
+        <article>
+          <h3>边缘函数</h3>
+          <p>全球节点上的一小段 Deno 程序。改这里必须部署，本地前端刷新不够。</p>
+          <ul>
+            <li><code>supabase/functions/ai-chat</code></li>
+            <li>提示词、词表、JSON 解析</li>
+            <li>验 JWT，再去调模型</li>
+          </ul>
+        </article>
+        <article>
+          <h3>中心数据</h3>
+          <p>某一个区域里的 Postgres 与密钥。边缘跑完逻辑，仍可能回核读写。</p>
+          <ul>
+            <li>todos、分类、登录态</li>
+            <li>Supabase 项目所在区域</li>
+            <li>模型 API 也是另一座「核」</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>一次请求的一生</h2>
+      <div class="measure">
+        <p>时延不是单单一跳。光纤传播往往只有几十毫秒；冷启动、模型推理才是大头。边缘赢在「传播 + 就近唤醒」，不保证模型本身变快。</p>
+      </div>
+      <div class="life">
+        <ol>
+          <li>
+            <strong>写进仓库</strong>
+            <p>函数是普通文件。和前端一起版本管理，但运行时不在 Vite 里。</p>
+          </li>
+          <li>
+            <strong>部署分发</strong>
+            <p><code>functions deploy</code> 把同一份代码推到各边缘节点。版本号会跳。</p>
+          </li>
+          <li>
+            <strong>请求打到近处</strong>
+            <p>DNS / Anycast 把用户带到最近的 PoP，而不是固定飞去美国。</p>
+          </li>
+          <li>
+            <strong>冷启动或热启动</strong>
+            <p>很久没人用，先醒进程（冷）；刚有人用过，就直接跑（热）。</p>
+          </li>
+          <li>
+            <strong>回核或返回</strong>
+            <p>只算逻辑，边缘就够。要查库、调模型，再从边缘连到对应的核。</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section>
+      <h2>对上你刚部署的那一次</h2>
+      <div class="measure">
+        <p>所以改提示词却「刷新没用」：浏览器只托管了调用按钮。真正拼词表、挡 JSON 泄漏的代码，已经印在边缘节点上。你部署的是地壳里的那一层。</p>
+      </div>
+      <div class="vlife">
+        <svg class="path" viewBox="0 0 1000 220" role="img" aria-label="V-Life 请求路径：浏览器到边缘函数再到数据库与模型">
+          <rect width="1000" height="220" fill="#f7f1e4" />
+          <g font-family="Noto Serif SC, serif" font-size="16" fill="#1a1712">
+            <rect x="30" y="70" width="160" height="80" fill="none" stroke="#1a1712" />
+            <text x="110" y="104" text-anchor="middle">你的浏览器</text>
+            <text x="110" y="128" text-anchor="middle" font-family="Red Hat Mono, monospace" font-size="11">AIChatPanel</text>
+            <rect x="280" y="70" width="200" height="80" fill="#d8f3f7" stroke="#2aa9c4" stroke-width="2" />
+            <text x="380" y="104" text-anchor="middle">边缘函数</text>
+            <text x="380" y="128" text-anchor="middle" font-family="Red Hat Mono, monospace" font-size="11">ai-chat</text>
+            <rect x="580" y="28" width="180" height="64" fill="#f3e4bf" stroke="#d4a24a" stroke-width="2" />
+            <text x="670" y="56" text-anchor="middle">Postgres</text>
+            <text x="670" y="76" text-anchor="middle" font-family="Red Hat Mono, monospace" font-size="11">某一个区域</text>
+            <rect x="580" y="128" width="180" height="64" fill="#f3e4bf" stroke="#d4a24a" stroke-width="2" />
+            <text x="670" y="156" text-anchor="middle">模型 API</text>
+            <text x="670" y="176" text-anchor="middle" font-family="Red Hat Mono, monospace" font-size="11">另一座核</text>
+            <rect x="810" y="70" width="160" height="80" fill="none" stroke="#1a1712" />
+            <text x="890" y="104" text-anchor="middle">气泡回你</text>
+            <text x="890" y="128" text-anchor="middle" font-family="Red Hat Mono, monospace" font-size="11">summary</text>
+          </g>
+          <g fill="none" stroke="#1a1712" stroke-width="1.6" marker-end="url(#arr)">
+            <defs>
+              <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0 0 L8 4 L0 8 Z" fill="#1a1712" />
+              </marker>
+            </defs>
+            <path d="M190 110 H278" />
+            <path d="M480 96 H578" />
+            <path d="M480 124 H578" />
+            <path d="M760 110 H808" />
+          </g>
+        </svg>
+        <div class="cap measure">
+          <p style="margin:0 0 8px">前端改完即可预览；<code>parseAgentChat</code>、<code>userVocab</code>、系统提示词必须 <code>supabase functions deploy ai-chat</code> 之后，用户打到的才是新地壳。</p>
+          <p style="margin:0;color:#5c5346;font-size:.92rem">图中时延是教学用的光纤估算，不含排队、TLS 与模型推理，不能当基准测试。</p>
+        </div>
+      </div>
+      <table class="glossary">
+        <thead>
+          <tr><th>词</th><th>在这页里的意思</th></tr>
+        </thead>
+        <tbody>
+          <tr><th>边缘 Edge</th><td>拓扑上靠近用户的一层，不是「前沿科技」的形容词。</td></tr>
+          <tr><th>PoP</th><td>Point of Presence，一个具体的边缘接入/执行点。</td></tr>
+          <tr><th>区域 Region</th><td>中心机房所在的大区。数据库通常钉在一个区域。</td></tr>
+          <tr><th>边缘函数</th><td>部署到 PoP 上、按请求调用的后端函数。Supabase 用 Deno 跑。</td></tr>
+          <tr><th>冷启动</th><td>节点上还没有热着的实例，第一次要把运行时拉起来。</td></tr>
+          <tr><th>Anycast</th><td>同一个地址，路由器把你送到拓扑上近的那台。</td></tr>
+        </tbody>
+      </table>
+      <div class="toolbar">
+        <button class="ghost" type="button" id="copy-md">复制这份讲义为 Markdown</button>
+        <span id="copy-status" aria-live="polite"></span>
+      </div>
+    </section>
+  </main>
+  <footer>示意距离用大圆航线；光纤按约 20 万 km/s。本页只有 SVG，无三维、无播放。V-Life 内部教学页。</footer>
+
+  <script>
+    const CITIES = [
+      { id: "shanghai", name: "上海", lat: 31.23, lon: 121.47 },
+      { id: "tokyo", name: "东京", lat: 35.68, lon: 139.69 },
+      { id: "singapore", name: "新加坡", lat: 1.35, lon: 103.82 },
+      { id: "sf", name: "旧金山", lat: 37.77, lon: -122.42 },
+      { id: "london", name: "伦敦", lat: 51.51, lon: -0.13 },
+    ];
+    const POPS = [
+      { name: "东京", lat: 35.68, lon: 139.69 },
+      { name: "新加坡", lat: 1.35, lon: 103.82 },
+      { name: "香港", lat: 22.32, lon: 114.17 },
+      { name: "孟买", lat: 19.08, lon: 72.88 },
+      { name: "法兰克福", lat: 50.11, lon: 8.68 },
+      { name: "弗吉尼亚", lat: 38.13, lon: -78.45 },
+      { name: "圣保罗", lat: -23.55, lon: -46.63 },
+      { name: "悉尼", lat: -33.87, lon: 151.21 },
+    ];
+    const CORE = { name: "弗吉尼亚", lat: 38.13, lon: -78.45 };
+    const FIBER_KM_PER_MS = 200;
+    const MAP = { x0: 70, y0: 40, w: 820, h: 380 };
+
+    const state = { mode: "compare", cityId: "shanghai", needDb: false };
+
+    const citySel = document.getElementById("city");
+    CITIES.forEach((c) => {
+      const o = document.createElement("option");
+      o.value = c.id;
+      o.textContent = c.name;
+      citySel.appendChild(o);
+    });
+
+    const layers = {
+      surface: {
+        title: "地表 · 你的浏览器",
+        body: "页面、点击、本地状态都在这里。它很快，但看不到密钥，也不能直接信任它提交的「我是谁」。",
+      },
+      crust: {
+        title: "地壳 · 边缘节点",
+        body: "离你最近的执行点。边缘函数在这一层醒来：验登录、拼提示词、挡异常 JSON。这就是「边缘」二字的位置。",
+      },
+      mantle: {
+        title: "地幔 · 骨干网",
+        body: "海底光缆和骨干路由器。它们只负责传比特，不运行你的业务函数。时延里的「光在光纤里」主要花在这一层。",
+      },
+      core: {
+        title: "地核 · 中心区域",
+        body: "少数大机房。Postgres、对象存储、不少模型网关钉在某一个核。边缘可以近，数据仍可能在核里。",
+      },
+    };
+    const note = document.getElementById("layer-note");
+    function showLayer(key) {
+      const L = layers[key];
+      note.innerHTML = `<h3>${L.title}</h3><p>${L.body}</p><p class="keys">键盘 1 地表 · 2 地壳 · 3 地幔 · 4 地核。</p>`;
+    }
+    document.getElementById("earth-cut").addEventListener("click", (e) => {
+      const hit = e.target.closest("[data-layer]");
+      if (hit) showLayer(hit.dataset.layer);
+    });
+    showLayer("crust");
+
+    function haversine(a, b) {
+      const toR = (d) => (d * Math.PI) / 180;
+      const dLat = toR(b.lat - a.lat);
+      const dLon = toR(b.lon - a.lon);
+      const la1 = toR(a.lat);
+      const la2 = toR(b.lat);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+      return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+    }
+    function city() { return CITIES.find((c) => c.id === state.cityId); }
+    function nearestPop(from) {
+      return POPS.reduce((best, p) => {
+        const d = haversine(from, p);
+        return !best || d < best.d ? { pop: p, d } : best;
+      }, null);
+    }
+    function lightMs(km) { return (km / FIBER_KM_PER_MS) * 2 * 1.45; }
+    function xy(lat, lon) {
+      return {
+        x: MAP.x0 + ((lon + 180) / 360) * MAP.w,
+        y: MAP.y0 + ((90 - lat) / 180) * MAP.h,
+      };
+    }
+    function arc(a, b, bulge) {
+      const pa = xy(a.lat, a.lon);
+      const pb = xy(b.lat, b.lon);
+      const mx = (pa.x + pb.x) / 2;
+      const my = (pa.y + pb.y) / 2;
+      const dx = pb.x - pa.x;
+      const dy = pb.y - pa.y;
+      const len = Math.hypot(-dy, dx) || 1;
+      return `M${pa.x.toFixed(1)},${pa.y.toFixed(1)} Q${(mx + (-dy / len) * bulge).toFixed(1)},${(my + (dx / len) * bulge).toFixed(1)} ${pb.x.toFixed(1)},${pb.y.toFixed(1)}`;
+    }
+    function el(name, attrs, text) {
+      const n = document.createElementNS("http://www.w3.org/2000/svg", name);
+      Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v));
+      if (text) n.textContent = text;
+      return n;
+    }
+
+    (function drawGrid() {
+      const g = document.getElementById("graticule");
+      for (let lon = -180; lon <= 180; lon += 30) {
+        const a = xy(80, lon);
+        const b = xy(-80, lon);
+        g.appendChild(el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
+      }
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const a = xy(lat, -180);
+        const b = xy(lat, 180);
+        g.appendChild(el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
+      }
+      g.appendChild(el("rect", { x: MAP.x0, y: MAP.y0, width: MAP.w, height: MAP.h, stroke: "#8aa0c2" }));
+    })();
+
+    function draw() {
+      const from = city();
+      const near = nearestPop(from);
+      const coreKm = haversine(from, CORE);
+      const edgeKm = near.d;
+      const coreMs = lightMs(coreKm);
+      const edgeMs = lightMs(edgeKm);
+      const dbExtra = state.needDb ? lightMs(haversine(near.pop, CORE)) : 0;
+      const exec = 40;
+      const cold = 180;
+      const showCore = state.mode === "core" || state.mode === "compare";
+      const showEdge = state.mode === "edge" || state.mode === "compare";
+
+      const routes = document.getElementById("routes");
+      const nodes = document.getElementById("nodes");
+      const labels = document.getElementById("labels");
+      routes.replaceChildren();
+      nodes.replaceChildren();
+      labels.replaceChildren();
+
+      if (showCore) {
+        routes.appendChild(el("path", { d: arc(from, CORE, 48), stroke: "#c43d8a", "stroke-width": "4" }));
+      }
+      if (showEdge) {
+        routes.appendChild(el("path", { d: arc(from, near.pop, 22), stroke: "#2aa9c4", "stroke-width": "5" }));
+        if (state.needDb) {
+          routes.appendChild(el("path", {
+            d: arc(near.pop, CORE, 36),
+            stroke: "#d4a24a",
+            "stroke-width": "2.5",
+            "stroke-dasharray": "7 5",
+          }));
+        }
+      }
+
+      POPS.forEach((p) => {
+        const pt = xy(p.lat, p.lon);
+        nodes.appendChild(el("circle", { cx: pt.x, cy: pt.y, r: 5, fill: "#2aa9c4" }));
+      });
+      const corePt = xy(CORE.lat, CORE.lon);
+      nodes.appendChild(el("circle", { cx: corePt.x, cy: corePt.y, r: 8, fill: "#d4a24a", stroke: "#efe6d4", "stroke-width": "2" }));
+      const you = xy(from.lat, from.lon);
+      nodes.appendChild(el("circle", { cx: you.x, cy: you.y, r: 8, fill: "#efe6d4", stroke: "#1a1712", "stroke-width": "2" }));
+
+      labels.appendChild(el("text", { x: you.x + 10, y: you.y - 10 }, `你 · ${from.name}`));
+      labels.appendChild(el("text", { x: corePt.x + 10, y: corePt.y + 18, fill: "#d4a24a" }, "中心 · 弗吉尼亚"));
+      if (showEdge) {
+        const np = xy(near.pop.lat, near.pop.lon);
+        labels.appendChild(el("text", { x: np.x + 10, y: np.y + 18, fill: "#2aa9c4" }, `最近边缘 · ${near.pop.name}`));
+      }
+
+      document.getElementById("cut-core").style.display = showCore ? "" : "none";
+      document.getElementById("cut-edge").style.display = showEdge ? "" : "none";
+      document.getElementById("cut-db").style.display = showEdge && state.needDb ? "" : "none";
+
+      if (state.mode === "core") {
+        document.getElementById("m-path").textContent = `${from.name} → ${CORE.name}`;
+        document.getElementById("m-dist").textContent = `${Math.round(coreKm)} km`;
+        document.getElementById("m-light").textContent = `往返约 ${Math.round(coreMs)} ms`;
+        document.getElementById("m-wait").textContent = `传播 ${Math.round(coreMs)} + 执行 ${exec} + 冷启动 ${cold} ≈ ${Math.round(coreMs + exec + cold)} ms`;
+      } else if (state.mode === "edge") {
+        document.getElementById("m-path").textContent = `${from.name} → ${near.pop.name}${state.needDb ? " → 再回核读库" : ""}`;
+        document.getElementById("m-dist").textContent = `${Math.round(edgeKm)} km` + (state.needDb ? ` + ${Math.round(haversine(near.pop, CORE))} km` : "");
+        document.getElementById("m-light").textContent = `往返约 ${Math.round(edgeMs + dbExtra)} ms`;
+        document.getElementById("m-wait").textContent = `传播 ${Math.round(edgeMs + dbExtra)} + 执行 ${exec} + 冷启动 ${cold} ≈ ${Math.round(edgeMs + dbExtra + exec + cold)} ms`;
+      } else {
+        document.getElementById("m-path").textContent = `中心 ${Math.round(coreKm)} km vs 边缘 ${Math.round(edgeKm)} km`;
+        document.getElementById("m-dist").textContent = `近了 ${Math.round(coreKm - edgeKm)} km`;
+        document.getElementById("m-light").textContent = `光纤 ${Math.round(coreMs)} ms vs ${Math.round(edgeMs)} ms`;
+        document.getElementById("m-wait").textContent = state.needDb
+          ? `读库后边缘仍要再连核 +${Math.round(dbExtra)} ms`
+          : "青线短，品红线长";
+      }
+    }
+
+    document.querySelectorAll(".mode button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.mode = btn.dataset.mode;
+        document.querySelectorAll(".mode button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        draw();
+      });
+    });
+    citySel.addEventListener("change", () => { state.cityId = citySel.value; draw(); });
+    document.getElementById("need-db").addEventListener("change", (e) => { state.needDb = e.target.checked; draw(); });
+    window.addEventListener("keydown", (e) => {
+      if (e.target.matches("input, select, textarea, button")) return;
+      const map = { Digit1: "surface", Digit2: "crust", Digit3: "mantle", Digit4: "core" };
+      if (map[e.code]) showLayer(map[e.code]);
+    });
+    draw();
+
+    const MD = `# 边缘函数
+
+边缘不是更酷的服务器，是地壳：代码在离你最近的那一层执行。
+
+- 浏览器：页面与调用。V-Life 里是 AIChatPanel，\`npm run dev\` 就能预览。
+- 边缘函数：验登录、提示词、词表。必须 \`supabase functions deploy\`。
+- 中心数据：Postgres 与模型 API 仍常在某一个区域。
+
+光纤示意：距离 / 20万km/s × 往返 × 绕线系数。不含冷启动与模型推理。`;
+    document.getElementById("copy-md").addEventListener("click", async () => {
+      const status = document.getElementById("copy-status");
+      try {
+        await navigator.clipboard.writeText(MD);
+        status.textContent = "已复制";
+      } catch {
+        status.textContent = "复制失败，请手动选中讲义";
+      }
+    });
+  </script>
+</body>
+</html>

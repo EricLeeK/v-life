@@ -1,4 +1,5 @@
 import {
+  Newspaper,
   LayoutDashboard,
   Carrot,
   Package,
@@ -15,15 +16,17 @@ import {
   Kanban,
   BookOpen,
   ShoppingBag,
-  Compass,
   Sparkles,
   GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useId } from "react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { motionTokens } from "@/lib/motion-tokens";
 import { LangToggle } from "@/components/LangToggle";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { useLang } from "@/contexts/LanguageContext";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/hooks/useData";
 import { useDemoMode } from "@/contexts/DemoModeContext";
@@ -32,6 +35,7 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -41,49 +45,73 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
+  const groupId = useId();
+  const reduced = useReducedMotion();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const navigate = useNavigate();
   const { signOut } = useAuth();
-  const { isDemo, exitDemo } = useDemoMode();
+  const { isDemo } = useDemoMode();
   const { t } = useLang();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
   const focusMode = (settings as any)?.app_focus_mode || "full";
 
-  const mainItems = [
-    { title: t("首页概览", "Dashboard"), url: "/", icon: LayoutDashboard },
-    { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
-    { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },
-    { title: t("日程计划", "Schedule"), url: "/schedule", icon: CalendarDays },
-    { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },
-    { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
-    { title: t("待办事项", "To-Do"), url: "/todos", icon: CheckSquare },
-    { title: t("今日待办", "Today's Todo"), url: "/today", icon: CalendarCheck },
-    { title: t("项目管理", "Projects"), url: "/projects", icon: Kanban },
-    { title: t("目标", "Goals"), url: "/goals", icon: Target },
-    { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
-    { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
-    { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
-    { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
-    { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
+  /* Groups mirror the ⌘K palette's taxonomy (今天/生活/成长) so both
+     navigations teach the same mental model. */
+  const navGroups: Array<{ label: string; items: Array<{ title: string; url: string; icon: React.ElementType }> }> = [
+    {
+      label: t("今天", "Today"),
+      items: [
+        { title: t("首页概览", "Dashboard"), url: "/", icon: LayoutDashboard },
+        { title: t("日程计划", "Schedule"), url: "/schedule", icon: CalendarDays },
+        { title: t("待办事项", "To-Dos"), url: "/todos", icon: CheckSquare },
+        { title: t("今日待办", "Today's Todo"), url: "/today", icon: CalendarCheck },
+      ],
+    },
+    {
+      label: t("生活", "Life"),
+      items: [
+        { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
+        { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },
+        { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
+        { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },
+        { title: t("生活日报", "Newspapers"), url: "/newspapers", icon: Newspaper },
+      ],
+    },
+    {
+      label: t("成长", "Growth"),
+      items: [
+        { title: t("项目管理", "Projects"), url: "/projects", icon: Kanban },
+        { title: t("目标", "Goals"), url: "/goals", icon: Target },
+        { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
+        { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
+        { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
+        { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
+        { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
+      ],
+    },
   ];
 
-  const visibleItems = mainItems.filter((item) => {
-    if (focusMode === "civil_service") {
-      return item.url === "/civil-service";
-    }
-    const key = item.url.replace("/", "");
-    return !hiddenFeatures.includes(key);
-  });
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        if (focusMode === "civil_service") {
+          return item.url === "/civil-service";
+        }
+        const key = item.url.replace("/", "");
+        return !hiddenFeatures.includes(key);
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <Sidebar
       collapsible="icon"
       role="navigation"
       aria-label={t("主导航", "Main navigation")}
-      className="border-r border-border bg-card"
+      className={`isolate border-r border-border bg-background ${isDemo ? "md:top-10 md:h-[calc(100svh-2.5rem)]" : ""}`}
     >
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
@@ -96,42 +124,52 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {visibleItems.map((item) => (
-                <SidebarMenuItem key={item.url}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === "/"}
-                      className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
-                      activeClassName="bg-muted text-foreground font-medium"
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <LayoutGroup id={groupId}>
+      <SidebarContent className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {visibleGroups.map((group) => (
+          <SidebarGroup key={group.label} className="py-1">
+            <SidebarGroupLabel className="text-[11px] font-medium tracking-wide">{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.url}>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <NavLink
+                        to={item.url}
+                        end={item.url === "/"}
+                        className="relative text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                        activeClassName="text-foreground font-medium"
+                      >
+                        {({ isActive }) => <>
+                        {isActive && <motion.span aria-hidden="true" layoutId="sidebar-active" className="absolute inset-0 z-0 rounded-md bg-muted" transition={reduced ? { duration: 0 } : motionTokens.spring.responsive} />}
+                        <item.icon className="relative z-10 h-4 w-4 shrink-0" />
+                        {!collapsed && <span className="relative z-10">{item.title}</span>}
+                        </>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-border">
         <SidebarMenu>
           <SidebarMenuItem>
             {POINTS_FEATURE_ENABLED && focusMode !== "civil_service" && (
               <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
                 <NavLink
                   to="/shop"
-                  className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
-                  activeClassName="bg-muted text-foreground font-medium"
+                  className="relative text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                  activeClassName="text-foreground font-medium"
                 >
-                  <ShoppingBag className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{t("商店", "Shop")}</span>}
+                  {({ isActive }) => <>
+                  {isActive && <motion.span aria-hidden="true" layoutId="sidebar-active" className="absolute inset-0 z-0 rounded-md bg-muted" transition={reduced ? { duration: 0 } : motionTokens.spring.responsive} />}
+                  <ShoppingBag className="relative z-10 h-4 w-4 shrink-0" />
+                  {!collapsed && <span className="relative z-10">{t("商店", "Shop")}</span>}
+                  </>}
                 </NavLink>
               </SidebarMenuButton>
             )}
@@ -143,36 +181,28 @@ export function AppSidebar() {
             <SidebarMenuButton asChild tooltip={t("设置", "Settings")}>
               <NavLink
                 to="/settings"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
-                activeClassName="bg-muted text-foreground font-medium"
+                className="relative text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                activeClassName="text-foreground font-medium"
               >
-                <Settings className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{t("设置", "Settings")}</span>}
+                {({ isActive }) => <>
+                {isActive && <motion.span aria-hidden="true" layoutId="sidebar-active" className="absolute inset-0 z-0 rounded-md bg-muted" transition={reduced ? { duration: 0 } : motionTokens.spring.responsive} />}
+                <Settings className="relative z-10 h-4 w-4 shrink-0" />
+                {!collapsed && <span className="relative z-10">{t("设置", "Settings")}</span>}
+                </>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarMenuItem>
-            {isDemo ? (
-              <SidebarMenuButton
-                tooltip={t("注册开始", "Register / Start")}
-                onClick={() => {
-                  exitDemo();
-                  navigate("/auth", { replace: true });
-                }}
-                className="bg-cat-yellow-bg hover:bg-cat-yellow/15 text-cat-yellow border border-cat-yellow/30 transition-colors rounded-md font-medium"
-              >
-                <Compass className="h-4 w-4 shrink-0 text-amber-600" />
-                {!collapsed && <span>{t("注册开始", "Register / Start")}</span>}
-              </SidebarMenuButton>
-            ) : (
+          {!isDemo && (
+            <SidebarMenuItem>
               <SidebarMenuButton tooltip={t("退出登录", "Log out")} onClick={signOut}>
                 <LogOut className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>{t("退出登录", "Log out")}</span>}
               </SidebarMenuButton>
-            )}
-          </SidebarMenuItem>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarFooter>
+      </LayoutGroup>
     </Sidebar>
   );
 }

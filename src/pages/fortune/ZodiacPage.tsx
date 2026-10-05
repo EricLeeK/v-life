@@ -96,7 +96,7 @@ export default function ZodiacPage() {
   }
 
   return (
-    <AppLayout title={t("星座详解", "Zodiac")}>
+    <AppLayout title={t("星座详解", "Zodiac")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("星座详解", "Zodiac")}

@@ -1,6 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import SettingsPage from "@/pages/Settings";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+function renderSettings() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}><SettingsPage /></QueryClientProvider>);
+}
 
 vi.mock("@/components/AppLayout", () => ({
   AppLayout: ({ children, title }: { children: React.ReactNode; title?: string }) => (
@@ -48,14 +54,14 @@ vi.mock("@/hooks/useData", () => ({
 
 describe("SettingsPage", () => {
   it("renders AI settings without crashing", () => {
-    render(<SettingsPage />);
+    renderSettings();
     expect(screen.getByText("AI 模型与 Key 配置")).toBeInTheDocument();
     expect(screen.getByText("智能路由 · 成本优化")).toBeInTheDocument();
   });
 
   it("renders the section nav with all grouped sections", () => {
-    render(<SettingsPage />);
-    for (const label of ["通用", "AI", "日程", "个性", "健康·财务", "数据"]) {
+    renderSettings();
+    for (const label of ["通用", "AI", "日程", "个性", "健康·财务", "日报", "数据"]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
   });

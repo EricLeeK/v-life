@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
+import { DateField } from "@/components/arc/DateField";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -419,7 +420,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: course.color || "#5b88b5" }} />
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: course.color || "hsl(var(--cat-blue))" }} />
               <h2 className="text-lg font-semibold text-foreground truncate">{course.name}</h2>
             </div>
             {course.description && <p className="mt-1 text-sm text-muted-foreground">{course.description}</p>}
@@ -588,12 +589,11 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     </div>
                     <div>
                       <Label htmlFor="learning-note-date" className="text-foreground text-sm">{t("日期", "Date")}</Label>
-                      <Input
+                      <DateField
                         id="learning-note-date"
-                        type="date"
+                        label={t("日期", "Date")}
                         value={form.note_date}
-                        onChange={(e) => { setForm({ ...form, note_date: e.target.value }); setIsDirty(true); }}
-                        className="border-border text-foreground"
+                        onChange={(note_date) => { setForm({ ...form, note_date }); setIsDirty(true); }}
                       />
                     </div>
                   </div>

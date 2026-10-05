@@ -515,11 +515,28 @@ export const demoMeasurementRecords = [
   { id: "demo-m0000000-0000-0000-0000-000000000004", waist: 83.5, hip: 96.5, chest: 94, arm: 32.5, thigh: 54.5, date: "2026-05-08", notes: "最新测量", created_at: "2026-05-08T08:00:00+09:00", updated_at: "2026-05-08T08:00:00+09:00", user_id: DEMO_USER },
 ];
 
-// ============ Pantry Items ============
-export const demoPantryItems = [
+// ============ Pantry Items (authored for 2026-05-08, shifted so "today" stays today) ============
+function shiftDemoDates<T extends Record<string, unknown>>(rows: T[], authoredFor: string): T[] {
+  const now = new Date();
+  const local = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const [y, m, d] = authoredFor.split("-").map(Number);
+  const offset = Math.round((local.getTime() - new Date(y, m - 1, d).getTime()) / 86_400_000);
+  const shift = (value: string) => {
+    const [yy, mm, dd] = value.slice(0, 10).split("-").map(Number);
+    const next = new Date(yy, mm - 1, dd + offset);
+    const day = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-${String(next.getDate()).padStart(2, "0")}`;
+    return day + value.slice(10);
+  };
+  return rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [
+    key,
+    typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value) && /date|_at$/.test(key) ? shift(value) : value,
+  ])) as T);
+}
+
+export const demoPantryItems = shiftDemoDates([
   { id: "demo-p0000000-0000-0000-0000-000000000001", name: "大米", category: "主食", quantity: "2kg", purchase_date: "2026-05-01", expiry_date: "2026-08-01", notes: "新潟产コシヒカリ", created_at: "2026-05-01T10:00:00+09:00", updated_at: "2026-05-01T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-p0000000-0000-0000-0000-000000000002", name: "鸡蛋", category: "乳制品", quantity: "10个", purchase_date: "2026-05-05", expiry_date: "2026-05-12", notes: null, created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-p0000000-0000-0000-0000-000000000003", name: "牛奶", category: "乳制品", quantity: "1L", purchase_date: "2026-05-06", expiry_date: "2026-05-10", notes: null, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-p0000000-0000-0000-0000-000000000003", name: "牛奶", category: "乳制品", quantity: "1L", purchase_date: "2026-05-01", expiry_date: "2026-05-07", notes: "该扔了", created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-p0000000-0000-0000-0000-000000000004", name: "豆腐", category: "蔬菜", quantity: "1盒", purchase_date: "2026-05-07", expiry_date: "2026-05-09", notes: "明天到期", created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-p0000000-0000-0000-0000-000000000005", name: "鸡胸肉", category: "肉类", quantity: "500g", purchase_date: "2026-05-05", expiry_date: "2026-05-08", notes: "今天到期", created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-p0000000-0000-0000-0000-000000000006", name: "西兰花", category: "蔬菜", quantity: "1棵", purchase_date: "2026-05-06", expiry_date: "2026-05-11", notes: null, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
@@ -529,7 +546,7 @@ export const demoPantryItems = [
   { id: "demo-p0000000-0000-0000-0000-000000000010", name: "面包", category: "主食", quantity: "1袋", purchase_date: "2026-05-07", expiry_date: "2026-05-10", notes: "全麦面包", created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-p0000000-0000-0000-0000-000000000011", name: "香蕉", category: "蔬菜", quantity: "1把", purchase_date: "2026-05-06", expiry_date: "2026-05-11", notes: null, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-p0000000-0000-0000-0000-000000000012", name: "酸奶", category: "乳制品", quantity: "4杯", purchase_date: "2026-05-05", expiry_date: "2026-05-12", notes: null, created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
-];
+], "2026-05-08");
 
 // ============ Belongings Daily ============
 export const demoBelongingsDaily = [

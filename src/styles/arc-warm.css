@@ -1,0 +1,121 @@
+/* Warm Desk Ledger tones on Arc's shape system.
+   Arc components read full colors; V-Life Tailwind still reads HSL channels outside .arc-runtime. */
+
+/* ===== Ledger geometry on Arc shapes =====
+   The brand owns the geometry; Arc contributes the behavior.
+   Radius ladder 7/8/12 mirrors rounded-md / card-premium / overlay.
+   Control heights 32/36/40; coarse pointers get 36/44/48 for the 44px touch floor.
+   --font-display is consumed only by metric components (AnimatedCounter, DonutChart
+   center), so it points at JetBrains Mono — the app-wide metric voice, not Geist. */
+.arc-runtime {
+  --radius-control: 0.4375rem;
+  --radius-panel: 0.5rem;
+  --radius-surface: 0.75rem;
+
+  --control-height-sm: 2rem;
+  --control-height-md: 2.25rem;
+  --control-height-lg: 2.5rem;
+
+  --font-display: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+  --tracking-display: -0.01em;
+
+  --focus-ring: hsl(30 25% 10%);
+}
+
+.dark .arc-runtime {
+  --focus-ring: hsl(40 18% 88%);
+}
+
+@media (pointer: coarse) {
+  .arc-runtime {
+    --control-height-sm: 2.25rem;
+    --control-height-md: 2.75rem;
+    --control-height-lg: 3rem;
+  }
+}
+
+/* Keyboard focus stays visible inside arc scopes.
+   Foundation ships `outline: none !important` (upstream product decision);
+   this outranks it by source order at equal specificity. Mouse users still
+   see no ring (:focus-visible only). */
+.arc-runtime :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
+}
+
+/* Summary counters use the same 20px compact metric role as static values. */
+.arc-runtime.arc-metric-compact {
+  --text-3xl: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The confirm morph joins the control radius ladder — Ledger buttons aren't pills. */
+.arc-runtime .confirm-quiet {
+  --radius-pill: var(--radius-control);
+}
+
+.arc-runtime {
+  --background: hsl(40 33% 99%);
+  --surface: hsl(40 40% 99%);
+  --surface-raised: hsl(0 0% 100%);
+  --surface-muted: hsl(40 20% 95%);
+  --foreground: hsl(30 25% 10%);
+  --text-secondary: hsl(36 12% 38%);
+  --text-muted: hsl(36 12% 40%);
+  --border: hsl(40 16% 87%);
+  --border-subtle: hsl(40 18% 93%);
+  --border-strong: hsl(36 12% 74%);
+  --accent: hsl(30 25% 12%);
+  --accent-strong: hsl(30 25% 8%);
+  --accent-subtle: hsl(30 25% 12% / 0.08);
+  --accent-foreground: hsl(40 33% 98%);
+  --control-on: hsl(30 25% 12%);
+  --control-glyph: hsl(40 33% 98%);
+  --control-track: hsl(40 14% 86%);
+  --control-track-hover: hsl(38 12% 80%);
+  --control-thumb: hsl(0 0% 100%);
+  --control-thumb-on: hsl(0 0% 100%);
+  --control-fill: hsl(30 25% 12%);
+  --success: hsl(100 35% 36%);
+  --warning: hsl(30 70% 42%);
+  --danger: hsl(0 62% 46%);
+  --shadow-resting: 0 1px 2px hsl(30 25% 10% / 0.045);
+  --shadow-raised: 0 10px 28px hsl(30 22% 12% / 0.07), 0 1px 3px hsl(30 22% 12% / 0.04);
+  --shadow-floating: 0 24px 50px hsl(30 22% 10% / 0.12), 0 4px 12px hsl(30 22% 10% / 0.05);
+  --arc-gradient-from: hsl(36 42% 92%);
+  --arc-gradient-to: hsl(24 46% 90%);
+  --arc-gradient-foreground: hsl(30 25% 12%);
+  --arc-gradient-soft: linear-gradient(135deg, hsl(38 36% 96%), hsl(28 40% 95%));
+  --series-1: hsl(22 65% 36%);
+  --series-2: hsl(185 55% 28%);
+  --series-3: hsl(256 45% 42%);
+  --series-4: hsl(100 45% 28%);
+}
+
+.dark .arc-runtime {
+  --background: hsl(30 15% 11%);
+  --surface: hsl(30 14% 13%);
+  --surface-raised: hsl(30 12% 16%);
+  --surface-muted: hsl(30 10% 18%);
+  --foreground: hsl(40 20% 92%);
+  --text-secondary: hsl(36 12% 74%);
+  --text-muted: hsl(36 8% 64%);
+  --border: hsl(30 10% 24%);
+  --border-subtle: hsl(30 10% 18%);
+  --border-strong: hsl(32 8% 36%);
+  --accent: hsl(40 18% 90%);
+  --accent-strong: hsl(40 20% 96%);
+  --accent-subtle: hsl(40 18% 90% / 0.12);
+  --accent-foreground: hsl(30 15% 10%);
+  --control-on: hsl(40 18% 90%);
+  --control-glyph: hsl(30 15% 10%);
+  --control-thumb-on: hsl(30 15% 10%);
+  --control-fill: hsl(36 10% 62%);
+  --success: hsl(100 32% 62%);
+  --warning: hsl(32 70% 64%);
+  --danger: hsl(0 62% 68%);
+  --series-1: hsl(24 72% 64%);
+  --series-2: hsl(185 42% 62%);
+  --series-3: hsl(262 42% 74%);
+  --series-4: hsl(100 36% 62%);
+}

@@ -1,11 +1,16 @@
 import { CLASSIFICATION_MODULES, CLASSIFICATION_WORKFLOW } from '../_shared/agentClassifications.ts';
 import { McpServer, StreamableHttpTransport } from 'mcp-lite';
-import { withOAuthProtectedResource, withSupabase } from 'npm:@supabase/server@1.6.0';
+import { withAgentAuth } from '../_shared/agentAuth.ts';
 import { MODULES, agentMetaOf } from '../_shared/moduleRegistry.ts';
 import { createAgentDataService, AgentDataError, type AgentContext } from '../_shared/agentDataService.ts';
 import { AGENT_INSTRUCTIONS, GUIDE_TOPICS, buildAgentGuide, errorRecovery, moduleCanSearch, toolDescription } from '../_shared/agentGuide.ts';
 import { fieldsSchema, buildCapabilities, MCP_VERSION, financeSummaryPeriod } from './mcpAdapter.ts';
 import { objectSchema as object, listSchema, paginationSchema, recordIdSchema, idempotencySchema, validateToolInput, type Schema } from './toolSchema.ts';
+import { TASK_OVERVIEW_DESCRIPTION, TASK_OVERVIEW_SCHEMA, TASK_TRANSFER_DESCRIPTION, TASK_TRANSFER_SCHEMA } from '../_shared/taskWorkflows.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { NEWSPAPER_OPERATIONS } from '../_shared/newspaperAgent.ts';
+import { executeNewspaperOperation } from '../_shared/newspaperOperations.ts';
+import { NewspaperError } from '../_shared/newspaperTypes.ts';
 const url=Deno.env.get('SUPABASE_URL')!;
 const resource=`${url}/functions/v1/mcp-server/mcp`;
 const json=(v:any,isError=false)=>({content:[{type:'text' as const,text:JSON.stringify(v)}],structuredContent:v,isError});
@@ -21,25 +26,26 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  // Audit is already transactional for writes. Supplemental transport logging must
  // never report a successful mutation as failed or expose raw exception stacks.
  async function audit(name:string,op:string,id:unknown,success:boolean,errorCode:string|null){
-  if(success&&name==='subscription_payment_create')return; // already committed by the payment RPC
+  if(success&&['subscription_payment_create','daily_task_transfer'].includes(name))return; // transactional audit already committed
   try{
    const result=await ctx.db.rpc('agent_log_operation',{p_tool_name:name,p_operation:op,p_record_id:typeof id==='string'?id:null,p_request_id:ctx.requestId,p_success:success,p_error_code:errorCode});
    if(result.error)console.error('agent audit unavailable',ctx.requestId,result.error.code);
   }catch{console.error('agent audit unavailable',ctx.requestId);}
  }
- function register(name:string,description:string,inputSchema:Schema,op:'read'|'create'|'update'|'delete',fn:(s:ReturnType<typeof createAgentDataService>,p:any)=>Promise<any>){
-  server.tool(name,{description,inputSchema,annotations:{readOnlyHint:op==='read',destructiveHint:op==='delete',idempotentHint:op==='read',openWorldHint:false},handler:async(input:unknown={})=>{
+ function register(name:string,description:string,inputSchema:Schema,op:'read'|'create'|'update'|'delete',fn:(s:ReturnType<typeof createAgentDataService>,p:any,callCtx:AgentContext)=>Promise<any>,annotations:Record<string,boolean>={}){
+  server.tool(name,{description,inputSchema,annotations:{readOnlyHint:op==='read',destructiveHint:op==='delete',idempotentHint:op==='read',openWorldHint:false,...annotations},handler:async(input:unknown={})=>{
    let args:Record<string,any>={};
    try{
     validateToolInput(inputSchema,input);
     const {idempotency_key,...rest}=input;args=rest;
     if(headerKey!==null&&(headerKey.length<1||headerKey.length>200))throw new AgentDataError('INVALID_INPUT','Idempotency-Key must contain 1 to 200 characters');
-    const service=createAgentDataService({...ctx,toolName:name,idempotencyKey:idempotency_key??headerKey??undefined});
-    const result=await fn(service,args);
+    const callCtx={...ctx,toolName:name,idempotencyKey:idempotency_key??headerKey??undefined};
+    const service=createAgentDataService(callCtx);
+    const result=await fn(service,args,callCtx);
     await audit(name,op,result.data?.id,true,null);
     return json({ok:true,...result,request_id:ctx.requestId});
    }catch(error){
-    const e=error instanceof AgentDataError?error:new AgentDataError('INTERNAL_ERROR','The operation could not be completed; preserve request_id');
+    const e=error instanceof AgentDataError||error instanceof NewspaperError?error:new AgentDataError('INTERNAL_ERROR','The operation could not be completed; preserve request_id');
     await audit(name,op,args.id,false,e.code);
     return json({ok:false,error:{code:e.code,message:e.message,...errorRecovery(e.code)},request_id:ctx.requestId},true);
    }
@@ -53,6 +59,16 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  register('daily_task_today','分页读取当前用户业务日的任务，不必猜测日期。返回 date、data、hasMore、nextOffset；data.id 是日任务 ID，todo_id 是总待办 ID；标题可通过 todo_get 获取。可按 todo_id 或 is_completed 精确筛选。例行与一次性在此；习惯通过 todo_list(kind="habit") 和 habit_log_list 查看。',object({...paginationSchema(),todo_id:{...recordIdSchema('todo'),description:'可选：只读指定总待办在今天的任务。'},is_completed:{type:'boolean',description:'可选：true 已完成，false 未完成；省略包含两者。'}}),'read',async(s,{limit,offset,...filters})=>{
   const date=await s.businessDate();return {...await s.list('daily_task',{limit,offset,filters:{...filters,task_date:date}}),date};
  });
+ register('daily_task_overview',TASK_OVERVIEW_DESCRIPTION,TASK_OVERVIEW_SCHEMA,'read',(s,args)=>s.taskOverview(args));
+ register('daily_task_transfer',TASK_TRANSFER_DESCRIPTION,TASK_TRANSFER_SCHEMA,'update',(s,args)=>s.transferDailyTasks(args),{destructiveHint:true,idempotentHint:true});
+ for(const [action,definition] of Object.entries(NEWSPAPER_OPERATIONS)){
+  const read=definition.permission==='read';
+  const schema={...definition.schema,properties:{...definition.schema.properties,...(!read?{idempotency_key:idempotencySchema}:{})}};
+  register(`newspaper_${action}`,definition.description,schema,read?'read':definition.permission==='delete'?'delete':'update',async(_service,input,callCtx)=>{
+   const admin=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
+   return {data:await executeNewspaperOperation({...callCtx,admin},action,input)};
+  },{openWorldHint:definition.paid===true,idempotentHint:read||definition.paid===true});
+ }
  for(const mod of MODULES.filter(m=>agentMetaOf(m).agentVisible)){
   const key=mod.key;
   register(`${key}_list`,toolDescription(mod,'list'),listSchema(mod),'read',(s,{limit,offset,date_from,date_to,...filters})=>s.list(key,{limit,offset,date_from,date_to,filters}));
@@ -73,17 +89,10 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  server.resource('vlife://guide',{name:'vlife_agent_guide',description:'V-Life Agent 使用指南：工作流、ID区分、示例、分页、权限与错误恢复。当前授权与业务日期请调用 agent_help。',mimeType:'application/json'},async()=>({contents:[{type:'text',uri:'vlife://guide',mimeType:'application/json',text:JSON.stringify(Object.fromEntries(GUIDE_TOPICS.map(topic=>[topic,buildAgentGuide(topic)])))}]}));
  return server;
 }
-const authenticated=withSupabase({auth:'user'},async(req,auth)=>{
- const claims=auth.jwtClaims;
- if(!claims?.sub||typeof claims.client_id!=='string')return Response.json({error:'OAUTH_TOKEN_REQUIRED'},{status:403});
- const db=auth.supabase as any;
- const {data:grant,error}=await db.from('agent_client_access').select('read_enabled,write_enabled,delete_enabled,revoked_at').eq('user_id',claims.sub).eq('client_id',claims.client_id).maybeSingle();
- if(error||!grant||grant.revoked_at)return Response.json({error:'AGENT_ACCESS_DENIED'},{status:403});
- const ctx:AgentContext={db:db as any,userId:claims.sub,clientId:claims.client_id,requestId:crypto.randomUUID(),permissions:{read:grant.read_enabled===true,write:grant.write_enabled===true,delete:grant.delete_enabled===true}};
+const protectedHandler=withAgentAuth(resource,async(req,ctx)=>{
  const server=serverFor(ctx,req.headers.get('Idempotency-Key'));
  const transport=new StreamableHttpTransport();return transport.bind(server)(req);
 });
-const protectedHandler=withOAuthProtectedResource({resourceServer:resource,authorizationServer:`${url}/auth/v1`},authenticated);
 export async function handleRequest(req:Request){
  const origin=req.headers.get('origin');
  const allowed=(Deno.env.get('MCP_ALLOWED_ORIGINS')??'https://shenghuo.homes,http://localhost:6274,http://localhost:5173').split(',');

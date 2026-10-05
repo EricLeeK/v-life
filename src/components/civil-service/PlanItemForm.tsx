@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField, DateTimeField } from "@/components/arc/DateField";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,8 +32,8 @@ function toLocalInput(iso: string | null | undefined): string {
 }
 
 function fromLocalInput(local: string): string | null {
-  if (!local) return null;
-  return new Date(local).toISOString();
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(local)) return null;
+  return new Date(local.slice(0, 16)).toISOString();
 }
 
 export function PlanItemForm({
@@ -94,7 +95,7 @@ export function PlanItemForm({
       {!hideDate && (
         <div className="space-y-2">
           <Label htmlFor="plan-date">{t("日期", "Date")}</Label>
-          <Input id="plan-date" type="date" value={planDate} onChange={(e) => setPlanDate(e.target.value)} />
+          <DateField id="plan-date" label={t("日期", "Date")} value={planDate} onChange={setPlanDate} />
         </div>
       )}
       <div className="grid grid-cols-2 gap-2">
@@ -126,11 +127,11 @@ export function PlanItemForm({
       <div className="grid grid-cols-2 gap-2">
         <div className="space-y-2">
           <Label htmlFor="plan-start-time">{t("开始（可选）", "Start (optional)")}</Label>
-          <Input id="plan-start-time" type="datetime-local" value={startLocal} onChange={(e) => setStartLocal(e.target.value)} />
+          <DateTimeField id="plan-start-time" label={t("开始（可选）", "Start (optional)")} value={startLocal} onChange={setStartLocal} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="plan-end-time">{t("结束（可选）", "End (optional)")}</Label>
-          <Input id="plan-end-time" type="datetime-local" value={endLocal} onChange={(e) => setEndLocal(e.target.value)} />
+          <DateTimeField id="plan-end-time" label={t("结束（可选）", "End (optional)")} value={endLocal} onChange={setEndLocal} />
         </div>
       </div>
       <p className="text-[11px] text-muted-foreground">

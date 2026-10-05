@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField } from "@/components/arc/DateField";
 
 interface TaskModalProps {
   open: boolean;
@@ -168,12 +169,11 @@ export function TaskModal({
           )}
           <div>
             <Label htmlFor="task-due-date" className="text-foreground text-sm">{t("截止日期", "Due Date")}</Label>
-            <Input
+            <DateField
               id="task-due-date"
-              type="date"
+              label={t("截止日期", "Due Date")}
               value={form.due_date}
-              onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-              className="border-border text-foreground"
+              onChange={(due_date) => setForm({ ...form, due_date })}
             />
           </div>
           <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">

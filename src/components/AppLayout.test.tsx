@@ -6,6 +6,7 @@ vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/contexts/DemoModeContext", () => ({ useDemoMode: () => ({ isDemo: false }) }));
 vi.mock("@/components/AppSidebar", () => ({ AppSidebar: () => <nav aria-label="主导航" /> }));
 vi.mock("@/components/MobileNav", () => ({ MobileNav: () => null }));
+vi.mock("@/components/arc/AppCommandPalette", () => ({ AppCommandPalette: () => null }));
 vi.mock("@/components/ui/sidebar", () => ({
   SidebarProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   SidebarTrigger: () => <button type="button">切换侧栏</button>,

@@ -28,7 +28,7 @@ export default function HistoryPage() {
   const [active, setActive] = useState<FortuneReadingRow | null>(null);
 
   return (
-    <AppLayout title={t("我的记录", "My readings")}>
+    <AppLayout title={t("我的记录", "My readings")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("我的记录", "My readings")}

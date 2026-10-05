@@ -49,7 +49,7 @@ export default function IchingPage() {
   }
 
   return (
-    <AppLayout title={t("易经起卦", "I Ching")}>
+    <AppLayout title={t("易经起卦", "I Ching")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("易经起卦", "I Ching")}

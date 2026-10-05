@@ -1,139 +1,80 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AgentConnections } from "./AgentConnections";
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AgentConnections } from './AgentConnections';
 
-const USER_ID = "user-1";
-const api = vi.hoisted(() => ({
-  user: { id: "user-1" },
-  listGrants: vi.fn(),
-  revokeGrant: vi.fn(),
-  from: vi.fn(),
-  deletes: [] as { userId: string; clientId: string }[],
-  upserts: [] as { client_id: string }[],
-}));
-
-vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { from: api.from, auth: { oauth: { listGrants: api.listGrants, revokeGrant: api.revokeGrant } } },
-}));
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ user: api.user }),
-}));
-
-type AccessRow = {
-  user_id: string;
-  client_id: string;
-  client_name: string;
-  read_enabled: boolean;
-  write_enabled: boolean;
-  delete_enabled: boolean;
-  revoked_at: string | null;
-  last_used_at: string | null;
-};
-
-const revoked: AccessRow = {
-  user_id: USER_ID, client_id: "revoked-client", client_name: "已撤销助手",
-  read_enabled: false, write_enabled: false, delete_enabled: false, revoked_at: "2026-09-01T00:00:00Z", last_used_at: null,
-};
-const active: AccessRow = {
-  user_id: USER_ID, client_id: "active-client", client_name: "仍在使用",
-  read_enabled: true, write_enabled: false, delete_enabled: false, revoked_at: null, last_used_at: null,
-};
-const stuck: AccessRow = {
-  user_id: USER_ID, client_id: "stuck-client", client_name: "授权未撤完",
-  read_enabled: false, write_enabled: false, delete_enabled: false, revoked_at: "2026-09-02T00:00:00Z", last_used_at: null,
-};
-
-let rows: AccessRow[];
-let deleteError: Error | null;
-
-function rowOf(name: string) {
-  const title = screen.getByText(name);
-  const row = title.closest("div.border");
-  if (!row) throw new Error(`missing row for ${name}`);
-  return within(row as HTMLElement);
-}
-
+const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), revoke: vi.fn(), copy: vi.fn(), user: { id: 'owner' } as { id: string } | null, isDemo: false, exitDemo: vi.fn() }));
+vi.mock('@/lib/agentKeyStore', () => ({ listAgentKeys: mocks.list, createAgentKey: mocks.create, revokeAgentKey: mocks.revoke }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
+vi.mock('@/contexts/DemoModeContext', () => ({ useDemoMode: () => ({ isDemo: mocks.isDemo, exitDemo: mocks.exitDemo }) }));
+vi.mock('./AgentOAuthConnections', () => ({ AgentOAuthConnections: () => <p>OAuth 暂不可用</p> }));
+const record = { user_id: 'owner', client_id: 'key_1', client_name: 'Hermes', credential_type: 'api_key' as const, key_prefix: 'vlife_12345678', read_enabled: true, write_enabled: false, delete_enabled: false, expires_at: null, revoked_at: null, created_at: '2026-10-05T08:00:00Z', last_used_at: null };
 beforeEach(() => {
-  vi.clearAllMocks();
-  rows = [revoked, active, stuck];
-  deleteError = null;
-  api.deletes = [];
-  api.upserts = [];
-  api.listGrants.mockResolvedValue({
-    data: [
-      { client: { client_id: "active-client", name: "仍在使用" } },
-      { client: { client_id: "stuck-client", name: "授权未撤完" } },
-      { client: { client_id: "oauth-only", name: "仅 OAuth" } },
-    ],
-    error: null,
-  });
-  api.revokeGrant.mockResolvedValue({ error: null });
-  api.from.mockImplementation((table: string) => {
-    if (table !== "agent_client_access") throw new Error(`unexpected table ${table}`);
-    return {
-      select: () => ({ eq: async () => ({ data: rows, error: null }) }),
-      upsert: async (row: { client_id: string }) => { api.upserts.push(row); return { error: null }; },
-      delete: () => ({
-        eq: (_column: string, userId: string) => ({
-          eq: async (_column2: string, clientId: string) => {
-            api.deletes.push({ userId, clientId });
-            if (deleteError) return { error: deleteError };
-            rows = rows.filter((row) => row.client_id !== clientId);
-            return { error: null };
-          },
-        }),
-      }),
-    };
-  });
+  vi.clearAllMocks(); mocks.list.mockResolvedValue([]); mocks.create.mockResolvedValue({ ...record, api_key: 'vlife_secret' }); mocks.revoke.mockResolvedValue(undefined);
+  mocks.user = { id: 'owner' }; mocks.isDemo = false;
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: mocks.copy.mockResolvedValue(undefined) } });
 });
-afterEach(cleanup);
-
-describe("AgentConnections removal", () => {
-  it("removes a revoked row that has no OAuth grant and leaves granted rows on revoke", async () => {
+describe('API key connection journey', () => {
+  it('keeps real connections out of demo mode even when a user is signed in', () => {
+    mocks.isDemo = true;
     render(<AgentConnections />);
-    await waitFor(() => expect(rowOf("已撤销助手").getByRole("button", { name: "移除" })).toBeEnabled());
-    expect(rowOf("已撤销助手").getByText("数据访问已禁止")).toBeInTheDocument();
-    expect(rowOf("仍在使用").getByRole("button", { name: "撤销连接" })).toBeEnabled();
-    expect(rowOf("仅 OAuth").getByRole("button", { name: "撤销连接" })).toBeEnabled();
-    expect(rowOf("授权未撤完").getByRole("button", { name: "重试撤销 OAuth" })).toBeEnabled();
-    expect(rowOf("仍在使用").queryByRole("button", { name: "移除" })).not.toBeInTheDocument();
-    expect(rowOf("仅 OAuth").queryByRole("button", { name: "移除" })).not.toBeInTheDocument();
-    expect(rowOf("授权未撤完").queryByRole("button", { name: "移除" })).not.toBeInTheDocument();
-
-    fireEvent.click(rowOf("已撤销助手").getByRole("button", { name: "移除" }));
-    await waitFor(() => expect(screen.queryByText("已撤销助手")).not.toBeInTheDocument());
-    expect(api.deletes).toEqual([{ userId: USER_ID, clientId: "revoked-client" }]);
-    expect(api.revokeGrant).not.toHaveBeenCalled();
-    expect(screen.getByRole("status")).toHaveTextContent("已从列表移除。");
-    expect(screen.getByText("仍在使用")).toBeInTheDocument();
-    expect(screen.getByText("授权未撤完")).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '生成 API Key' })).not.toBeInTheDocument();
+    expect(mocks.list).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '退出演示，管理连接' }));
+    expect(mocks.exitDemo).toHaveBeenCalledOnce();
   });
-
-  it("keeps the revoked row and shows an alert when delete fails", async () => {
-    deleteError = new Error("权限不足");
+  it('offers sign-in instead of a nonfunctional form when signed out', () => {
+    mocks.user = null;
     render(<AgentConnections />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "移除" })).toBeEnabled());
-    fireEvent.click(screen.getByRole("button", { name: "移除" }));
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("未能移除连接：权限不足。请重试。"));
-    expect(screen.getByText("已撤销助手")).toBeInTheDocument();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(api.deletes).toEqual([{ userId: USER_ID, clientId: "revoked-client" }]);
+    expect(screen.getByRole('link', { name: '登录后连接' })).toHaveAttribute('href', '/auth');
+    expect(mocks.list).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: '生成 API Key' })).not.toBeInTheDocument();
   });
-
-  it("does not delete when revoking an active connection or retrying a remaining grant", async () => {
+  it('creates a permanent key, copies its config, and clears the one-time secret', async () => {
     render(<AgentConnections />);
-    await waitFor(() => expect(rowOf("仍在使用").getByRole("button", { name: "撤销连接" })).toBeEnabled());
-    fireEvent.click(rowOf("仍在使用").getByRole("button", { name: "撤销连接" }));
-    await waitFor(() => expect(api.revokeGrant).toHaveBeenCalledWith({ clientId: "active-client" }));
-    expect(api.deletes).toEqual([]);
-    expect(api.upserts.map((row) => row.client_id)).toEqual(["active-client"]);
-
-    await waitFor(() => expect(rowOf("授权未撤完").getByRole("button", { name: "重试撤销 OAuth" })).toBeEnabled());
-    expect(rowOf("授权未撤完").queryByRole("button", { name: "移除" })).not.toBeInTheDocument();
-    expect(rowOf("仅 OAuth").queryByRole("button", { name: "移除" })).not.toBeInTheDocument();
-    fireEvent.click(rowOf("授权未撤完").getByRole("button", { name: "重试撤销 OAuth" }));
-    await waitFor(() => expect(api.revokeGrant).toHaveBeenCalledWith({ clientId: "stuck-client" }));
-    expect(api.deletes).toEqual([]);
-    expect(rowOf("仅 OAuth").queryByRole("button", { name: "移除" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('连接名称'), { target: { value: 'Hermes' } });
+    fireEvent.change(screen.getByLabelText('有效期'), { target: { value: 'never' } });
+    fireEvent.click(screen.getByRole('button', { name: '生成 API Key' }));
+    await screen.findByLabelText('新 API Key');
+    expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Hermes', expiresAt: null, read: true, write: false, delete: false }));
+    fireEvent.click(screen.getByRole('button', { name: '复制 MCP 配置' }));
+    await waitFor(() => expect(mocks.copy).toHaveBeenCalledWith(expect.stringContaining('Bearer vlife_secret')));
+    fireEvent.click(screen.getByRole('button', { name: '我已保存，收起 Key' }));
+    expect(screen.queryByLabelText('新 API Key')).not.toBeInTheDocument();
+    expect(localStorage.getItem('vlife_secret')).toBeNull();
+  });
+  it('keeps input on creation failure and does not claim success', async () => {
+    mocks.create.mockRejectedValue(Error('offline'));
+    render(<AgentConnections />);
+    fireEvent.change(screen.getByLabelText('连接名称'), { target: { value: 'My Agent' } });
+    fireEvent.click(screen.getByRole('button', { name: '生成 API Key' }));
+    await screen.findByRole('alert');
+    expect(screen.getByLabelText('连接名称')).toHaveValue('My Agent');
+    expect(screen.queryByLabelText('新 API Key')).not.toBeInTheDocument();
+  });
+  it('does not turn a refresh failure into an empty list', async () => {
+    mocks.list.mockResolvedValueOnce([record]).mockRejectedValue(Error('offline'));
+    render(<AgentConnections />);
+    await screen.findByText('Hermes');
+    fireEvent.click(screen.getByRole('button', { name: '刷新状态' }));
+    await screen.findByRole('alert');
+    expect(screen.getByText('Hermes')).toBeInTheDocument();
+    expect(screen.queryByText('还没有 API Key。生成一个，连接你的第一个 Agent。')).not.toBeInTheDocument();
+  });
+  it('requires confirmation for irreversible revocation and keeps the key active on failure', async () => {
+    mocks.list.mockResolvedValue([record]); mocks.revoke.mockRejectedValue(Error('offline'));
+    render(<AgentConnections />);
+    fireEvent.click(await screen.findByRole('button', { name: '撤销 Hermes' }));
+    expect(mocks.revoke).not.toHaveBeenCalled();
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: '撤销 Key' }));
+    await screen.findByRole('alert');
+    expect(screen.getByText('尚未使用')).toBeInTheDocument();
+  });
+  it('loads OAuth only when requested and its failure cannot hide API keys', async () => {
+    mocks.list.mockResolvedValue([record]); render(<AgentConnections />);
+    await screen.findByText('Hermes');
+    expect(screen.queryByText('OAuth 暂不可用')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('其他连接方式 · OAuth'));
+    expect(await screen.findByText('OAuth 暂不可用')).toBeInTheDocument();
+    expect(screen.getByText('Hermes')).toBeInTheDocument();
   });
 });

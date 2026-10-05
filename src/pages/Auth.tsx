@@ -113,8 +113,8 @@ export default function AuthPage() {
         <CardContent>
           <Tabs defaultValue="login">
             <TabsList className="grid w-full grid-cols-2 bg-muted p-1 h-10">
-              <TabsTrigger value="login" className="rounded-md data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground">{t("登录", "Login")}</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-md data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground">{t("注册", "Sign Up")}</TabsTrigger>
+              <TabsTrigger value="login">{t("登录", "Login")}</TabsTrigger>
+              <TabsTrigger value="signup">{t("注册", "Sign Up")}</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4 mt-4">

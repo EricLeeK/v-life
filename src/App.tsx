@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { RouteLoadBoundary } from "@/components/RouteLoadBoundary";
 import { ThemeProvider } from "next-themes";
+import { ArcThemeSync } from "@/components/arc/ArcThemeSync";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -38,6 +39,7 @@ const CivilServiceHome = lazy(() => import("./pages/civil-service/CivilServiceHo
 const CivilServiceGroup = lazy(() => import("./pages/civil-service/CivilServiceGroup"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
+const NewspapersPage = lazy(() => import("./pages/Newspapers"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const FortuneHome = lazy(() => import("./pages/fortune/FortuneHome"));
 const TarotPage = lazy(() => import("./pages/fortune/TarotPage"));
@@ -56,11 +58,9 @@ const queryClient = new QueryClient({
 
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="h-6 w-6 border-2 border-[#d17847] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[13px] text-muted-foreground font-medium">Loading...</p>
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-background" role="status">
+      <div className="h-5 w-5 rounded-full border-[1.5px] border-foreground/15 border-t-foreground/70 animate-spin motion-reduce:animate-none" />
+      <span className="sr-only">加载中</span>
     </div>
   );
 }
@@ -119,6 +119,7 @@ function AppRoutes() {
           <Route path="/fortune/lot" element={<ProtectedRoute><LotPage /></ProtectedRoute>} />
           <Route path="/fortune/bazi" element={<ProtectedRoute><BaziPage /></ProtectedRoute>} />
           <Route path="/fortune/history" element={<ProtectedRoute><FortuneHistoryPage /></ProtectedRoute>} />
+          <Route path="/newspapers" element={<ProtectedRoute><NewspapersPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -130,6 +131,7 @@ function AppRoutes() {
 
 function DeferredAIChatPanel() {
   const [shouldLoad, setShouldLoad] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     const open = () => setShouldLoad(true);
@@ -140,10 +142,14 @@ function DeferredAIChatPanel() {
   if (shouldLoad) {
     return (
       <Suspense fallback={null}>
-        <AIChatPanel initialOpen />
+        <AIChatPanel initialOpen showLauncher={pathname !== "/" && pathname !== "/newspapers"} />
       </Suspense>
     );
   }
+
+  // Home has AI capture; the paper reader has its own AI review action.
+  // Keep the floating launcher from covering agenda and archive content.
+  if (pathname === "/" || pathname === "/newspapers") return null;
 
   return (
     <Button
@@ -160,6 +166,7 @@ function DeferredAIChatPanel() {
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ArcThemeSync />
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />

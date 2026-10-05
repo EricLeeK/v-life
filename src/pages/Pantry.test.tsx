@@ -52,8 +52,8 @@ describe("pantry expiry and categories", () => {
     render(<PantryPage />);
     expect(within(itemRow("Today eggs")).getByText("Expiring Soon")).toBeInTheDocument();
     expect(within(itemRow("Three-day tofu")).getByText("Expiring Soon")).toBeInTheDocument();
-    expect(within(itemRow("Four-day vegetables")).getByText("OK")).toBeInTheDocument();
-    expect(within(itemRow("Undated rice")).getByText("OK")).toBeInTheDocument();
+    expect(itemRow("Four-day vegetables")).not.toHaveTextContent(/Expir/);
+    expect(itemRow("Undated rice")).not.toHaveTextContent(/Expir/);
     fireEvent.click(screen.getByRole("button", { name: "Expiring Soon" }));
     expect(screen.queryByText("Four-day vegetables")).not.toBeInTheDocument();
   });

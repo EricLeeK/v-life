@@ -1,5 +1,62 @@
 # Agent 接入与维护
 
+## API Key 连接（2.8.0，待部署）
+
+首次使用可阅读 [网站与 Agent 用户新手教程](agent-connection-beginner-guide.md)，包含生成 Key、两种配置方法、连接验证及常见问题。
+
+设置 → Agent 连接现在以 API Key 为默认入口。填写连接名称，选择读取、新增/修改、删除权限，以及 30 天、90 天、指定日期或永久有效。自选日期包含当天，按北京时间次日 00:00 失效。生成后可复制 Key、给 Agent 的完整说明或 MCP JSON 配置；完整 Key 只返回一次，收起/离开页面后不能再次读取。
+
+支持自定义请求头或 Bearer Token 的客户端使用 `Authorization: Bearer vlife_…`，不需要 OAuth 回调、浏览器 Session、刷新令牌或客户端注册。MCP 地址仍是 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp`；直接 HTTP 地址为 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/agent-api/api/v1`，正式域名 `/api/v1` 也兼容。只支持 OAuth 的客户端继续使用折叠的兼容入口。
+
+创建、过期和撤销由数据库管理。私有表仅保存 SHA-256 摘要，公开列表仅展示名称、前缀、权限、有效期和最近使用时间。撤销会删除摘要，不能通过恢复元数据重新启用。最多保留 50 个仍有效的 Key。Agent 不能生成或管理其他 Key，也不能读取私密设置。
+
+服务端每次请求重新验证摘要，再换成仅在本次请求内部使用的短期用户 JWT，继续执行已有 RLS、领域 RPC、审计和幂等检查；业务数据操作不使用 service-role。长任务在内部 token 到期前按需续签并重新验证 Key。过期/撤销返回 `401 API_KEY_INVALID`；配置或认证数据库故障返回 `503`，不会错误提示用户反复换 Key。永久 Key 只表示不自动到期，仍可随时撤销。
+
+部署条件、验证证据和回退方式见 [API Key 重构交付记录](agent-api-keys-2026-10-05.md)。本节描述本地实现，不代表线上已经启用。
+
+## 任务工作流（2.6.0）
+
+已于 2026-09-28 发布；具体线上版本和验证范围见 [发布记录](agent-task-workflows-release-2026-09-28.md)。
+
+新接入的外部 Agent 优先使用两个领域工具，避免自行拼接分页、标题查询、日期计算、创建和删除。旧 CRUD 工具仍兼容。
+
+| 意图 | MCP | HTTP /api/v1 |
+| --- | --- | --- |
+| 看今日任务和往期未完成 | `daily_task_overview` | `GET /daily_task/overview` |
+| 将所选日任务跨天安排 | `daily_task_transfer` | `POST /daily_task/transfer` |
+
+`daily_task_overview({date:"today",lookback_days:3})` 返回 `data.business_date`、目标 `date`、`tasks`、`backlog` 和数量。每项包含 `daily_task_id`、`todo_id`、标题、类型、分类、安排/完成日期、`can_transfer` 和 `blocked_reason`。backlog 是**目标日之前**的未完成安排；只看昨天用 `lookback_days:1`，只看目标日用 `0`。支持 0–30 天。习惯仍通过 `habit_log` 处理。
+
+概览是一个数据库快照，不需要分页或逐项查标题。最多 500 条，`complete:true` 表示本范围完整；超出返回 `RESULT_TOO_LARGE`，不返回残缺清单。此时缩小天数，或使用底层列表完整分页读取。
+
+迁移前，按用户意图从概览选取实际 `daily_task_id`，不要传 `todo_id`。例如“把昨天没做完的任务移入今天”：
+
+```js
+daily_task_overview({date:"today",lookback_days:1})
+// 选择 backlog 中符合用户意图且 can_transfer=true 的实际日任务 ID。
+daily_task_transfer({
+  daily_task_ids:["实际日任务 UUID"],
+  target_date:"today",
+  mode:"move",
+  idempotency_key:"为本次操作生成并保存的唯一键"
+})
+```
+
+- `date` / `target_date` 支持 `today`、`tomorrow`、`yesterday` 或有效的 `YYYY-MM-DD`（1900 年起），相对日期按服务器北京时间及用户 `day_start_hour` 解释，Agent 不自行猜日期。
+- **必须明确 mode**：`move` 对应网页上箭头，移除所选旧安排，需要 read/write/delete；`copy` 为例行任务保留旧安排并再次安排，需要 read/write。未完成的一次性任务只能留在一个日期上，因此 `copy` 也会改期，返回 `moved` 与 `source_removed:true`。没有 delete 权限时不能擅自把 move 改成 copy。
+- 单次 1–200 个不重复日任务 ID。只能处理用户选定的未完成、可执行任务；暂停/归档/习惯、含活跃子任务的顶层父任务、已完成来源或已完成目标会明确拒绝。任一来源失效、越权或不符合条件时，整批不写入。多批之间不保证整体原子性。
+- 服务端复用原总待办，并对同一待办同一天去重。创建目标日记录时沿用来源难度、积分和元数据；已有目标保留原值。选择同一待办的多个旧日记录时，按**来源日期降序、ID 升序**处理，第一条创建目标，其余复用。来源已在目标日则返回 `already_on_target`。
+- 成功响应含 `data.items`（原/目标日任务 ID、标题、日期、`outcome`、`target_created`、`source_removed`），以及 `source_count`、`target_count`、`created_count`、`removed_count`、`unchanged_count` 和 `verified_at`。结果在同一事务内校验；不要把复用已有目标说成“新建”。
+- MCP **必填** `idempotency_key`；HTTP 将同一键放在必填的 `Idempotency-Key` 请求头，JSON 请求体仅含来源 ID、目标日和 mode。参数超长、空键、重复 ID、未知字段均拒绝。
+- 重试保留**原键、原始日期表达式和全部参数**。服务端先回放再解析 today/tomorrow，跨天重试不漂移。`replayed:true` 是首次操作的原回执；需要当前状态时再读 overview。换参数却复用旧键返回 `IDEMPOTENCY_CONFLICT`（HTTP 409）。失败不缓存成功回执。
+- **旧记录不是不可变历史**：一次性任务完成后，所有关联日任务同步完成；`copy` 仅为例行任务保留旧安排，一次性任务改期会移走旧的未完成记录。实际完成时间看 `completed_at`，不能把旧 `task_date` 当完成日期。
+
+客户端优先使用原生 MCP 工具，支持 Bearer Token 时使用 API Key。手写集成可走以上 JSON API，避免自行解析 MCP 的 JSON/SSE；OAuth Token 的刷新属于 OAuth 客户端，API Key 的 401 应检查过期和撤销状态，不能把所有鉴权失败都无限重试。所有调用先检查 `ok/error`，错误不能降级成空列表。
+
+发布顺序：先应用 `20260928010000_agent_task_workflows.sql`，再部署 `mcp-server` 和 `agent-api`。新工具复用现有日任务领域函数，不批量重写既有数据。本节是代码契约，不能代替实际部署和验证记录。
+
+验证：`supabase/tests/agent_task_workflows.sql` 使用专用测试用户、真实数据库角色并最终 rollback，覆盖权限、批量回滚、目标去重、元数据保持、重试和完整概览。运行生产验证必须保留 rollback；在迁移前验证时也须将迁移包在同一回滚事务里。
+
 ## 订阅能力（2.5.0，本地实现）
 
 网页 AI、MCP 和 Agent API 共用 `subscription` 订阅模块与 `subscription_payment` 付款确认模块。此节描述代码中的接口；部署前须先应用 `20260925010000_subscriptions.sql`，再发布 `ai-chat`、`mcp-server`、`agent-api` 和网页。
@@ -22,7 +79,7 @@ MCP 使用 `subscription_payment_create`；HTTP 使用 `POST /subscription_payme
 
 ## 用户连接
 
-在支持远程 MCP 和 OAuth 的客户端添加 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp`，完成网站登录，选择读取、新增/修改和删除权限。用户不提供 API Key 或浏览器 Session。设置 → 数据 → 已连接的 Agent 可复制地址、查看权限和撤销；撤销先禁止数据请求，再撤销 OAuth grant，失败可重试。
+默认连接方式见上方 API Key 章节。只支持远程 MCP 和 OAuth 的客户端添加 `https://veabdivlfhctseihypzl.supabase.co/functions/v1/mcp-server/mcp`，完成网站登录，选择读取、新增/修改和删除权限。设置 → Agent 连接 → 其他连接方式可查看和撤销 OAuth 连接；撤销先禁止数据请求，再撤销 OAuth grant，失败可重试。任何方式都不需要提供浏览器 Session。
 
 只支持 HTTP/OpenAPI 的 Agent 使用 `https://shenghuo.homes/api/v1`。首次未登录请求会返回 OAuth protected-resource discovery；授权后可读取 `/openapi.json` 和 `/capabilities`，再调用 `/{module}`、`/{module}/{id}`、`/{module}/export`、`/summary/{name}`。写请求用 `Idempotency-Key`，响应携带 `X-Request-Id`。
 
@@ -55,7 +112,7 @@ supabase functions deploy agent-api --use-api --no-verify-jwt
 vercel deploy --prod
 ```
 
-`verify_jwt=false` 只关闭网关校验，函数内的官方用户 JWT middleware 仍强制认证。`MCP_ALLOWED_ORIGINS` 可配置浏览器型 MCP 客户端来源；无 Origin 的原生客户端正常连接。
+`verify_jwt=false` 只关闭网关校验，函数内的 API Key / OAuth 共用入口仍强制认证。`MCP_ALLOWED_ORIGINS` 可配置浏览器型 MCP 客户端来源；无 Origin 的原生客户端正常连接。
 
 新增模块后运行 `deno run scripts/agent-contract.ts` 生成数据库写入白名单迁移；确认所有权、字段和表 RLS 后再发布。MCP 工具和 capability 自动来自注册表，数据库合同采用迁移发布，避免任意客户端扩大权限。
 
@@ -127,3 +184,16 @@ supabase db query --linked --file supabase/tests/agent_classifications.sql
 `daily_task_today` 按用户业务日返回安排清单；`task_date` 不是实际完成日期。若按 `day_start_hour` 回顾业务日，需根据 `completed_at` 判断对应时间区间。一次性总待办与关联日任务不能重复计数，多个日任务按 `todo_id` 去重。撤销/重做仅保留最近完成状态和时间，不是完整事件日志。
 
 发布此能力时，先应用 `20260925001000_todo_completion_timestamp.sql`，再发布使用新版模块字段的 Edge Functions，避免新接口读取尚不存在的列。
+
+### 生活报纸档案馆
+
+日报通过独立领域服务汇集记录，使用账户时区和一天起始小时；往期保存快照，只有明确调用 `newspaper_refresh` 才更新修订。读取不会触发复盘或生图。MCP 工具使用 `newspaper_` 前缀；HTTP 对应 `/api/v1/newspaper/<operation>`，只读操作为 GET，其余为 POST。`GET /api/v1/newspaper` 等同 `list`。具体参数与能力以 OpenAPI、工具 schema 为准。
+
+- `list` 按 `date_from`、`date_to`、`q` 查询，使用 `nextOffset` 继续读取；`get` 以 `date` 读取完整一期。
+- `supplement_save` 保存 `body` 原文；编辑和删除须携带读取时的 `expected_updated_at`。`source_get` 检查原记录是否可用，删除源记录不会删除快照。
+- `export` 返回 Markdown，可选择类别以及是否包含补充、复盘；不含密钥或临时私有图片链接。网页另支持包含原图文件的 ZIP。
+- `style_list/save/delete` 维护配图风格，模板支持 `{{date}}`、`{{content}}`、`{{section}}`。历史图片保留当时的风格快照。
+- `review_generate` 和 `image_generate` 必须来自用户明确请求，并携带幂等键；同一次重试复用原键和原参数。读取、刷新和自动归档均不会自动触发它们。
+- `image_status` 查询后台进度；`succeeded` 才表示原图与缩略图已保存。`unknown` 表示提交结果待确认，不可换键自动重提。`image_select` 选择历史候选，`image_caption` 修改图注。
+
+日报写操作同时要求读取授权和对应写入/删除授权。图片渠道密钥只能在网页设置中保存，由服务端保管；Agent/MCP 不开放密钥配置、读取或导出。具体部署与真实渠道验证状态见 `docs/life-newspaper-implementation.md`。

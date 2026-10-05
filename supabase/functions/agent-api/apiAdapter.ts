@@ -5,9 +5,13 @@ import { toolDescription, GUIDE_TOPICS } from '../_shared/agentGuide.ts';
 import { MODULES, moduleByKey, agentMetaOf, type FieldDef, type ModuleDef } from '../_shared/moduleRegistry.ts';
 import type { AgentListOptions } from '../_shared/agentDataService.ts';
 import { AGENT_CONTRACT_VERSION } from '../_shared/agentCapabilities.ts';
+import { TASK_OVERVIEW_DESCRIPTION, TASK_OVERVIEW_SCHEMA, TASK_TRANSFER_DESCRIPTION, TASK_TRANSFER_SCHEMA } from '../_shared/taskWorkflows.ts';
+import { NEWSPAPER_OPERATIONS, newspaperHttpMethod } from '../_shared/newspaperAgent.ts';
 
 export type ApiRoute =
+  | { action: 'newspaper'; operation: string }
   | { action: 'capabilities' | 'openapi' | 'guide' }
+  | { action: 'task_overview' | 'task_transfer' }
   | { action: 'classifications'; module:string }
   | { action: 'summary'; name: string }
   | { action: 'list' | 'create'; module: string }
@@ -27,6 +31,13 @@ export function parseApiRoute(pathname: string, method: string): ApiRoute {
   const at = pathname.indexOf(marker);
   if (at < 0) return { action: 'not_found' };
   const parts = pathname.slice(at + marker.length).split('/').filter(Boolean).map(decodeURIComponent);
+  if (parts[0] === 'newspaper') {
+    const operation = parts.length === 1 ? 'list' : parts.length === 2 ? parts[1] : '';
+    const expectedMethod = newspaperHttpMethod(operation);
+    return !expectedMethod ? { action: 'not_found' } : method === expectedMethod ? { action: 'newspaper', operation } : { action: 'method_not_allowed' };
+  }
+  if(parts.length===2&&parts[0]==='daily_task'&&parts[1]==='overview')return {action:method==='GET'?'task_overview':'method_not_allowed'};
+  if(parts.length===2&&parts[0]==='daily_task'&&parts[1]==='transfer')return {action:method==='POST'?'task_transfer':'method_not_allowed'};
   if (parts.length === 1 && parts[0] === 'guide') return method === 'GET' ? { action: 'guide' } : { action: 'method_not_allowed' };
   if (parts.length === 1 && parts[0] === 'capabilities') return method === 'GET' ? { action: 'capabilities' } : { action: 'method_not_allowed' };
   if (parts.length === 1 && parts[0] === 'openapi.json') return method === 'GET' ? { action: 'openapi' } : { action: 'method_not_allowed' };
@@ -54,6 +65,15 @@ function writeSchema(module: ModuleDef, operation: 'create' | 'update') {
 
 export function buildOpenApi(baseUrl: string, authorizationServer: string) {
   const paths: Record<string, unknown> = {};
+  for (const [operation, definition] of Object.entries(NEWSPAPER_OPERATIONS)) {
+    const read = definition.permission === 'read';
+    const path = operation === 'list' ? '/newspaper' : `/newspaper/${operation}`;
+    paths[path] = { [read ? 'get' : 'post']: {
+      operationId: `newspaper_${operation}`, summary: definition.description,
+      parameters: read ? Object.entries(definition.schema.properties).map(([name, schema]) => ({ name, in: 'query', required: definition.schema.required.includes(name), schema })) : [{ name: 'Idempotency-Key', in: 'header', required: definition.paid === true, schema: { type: 'string', minLength: 1, maxLength: 200 } }],
+      ...(!read ? { requestBody: jsonBody(definition.schema) } : {}), responses: read ? okResponse() : mutationResponses(),
+    } };
+  }
   for (const module of MODULES.filter((item) => agentMetaOf(item).agentVisible)) {
     const collection: Record<string, unknown> = {
       get: { operationId: `${module.key}_list`, summary: `分页读取${module.labelZh}`, description: toolDescription(module, 'list'), parameters: pageParameters(module), responses: okResponse() },
@@ -73,13 +93,16 @@ export function buildOpenApi(baseUrl: string, authorizationServer: string) {
   paths['/capabilities'] = { get: { operationId: 'capabilities', responses: okResponse() } };
   paths['/summary/{name}'] = { get: { operationId: 'summary', parameters: [{ name: 'name', in: 'path', required: true, schema: { type: 'string' } }, ...pageParameters()], responses: okResponse() } };
   paths['/summary/subscription']={get:{operationId:'subscription_summary',summary:'订阅月均预算与未来30天预计扣费，各币种独立汇总',description:'预算不等于实际支出；固定与按量预估分别返回。默认北京时间今日。',parameters:[{name:'as_of_date',in:'query',schema:{type:'string',format:'date'}}],responses:okResponse()}};
+  paths['/daily_task/overview']={get:{operationId:'daily_task_overview',summary:'完整任务概览与往期未完成',description:TASK_OVERVIEW_DESCRIPTION,parameters:Object.entries(TASK_OVERVIEW_SCHEMA.properties).map(([name,schema])=>({name,in:'query',schema})),responses:{...okResponse(),400:{description:'Invalid options or result exceeds 500 records; no partial list returned'}}}};
+  const {idempotency_key:_,...transferProperties}=TASK_TRANSFER_SCHEMA.properties;
+  paths['/daily_task/transfer']={post:{operationId:'daily_task_transfer',summary:'原子批量跨天安排',description:TASK_TRANSFER_DESCRIPTION,parameters:[{name:'Idempotency-Key',in:'header',required:true,schema:{type:'string',minLength:1,maxLength:200}}],requestBody:jsonBody({...TASK_TRANSFER_SCHEMA,properties:transferProperties,required:TASK_TRANSFER_SCHEMA.required.filter(key=>key!=='idempotency_key')}),responses:mutationResponses()}};
   return {
     openapi: '3.1.0',
     info: { title: 'V-Life Agent API', version: AGENT_CONTRACT_VERSION },
     servers: [{ url: baseUrl }],
-    security: [{ oauth2: [] }],
+    security: [{ apiKey: [] }, { oauth2: [] }],
     paths,
-    components: { securitySchemes: { oauth2: { type: 'oauth2', flows: { authorizationCode: { authorizationUrl: `${authorizationServer}/authorize`, tokenUrl: `${authorizationServer}/token`, scopes: {} } } } } },
+    components: { securitySchemes: { apiKey: { type: 'http', scheme: 'bearer', bearerFormat: 'V-Life API Key', description: 'Create an API Key in V-Life Settings → Agent connections. Send Authorization: Bearer vlife_…; keys can expire or be revoked.' }, oauth2: { type: 'oauth2', flows: { authorizationCode: { authorizationUrl: `${authorizationServer}/authorize`, tokenUrl: `${authorizationServer}/token`, scopes: {} } } } } },
   };
 }
 
@@ -94,5 +117,5 @@ function pageParameters(module?: ModuleDef) {
 }
 function idempotencyParameter() { return [{ name: 'Idempotency-Key', in: 'header', schema: { type: 'string', maxLength: 200 } }]; }
 function jsonBody(schema: unknown) { return { required: true, content: { 'application/json': { schema } } }; }
-function okResponse() { return { 200: { description: 'Success', content: { 'application/json': { schema: { type: 'object' } } } }, 401: { description: 'OAuth required' }, 403: { description: 'Permission denied' } }; }
+function okResponse() { return { 200: { description: 'Success', content: { 'application/json': { schema: { type: 'object' } } } }, 401: { description: 'API Key or OAuth token required; key may be expired or revoked' }, 403: { description: 'Permission denied' } }; }
 function mutationResponses() { return { ...okResponse(), 400: { description: 'Invalid input' }, 404: { description: 'Record not found' }, 409: { description: 'Conflict' } }; }

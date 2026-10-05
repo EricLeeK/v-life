@@ -231,7 +231,7 @@
   h2.font-display,
   h3.font-display,
   .heading-font {
-    font-family: 'Fraunces', 'Instrument Serif', ui-serif, Georgia, serif;
+    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', ui-serif, Georgia, serif;
     font-variation-settings: "opsz" 144, "SOFT" 50;
   }
 
@@ -329,6 +329,28 @@
   .card-premium:hover {
     border-color: var(--line-strong);
     box-shadow: 0 2px 10px rgba(42, 36, 29, 0.06);
+  }
+
+  /* Ledger 表单刻度：页面级表单的文本输入/选择统一 36px 高、7px 圆角、16px 字号
+     （触控指针 44px），与 arc --control-height-md 同一把尺。 */
+  .ledger-field {
+    width: 100%;
+    height: 2.25rem;
+    border-radius: 0.4375rem;
+    border: 1px solid hsl(var(--input));
+    background-color: hsl(var(--card));
+    padding-inline: 0.75rem;
+    font-size: 1rem;
+    color: hsl(var(--card-foreground));
+  }
+  .ledger-field:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 1px;
+  }
+  @media (pointer: coarse) {
+    .ledger-field {
+      height: 2.75rem;
+    }
   }
 
   /* Thin scrollbar for projects page */
@@ -480,7 +502,7 @@
   }
 
   .obsidian-markdown input[type="checkbox"] {
-    accent-color: #5b88b5;
+    accent-color: hsl(var(--cat-blue));
     margin-right: 0.5em;
     transform: translateY(1px);
   }
@@ -511,8 +533,8 @@
   }
 
   .obsidian-markdown pre {
-    background-color: #1e293b;
-    color: #f8fafc;
+    background-color: hsl(30 22% 11%);
+    color: hsl(40 20% 92%);
     font-family: "JetBrains Mono", "SF Mono", "Fira Code", Menlo, Monaco, monospace;
     font-size: 0.875rem;
     line-height: 1.6;
@@ -520,8 +542,8 @@
     border-radius: 0.75rem;
     overflow-x: auto;
     margin: 1.2em 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border: 1px solid #334155;
+    box-shadow: 0 1px 3px rgba(42, 36, 29, 0.1);
+    border: 1px solid hsl(30 12% 24%);
   }
 
   .obsidian-markdown pre code {
@@ -607,3 +629,34 @@
     color: hsl(var(--cat-blue) / 0.8);
   }
 }
+
+
+/* Destructive icons stay quiet until intent: grey at rest, red on hover/focus. */
+svg.lucide-trash-2, svg.lucide-trash2, svg.lucide-trash { color: hsl(var(--muted-foreground)); transition: color .15s; }
+:is(button, [role=menuitem]):is(:hover, :focus-visible) > svg:is(.lucide-trash-2, .lucide-trash2, .lucide-trash) { color: hsl(var(--destructive)); }
+:is(.bg-destructive, [data-keep-color]) svg:is(.lucide-trash-2, .lucide-trash2, .lucide-trash) { color: inherit; }
+
+/* Page header: one serif title per page, optional description and actions. */
+.page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; padding: 8px 0 24px; }
+.page-header h1 { font-size: clamp(26px, 2.6vw, 34px); font-weight: 600; line-height: 1.2; letter-spacing: -.01em; }
+.page-header p { margin-top: 6px; font-size: 14px; line-height: 1.6; color: hsl(var(--muted-foreground)); max-width: 60ch; }
+.page-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* Row list: records read as a ledger of hairline rows, not a stack of floating cards. */
+.row-group + .row-group { margin-top: 28px; }
+.row-group-title { display: flex; align-items: baseline; gap: 8px; padding: 0 2px 8px; font-size: 12px; font-weight: 600; letter-spacing: .04em; color: hsl(var(--muted-foreground)); }
+.row-group-title .count { font-family: var(--font-mono, ui-monospace, monospace); font-weight: 500; opacity: .7; }
+.row-list { border-top: 1px solid hsl(var(--border)); }
+.row-item { position: relative; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 6px; border-bottom: 1px solid hsl(var(--border)); transition: background-color .15s; }
+.row-item:hover { background: hsl(var(--muted) / .45); }
+.row-main { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex: 1; flex-wrap: wrap; }
+.row-title { font-size: 14px; font-weight: 500; color: hsl(var(--foreground)); }
+.row-meta { font-size: 12px; color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; }
+.row-actions { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity .15s; }
+.row-item:hover .row-actions, .row-item:focus-within .row-actions { opacity: 1; }
+@media (hover: none) { .row-actions { opacity: 1; } }
+.status-text { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.status-text::before { content: ""; width: 6px; height: 6px; border-radius: 8px; background: currentColor; }
+.status-text.tone-danger { color: hsl(var(--destructive)); }
+.status-text.tone-warn { color: hsl(var(--warning)); }
+.status-text.tone-ok { color: hsl(var(--muted-foreground)); }

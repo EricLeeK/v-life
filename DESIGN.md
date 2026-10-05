@@ -73,6 +73,41 @@ typography:
     fontFamily: "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif"
     fontSize: "13px"
     fontWeight: 500
+  newspaper-body:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.9
+  newspaper-deck:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "18px"
+    fontWeight: 400
+    lineHeight: 1.8
+  newspaper-headline:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(32px, 3.9vw, 54px)"
+    fontWeight: 900
+    lineHeight: 1.2
+  newspaper-headline-compact:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(28px, 8vw, 38px)"
+    fontWeight: 900
+    lineHeight: 1.2
+  newspaper-masthead:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(52px, 7.6vw, 104px)"
+    fontWeight: 900
+    lineHeight: 1.08
+  newspaper-masthead-compact:
+    fontFamily: "Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif, serif"
+    fontSize: "clamp(44px, 14vw, 64px)"
+    fontWeight: 900
+    lineHeight: 1.08
+  newspaper-archive-title:
+    fontFamily: "Fraunces, Songti SC, Noto Serif SC, ui-serif, serif"
+    fontSize: "clamp(30px, 4vw, 50px)"
+    fontWeight: 650
+    lineHeight: 1.22
   metric:
     fontFamily: "JetBrains Mono, SF Mono, Fira Code, monospace"
     fontSize: "28px"
@@ -89,6 +124,7 @@ rounded:
   sm: "calc(0.5625rem - 4px)"
   md: "calc(0.5625rem - 2px)"
   lg: "0.5625rem"
+  card: "8px"
 spacing:
   page-x: "24px"
   page-y: "24px"
@@ -194,7 +230,7 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 ## Shapes
 
 - Global radius token `--radius: 0.5625rem` (~9px)
-- Cards / premium panels often `8px`
+- Cards / premium panels use `8px`
 - Pills for badges; circular FABs for AI assistant
 - Prefer soft rectangles over heavy neumorphism
 
@@ -240,3 +276,23 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 - Functional hover, focus, and state transitions remain brief and visible.
 - Under `prefers-reduced-motion: reduce`, staggered entrances and infinite/decorative animation classes are disabled; scrolling becomes immediate.
 - Do not globally force every transition to `0.01ms`: that removes useful state feedback and can create brittle timing behavior.
+
+## 生活报纸档案馆（/newspapers）
+
+此处是用户指定的「档案柜 + 真实报纸」视觉扩展，采用 Experience → Read 的转换，不沿用右侧模块面板的阅读结构。
+
+- **档案柜**：暖灰柜体和每月抽屉保留，默认只展开最近一个月，搜索时展开匹配月份。层级以每份日报的标题、首段摘要与真实配图为主；日期签完整露出，月份与归档状态退为辅助信息。抽屉约 360ms 展开，纸张悬停抬起 6px，归位后不残留抬升。
+- **纸张**：报纸是新闻纸而不是屏幕卡片——纸色上叠细颗粒与横向纤维两层 SVG 噪点（`--np-grain`、`--np-fibre`），下方两层错开的薄纸边，纸面保留对折成条留下的三道水平折痕。配图做轻微的旧化（sepia / 降饱和）。深色模式降低折痕强度、桌面去掉纹理。
+- **折叠动画**：纸张从原槽位连续移动并沿中线展开（820ms），收回反向折起归位（620ms）。封面来自实际档案条目，内页来自当前阅读位置的真实 DOM；两个印刷面保留在同一场景，移动与折叠共用时间轴，固定印刷面始终在折页背面上方。完成时一次性交接，避免中途空白与重复纸张。展开途中按 Esc 反转当前帧；卸载时取消动画。减少动态效果和不支持 Web Animations 时直接切换，归位恢复原列表滚动与键盘焦点。
+- 原有 Fraunces 用于 V-Life 和日期（用户已确认，检测器登记了单值豁免）。中文报头与栏目使用 `Songti SC, Noto Serif SC, Source Han Serif SC, ui-serif`，已登记为 `newspaper-*` 字体规范：正文 16px、导语 18px、头条 clamp(32px, 3.9vw, 54px)、报头 clamp(52px, 7.6vw, 104px)，紧凑版本见 frontmatter。小号 9–14px 仅用于日期印记、状态和辅助信息。
+- 纸页保持直角；印章、勾选框等印刷元素直角；按钮、抽屉、索引签用 8px。复用 `--background`、`--muted`、`--foreground`、`--border` 与语义色；阴影用墨色透明度，无额外品牌色。
+- 桌面宽窄分栏、手机单栏。图片是真实保存资产的缩略图，AI 与演示图片分别明确标识；无图、无复盘时保留完整文字阅读。
+- 手机输入框、日期和选择器使用 16px，避免 iOS 聚焦时自动放大。
+- 收回阅读器后保留实际键盘焦点但不残留抬起和框线；再次 Tab 导航显示焦点，实际指针移动恢复悬浮反馈。
+
+
+## 首页日程缩略视图
+
+- 以真实事件的标题和时间为主，沿用日程分类颜色；日期只作为列索引，今天使用原 `--secondary` 浅色。
+- 桌面展示七列，每列最多三条安排；今天围绕接下来要发生的安排取连续片段，并保留近期上下文。完整日程入口与事件卡都携带对应日期。
+- 手机在卡片内部横向翻阅，默认让今天可见；加载、空日程和读取失败有明确反馈。统计数据放在下方紧凑一行。

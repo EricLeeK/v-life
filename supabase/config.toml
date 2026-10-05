@@ -1,10 +1,21 @@
 project_id = "veabdivlfhctseihypzl"
 
-# OAuth protected-resource discovery must reach the Edge Function before a bearer token exists.
-# The MCP adapter performs token verification and RLS-scoped client construction itself.
+# OAuth discovery and opaque API Keys must reach the shared authentication adapter.
+# It verifies either credential and constructs an RLS-scoped client itself.
 [functions.mcp-server]
 verify_jwt = false
 
-# Same OAuth middleware as MCP; the function verifies the user token itself.
+# Same API Key / OAuth authentication as MCP.
 [functions.agent-api]
+verify_jwt = false
+
+# The website endpoint verifies its bearer token with Supabase Auth.
+[functions.newspaper]
+verify_jwt = false
+
+# Scheduled endpoints verify a dedicated worker secret before using service credentials.
+[functions.newspaper-archive]
+verify_jwt = false
+
+[functions.newspaper-images-worker]
 verify_jwt = false

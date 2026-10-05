@@ -51,14 +51,28 @@ describe("record editing integrity", () => {
     await waitFor(() => expect(api.update).toHaveBeenCalledWith(expect.objectContaining({ amount_cny: 50, exchange_rate: 0.05 })));
   });
 
-  it("rejects negative expense amounts before persistence", () => {
+  it("rejects negative expense amounts before persistence", async () => {
     show(<FinancePage />);
     fireEvent.click(screen.getByRole("button", { name: /\d{2}\/\d{2} - / }));
     fireEvent.click(screen.getByRole("button", { name: "编辑记录" }));
-    change(/金额/, "-20");
+    change("金额 *", "-20");
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
+    await waitFor(() => expect(api.toast).toHaveBeenCalledWith(expect.objectContaining({ variant: "destructive" })));
     expect(api.update).not.toHaveBeenCalled();
-    expect(api.toast).toHaveBeenCalledWith(expect.objectContaining({ variant: "destructive" }));
+  });
+
+  it("keeps the finance edit draft when the persistence promise rejects", async () => {
+    api.update.mockRejectedValueOnce(new Error("network unavailable"));
+    show(<FinancePage />);
+    fireEvent.click(screen.getByRole("button", { name: /\d{2}\/\d{2} - / }));
+    fireEvent.click(screen.getByRole("button", { name: "编辑记录" }));
+    change("备注", "保留这条草稿");
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+    await waitFor(() => expect(api.toast).toHaveBeenCalledWith(expect.objectContaining({ title: "保存失败", description: "network unavailable" })));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByLabelText("备注")).toHaveValue("保留这条草稿");
+    expect(screen.queryByText("已保存")).not.toBeInTheDocument();
   });
 });
 

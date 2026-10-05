@@ -104,6 +104,7 @@ export default defineConfig(() => {
   ],
   resolve: {
     alias: {
+      "@/registry": path.resolve(__dirname, "./src/vendor/uiarc/registry"),
       "@": path.resolve(__dirname, "./src"),
       // Canonical module registry shared with Supabase edge functions.
       "@modules": path.resolve(__dirname, "./supabase/functions/_shared/moduleRegistry.ts"),

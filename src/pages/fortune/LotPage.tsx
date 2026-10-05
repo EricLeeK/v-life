@@ -39,7 +39,7 @@ export default function LotPage() {
   }
 
   return (
-    <AppLayout title={t("求签", "Lot")}>
+    <AppLayout title={t("求签", "Lot")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("求签", "Lot")}

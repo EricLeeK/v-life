@@ -12,6 +12,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      "@/registry": path.resolve(__dirname, "./src/vendor/uiarc/registry"),
       "@": path.resolve(__dirname, "./src"),
       "@modules": path.resolve(__dirname, "./supabase/functions/_shared/moduleRegistry.ts"),
     },

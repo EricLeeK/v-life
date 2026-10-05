@@ -16,6 +16,8 @@ function fixture(auditFails=false) {
   if(name==='agent_log_operation'&&auditFails)throw new Error('audit unavailable');
   if(name==='agent_classifications')return {data:{data:[{value:'工作',usage_count:3,configured:false}],total:1,hasMore:false,nextOffset:null},error:null};
   if(name==='task_business_date')return {data:'2026-09-24',error:null};
+  if(name==='daily_task_overview')return {data:{data:{business_date:'2026-09-24',date:'2026-09-24',complete:true,tasks:[],backlog:[]}},error:null};
+  if(name==='daily_task_transfer')return {data:{data:{target_date:'2026-09-25',items:[]},replayed:false},error:null};
   if(name==='agent_mutate')return {data:{data:{id:todoId,title:'买牛奶',is_completed:true}},error:null};
   return {data:null,error:null};
  }};
@@ -71,6 +73,27 @@ Deno.test('today helper applies the server business date rather than guessing',a
  assertEquals(r.structuredContent.ok,true);
  assertEquals(r.structuredContent.date,'2026-09-24');
  assert(filters.some(c=>c[0]==='eq'&&c[1]==='task_date'&&c[2]==='2026-09-24'));
+});
+
+Deno.test('task workflow tools are discoverable with explicit transfer semantics and safe retry inputs',async()=>{
+ const {rpc,call,calls}=fixture();const {tools}=await rpc('tools/list');
+ const overview=tools.find((t:any)=>t.name==='daily_task_overview');
+ const transfer=tools.find((t:any)=>t.name==='daily_task_transfer');
+ assert(overview,'Missing task overview tool');assert(transfer,'Missing atomic transfer tool');
+ assert(overview.annotations.readOnlyHint);assert(transfer.annotations.destructiveHint);assert(transfer.annotations.idempotentHint);
+ assert(transfer.inputSchema.required.includes('mode'));assert(transfer.inputSchema.required.includes('idempotency_key'));
+ assertEquals(transfer.inputSchema.properties.daily_task_ids.maxItems,200);
+ assertEquals(transfer.inputSchema.properties.mode.enum,['move','copy']);
+ const context=(await call('daily_task_overview',{date:'tomorrow'})).structuredContent;
+ assert(context.ok);assert(context.data.complete);
+ assert(calls.some(c=>c[0]==='daily_task_overview'&&c[1].p_date==='tomorrow'));
+ const result=(await call('daily_task_transfer',{daily_task_ids:[todoId],target_date:'tomorrow',mode:'copy',idempotency_key:'copy-key'})).structuredContent;
+ assert(result.ok);assertEquals(result.replayed,false);
+ assert(calls.some(c=>c[0]==='daily_task_transfer'&&c[1].p_idempotency_key==='copy-key'));
+ const invalid=(await call('daily_task_transfer',{daily_task_ids:[todoId],mode:'copy'})).structuredContent;
+ assertEquals(invalid.error.code,'INVALID_INPUT');
+ const denied=(await call('daily_task_transfer',{daily_task_ids:[todoId],mode:'move',idempotency_key:'move-key'})).structuredContent;
+ assertEquals(denied.error.code,'PERMISSION_DENIED');
 });
 Deno.test('create schemas declare mandatory database dates and course relation',async()=>{
  const {tools}=await fixture().rpc('tools/list');

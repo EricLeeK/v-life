@@ -73,7 +73,7 @@ export default function ShengxiaoPage() {
   }
 
   return (
-    <AppLayout title={t("生肖运势", "Shengxiao")}>
+    <AppLayout title={t("生肖运势", "Shengxiao")} header={false}>
       <div className="space-y-8">
         <FortunePageHeader
           title={t("生肖运势", "Shengxiao")}

@@ -1,0 +1,58 @@
+Use case: infographic-diagram.
+Create ONE polished high-resolution Chinese beginner tutorial infographic for V-Life, a personal life organizer website, showing how a human connects an AI Agent with an API Key. Portrait format about 3:4, generous resolution and very readable simplified Chinese typography. It must be a usable instructional image, not a marketing poster. All text should be sharp and correct. No actual secrets or invented QR codes.
+
+Visual style: consistent with V-Life's warm desk ledger design. Warm ivory paper background, deep brown-black ink, restrained sage green for successful/selected states, subtle warm tan separators, light rounded browser and app window illustrations, clean thin line icons (key, copy, plug, check), large numbered steps connected by simple downward arrows. No mascots or extraneous objects. Modest paper texture, excellent contrast, plenty of spacing. Use flat front-facing annotated UI illustrations, not angled 3D mockups. All interface fragments clearly illustrative. The eye should follow top to bottom in three broad numbered bands.
+
+Top:
+Large title exactly "V-Life 连接 Agent"
+Subtitle exactly "生成 Key → 配置 Agent → 验证连接"
+A visible compact status pill exactly "新版流程示意 · 上线后使用"
+Do not imply the feature is already deployed.
+
+Band 01: "在网站生成 Key"
+Caption "设置 → Agent 连接"
+Show a simplified V-Life form:
+"连接名称" with example "我的助手"
+"有效期" showing selected "永久有效"
+Below the expiry field display the alternatives "30 天 / 90 天 / 指定日期 / 永久"
+"允许的操作" with checked "读取数据", unchecked "新增和修改", unchecked "删除数据".
+A dark primary button labeled "生成 API Key".
+Then show a small success output strip with a MASKED fake key "vlife_••••••••" and prominent button "复制给 Agent".
+Annotation text "第一次连接，先选读取权限"
+Annotation text "完整 Key 只显示一次，先保存再收起"
+The graphic must visually communicate creation followed by copying, not that an existing short prefix can be used as the full key. Label masked display "Key 示意".
+
+Band 02: "在 Agent 里配置"
+Within this band show two clear alternatives, with a small "任选一种" label.
+Path A heading "让 Agent 帮你配置"
+Body "粘贴「复制给 Agent」的内容"
+Small note "需要 Agent 具备工具配置或网络能力"
+Path B heading "自己填写连接设置"
+Draw a simple remote tool connection form with:
+"名称" : "V-Life"
+"类型" : "远程 MCP / HTTP"
+"MCP 地址" : "从网站「手动配置」复制"
+"认证方式" : "Bearer Token"
+"Token" : "粘贴完整 API Key"
+Under this form show a compact alternate header setup:
+"只有自定义请求头？"
+"Authorization: Bearer 你的完整Key"
+Use clear monospace only for technical English and the fake key.
+A slim annotation across the band: "填在外部工具连接里，不要填到模型 API Key 栏"
+Do not show an actual long server URL; instead direct to copying the exact one from the website. No OAuth callback fields. Do not imply a normal text-only chatbot can connect simply by remembering the secret.
+
+Band 03: "实际读取，确认连通"
+Draw a friendly chat message with exact request:
+"读取使用指南，再查今天的待办。只读取，不修改。"
+Below, green check indicators "指南读取成功" and "待办查询成功", labeled "成功结果示意".
+Then an arrow back to a small website status fragment with "我的 API Key", a "刷新状态" control and "最近使用时间".
+Annotation: "真实调用成功，才算连接成功"
+Secondary note: "查到 0 条任务也可以是正常结果"
+Keep this instructional, not a claim that a real connection has been tested.
+
+Bottom footer, two balanced compact notes with key / stop icons:
+"永久有效：不自动到期，仍可随时撤销"
+"停止访问：网站中撤销对应 Key"
+Tiny bottom caption "界面与 Key 均为示意，不含真实凭证"
+
+Avoid dense paragraphs, tiny illegible text, decorative English slogans, giant logos, fictional agent product brands, fake QR codes, code walls, real API keys, OAuth redirect_uri instructions, and misleading deployed/success status. Prioritize a beginner understanding exactly which website controls to click, where the key goes in the Agent, and how to verify actual access.

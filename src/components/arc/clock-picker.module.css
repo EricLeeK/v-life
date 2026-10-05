@@ -1,0 +1,160 @@
+/* The root holds the trigger's place; the surface floats above it and grows into the panel, so opening never pushes content. */
+.root {
+  position: relative;
+  display: inline-block;
+  height: var(--control-height-md);
+  vertical-align: top;
+  color: var(--foreground);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+  z-index: 0;
+  transition: z-index 0s linear .5s;
+}
+.root[data-open] { z-index: 30; transition-delay: 0s; }
+.root *, .root *::before, .root *::after { box-sizing: border-box; }
+
+.surface {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  overflow: clip;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-resting);
+  transition: box-shadow var(--duration-considered) var(--ease-standard);
+}
+.surface::after { content: ""; position: absolute; inset: 0; border: 1px solid var(--border); border-radius: inherit; pointer-events: none; }
+.root:not([data-open]) .surface { z-index: 0; }
+.root[data-open] .surface { box-shadow: var(--shadow-floating); }
+
+.trigger {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 100%;
+  height: var(--control-height-md);
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.trigger[inert] { pointer-events: none; }
+.icon, .chevron { display: grid; flex: none; place-items: center; color: var(--text-secondary); }
+.chevron { margin-left: auto; color: var(--text-muted); }
+.value { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.value[data-empty] { color: var(--text-secondary); font-weight: 400; }
+
+.panel { position: absolute; top: 0; left: 0; width: 272px; padding: 14px 16px 12px; }
+
+/* Readout: the two halves are the mode switch, and their digits roll the way the value moves. */
+.readout { display: flex; align-items: center; justify-content: center; gap: 2px; margin-bottom: 12px; }
+.segment {
+  min-width: 60px;
+  height: 46px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  font-size: 28px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+.segment[aria-pressed="true"] { color: var(--foreground); background: color-mix(in oklch, var(--foreground) 6%, transparent); }
+.segment:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+.colon { font-family: "JetBrains Mono", "SF Mono", ui-monospace, monospace; font-size: 28px; font-weight: 600; color: var(--text-muted); line-height: 1; transform: translateY(-2px); }
+.digits { position: relative; display: inline-flex; overflow: hidden; height: 1.15em; align-items: center; }
+.digitsInner { display: inline-block; }
+
+/* Face */
+.face {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.face:active { cursor: grabbing; }
+.face:focus-visible { box-shadow: 0 0 0 2px var(--surface-raised), 0 0 0 4px var(--foreground); }
+.ticks { position: absolute; inset: 0; pointer-events: none; }
+.ticks line { stroke: var(--text-muted); stroke-width: 1; opacity: .45; stroke-linecap: round; }
+.ticks line[data-major] { stroke: var(--text-secondary); opacity: .7; stroke-width: 1.25; }
+
+.hand {
+  position: absolute;
+  left: calc(50% - 1px);
+  bottom: 50%;
+  width: 2px;
+  background: var(--foreground);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.pivot { position: absolute; left: calc(50% - 4px); top: calc(50% - 4px); width: 8px; height: 8px; border-radius: 50%; background: var(--foreground); pointer-events: none; }
+.knob {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--foreground);
+  pointer-events: none;
+}
+.knob[data-dot]::after { content: ""; position: absolute; left: 14px; top: 14px; width: 6px; height: 6px; border-radius: 50%; background: var(--surface-raised); }
+
+.numbers { position: absolute; inset: 0; pointer-events: none; transform-origin: 50% 50%; }
+.number {
+  position: absolute;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  transition: color .12s var(--ease-standard);
+}
+.number[data-inner] { font-size: 12px; color: var(--text-secondary); }
+.number[data-on] { color: var(--surface-raised); }
+
+.footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+.quick, .actions { display: flex; gap: 4px; }
+.ghost, .primary {
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.ghost { background: transparent; color: var(--text-secondary); }
+.ghost:hover { background: color-mix(in oklch, var(--foreground) 6%, transparent); color: var(--foreground); }
+.primary { background: var(--foreground); color: var(--surface-raised); }
+.primary:hover { opacity: .92; }
+.ghost:focus-visible, .primary:focus-visible { outline: 2px solid var(--foreground); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .number, .segment { transition: none; }
+}

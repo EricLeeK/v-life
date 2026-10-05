@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, parseISO, format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
+import { DateField } from "@/components/arc/DateField";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -238,7 +239,7 @@ function ExamManageDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="exam-date">{t("考试日", "Exam date")}</Label>
-              <Input id="exam-date" type="date" value={form.exam_date} onChange={(e) => setForm({ ...form, exam_date: e.target.value })} />
+              <DateField id="exam-date" label={t("考试日", "Exam date")} value={form.exam_date} onChange={(exam_date) => setForm({ ...form, exam_date })} />
             </div>
           </div>
           <div className="space-y-2">
