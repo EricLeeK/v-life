@@ -1,38 +1,368 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-20T02:40:00Z",
+  "generatedAt": "2026-10-05T06:27:15.465Z",
   "title": "Design System: V-Life",
   "extensions": {
     "colorMeta": {
       "primary": {
         "role": "primary",
         "displayName": "Ink Charcoal",
-        "canonical": "hsl(30 25% 10%)"
+        "canonical": "hsl(30 25% 10%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0156 66.87)",
+          "oklch(26.43% 0.0156 66.87)",
+          "oklch(37.86% 0.0156 66.87)",
+          "oklch(49.29% 0.0156 66.87)",
+          "oklch(60.71% 0.0156 66.87)",
+          "oklch(72.14% 0.0156 66.87)",
+          "oklch(83.57% 0.0156 66.87)",
+          "oklch(95.00% 0.0156 66.87)"
+        ]
       },
       "background": {
         "role": "neutral",
         "displayName": "Cream Paper",
-        "canonical": "hsl(40 20% 95%)"
+        "canonical": "hsl(40 20% 95%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0049 84.56)",
+          "oklch(26.43% 0.0049 84.56)",
+          "oklch(37.86% 0.0049 84.56)",
+          "oklch(49.29% 0.0049 84.56)",
+          "oklch(60.71% 0.0049 84.56)",
+          "oklch(72.14% 0.0049 84.56)",
+          "oklch(83.57% 0.0049 84.56)",
+          "oklch(95.00% 0.0049 84.56)"
+        ]
       },
       "muted-foreground": {
         "role": "neutral",
         "displayName": "Muted Stone",
-        "canonical": "hsl(36 12% 40%)"
+        "canonical": "hsl(36 12% 40%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0255 78.05)",
+          "oklch(26.43% 0.0255 78.05)",
+          "oklch(37.86% 0.0255 78.05)",
+          "oklch(49.29% 0.0255 78.05)",
+          "oklch(60.71% 0.0255 78.05)",
+          "oklch(72.14% 0.0255 78.05)",
+          "oklch(83.57% 0.0255 78.05)",
+          "oklch(95.00% 0.0255 78.05)"
+        ]
       },
       "line": {
         "role": "neutral",
         "displayName": "Hairline",
-        "canonical": "#e4e1d7"
+        "canonical": "#e4e1d7",
+        "tonalRamp": [
+          "oklch(15.00% 0.0138 92.99)",
+          "oklch(26.43% 0.0138 92.99)",
+          "oklch(37.86% 0.0138 92.99)",
+          "oklch(49.29% 0.0138 92.99)",
+          "oklch(60.71% 0.0138 92.99)",
+          "oklch(72.14% 0.0138 92.99)",
+          "oklch(83.57% 0.0138 92.99)",
+          "oklch(95.00% 0.0138 92.99)"
+        ]
       },
       "cat-orange": {
         "role": "accent",
         "displayName": "Clay Orange",
-        "canonical": "hsl(22 65% 36%)"
+        "canonical": "hsl(22 65% 36%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1157 47.70)",
+          "oklch(26.43% 0.1157 47.70)",
+          "oklch(37.86% 0.1157 47.70)",
+          "oklch(49.29% 0.1157 47.70)",
+          "oklch(60.71% 0.1157 47.70)",
+          "oklch(72.14% 0.1157 47.70)",
+          "oklch(83.57% 0.1157 47.70)",
+          "oklch(95.00% 0.1157 47.70)"
+        ]
       },
       "cat-green": {
         "role": "accent",
         "displayName": "Moss Green",
-        "canonical": "hsl(100 45% 28%)"
+        "canonical": "hsl(100 45% 28%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1057 136.53)",
+          "oklch(26.43% 0.1057 136.53)",
+          "oklch(37.86% 0.1057 136.53)",
+          "oklch(49.29% 0.1057 136.53)",
+          "oklch(60.71% 0.1057 136.53)",
+          "oklch(72.14% 0.1057 136.53)",
+          "oklch(83.57% 0.1057 136.53)",
+          "oklch(95.00% 0.1057 136.53)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "foreground",
+        "canonical": "hsl(30 25% 10%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0156 66.87)",
+          "oklch(26.43% 0.0156 66.87)",
+          "oklch(37.86% 0.0156 66.87)",
+          "oklch(49.29% 0.0156 66.87)",
+          "oklch(60.71% 0.0156 66.87)",
+          "oklch(72.14% 0.0156 66.87)",
+          "oklch(83.57% 0.0156 66.87)",
+          "oklch(95.00% 0.0156 66.87)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "card",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "primary-foreground",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "muted",
+        "canonical": "hsl(40 16% 91%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0071 84.57)",
+          "oklch(26.43% 0.0071 84.57)",
+          "oklch(37.86% 0.0071 84.57)",
+          "oklch(49.29% 0.0071 84.57)",
+          "oklch(60.71% 0.0071 84.57)",
+          "oklch(72.14% 0.0071 84.57)",
+          "oklch(83.57% 0.0071 84.57)",
+          "oklch(95.00% 0.0071 84.57)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "border",
+        "canonical": "hsl(40 16% 87%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0103 84.58)",
+          "oklch(26.43% 0.0103 84.58)",
+          "oklch(37.86% 0.0103 84.58)",
+          "oklch(49.29% 0.0103 84.58)",
+          "oklch(60.71% 0.0103 84.58)",
+          "oklch(72.14% 0.0103 84.58)",
+          "oklch(83.57% 0.0103 84.58)",
+          "oklch(95.00% 0.0103 84.58)"
+        ]
+      },
+      "destructive": {
+        "role": "semantic",
+        "displayName": "destructive",
+        "canonical": "hsl(0 72% 51%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.2137 27.17)",
+          "oklch(26.43% 0.2137 27.17)",
+          "oklch(37.86% 0.2137 27.17)",
+          "oklch(49.29% 0.2137 27.17)",
+          "oklch(60.71% 0.2137 27.17)",
+          "oklch(72.14% 0.2137 27.17)",
+          "oklch(83.57% 0.2137 27.17)",
+          "oklch(95.00% 0.2137 27.17)"
+        ]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "success",
+        "canonical": "hsl(100 35% 40%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1142 136.16)",
+          "oklch(26.43% 0.1142 136.16)",
+          "oklch(37.86% 0.1142 136.16)",
+          "oklch(49.29% 0.1142 136.16)",
+          "oklch(60.71% 0.1142 136.16)",
+          "oklch(72.14% 0.1142 136.16)",
+          "oklch(83.57% 0.1142 136.16)",
+          "oklch(95.00% 0.1142 136.16)"
+        ]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "warning",
+        "canonical": "hsl(30 70% 55%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1353 62.20)",
+          "oklch(26.43% 0.1353 62.20)",
+          "oklch(37.86% 0.1353 62.20)",
+          "oklch(49.29% 0.1353 62.20)",
+          "oklch(60.71% 0.1353 62.20)",
+          "oklch(72.14% 0.1353 62.20)",
+          "oklch(83.57% 0.1353 62.20)",
+          "oklch(95.00% 0.1353 62.20)"
+        ]
+      },
+      "cat-blue": {
+        "role": "accent",
+        "displayName": "cat-blue",
+        "canonical": "hsl(207 55% 36%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0939 246.27)",
+          "oklch(26.43% 0.0939 246.27)",
+          "oklch(37.86% 0.0939 246.27)",
+          "oklch(49.29% 0.0939 246.27)",
+          "oklch(60.71% 0.0939 246.27)",
+          "oklch(72.14% 0.0939 246.27)",
+          "oklch(83.57% 0.0939 246.27)",
+          "oklch(95.00% 0.0939 246.27)"
+        ]
+      },
+      "cat-teal": {
+        "role": "accent",
+        "displayName": "cat-teal",
+        "canonical": "hsl(185 55% 28%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0697 203.79)",
+          "oklch(26.43% 0.0697 203.79)",
+          "oklch(37.86% 0.0697 203.79)",
+          "oklch(49.29% 0.0697 203.79)",
+          "oklch(60.71% 0.0697 203.79)",
+          "oklch(72.14% 0.0697 203.79)",
+          "oklch(83.57% 0.0697 203.79)",
+          "oklch(95.00% 0.0697 203.79)"
+        ]
+      },
+      "cat-purple": {
+        "role": "accent",
+        "displayName": "cat-purple",
+        "canonical": "hsl(256 45% 42%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1498 291.16)",
+          "oklch(26.43% 0.1498 291.16)",
+          "oklch(37.86% 0.1498 291.16)",
+          "oklch(49.29% 0.1498 291.16)",
+          "oklch(60.71% 0.1498 291.16)",
+          "oklch(72.14% 0.1498 291.16)",
+          "oklch(83.57% 0.1498 291.16)",
+          "oklch(95.00% 0.1498 291.16)"
+        ]
+      },
+      "cat-yellow": {
+        "role": "accent",
+        "displayName": "cat-yellow",
+        "canonical": "hsl(40 70% 30%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0958 79.86)",
+          "oklch(26.43% 0.0958 79.86)",
+          "oklch(37.86% 0.0958 79.86)",
+          "oklch(49.29% 0.0958 79.86)",
+          "oklch(60.71% 0.0958 79.86)",
+          "oklch(72.14% 0.0958 79.86)",
+          "oklch(83.57% 0.0958 79.86)",
+          "oklch(95.00% 0.0958 79.86)"
+        ]
+      },
+      "cat-red": {
+        "role": "accent",
+        "displayName": "cat-red",
+        "canonical": "hsl(0 55% 40%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1483 24.84)",
+          "oklch(26.43% 0.1483 24.84)",
+          "oklch(37.86% 0.1483 24.84)",
+          "oklch(49.29% 0.1483 24.84)",
+          "oklch(60.71% 0.1483 24.84)",
+          "oklch(72.14% 0.1483 24.84)",
+          "oklch(83.57% 0.1483 24.84)",
+          "oklch(95.00% 0.1483 24.84)"
+        ]
+      },
+      "chart-1": {
+        "role": "accent",
+        "displayName": "chart-1",
+        "canonical": "hsl(200 40% 53%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.0813 231.64)",
+          "oklch(26.43% 0.0813 231.64)",
+          "oklch(37.86% 0.0813 231.64)",
+          "oklch(49.29% 0.0813 231.64)",
+          "oklch(60.71% 0.0813 231.64)",
+          "oklch(72.14% 0.0813 231.64)",
+          "oklch(83.57% 0.0813 231.64)",
+          "oklch(95.00% 0.0813 231.64)"
+        ]
+      },
+      "chart-2": {
+        "role": "accent",
+        "displayName": "chart-2",
+        "canonical": "hsl(100 35% 40%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1142 136.16)",
+          "oklch(26.43% 0.1142 136.16)",
+          "oklch(37.86% 0.1142 136.16)",
+          "oklch(49.29% 0.1142 136.16)",
+          "oklch(60.71% 0.1142 136.16)",
+          "oklch(72.14% 0.1142 136.16)",
+          "oklch(83.57% 0.1142 136.16)",
+          "oklch(95.00% 0.1142 136.16)"
+        ]
+      },
+      "chart-3": {
+        "role": "accent",
+        "displayName": "chart-3",
+        "canonical": "hsl(30 70% 55%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1353 62.20)",
+          "oklch(26.43% 0.1353 62.20)",
+          "oklch(37.86% 0.1353 62.20)",
+          "oklch(49.29% 0.1353 62.20)",
+          "oklch(60.71% 0.1353 62.20)",
+          "oklch(72.14% 0.1353 62.20)",
+          "oklch(83.57% 0.1353 62.20)",
+          "oklch(95.00% 0.1353 62.20)"
+        ]
+      },
+      "chart-4": {
+        "role": "accent",
+        "displayName": "chart-4",
+        "canonical": "hsl(0 72% 51%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.2137 27.17)",
+          "oklch(26.43% 0.2137 27.17)",
+          "oklch(37.86% 0.2137 27.17)",
+          "oklch(49.29% 0.2137 27.17)",
+          "oklch(60.71% 0.2137 27.17)",
+          "oklch(72.14% 0.2137 27.17)",
+          "oklch(83.57% 0.2137 27.17)",
+          "oklch(95.00% 0.2137 27.17)"
+        ]
+      },
+      "chart-5": {
+        "role": "accent",
+        "displayName": "chart-5",
+        "canonical": "hsl(260 35% 60%)",
+        "tonalRamp": [
+          "oklch(15.00% 0.1083 298.51)",
+          "oklch(26.43% 0.1083 298.51)",
+          "oklch(37.86% 0.1083 298.51)",
+          "oklch(49.29% 0.1083 298.51)",
+          "oklch(60.71% 0.1083 298.51)",
+          "oklch(72.14% 0.1083 298.51)",
+          "oklch(83.57% 0.1083 298.51)",
+          "oklch(95.00% 0.1083 298.51)"
+        ]
       }
     },
     "typographyMeta": {
@@ -47,40 +377,128 @@
       "mono": {
         "displayName": "Mono Data",
         "purpose": "Metrics and tabular numbers."
+      },
+      "dashboard-display": {
+        "displayName": "dashboard-display",
+        "purpose": "The dashboard-display role declared in DESIGN.md."
+      },
+      "action-title": {
+        "displayName": "action-title",
+        "purpose": "The action-title role declared in DESIGN.md."
+      },
+      "section-title": {
+        "displayName": "section-title",
+        "purpose": "The section-title role declared in DESIGN.md."
+      },
+      "label": {
+        "displayName": "label",
+        "purpose": "The label role declared in DESIGN.md."
+      },
+      "micro": {
+        "displayName": "micro",
+        "purpose": "The micro role declared in DESIGN.md."
+      },
+      "dense": {
+        "displayName": "dense",
+        "purpose": "The dense role declared in DESIGN.md."
+      },
+      "caption": {
+        "displayName": "caption",
+        "purpose": "The caption role declared in DESIGN.md."
+      },
+      "compact": {
+        "displayName": "compact",
+        "purpose": "The compact role declared in DESIGN.md."
+      },
+      "newspaper-body": {
+        "displayName": "newspaper-body",
+        "purpose": "The newspaper-body role declared in DESIGN.md."
+      },
+      "newspaper-deck": {
+        "displayName": "newspaper-deck",
+        "purpose": "The newspaper-deck role declared in DESIGN.md."
+      },
+      "newspaper-headline": {
+        "displayName": "newspaper-headline",
+        "purpose": "The newspaper-headline role declared in DESIGN.md."
+      },
+      "newspaper-headline-compact": {
+        "displayName": "newspaper-headline-compact",
+        "purpose": "The newspaper-headline-compact role declared in DESIGN.md."
+      },
+      "newspaper-masthead": {
+        "displayName": "newspaper-masthead",
+        "purpose": "The newspaper-masthead role declared in DESIGN.md."
+      },
+      "newspaper-masthead-compact": {
+        "displayName": "newspaper-masthead-compact",
+        "purpose": "The newspaper-masthead-compact role declared in DESIGN.md."
+      },
+      "newspaper-archive-title": {
+        "displayName": "newspaper-archive-title",
+        "purpose": "The newspaper-archive-title role declared in DESIGN.md."
+      },
+      "metric": {
+        "displayName": "metric",
+        "purpose": "The metric role declared in DESIGN.md."
+      },
+      "metric-compact": {
+        "displayName": "metric-compact",
+        "purpose": "The metric-compact role declared in DESIGN.md."
       }
     },
     "shadows": [
       {
+        "name": "hairline",
+        "value": "var(--shadow-hairline)",
+        "purpose": "Incumbent hairline shadow token; premium cards currently render flat."
+      },
+      {
+        "name": "btn",
+        "value": "var(--shadow-btn)",
+        "purpose": "Incumbent btn shadow token; premium cards currently render flat."
+      },
+      {
         "name": "card",
         "value": "var(--shadow-card)",
-        "purpose": "Default elevated panels."
+        "purpose": "Incumbent card shadow token; premium cards currently render flat."
       },
       {
         "name": "raised",
         "value": "var(--shadow-raised)",
-        "purpose": "Hover / emphasis elevation."
+        "purpose": "Incumbent raised shadow token; premium cards currently render flat."
       },
       {
         "name": "overlay",
         "value": "var(--shadow-overlay)",
-        "purpose": "Dialogs and sheets."
+        "purpose": "Incumbent overlay shadow token; premium cards currently render flat."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-strong",
-        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
-        "purpose": "Signature enter and press easing."
+        "name": "ease-out",
+        "value": "var(--ease-out)",
+        "purpose": "Short color and focus feedback."
       },
       {
-        "name": "enter-up",
-        "value": "fade-up 0.5s with --i stagger",
-        "purpose": "List entrance; disabled under prefers-reduced-motion."
+        "name": "press",
+        "value": "160ms; 80ms on press; translateY(1px) scale(.985)",
+        "purpose": "Button pressure response."
+      },
+      {
+        "name": "responsive-spring",
+        "value": "stiffness:520; damping:38; mass:1",
+        "purpose": "Switch thumb and shared-layout selection surface."
+      },
+      {
+        "name": "smooth-spring",
+        "value": "visualDuration:.34; bounce:0",
+        "purpose": "Disclosure height."
       },
       {
         "name": "reduced-motion",
-        "value": "targeted animation disable",
-        "purpose": "Disable entrances and infinite decoration while preserving functional state feedback."
+        "value": "targeted CSS disable and useReducedMotion duration:0",
+        "purpose": "Preserve state changes without movement."
       }
     ],
     "breakpoints": [
@@ -104,49 +522,64 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Ink fill primary action.",
+      "description": "Ink action with a brief pressure response; shared control defaults.",
       "html": "<button class=\"ds-btn-primary\">保存</button>",
-      "css": ".ds-btn-primary{background:hsl(30 25% 10%);color:#fff;padding:8px 16px;height:40px;border:none;border-radius:calc(0.5625rem - 2px);font:500 14px Inter,sans-serif;box-shadow:0 1px 2px rgba(42,36,29,.08);transition:transform .15s cubic-bezier(.23,1,.32,1),box-shadow .15s}.ds-btn-primary:hover{box-shadow:0 2px 6px rgba(42,36,29,.12)}.ds-btn-primary:active{transform:scale(.97)}.ds-btn-primary:focus-visible{outline:2px solid hsl(30 25% 10%);outline-offset:2px}"
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:8px 16px;border-radius:var(--radius);font:500 14px Inter,sans-serif;transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out),transform 160ms var(--ease-out-strong);border:none;background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:0 1px 2px hsl(var(--card-foreground)/.08)}.ds-btn-primary:hover{background:hsl(var(--primary)/.9);box-shadow:0 2px 6px hsl(var(--card-foreground)/.12)}.ds-btn-primary:active:not(:disabled){transform:translateY(1px) scale(.985);transition-duration:80ms}.ds-btn-primary:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}.ds-btn-primary:disabled{opacity:.5;pointer-events:none}@media(pointer:coarse){.ds-btn-primary{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-btn-primary{transition:none}.ds-btn-primary:active{transform:none}}"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Hairline secondary action.",
+      "description": "White secondary action with a warm hover surface.",
       "html": "<button class=\"ds-btn-outline\">取消</button>",
-      "css": ".ds-btn-outline{background:hsl(40 20% 95%);color:hsl(30 25% 10%);padding:8px 16px;height:40px;border:none;border-radius:calc(0.5625rem - 2px);font:500 14px Inter,sans-serif;box-shadow:0 0 0 1px #d4d1c7,0 1px 2px rgba(42,36,29,.05)}.ds-btn-outline:hover{background:#f6f4ee}.ds-btn-outline:focus-visible{outline:2px solid hsl(30 25% 10%);outline-offset:2px}"
+      "css": ".ds-btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:8px 16px;border-radius:var(--radius);font:500 14px Inter,sans-serif;transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out),transform 160ms var(--ease-out-strong);border:1px solid hsl(var(--border));background:hsl(var(--card));color:hsl(var(--card-foreground));box-shadow:0 1px 2px hsl(var(--card-foreground)/.05)}.ds-btn-outline:hover{background:var(--field-warm);border-color:var(--line-strong)}.ds-btn-outline:active:not(:disabled){transform:translateY(1px) scale(.985);transition-duration:80ms}.ds-btn-outline:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}.ds-btn-outline:disabled{opacity:.5;pointer-events:none}@media(pointer:coarse){.ds-btn-outline{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-btn-outline{transition:none}.ds-btn-outline:active{transform:none}}"
     },
     {
       "name": "Text Field",
       "kind": "input",
-      "description": "Warm field with hairline border.",
-      "html": "<label class=\"ds-field\"><span class=\"ds-label\">邮箱</span><input class=\"ds-input\" placeholder=\"you@example.com\"/></label>",
-      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font-family:Inter,sans-serif}.ds-label{font-size:12px;color:hsl(36 12% 40%)}.ds-input{height:40px;padding:0 12px;border:1px solid hsl(40 16% 87%);border-radius:calc(0.5625rem - 2px);background:#fff;color:hsl(30 25% 10%);font-size:16px}.ds-input:focus{outline:2px solid hsl(30 25% 10%);outline-offset:1px}"
+      "description": "White field with a quiet border; touch inputs use 16px text.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">待办名称</span><input class=\"ds-input\" placeholder=\"整理本周生活记录\"/></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:8px;font-family:Inter,sans-serif}.ds-label{font-size:12px;color:hsl(var(--muted-foreground))}.ds-input{height:40px;padding:0 12px;border:1px solid hsl(var(--input));border-radius:var(--radius);background:hsl(var(--card));color:hsl(var(--card-foreground));font:400 14px Inter,sans-serif;box-shadow:0 1px 2px hsl(var(--card-foreground)/.025);transition:border-color 160ms var(--ease-out),box-shadow 160ms var(--ease-out)}.ds-input:hover{border-color:hsl(var(--card-foreground)/.28)}.ds-input:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}.ds-input[aria-invalid=\"true\"]{border-color:hsl(var(--destructive))}.ds-input:disabled{opacity:.5;cursor:not-allowed}@media(pointer:coarse){.ds-input{min-height:44px;font-size:16px}}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
     },
     {
       "name": "Premium Card",
       "kind": "card",
       "refersTo": "card-premium",
-      "description": "Token gradient elevated card.",
+      "description": "White panel with an 8px corner and hairline border; flat at rest.",
       "html": "<div class=\"ds-card\"><p class=\"ds-card-label\">本月支出</p><p class=\"ds-card-value\">¥1,280</p></div>",
-      "css": ".ds-card{background:linear-gradient(180deg,#fff 0%,#f5f2eb 100%);border:1px solid #e4e1d7;border-radius:8px;padding:16px;box-shadow:0 1px 2px rgba(42,36,29,.04),0 2px 6px rgba(42,36,29,.03)}.ds-card-label{margin:0;font:500 12px Inter,sans-serif;color:hsl(36 12% 40%);letter-spacing:.04em;text-transform:uppercase}.ds-card-value{margin:4px 0 0;font:600 28px 'JetBrains Mono',monospace;color:hsl(30 25% 10%)}"
+      "css": ".ds-card{background:hsl(var(--card));color:hsl(var(--card-foreground));border:1px solid var(--line);border-radius:8px;padding:16px;box-shadow:none;transition:border-color 200ms cubic-bezier(.22,1,.36,1)}.ds-card:hover{border-color:var(--line-strong)}.ds-card-label{margin:0;font:500 12px Inter,sans-serif;color:hsl(var(--muted-foreground))}.ds-card-value{margin:4px 0 0;font:600 28px \"JetBrains Mono\",monospace}@media(prefers-reduced-motion:reduce){.ds-card{transition:none}}"
     },
     {
       "name": "Category Chip",
       "kind": "chip",
-      "description": "Category accent using cat tokens.",
+      "description": "Semantic schedule category color.",
       "html": "<span class=\"ds-chip\">日程</span>",
-      "css": ".ds-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:hsl(210 44% 92%);color:hsl(207 40% 53%);font:500 12px Inter,sans-serif}"
+      "css": ".ds-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:hsl(var(--cat-blue-bg));color:hsl(var(--cat-blue));font:500 12px Inter,sans-serif}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "description": "Quiet auxiliary action.",
+      "html": "<button class=\"ds-btn-ghost\">重置</button>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:8px 16px;border-radius:var(--radius);font:500 14px Inter,sans-serif;transition:background-color 160ms var(--ease-out),border-color 160ms var(--ease-out),transform 160ms var(--ease-out-strong);border:none;background:transparent;color:hsl(var(--card-foreground))}.ds-btn-ghost:hover{background:hsl(var(--accent))}.ds-btn-ghost:active:not(:disabled){transform:translateY(1px) scale(.985);transition-duration:80ms}.ds-btn-ghost:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}.ds-btn-ghost:disabled{opacity:.5;pointer-events:none}@media(pointer:coarse){.ds-btn-ghost{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-btn-ghost{transition:none}.ds-btn-ghost:active{transform:none}}"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "description": "Warm selected surface with labels above it. Shared-layout movement runs in the application.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"主导航\"><a class=\"ds-nav-item\" href=\"#\" aria-current=\"page\">首页</a><a class=\"ds-nav-item\" href=\"#\">日程</a><a class=\"ds-nav-item\" href=\"#\">待办</a></nav>",
+      "css": ".ds-nav{display:flex;gap:4px;font:500 14px Inter,sans-serif}.ds-nav-item{display:flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 12px;border-radius:var(--radius);text-decoration:none;color:hsl(var(--muted-foreground));transition:color 160ms var(--ease-out),background-color 160ms var(--ease-out)}.ds-nav-item[aria-current=\"page\"]{background:hsl(var(--muted));color:hsl(var(--card-foreground))}.ds-nav-item:hover{color:hsl(var(--card-foreground))}.ds-nav-item:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-nav-item{transition:none}}"
     }
   ],
   "narrative": {
     "northStar": "Warm Desk Ledger",
-    "overview": "V-Life is a bilingual personal life OS that should feel like a well-kept desk blotter: warm cream paper, ink-dark text, hairline rules, and quiet category accents. Density favors scanability for Operate-mode tasks over marketing flourish.",
+    "overview": "V-Life is a bilingual personal life OS that should feel like a well-kept desk blotter: warm cream paper, ink-dark text, hairline rules, and quiet category accents. Density favors scanability for Operate-mode tasks (todos, schedule, finance) over marketing flourish. Motion is short and purposeful (list enter-up, button press), and always yields to `prefers-reduced-motion`.",
     "keyCharacteristics": [
-      "Warm cream canvas with token-based elevated cards and an explicit ink-dark theme",
-      "Ink primary instead of saturated brand purple",
-      "Category accents via --cat-*; charts via --chart-*",
-      "Fraunces + Inter + JetBrains Mono pairing"
+      "Warm cream canvas (`--background`) with white elevated cards",
+      "Ink primary (`--foreground` / `--primary`) instead of saturated brand purple",
+      "Category accents via `--cat-*` tokens; charts via `--chart-*`",
+      "Fraunces for display headings; Inter for UI; JetBrains Mono for metrics",
+      "Hairline borders (`--line`) + soft warm-brown shadows"
     ],
     "rules": [
       {
@@ -161,18 +594,16 @@
       }
     ],
     "dos": [
-      "Do use semantic tokens (bg-background, text-muted-foreground, text-cat-*).",
-      "Do define category foreground and background tokens for both themes.",
-      "Do disable decorative motion selectively under prefers-reduced-motion.",
-      "Do keep touch targets at least 44x44px.",
-      "Do pair Label htmlFor with control ids."
+      "**Do** use semantic tokens (`bg-background`, `text-muted-foreground`, `border-border`, `text-cat-green`).",
+      "**Do** respect `prefers-reduced-motion` (`.enter-up` off; no infinite distraction).",
+      "**Do** keep bilingual copy via `t(zh, en)`."
     ],
     "donts": [
-      "Don't hard-code cream/ink hex in new UI.",
-      "Don't use bg-white or Stone palette utilities for application surfaces and text.",
-      "Don't collapse every transition globally for reduced motion.",
-      "Don't invent a second category color map beside --cat-*.",
-      "Don't ship icon-only controls without accessible names."
+      "**Don't** hard-code cream/ink hex in new UI (`#f4f3ee`, `#1f1a14`, `#8a847a`, `#e4e1d7`) — map to tokens.",
+      "**Don't** invent a second category color map beside `--cat-*`.",
+      "**Don't** ship icon-only controls without accessible names.",
+      "**Don't** use purple-on-white marketing gradients; this product is warm ink on cream.",
+      "**Don't** treat Inter/Fraunces as disposable without an explicit rebrand — they are the incumbent pairing until `/impeccable typeset` changes them."
     ]
   }
 }

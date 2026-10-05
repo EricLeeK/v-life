@@ -43,10 +43,9 @@
   outline-offset: 2px !important;
 }
 
-/* Metric scope: animated counters adopt the app-wide 28px metric voice. */
-.arc-runtime .arc-metric {
-  --text-3xl: 1.75rem;
-  --text-2xl: 1.75rem;
+/* Summary counters use the same 20px compact metric role as static values. */
+.arc-runtime.arc-metric-compact {
+  --text-3xl: 1.25rem;
   font-variant-numeric: tabular-nums;
 }
 

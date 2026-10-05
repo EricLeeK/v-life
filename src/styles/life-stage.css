@@ -1,6 +1,5 @@
 /* Shared dashboard surfaces. Radius stays with the original cards; motion stays on the controls inside. */
-.life-stage,
-.life-metric {
+.life-stage {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   border-radius: 8px;
@@ -12,7 +11,83 @@
 }
 
 .life-metric {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 0.5rem;
+}
+
+.metric-summary > .life-metric + .life-metric {
+  border-left: 1px solid hsl(var(--border));
+}
+
+.capture-action {
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out), transform 0.15s var(--ease-out);
+}
+
+.capture-action:active {
+  transform: translateY(1px);
+}
+
+.capture-icon, .module-icon {
+  box-shadow: inset 0 0 0 1px hsl(var(--foreground) / .045);
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out);
+}
+.capture-button:hover .capture-icon, .module-card:hover .module-icon {
+  background: hsl(var(--secondary));
+  color: hsl(var(--foreground));
+}
+.pipeline-row {
+  transition: background-color 160ms var(--ease-out), transform 120ms var(--ease-out-strong);
+}
+.pipeline-row:hover, .pipeline-row:focus-visible { background: hsl(var(--muted)); }
+.pipeline-row:active { transform: scale(.994); }
+.pipeline-icon { background: hsl(var(--muted) / .7); }
+.pipeline-arrow, .module-arrow {
+  transition: transform 200ms var(--ease-out-strong), color 160ms var(--ease-out), opacity 160ms var(--ease-out);
+}
+.pipeline-row:hover .pipeline-arrow, .pipeline-row:focus-visible .pipeline-arrow,
+.module-card:hover .module-arrow, .module-card:focus-visible .module-arrow {
+  color: hsl(var(--foreground));
+  transform: translateX(2px);
+}
+.pipeline-list .pipeline-row + .pipeline-row { position: relative; }
+.pipeline-list .pipeline-row + .pipeline-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 3.75rem;
+  right: 1rem;
+  border-top: 1px solid hsl(var(--border) / .6);
+}
+.module-card:active { transform: translateY(1px); }
+.module-arrow { opacity: .5; }
+.module-card:hover .module-arrow, .module-card:focus-visible .module-arrow { opacity: 1; }
+
+@media (min-width: 1024px) {
+  .life-metric {
+    padding: 0.75rem 1rem;
+  }
+
+  .metric-summary > .life-metric:nth-child(odd) {
+    border-left: 0;
+  }
+
+  .metric-summary > .life-metric:nth-child(n + 3) {
+    border-top: 1px solid hsl(var(--border));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capture-action {
+    transition: none;
+  }
+
+  .capture-action:active {
+    transform: none;
+  }
+
+  .capture-icon, .module-icon, .pipeline-row, .pipeline-arrow, .module-arrow { transition: none; }
+  .pipeline-row:active, .module-card:active,
+  .pipeline-row:hover .pipeline-arrow, .pipeline-row:focus-visible .pipeline-arrow,
+  .module-card:hover .module-arrow, .module-card:focus-visible .module-arrow { transform: none; }
 }
 
 /* The donut only puts its legend beside the ring when an ancestor is the container. */

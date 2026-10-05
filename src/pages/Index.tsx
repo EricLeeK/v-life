@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { SectionDisclosure } from "@/components/ui/section-disclosure";
+import { WeekAgenda } from "@/components/dashboard/WeekAgenda";
 import {
   CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
   Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
-  ChevronRight, ArrowRight, ChevronDown, CheckCircle2, Clock, GraduationCap, BookOpen,
-  CalendarPlus, ListPlus, ReceiptText, CircleCheck,
+      ChevronRight, ArrowRight, CheckCircle2, Clock, GraduationCap, BookOpen,
+  CalendarPlus, ListPlus, ReceiptText, CircleCheck, CalendarCheck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
@@ -13,7 +16,9 @@ import {
   useTodaySchedule, useTodayCalorieSummary, useFinanceByMonth,
   useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
   useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks, useCaloriesByRange, useScheduleByRange,
+  useTodayTasks,
 } from "@/hooks/useData";
+import { todayPickerItems } from "@/lib/habits";
 import { usePrimaryExam, useTodayCivilPlans } from "@/hooks/useCivilService";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { getSubscriptionEvent, summarizeSubscriptions } from "@/lib/subscriptions";
@@ -21,10 +26,12 @@ import { useLocalDate } from "@/hooks/useLocalDate";
 import { ArcScope } from "@/components/arc/ArcScope";
 import AnimatedCounter from "@/vendor/uiarc/registry/components/animated-counter/animated-counter";
 import { differenceInCalendarDays, parseISO, format, addDays, startOfWeek } from "date-fns";
+import type { Tables } from "@/integrations/supabase/types";
 
+type DashboardDailyTask = Tables<"daily_tasks"> & {
+  todos: Pick<Tables<"todos">, "title" | "importance" | "category" | "is_archived" | "is_completed"> | null;
+};
 
-const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
-const WEEKDAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function getGreeting(hour: number): string {
   if (hour < 6) return "凌晨好";
@@ -69,6 +76,28 @@ function safePercent(value: number, total: number): number | null {
   return Math.max(0, Math.min(100, (value / total) * 100));
 }
 
+const IMPORTANCE_RANK: Record<string, number> = {
+  urgent: 0,
+  紧急: 0,
+  important: 1,
+  重要: 1,
+  normal: 2,
+  普通: 2,
+  low: 3,
+  低优先: 3,
+};
+
+function importanceRank(value?: string | null) {
+  if (!value) return IMPORTANCE_RANK["普通"];
+  return IMPORTANCE_RANK[value] ?? IMPORTANCE_RANK["普通"];
+}
+
+function importanceMark(value?: string | null): { pill?: "urgent" | "important"; pillColor?: "red" | "yellow" } {
+  if (value === "紧急" || value === "urgent") return { pill: "urgent", pillColor: "red" };
+  if (value === "重要" || value === "important") return { pill: "important", pillColor: "yellow" };
+  return {};
+}
+
 // Category accents — wired to --cat-* design tokens
 const CAT = {
   green:  { text: "text-cat-green", bg: "bg-cat-green-bg", border: "border-cat-green-bg" },
@@ -83,7 +112,7 @@ const CAT = {
 function MetricCard({ label, value, hint, color }: {
   label: string;
   value: React.ReactNode;
-  hint?: string;
+  hint?: React.ReactNode;
   color?: keyof typeof CAT;
 }) {
   const c = color ? CAT[color] : null;
@@ -92,11 +121,11 @@ function MetricCard({ label, value, hint, color }: {
       <p className="text-xs text-muted-foreground font-medium">{label}</p>
       <div className="mt-1 text-foreground">
         {typeof value === "number" ? (
-          <ArcScope className="inline-flex arc-metric">
+          <ArcScope className="inline-flex arc-metric-compact">
             <AnimatedCounter value={value} />
           </ArcScope>
         ) : (
-          <p className="type-metric font-mono-data tracking-tight">{value}</p>
+          <p className="type-metric-compact font-mono-data tracking-tight">{value}</p>
         )}
       </div>
       {hint && (
@@ -119,21 +148,21 @@ function PipelineRow({ icon, iconColor, title, subtitle, pill, pillColor, to }: 
   return (
     <Link
       to={to}
-      className="w-full min-h-11 text-left flex items-center gap-3 px-4 py-3 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-lg transition-colors group"
+      className="pipeline-row w-full min-h-11 text-left flex items-center gap-3 px-4 py-3 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md group"
     >
-      <span data-tone={iconColor} className="flex h-5 w-5 items-center justify-center shrink-0 text-muted-foreground [&_svg]:!text-muted-foreground">
+      <span data-tone={iconColor} className="pipeline-icon flex h-8 w-8 items-center justify-center rounded-md shrink-0 text-muted-foreground">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-medium text-foreground truncate">{title}</p>
-        {subtitle && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
+        <p className="text-sm font-medium text-foreground line-clamp-2" title={title}>{title}</p>
+        {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
       </div>
       {pill && pc && (
         <span className={`status-text shrink-0 ${pc.text}`}>
           {pill}
         </span>
       )}
-      <ChevronRight className="h-3.5 w-3.5 text-border group-hover:text-muted-foreground transition-colors shrink-0" />
+      <ChevronRight className="pipeline-arrow h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
     </Link>
   );
 }
@@ -150,11 +179,11 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
   return (
     <button
       type="button"
-      className="w-full min-h-24 text-left card-premium p-4 cursor-pointer group focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="module-card w-full min-h-24 text-left card-premium p-4 cursor-pointer group focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       onClick={onClick}
     >
       <div className="flex items-start justify-between mb-2">
-        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
+        <div className="module-icon h-8 w-8 rounded-md bg-muted flex items-center justify-center">
           {icon}
         </div>
         {status && sc && (
@@ -163,8 +192,11 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
           </span>
         )}
       </div>
-      <p className="text-[13px] font-semibold text-foreground mt-2">{title}</p>
-      <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <ArrowRight aria-hidden="true" className="module-arrow h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      </div>
+      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
     </button>
   );
 }
@@ -189,8 +221,23 @@ export default function DashboardPage() {
   const { data: todayEvents = [] } = useTodaySchedule();
   const { data: todayCalories = 0 } = useTodayCalorieSummary();
   const { data: monthFinanceRecords = [] } = useFinanceByMonth(now.getFullYear(), now.getMonth() + 1);
-  const { data: allTodos = [] } = todoHooks.useList();
+  const { data: allTodos = [] }: { data?: Tables<"todos">[] } = todoHooks.useList();
+  const { data: todayTasks = [] }: { data?: DashboardDailyTask[] } = useTodayTasks();
   const pendingTodos = allTodos.filter((todo: any) => !todo.is_completed && !todo.is_archived);
+  const todayTodoIds = new Set<string>(todayTasks.map((task: { todo_id: string }) => task.todo_id));
+  const openTodayTasks = todayTasks
+    .filter((task) => !task.is_completed && task.todos?.title && !task.todos.is_archived && !task.todos.is_completed)
+    .sort((a, b) => importanceRank(a.todos?.importance) - importanceRank(b.todos?.importance));
+  const previewTodayTasks = openTodayTasks.slice(0, 5);
+  const otherTodos = todayPickerItems(
+    allTodos.filter((todo) => {
+      if (todo.parent_id) return true;
+      return !allTodos.some((child) => child.parent_id === todo.id && !child.is_completed && !child.is_archived);
+    }),
+    todayTodoIds,
+  )
+    .sort((a, b) => importanceRank(a.importance) - importanceRank(b.importance))
+    .slice(0, 5);
   const { data: expiringPantry = [] } = useExpiringPantry();
   const subscriptionQuery = useSubscriptions(isVisible("belongings"));
   const subscriptionSummary = summarizeSubscriptions(subscriptionQuery.data ?? [], todayStr);
@@ -267,11 +314,6 @@ export default function DashboardPage() {
         ? `${displayName}，${getGreeting(now.getHours())}`
         : `${getGreetingEn(now.getHours())}, ${displayName}`)
     : (lang === "zh" ? getGreeting(now.getHours()) : getGreetingEn(now.getHours()));
-  const weekdays = lang === "zh" ? WEEKDAYS_ZH : WEEKDAYS_EN;
-  const dateLabel = lang === "zh"
-    ? `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`
-    : `${weekdays[now.getDay()]}, ${now.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
-
   // Fasting calculation
   const fastingStartHour = settings?.fasting_start_hour ?? 12;
   const fastingStartMinute = (settings as any)?.fasting_start_minute ?? 0;
@@ -281,10 +323,6 @@ export default function DashboardPage() {
   const isEatingWindow = eatingEndMin > eatingStartMin
     ? currentTotalMin >= eatingStartMin && currentTotalMin < eatingEndMin
     : currentTotalMin >= eatingStartMin || currentTotalMin < eatingEndMin;
-
-  const nextEvent = todayEvents.length > 0
-    ? todayEvents.find((e: any) => new Date(e.start_time) > now) || todayEvents[0]
-    : null;
 
   // Weight trend data
   const latestWeight = weightTrend.length > 0 ? Number(weightTrend[weightTrend.length - 1]?.weight) : null;
@@ -304,15 +342,6 @@ export default function DashboardPage() {
   const overduePantryItems = pantryItems.filter(({ days }) => days !== null && days < 0);
   const dueSoonPantryItems = pantryItems.filter(({ days }) => days !== null && days >= 0 && days <= 3);
   const metricCards = [
-    isVisible("schedule") && {
-      key: "schedule",
-      label: t("今日日程", "Today's Schedule"),
-      value: todayEvents.length,
-      hint: nextEvent && (nextEvent as any).start_time
-        ? format(new Date((nextEvent as any).start_time), "HH:mm")
-        : t("暂无安排", "No events"),
-      color: "blue" as const,
-    },
     isVisible("todos") && {
       key: "todos",
       label: t("待办进度", "To-Do Progress"),
@@ -338,7 +367,7 @@ export default function DashboardPage() {
       label: t("剩余热量", "Calories Remaining"),
       value: calorieTarget > 0 ? remainingCalories : "—",
       hint: calorieTarget > 0
-        ? `${todayCalories} / ${calorieTarget} kcal`
+        ? <>{todayCalories} / <span className="whitespace-nowrap">{calorieTarget} kcal</span></>
         : t("尚未设置热量目标", "Calorie target not set"),
       color: (remainingCalories < 0 ? "orange" : "green") as keyof typeof CAT,
     },
@@ -372,11 +401,11 @@ export default function DashboardPage() {
       hint: weightDiff !== null && Number.isFinite(weightDiff) ? `${weightDiff > 0 ? "+" : ""}${weightDiff.toFixed(1)}kg` : undefined,
       color: "teal" as const,
     },
-  ].filter(Boolean).slice(0, 4) as Array<{
+  ].filter(Boolean).slice(0, isVisible("schedule") ? 3 : 4) as Array<{
     key: string;
     label: string;
     value: React.ReactNode;
-    hint?: string;
+    hint?: React.ReactNode;
     color?: keyof typeof CAT;
   }>;
 
@@ -524,16 +553,7 @@ export default function DashboardPage() {
 
   const budgetUsedPercent = safePercent(totalSpending, budget);
   const budgetRemainingPercent = hasBudget ? safePercent(Math.max(0, budget - totalSpending), budget) : null;
-  const showScheduleOverview = isVisible("schedule");
   const showTodosOverview = isVisible("todos");
-  const showTodayOverviewSection = showScheduleOverview || showTodosOverview;
-  const weekdayLabels = lang === "zh" ? ["一", "二", "三", "四", "五", "六", "日"] : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const weekDays = Array.from({ length: 7 }, (_, index) => {
-    const date = addDays(weekStart, index);
-    const key = format(date, "yyyy-MM-dd");
-    const count = (weekScheduleEvents as any[]).filter((event) => format(new Date(event.start_time), "yyyy-MM-dd") === key).length;
-    return { key, date, count, isToday: key === todayStr, label: weekdayLabels[index] };
-  });
   const attention = [
     ...(isVisible("todos") && overdueTodoCount > 0 ? [{
       key: "overdue-todos",
@@ -751,163 +771,139 @@ export default function DashboardPage() {
 
   return (
     <AppLayout title={t("首页概览", "Dashboard")} header={false}>
-      <div className="space-y-8 lg:space-y-10">
-        <section className="flex flex-col gap-1">
-          <h1 className="type-dashboard-display heading-font text-foreground">{greeting}</h1>
-          <p className="text-sm text-muted-foreground">{dateLabel}</p>
-        </section>
-
-        <section className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)] gap-4">
-            <div className="card-premium p-4 sm:p-5">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="text-sm font-semibold">{t("这周", "This week")}</h2>
-                <Link to="/schedule" className="text-caption text-muted-foreground underline-offset-4 hover:underline">{t("日程", "Schedule")}</Link>
-              </div>
-              <div className="mt-4 grid grid-cols-7 gap-1">
-                {weekDays.map((day) => (
-                  <Link
-                    key={day.key}
-                    to="/schedule"
-                    aria-label={day.isToday
-                      ? t(`今天 ${day.date.getDate()} 日，${day.count} 项日程`, `Today ${day.date.getDate()}, ${day.count} events`)
-                      : t(`${day.label} ${day.date.getDate()} 日，${day.count} 项日程`, `${day.label} ${day.date.getDate()}, ${day.count} events`)}
-                    aria-current={day.isToday ? "date" : undefined}
-                    className={`flex min-h-16 flex-col items-center justify-center rounded-md py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${day.isToday ? "bg-foreground text-background" : "hover:bg-muted"}`}
-                  >
-                    <span className={`text-caption ${day.isToday ? "opacity-70" : "text-muted-foreground"}`}>{day.label}</span>
-                    <span className="font-mono-data text-sm">{day.date.getDate()}</span>
-                    <span className={`mt-1 font-mono-data text-caption ${day.count === 0 ? "opacity-40" : ""}`}>{day.count}</span>
+      <div className="space-y-6">
+        <section className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <h1 className="type-dashboard-display heading-font text-foreground">{greeting}</h1>
+          </div>
+          <nav aria-label={t("快捷记录", "Quick capture")} className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Button key={action.key} variant="outline" asChild className="capture-button min-h-11 justify-start px-3">
+                  <Link to={action.to} aria-label={action.label}>
+                    <span className="capture-icon flex h-6 w-6 items-center justify-center rounded-[5px] bg-muted text-muted-foreground"><Icon className="h-4 w-4" /></span>
+                    <span>{action.label}</span>
                   </Link>
-                ))}
-              </div>
-              {attention.length > 0 && (
-                <ul className="mt-4 border-t border-border">
-                  {attention.map((item) => (
-                    <li key={item.key}>
-                      <button
-                        type="button"
-                        aria-label={item.label}
-                        className="flex min-h-11 w-full items-center gap-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        onClick={() => navigate(item.to)}
-                      >
-                        <span className={`status-text shrink-0 ${item.tone}`} />
-                        <span className="min-w-0 flex-1 truncate text-sm">{item.title}</span>
-                        {item.meta && <span className="shrink-0 text-caption text-muted-foreground">{item.meta}</span>}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <aside className="rounded-lg border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold">{t("快捷记录", "Quick capture")}</h3>
-              <p className="text-caption text-muted-foreground mt-1">{t("把想法变成记录，不必先找模块", "Capture it without hunting for a module")}</p>
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                {quickActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <Link key={action.key} to={action.to} aria-label={action.label} className="min-h-11 rounded-md border border-border bg-background px-3 py-2 flex items-center gap-2 text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
-                      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span>{action.label}</span>
-                    </Link>
-                  );
-                })}
-                <button
-                  type="button"
-                  aria-label={t("打开 AI 助手", "Open AI Assistant")}
-                  className="min-h-11 rounded-md border border-border bg-background px-3 py-2 flex items-center gap-2 text-sm font-medium hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
-                >
-                  <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span>{t("AI 快速记", "AI capture")}</span>
-                </button>
-              </div>
-            </aside>
+                </Button>
+              );
+            })}
+            <Button
+              type="button"
+              variant="outline"
+              aria-label={t("打开 AI 助手", "Open AI Assistant")}
+              className="capture-button min-h-11 justify-start px-3"
+              onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
+            >
+              <span className="capture-icon flex h-6 w-6 items-center justify-center rounded-[5px] bg-muted text-muted-foreground"><Sparkles className="h-4 w-4" /></span>
+              <span>{t("AI 快速记", "AI capture")}</span>
+            </Button>
+          </nav>
         </section>
 
-        {metricCards.length > 0 && (
-          <section role="region" aria-label={t("今日关键数据", "Today's key metrics")} className="grid grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-4">
-            {metricCards.map(({ key, ...metric }) => <MetricCard key={key} {...metric} />)}
+        <div className="space-y-3">
+          {isVisible("schedule") && <WeekAgenda events={weekScheduleEvents} weekStart={weekStart} today={todayStr}
+            loading={scheduleHistory.isLoading} failed={!!scheduleHistory.error} onRetry={() => void scheduleHistory.refetch?.()} />}
+          {metricCards.length > 0 && (
+            <div role="region" aria-label={t("今日关键数据", "Today's key metrics")} className="dashboard-metrics card-premium overflow-hidden"
+              style={{ "--metric-columns": metricCards.length } as React.CSSProperties}>
+              {metricCards.map(({ key, ...metric }) => <MetricCard key={key} {...metric} />)}
+            </div>
+          )}
+        </div>
+
+        {showTodosOverview && (
+          <section>
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h2 className="type-section-title heading-font">{t("优先待办", "Priority to-dos")}</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="card-premium overflow-hidden" role="region" aria-label={t("今日待办", "Today's to-dos")}>
+                <div className="min-h-11 flex items-center justify-between gap-3 px-4 border-b border-border">
+                  <div className="flex items-center gap-2"><CalendarCheck className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold">{t("今日待办", "Today's to-dos")}</span></div>
+                  <Link to="/today" aria-label={t("查看全部今日待办", "View all of today's to-dos")} className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
+                </div>
+                <div className="pipeline-list p-1.5">
+                  {openTodayTasks.length === 0 ? (
+                    <div className="px-4 py-5 text-center">
+                      <p className="text-sm text-muted-foreground">{todayTasks.length > 0 ? t("今天的待办都完成了", "Today's to-dos are done") : t("今天还没有待办", "Nothing on today yet")}</p>
+                      <Link to="/today" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("去添加今日待办", "Add to today")}</Link>
+                    </div>
+                  ) : previewTodayTasks.map((task) => {
+                    const mark = importanceMark(task.todos?.importance);
+                    return (
+                      <PipelineRow key={task.id} icon={<CalendarCheck className="h-4 w-4" />} iconColor="bg-cat-green-bg" title={task.todos.title} subtitle={task.todos.category || undefined} pill={mark.pill === "urgent" ? t("紧急", "Urgent") : mark.pill === "important" ? t("重要", "Important") : undefined} pillColor={mark.pillColor} to="/today" />
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="card-premium overflow-hidden" role="region" aria-label={t("其他待办", "Other to-dos")}>
+                <div className="min-h-11 flex items-center justify-between gap-3 px-4 border-b border-border">
+                  <div className="flex items-center gap-2"><CheckSquare className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold">{t("其他待办", "Other to-dos")}</span></div>
+                  <Link to="/todos" aria-label={t("查看全部待办", "View all to-dos")} className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
+                </div>
+                <div className="pipeline-list p-1.5">
+                  {otherTodos.length === 0 ? (
+                    <div className="px-4 py-5 text-center">
+                      <p className="text-sm text-muted-foreground">{t("没有还没加入今天的待办", "Every open to-do is already on today")}</p>
+                      <Link to="/todos?new=1" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("新增待办", "Add to-do")}</Link>
+                    </div>
+                  ) : otherTodos.map((todo) => {
+                    const mark = importanceMark(todo.importance);
+                    return (
+                      <PipelineRow key={todo.id} icon={<CheckSquare className="h-4 w-4" />} iconColor="bg-cat-green-bg" title={todo.title} subtitle={todo.category || undefined} pill={mark.pill === "urgent" ? t("紧急", "Urgent") : mark.pill === "important" ? t("重要", "Important") : undefined} pillColor={mark.pillColor} to="/todos" />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </section>
         )}
 
-        {showTodayOverviewSection && (
-          <section>
-            <div className="mb-4">
-              <h2 className="type-section-title heading-font">{t("今天的安排", "Today's plan")}</h2>
-              <p className="text-xs text-muted-foreground mt-1">{t("接下来三项日程与待办", "Your next three events and to-dos")}</p>
-            </div>
-            <div className={`grid grid-cols-1 ${showScheduleOverview && showTodosOverview ? "lg:grid-cols-2" : ""} gap-4`}>
-              {showScheduleOverview && (
-                <div className="card-premium overflow-hidden">
-                  <div className="min-h-11 flex items-center justify-between gap-3 px-4 border-b border-border">
-                    <div className="flex items-center gap-2"><CalendarDays className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold">{t("今日日程", "Today's Schedule")}</span></div>
-                    <Link to="/schedule" className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
-                  </div>
-                  <div className="py-1">
-                    {todayEvents.length === 0 ? (
-                      <div className="px-4 py-5 text-center"><p className="text-sm text-muted-foreground">{t("今天还没有安排", "Nothing scheduled today")}</p><Link to="/schedule?new=1" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("添加日程", "Add schedule")}</Link></div>
-                    ) : todayEvents.slice(0, 3).map((event: any) => (
-                      <PipelineRow key={event.id} icon={<CalendarDays className="h-4 w-4 text-cat-blue" />} iconColor="bg-cat-blue-bg" title={event.title} subtitle={event.start_time ? format(new Date(event.start_time), "HH:mm") : ""} pill={event.importance === "重要" ? t("重要", "Important") : undefined} pillColor="orange" to="/schedule" />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {showTodosOverview && (
-                <div className="card-premium overflow-hidden">
-                  <div className="min-h-11 flex items-center justify-between gap-3 px-4 border-b border-border">
-                    <div className="flex items-center gap-2"><CheckSquare className="h-4 w-4 text-muted-foreground" /><span className="text-sm font-semibold">{t("待办事项", "To-Dos")}</span></div>
-                    <Link to="/todos" className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
-                  </div>
-                  <div className="py-1">
-                    {pendingTodos.length === 0 ? (
-                      <div className="px-4 py-5 text-center"><p className="text-sm text-muted-foreground">{t("今天没有待办", "Nothing pending today")}</p><Link to="/todos?new=1" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("新增待办", "Add to-do")}</Link></div>
-                    ) : pendingTodos.slice(0, 3).map((todo: any) => (
-                      <PipelineRow key={todo.id} icon={<CheckSquare className="h-4 w-4 text-cat-green" />} iconColor="bg-cat-green-bg" title={todo.title} subtitle={todo.category || undefined} pill={(todo.importance === "紧急" || todo.importance === "urgent") ? t("紧急", "Urgent") : (todo.importance === "重要" || todo.importance === "important") ? t("重要", "Important") : undefined} pillColor={(todo.importance === "紧急" || todo.importance === "urgent") ? "red" : (todo.importance === "重要" || todo.importance === "important") ? "yellow" : undefined} to="/todos" />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+        {attention.length > 0 && (
+          <section aria-label={t("需要留意", "Needs attention")} className="card-premium px-4">
+            <h2 className="pt-4 pb-2 text-sm font-semibold">{t("需要留意", "Needs attention")}</h2>
+            <ul className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 divide-y divide-border lg:divide-y-0 pb-2">
+              {attention.map((item) => (
+                <li key={item.key}>
+                  <button
+                    type="button"
+                    aria-label={item.label}
+                    className="capture-action flex min-h-11 w-full items-center gap-3 rounded-md py-2 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => navigate(item.to)}
+                  >
+                    <span className={`status-text shrink-0 ${item.tone}`} />
+                    <span className="min-w-0 flex-1 text-sm">{item.title}</span>
+                    {item.meta && <span className="shrink-0 text-xs text-muted-foreground">{item.meta}</span>}
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 
         {lifeModuleCards.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between gap-4">
-              <div><h2 className="type-section-title heading-font">{t("全部模块", "All modules")}</h2><p className="text-xs text-muted-foreground mt-1">{t("需要时再展开完整目录", "Open the full directory only when needed")}</p></div>
-              <button type="button" aria-expanded={modulesExpanded} aria-label={modulesExpanded ? t("收起全部模块", "Collapse all modules") : t("展开全部模块", "Expand all modules")} className="min-h-11 inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => setModulesExpanded((value) => !value)}>
-                {modulesExpanded ? t("收起", "Collapse") : `${t("展开", "Expand")} · ${lifeModuleCards.length}`}<ChevronDown className={`h-4 w-4 transition-transform ${modulesExpanded ? "rotate-180" : ""}`} />
-              </button>
-            </div>
-            {modulesExpanded && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mt-4">
+          <SectionDisclosure title={t("全部模块", "All modules")} open={modulesExpanded} onOpenChange={setModulesExpanded} expandLabel={t("展开", "Expand")} collapseLabel={t("收起", "Collapse")} count={lifeModuleCards.length} actionLabel={modulesExpanded ? t("收起全部模块", "Collapse all modules") : t("展开全部模块", "Expand all modules")}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 {lifeModuleCards.map((card) => <FeatureCard key={card.id} {...card} />)}
               </div>
-            )}
-          </section>
+          </SectionDisclosure>
         )}
 
         {insightCards.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between gap-4">
-              <div><h2 className="type-section-title heading-font">{t("状态洞察", "Status insights")}</h2><p className="text-xs text-muted-foreground mt-1">{t("需要时查看趋势和长期状态", "Review trends when you need them")}</p></div>
-              <button type="button" aria-expanded={insightsExpanded} className="min-h-11 inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none" onClick={() => setInsightsExpanded((value) => !value)}>
-                {insightsExpanded ? t("收起洞察", "Collapse insights") : t("展开状态洞察", "Expand insights")}<ChevronDown className={`h-4 w-4 transition-transform ${insightsExpanded ? "rotate-180" : ""}`} />
-              </button>
-            </div>
-            {insightsExpanded && (insightsLoading ? (
-              <p role="status" className="mt-4 text-sm text-muted-foreground">{t("正在加载本周洞察…", "Loading this week's insights…")}</p>
+          <SectionDisclosure title={t("状态洞察", "Status insights")} open={insightsExpanded} onOpenChange={setInsightsExpanded} expandLabel={t("展开状态洞察", "Expand insights")} collapseLabel={t("收起洞察", "Collapse insights")}>
+            {insightsLoading ? (
+              <p role="status" className="text-sm text-muted-foreground">{t("正在加载本周洞察…", "Loading this week's insights…")}</p>
             ) : insightsFailed ? (
-              <div role="alert" className="mt-4 flex items-center gap-3 text-sm">
+              <div role="alert" className="flex items-center gap-3 text-sm">
                 <p>{t("洞察数据未能加载，请重试。", "Couldn't load insights. Please retry.")}</p>
                 <button type="button" className="min-h-11 rounded-md border border-border px-3 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => insightQueries.filter(query => query.error).forEach(query => { void query.refetch(); })}>
                   {t("重试", "Retry")}
                 </button>
               </div>
-            ) : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">{insightCards}</div>)}
-          </section>
+            ) : <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">{insightCards}</div>}
+          </SectionDisclosure>
         )}
       </div>
     </AppLayout>

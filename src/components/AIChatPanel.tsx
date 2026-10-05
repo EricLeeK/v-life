@@ -308,7 +308,7 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
   }
 }
 
-export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) {
+export function AIChatPanel({ initialOpen = false, showLauncher = true }: { initialOpen?: boolean; showLauncher?: boolean }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(initialOpen);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -979,6 +979,7 @@ export function AIChatPanel({ initialOpen = false }: { initialOpen?: boolean }) 
   }, [isOpen, showHistory]);
 
   if (!isOpen) {
+    if (!showLauncher) return null;
     return (
       <Button
         onClick={() => setIsOpen(true)}

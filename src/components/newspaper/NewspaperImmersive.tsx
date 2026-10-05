@@ -1,11 +1,12 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { unfoldPaper, visiblePaperRect, type PaperRect } from "./paperFlight";
+import { cancelPaperFlight, unfoldPaper, visiblePaperRect, type PaperRect } from "./paperFlight";
 
 export type NewspaperOrigin = PaperRect;
 
 export interface NewspaperFlight {
   from: PaperRect | null;
+  cover?: HTMLElement | null;
 }
 
 export function NewspaperImmersive(
@@ -30,6 +31,8 @@ export function NewspaperImmersive(
     if (appRoot) appRoot.inert = true;
     panel.querySelector<HTMLElement>("[data-newspaper-back]")?.focus({ preventScroll: true });
     return () => {
+      const paper = panel.querySelector<HTMLElement>(".np-paper");
+      if (paper) cancelPaperFlight(paper);
       document.body.style.overflow = previousOverflow;
       document.body.classList.remove("np-immersive-open");
       if (appRoot) appRoot.inert = previousInert || false;
@@ -44,8 +47,8 @@ export function NewspaperImmersive(
     if (!paper || !open) return;
     flown.current = true;
     panel.dataset.flight = "unfolding";
-    void unfoldPaper({ from: flight.from, paper, open, desk: panel }).finally(() => {
-      delete panel.dataset.flight;
+    void unfoldPaper({ from: flight.from, cover: flight.cover, paper, open, desk: panel }).finally(() => {
+      if (panel.dataset.flight === "unfolding") delete panel.dataset.flight;
       onFlightDone?.();
     });
   });

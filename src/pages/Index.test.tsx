@@ -49,21 +49,58 @@ describe("Dashboard homepage", () => {
     expect(screen.getAllByText("首页概览").length).toBeGreaterThan(0);
   });
 
-  it("shows the week instead of a recommended task and limits the visible metrics to four", () => {
+  it("shows real weekly arrangements and keeps secondary metrics compact", () => {
     renderDashboard();
 
-    expect(screen.getByRole("heading", { name: "这周" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "这一周的安排" })).toBeInTheDocument();
+    const agenda = screen.getByRole("region", { name: "本周日程预览" });
+    expect(within(agenda).getByRole("link", { name: /^高等数学 II，/ })).toHaveAttribute("href", expect.stringMatching(/^\/schedule\?date=\d{4}-\d{2}-\d{2}$/));
     expect(screen.queryByRole("heading", { name: "下一步做什么" })).not.toBeInTheDocument();
     expect(screen.queryByText("建议先做")).not.toBeInTheDocument();
     expect(screen.queryByText("翻开今天的生活日报")).not.toBeInTheDocument();
     const metrics = screen.getByRole("region", { name: "今日关键数据" });
-    expect(within(metrics).getAllByTestId("dashboard-metric")).toHaveLength(4);
+    expect(within(metrics).getAllByTestId("dashboard-metric")).toHaveLength(3);
   });
 
   it("keeps the full module directory behind progressive disclosure", () => {
     renderDashboard();
 
     expect(screen.getByRole("button", { name: /展开全部模块/ })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("shows today's to-dos and five other to-dos ordered by urgency", () => {
+    renderDashboard();
+
+    const today = screen.getByRole("region", { name: "今日待办" });
+    expect(within(today).getByRole("link", { name: "查看全部今日待办" })).toHaveAttribute("href", "/today");
+    const todayTitles = within(today).getAllByRole("link")
+      .filter((link) => link.getAttribute("href") === "/today" && link.getAttribute("aria-label") !== "查看全部今日待办")
+      .map((link) => link.textContent ?? "");
+    expect(todayTitles.length).toBeLessThanOrEqual(5);
+    expect(todayTitles[0]).toContain("提交论文初稿");
+    expect(todayTitles[0]).toContain("紧急");
+    expect(todayTitles[1]).toContain("复习概率论考试");
+    expect(todayTitles[2]).toContain("回复导师邮件");
+    expect(todayTitles[2]).toContain("重要");
+    expect(todayTitles[3]).toContain("给彤彤寄包裹");
+    expect(todayTitles.join("\n")).not.toContain("买日用品");
+    expect(todayTitles.join("\n")).not.toContain("Multi-agent PDE solving system - LEAP");
+
+    const others = screen.getByRole("region", { name: "其他待办" });
+    const titles = within(others).getAllByRole("link")
+      .filter((link) => link.getAttribute("href") === "/todos" && link.getAttribute("aria-label") !== "查看全部待办")
+      .map((link) => link.textContent ?? "");
+    expect(titles).toHaveLength(5);
+    expect(titles[0]).toContain("Multi-agent PDE solving system - LEAP");
+    expect(titles[0]).toContain("紧急");
+    expect(titles[1]).toContain("秋招 agent 或者自动化开发");
+    expect(titles[2]).toContain("粗读 UniNDM");
+    expect(titles[3]).toContain("ARIS 面试HTML");
+    expect(titles[4]).toContain("学习Hello Agent");
+    expect(titles.join("\n")).not.toContain("LLM - MC wiki");
+    expect(titles.join("\n")).not.toContain("提交论文初稿");
+    expect(titles.join("\n")).not.toContain("晨间冥想");
+    expect(screen.queryByText("今天还没有安排")).not.toBeInTheDocument();
   });
 
   it("exposes shortcut links that open the corresponding create flows", () => {

@@ -1,0 +1,95 @@
+/* Paper surfaces, precise selection, and quiet pressure feedback. */
+.paper-button {
+  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out-strong);
+  -webkit-tap-highlight-color: transparent;
+}
+.paper-button:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(1px) scale(.985);
+  transition-duration: 80ms;
+}
+.paper-tabs { box-shadow: inset 0 1px 2px hsl(var(--card-foreground) / .035); }
+.paper-tab { transition: color 160ms var(--ease-out); }
+.paper-tab:hover:not([data-state="active"]):not(:disabled) { color: hsl(var(--card-foreground)); }
+.paper-tab-surface {
+  background: hsl(var(--card));
+  box-shadow: 0 1px 3px hsl(var(--card-foreground) / .08), 0 0 0 1px hsl(var(--card-foreground) / .045);
+}
+.paper-switch {
+  position: relative;
+  box-shadow: inset 0 1px 2px hsl(var(--card-foreground) / .1);
+  transition: background-color 160ms var(--ease-out);
+}
+.paper-switch::before, .paper-checkbox::before {
+  content: "";
+  position: absolute;
+  inset: -10px -4px;
+}
+.paper-switch-thumb { box-shadow: 0 1px 3px hsl(var(--card-foreground) / .2), 0 0 0 1px hsl(var(--card-foreground) / .045); }
+.paper-checkbox {
+  position: relative;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 120ms var(--ease-out-strong);
+}
+.paper-checkbox::before { inset: -8px; }
+.paper-checkbox:hover:not(:disabled) { border-color: hsl(var(--card-foreground) / .5); }
+.paper-checkbox:active:not(:disabled) { transform: scale(.92); }
+.paper-check-mark {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  transition: stroke-dashoffset 200ms var(--ease-out-strong), opacity 100ms var(--ease-out);
+}
+.paper-checkbox[data-state="checked"] .paper-check-mark { stroke-dashoffset: 0; opacity: 1; }
+.paper-check-mixed { opacity: 0; transition: opacity 120ms var(--ease-out); }
+.paper-checkbox[data-state="indeterminate"] .paper-check-mixed { opacity: 1; }
+.paper-select-trigger, .native-select {
+  box-shadow: 0 1px 2px hsl(var(--card-foreground) / .025);
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+.paper-input {
+  box-shadow: 0 1px 2px hsl(var(--card-foreground) / .025);
+  transition: border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), background-color 160ms var(--ease-out);
+}
+.paper-input:hover:not(:disabled):not(:focus-visible) { border-color: hsl(var(--card-foreground) / .28); }
+.paper-input[aria-invalid="true"] { border-color: hsl(var(--destructive)); }
+/* Arc surfaces use complete colors; native controls still receive HSL channel tokens. */
+.arc-runtime .paper-select-trigger, .arc-runtime .native-select, .arc-runtime .paper-input, .arc-runtime .paper-button {
+  border-color: var(--border);
+}
+.arc-runtime .paper-select-trigger, .arc-runtime .native-select, .arc-runtime .paper-input {
+  color: var(--foreground);
+}
+.arc-runtime .paper-input[aria-invalid="true"] { border-color: hsl(var(--destructive)); }
+.paper-select-trigger:hover:not(:disabled), .paper-select-trigger[data-state="open"],
+.native-select:hover:not(:disabled) { border-color: hsl(var(--card-foreground) / .28); }
+.paper-select-chevron { transition: transform 240ms var(--ease-out-strong); }
+.paper-select-trigger[data-state="open"] .paper-select-chevron { transform: rotate(180deg); }
+.paper-select-panel {
+  transform-origin: var(--radix-select-content-transform-origin);
+  box-shadow: 0 12px 32px -8px hsl(var(--card-foreground) / .16), 0 3px 8px hsl(var(--card-foreground) / .06);
+  max-height: min(24rem, var(--radix-select-content-available-height));
+}
+.paper-select-panel[data-state="open"] { animation: paper-menu-in 240ms var(--ease-out-strong); }
+.paper-select-panel[data-state="closed"] { animation: paper-menu-out 140ms var(--ease-out); }
+.paper-select-item { transition: background-color 100ms var(--ease-out), color 100ms var(--ease-out); }
+.paper-select-item[data-state="checked"] { font-weight: 600; }
+.paper-select-item[data-highlighted] { background: hsl(var(--muted)); }
+.mobile-nav-surface { box-shadow: inset 0 0 0 1px hsl(var(--card-foreground) / .04); }
+.mobile-nav-item { -webkit-tap-highlight-color: transparent; }
+@keyframes paper-menu-in { from { opacity: 0; scale: .97; } to { opacity: 1; scale: 1; } }
+@keyframes paper-menu-out { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .98; } }
+@media (pointer: coarse) {
+  .paper-button:not([data-compact]), .paper-select-trigger, input.paper-input { min-height: 44px; }
+  .paper-input { font-size: 16px; }
+  .paper-select-item { min-height: 44px; }
+  .paper-tab { min-height: 36px; }
+  .paper-tabs { height: auto; min-height: 44px; }
+  .paper-switch::before { inset: -10px 0; }
+  .paper-checkbox::before { inset: -14px; }
+  .paper-button[data-compact="true"] { position: relative; }
+  .paper-button[data-compact="true"]::before { content: ""; position: absolute; inset: -8px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paper-button, .paper-tab, .paper-switch, .paper-checkbox, .paper-check-mark, .paper-check-mixed, .paper-select-trigger, .native-select, .paper-select-chevron, .paper-select-item, .paper-input { transition: none; }
+  .paper-button:active:not(:disabled), .paper-checkbox:active:not(:disabled) { transform: none; }
+  .paper-select-panel[data-state] { animation: none; }
+}

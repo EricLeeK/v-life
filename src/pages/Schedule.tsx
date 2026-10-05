@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -108,12 +108,23 @@ function generateInstances(
   return instances;
 }
 
+function dateFromSearch(search: string) {
+  const value = new URLSearchParams(search).get("date");
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isFinite(date.getTime()) && format(date, "yyyy-MM-dd") === value ? date : null;
+}
+
 export default function SchedulePage() {
   const { t, lang } = useLang();
   const location = useLocation();
   const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
   const today = format(new Date(), "yyyy-MM-dd");
-  const [baseDate, setBaseDate] = useState(() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; });
+  const [baseDate, setBaseDate] = useState(() => { const d = dateFromSearch(location.search) ?? new Date(); d.setHours(0, 0, 0, 0); return d; });
+  useEffect(() => {
+    const requestedDate = dateFromSearch(location.search);
+    if (requestedDate) setBaseDate(requestedDate);
+  }, [location.search]);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       return "1day";

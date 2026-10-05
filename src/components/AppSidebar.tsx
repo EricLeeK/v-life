@@ -20,6 +20,9 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { useId } from "react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { motionTokens } from "@/lib/motion-tokens";
 import { LangToggle } from "@/components/LangToggle";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
 import { useLang } from "@/contexts/LanguageContext";
@@ -42,6 +45,8 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
+  const groupId = useId();
+  const reduced = useReducedMotion();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -106,7 +111,7 @@ export function AppSidebar() {
       collapsible="icon"
       role="navigation"
       aria-label={t("主导航", "Main navigation")}
-      className={`border-r border-border bg-background ${isDemo ? "md:top-10 md:h-[calc(100svh-2.5rem)]" : ""}`}
+      className={`isolate border-r border-border bg-background ${isDemo ? "md:top-10 md:h-[calc(100svh-2.5rem)]" : ""}`}
     >
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
@@ -119,6 +124,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
+      <LayoutGroup id={groupId}>
       <SidebarContent className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {visibleGroups.map((group) => (
           <SidebarGroup key={group.label} className="py-1">
@@ -131,11 +137,14 @@ export function AppSidebar() {
                       <NavLink
                         to={item.url}
                         end={item.url === "/"}
-                        className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
-                        activeClassName="bg-muted text-foreground font-medium"
+                        className="relative text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                        activeClassName="text-foreground font-medium"
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span>{item.title}</span>}
+                        {({ isActive }) => <>
+                        {isActive && <motion.span aria-hidden="true" layoutId="sidebar-active" className="absolute inset-0 z-0 rounded-md bg-muted" transition={reduced ? { duration: 0 } : motionTokens.spring.responsive} />}
+                        <item.icon className="relative z-10 h-4 w-4 shrink-0" />
+                        {!collapsed && <span className="relative z-10">{item.title}</span>}
+                        </>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -153,11 +162,14 @@ export function AppSidebar() {
               <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
                 <NavLink
                   to="/shop"
-                  className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
-                  activeClassName="bg-muted text-foreground font-medium"
+                  className="relative text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                  activeClassName="text-foreground font-medium"
                 >
-                  <ShoppingBag className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{t("商店", "Shop")}</span>}
+                  {({ isActive }) => <>
+                  {isActive && <motion.span aria-hidden="true" layoutId="sidebar-active" className="absolute inset-0 z-0 rounded-md bg-muted" transition={reduced ? { duration: 0 } : motionTokens.spring.responsive} />}
+                  <ShoppingBag className="relative z-10 h-4 w-4 shrink-0" />
+                  {!collapsed && <span className="relative z-10">{t("商店", "Shop")}</span>}
+                  </>}
                 </NavLink>
               </SidebarMenuButton>
             )}
@@ -169,11 +181,14 @@ export function AppSidebar() {
             <SidebarMenuButton asChild tooltip={t("设置", "Settings")}>
               <NavLink
                 to="/settings"
-                className="text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
-                activeClassName="bg-muted text-foreground font-medium"
+                className="relative text-muted-foreground hover:bg-muted hover:text-foreground transition-colors rounded-md"
+                activeClassName="text-foreground font-medium"
               >
-                <Settings className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{t("设置", "Settings")}</span>}
+                {({ isActive }) => <>
+                {isActive && <motion.span aria-hidden="true" layoutId="sidebar-active" className="absolute inset-0 z-0 rounded-md bg-muted" transition={reduced ? { duration: 0 } : motionTokens.spring.responsive} />}
+                <Settings className="relative z-10 h-4 w-4 shrink-0" />
+                {!collapsed && <span className="relative z-10">{t("设置", "Settings")}</span>}
+                </>}
               </NavLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -187,6 +202,7 @@ export function AppSidebar() {
           )}
         </SidebarMenu>
       </SidebarFooter>
+      </LayoutGroup>
     </Sidebar>
   );
 }

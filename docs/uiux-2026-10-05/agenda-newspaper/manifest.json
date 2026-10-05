@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "project": "V-Life · 日程内容与日报动效",
+  "brief": "沿用 01 整理优化，把首页日历从日期计数改为真实安排预览。相同演示记录与1280宽视口；日报实际效果请从下方体验页打开。",
+  "round": "2026-10-05 · 内容优先",
+  "candidates": [
+    {
+      "id": "before",
+      "name": "本轮调整前",
+      "baseline": true,
+      "concept": "日期和数量占据主位",
+      "typography": "保留品牌字体；事件桌面12px、手机13px",
+      "palette": [
+        "#f5f3f0",
+        "#201a13",
+        "#ffffff"
+      ],
+      "traits": [
+        "只看到当天有几项",
+        "需要进入日程才知道具体安排"
+      ],
+      "kind": "image",
+      "source": "before-home/page-1280x900.png"
+    },
+    {
+      "id": "after",
+      "name": "实际安排直接可见",
+      "concept": "一周内容预览，日期退到辅助位置",
+      "typography": "保留品牌字体；事件桌面12px、手机13px",
+      "palette": [
+        "#f5f3f0",
+        "#201a13",
+        "#ffffff"
+      ],
+      "traits": [
+        "标题、时间和原分类色直接可见",
+        "今日保持原浅色",
+        "点选后进入对应日期"
+      ],
+      "kind": "image",
+      "source": "final-home-desktop/page-@2x.png"
+    }
+  ]
+}

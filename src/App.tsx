@@ -131,6 +131,7 @@ function AppRoutes() {
 
 function DeferredAIChatPanel() {
   const [shouldLoad, setShouldLoad] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     const open = () => setShouldLoad(true);
@@ -141,10 +142,14 @@ function DeferredAIChatPanel() {
   if (shouldLoad) {
     return (
       <Suspense fallback={null}>
-        <AIChatPanel initialOpen />
+        <AIChatPanel initialOpen showLauncher={pathname !== "/" && pathname !== "/newspapers"} />
       </Suspense>
     );
   }
+
+  // Home has AI capture; the paper reader has its own AI review action.
+  // Keep the floating launcher from covering agenda and archive content.
+  if (pathname === "/" || pathname === "/newspapers") return null;
 
   return (
     <Button
