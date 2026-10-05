@@ -19,15 +19,28 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..700,50&family=Geist:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,400..700,50&family=Geist:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@500;700&family=Noto+Serif+SC:wght@500;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="V-Life · Personal Life Management">
     <meta name="twitter:description" content="AI-powered personal life management app covering schedule, finance, calories, todos, goals, pantry, belongings, thoughts, and weight loss.">
+    <style>
+      /* Paint before JavaScript arrives; React replaces this whole placeholder. */
+      .boot-shell{display:flex;min-height:100svh;background:hsl(var(--background,40 20% 95%));color:hsl(var(--foreground,30 25% 10%));font:14px system-ui,sans-serif;position:fixed;inset:0;overflow:hidden}
+      .boot-shell *{box-sizing:border-box}.boot-shell i{display:block;background:hsl(var(--muted,40 16% 89%));border-radius:6px;animation:boot-pulse 1.8s ease-in-out infinite}
+      .boot-nav{width:256px;flex-shrink:0;padding:24px 16px;border-right:1px solid hsl(var(--border,40 16% 87%))}.boot-nav strong{display:block;font-size:18px;margin-bottom:36px}.boot-nav i{height:36px;margin-bottom:14px}
+      .boot-page{min-width:0;flex:1}.boot-bar{height:48px;padding:15px 24px;border-bottom:1px solid hsl(var(--border,40 16% 87%))}.boot-bar i{height:18px;width:96px}.boot-content{padding:32px 40px;max-width:1600px;margin:auto}.boot-title{height:36px;width:210px;max-width:70%}.boot-subtitle{height:16px;width:150px;margin:14px 0 32px}.boot-cards{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}.boot-cards i{height:180px}.boot-rows{display:grid;gap:16px;margin-top:28px}.boot-rows i{height:56px}
+      @keyframes boot-pulse{50%{opacity:.5}}@media(prefers-reduced-motion:reduce){.boot-shell i{animation:none}}@media(max-width:767px){.boot-nav{display:none}.boot-content{padding:24px 16px}.boot-cards{grid-template-columns:1fr;gap:16px}.boot-cards i{height:148px}}
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-shell" role="status" aria-label="正在打开 V-Life" aria-busy="true" data-boot-skeleton>
+        <aside class="boot-nav" aria-hidden="true"><strong>V-Life</strong><i></i><i></i><i></i><i></i><i></i><i></i></aside>
+        <div class="boot-page" aria-hidden="true"><div class="boot-bar"><i></i></div><main class="boot-content"><i class="boot-title"></i><i class="boot-subtitle"></i><div class="boot-cards"><i></i><i></i></div><div class="boot-rows"><i></i><i></i><i></i></div></main></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

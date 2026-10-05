@@ -2,6 +2,7 @@ import { NewspaperSettings } from "@/components/newspaper/NewspaperSettings";
 import { AgentConnections } from "@/components/AgentConnections";
 import { useState, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { RouteSkeletonBody } from "@/components/routeSkeletons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -171,7 +172,7 @@ export default function SettingsPage() {
   }, [draft, settings]);
 
   if (isLoading || !settings || !draft) {
-    return <AppLayout title={t("设置", "Settings")}><p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p></AppLayout>;
+    return <AppLayout title={t("设置", "Settings")}><RouteSkeletonBody pathname="/settings" /></AppLayout>;
   }
 
   const update = (key: string, value: any) => {

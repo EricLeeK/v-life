@@ -35,6 +35,7 @@ import { POINTS_FEATURE_ENABLED as POINTS } from "@/lib/featureFlags";
 import { todayPickerItems } from "@/lib/habits";
 import { groupPastDailyTasksByDate, PAST_DATE_LABELS } from "@/lib/pastDailyTasks";
 import { HabitWidgetStack } from "@/components/HabitWidgetStack";
+import { RouteSkeletonBody } from "@/components/routeSkeletons";
 
 const DIFFICULTY_CONFIG = {
   easy: { label: { zh: "简单", en: "Easy" }, color: "bg-cat-green-bg text-cat-green", points: 10 },
@@ -743,9 +744,7 @@ export default function TodayTodoPage() {
   if (tasksLoading) {
     return (
       <AppLayout title={t("今日待办", "Today's Todo")}>
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <RouteSkeletonBody pathname="/today" />
       </AppLayout>
     );
   }

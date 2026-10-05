@@ -31,7 +31,7 @@ function PrivateDataScope({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
   const { isDemo } = useDemoMode();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -69,11 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, session, loading, signOut }}>
-      {(isDemo || !loading) && (
+      {(isDemo || !loading) ? (
         <PrivateDataScope key={`${isDemo ? "demo" : "account"}:${user?.id ?? "anonymous"}`}>
           {children}
         </PrivateDataScope>
-      )}
+      ) : fallback}
     </AuthContext.Provider>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { AppLayout } from "@/components/AppLayout";
+import { RouteSkeletonBody } from "@/components/routeSkeletons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -536,7 +537,7 @@ export default function WeightLossPage() {
     }
   }, [settings]);
 
-  if (isLoading || !settings) return <AppLayout title={t("减肥专项", "Weight Loss")}><p className="text-sm text-muted-foreground">{t("加载中...", "Loading...")}</p></AppLayout>;
+  if (isLoading || !settings) return <AppLayout title={t("减肥专项", "Weight Loss")}><RouteSkeletonBody pathname="/weight-loss" /></AppLayout>;
 
   const startHour = (settings as any).fasting_start_hour ?? 12;
   const startMinute = (settings as any).fasting_start_minute ?? 0;

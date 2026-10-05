@@ -27,7 +27,7 @@ function deferred<T>() {
 let notifyAuth: (event: AuthChangeEvent, session: Session | null) => void;
 const clients: QueryClient[] = [];
 
-function mount(children: ReactNode) {
+function mount(children: ReactNode, fallback?: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 180_000 } } });
   clients.push(client);
   let activeClient = client;
@@ -37,7 +37,7 @@ function mount(children: ReactNode) {
   }
   const view = render(
     <QueryClientProvider client={client}>
-      <DemoModeProvider><AuthProvider><CaptureClient /></AuthProvider></DemoModeProvider>
+      <DemoModeProvider><AuthProvider fallback={fallback}><CaptureClient /></AuthProvider></DemoModeProvider>
     </QueryClientProvider>,
   );
   return { ...view, get client() { return activeClient; } };
@@ -67,6 +67,17 @@ beforeEach(() => {
 afterEach(() => { cleanup(); clients.splice(0).forEach((client) => client.clear()); });
 
 describe("authenticated data lifecycle", () => {
+  it("shows a loading fallback without mounting private content while restoring a session", async () => {
+    const initial = deferred<{ data: { session: Session } }>();
+    auth.getSession.mockReturnValue(initial.promise);
+    mount(<Probe />, <div role="status">正在加载页面</div>);
+    expect(screen.getByRole("status")).toHaveTextContent("正在加载页面");
+    expect(screen.queryByLabelText("private draft")).not.toBeInTheDocument();
+    await act(async () => initial.resolve({ data: { session: sessionFor("A") } }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("private draft")).toBeInTheDocument();
+  });
+
   it("isolates late mutation callbacks from the new account cache", async () => {
     const view = mount(<Probe />);
     await screen.findByText("A");

@@ -1,7 +1,9 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { AppShell } from "@/components/AppLayout";
+import { AppLoadingSkeleton, RouteSkeleton } from "@/components/routeSkeletons";
+import { RouteLoadBoundary } from "@/components/RouteLoadBoundary";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
-import { RouteLoadBoundary } from "@/components/RouteLoadBoundary";
 import { ThemeProvider } from "next-themes";
 import { ArcThemeSync } from "@/components/arc/ArcThemeSync";
 import { POINTS_FEATURE_ENABLED } from "@/lib/featureFlags";
@@ -56,26 +58,16 @@ const queryClient = new QueryClient({
   },
 });
 
-function PageLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background" role="status">
-      <div className="h-5 w-5 rounded-full border-[1.5px] border-foreground/15 border-t-foreground/70 animate-spin motion-reduce:animate-none" />
-      <span className="sr-only">加载中</span>
-    </div>
-  );
-}
-
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute() {
   const { user, loading } = useAuth();
   const { isDemo } = useDemoMode();
-  if (loading && !isDemo) return <PageLoader />;
-  if (!user && !isDemo) return <Navigate to="/auth" replace />;
-  return <>{children}</>;
+  if (!user && !isDemo && !loading) return <Navigate to="/auth" replace />;
+  return <AppShell pending={loading && !isDemo} />;
 }
 
 function FocusHomeRedirect({ children }: { children: React.ReactNode }) {
   const { data: settings } = useSettings();
-  const focusMode = (settings as any)?.app_focus_mode || "full";
+  const focusMode = (settings as { app_focus_mode?: string } | null)?.app_focus_mode || "full";
   if (focusMode === "civil_service") {
     return <Navigate to="/civil-service" replace />;
   }
@@ -83,48 +75,43 @@ function FocusHomeRedirect({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const location = useLocation();
   return (
     <>
       <DemoBanner />
-      <RouteLoadBoundary key={location.pathname}>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/oauth/consent" element={<OAuthConsentPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/" element={<ProtectedRoute><FocusHomeRedirect><Index /></FocusHomeRedirect></ProtectedRoute>} />
-          <Route path="/pantry" element={<ProtectedRoute><PantryPage /></ProtectedRoute>} />
-          <Route path="/belongings" element={<ProtectedRoute><BelongingsPage /></ProtectedRoute>} />
-          <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
-          <Route path="/calories" element={<ProtectedRoute><CaloriesPage /></ProtectedRoute>} />
-          <Route path="/finance" element={<ProtectedRoute><FinancePage /></ProtectedRoute>} />
-          <Route path="/todos" element={<ProtectedRoute><TodosPage /></ProtectedRoute>} />
-          <Route path="/today" element={<ProtectedRoute><TodayTodoPage /></ProtectedRoute>} />
-          <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-          <Route path="/goals" element={<ProtectedRoute><GoalsPage /></ProtectedRoute>} />
-          <Route path="/thoughts" element={<ProtectedRoute><ThoughtsPage /></ProtectedRoute>} />
-          <Route path="/learning-notes" element={<ProtectedRoute><LearningNotesPage /></ProtectedRoute>} />
-          <Route path="/weight-loss" element={<ProtectedRoute><WeightLossPage /></ProtectedRoute>} />
-          <Route path="/civil-service" element={<ProtectedRoute><CivilServiceHome /></ProtectedRoute>} />
-          <Route path="/civil-service/:group" element={<ProtectedRoute><CivilServiceGroup /></ProtectedRoute>} />
-          {POINTS_FEATURE_ENABLED && (
-            <Route path="/shop" element={<ProtectedRoute><ShopPage /></ProtectedRoute>} />
-          )}
-          <Route path="/fortune" element={<ProtectedRoute><FortuneHome /></ProtectedRoute>} />
-          <Route path="/fortune/tarot" element={<ProtectedRoute><TarotPage /></ProtectedRoute>} />
-          <Route path="/fortune/zodiac" element={<ProtectedRoute><ZodiacPage /></ProtectedRoute>} />
-          <Route path="/fortune/shengxiao" element={<ProtectedRoute><ShengxiaoPage /></ProtectedRoute>} />
-          <Route path="/fortune/iching" element={<ProtectedRoute><IchingPage /></ProtectedRoute>} />
-          <Route path="/fortune/lot" element={<ProtectedRoute><LotPage /></ProtectedRoute>} />
-          <Route path="/fortune/bazi" element={<ProtectedRoute><BaziPage /></ProtectedRoute>} />
-          <Route path="/fortune/history" element={<ProtectedRoute><FortuneHistoryPage /></ProtectedRoute>} />
-          <Route path="/newspapers" element={<ProtectedRoute><NewspapersPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-      </RouteLoadBoundary>
+      <Routes>
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/oauth/consent" element={<RouteLoadBoundary><Suspense fallback={<RouteSkeleton pathname="/oauth/consent" />}><OAuthConsentPage /></Suspense></RouteLoadBoundary>} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<FocusHomeRedirect><Index /></FocusHomeRedirect>} />
+          <Route path="/pantry" element={<PantryPage />} />
+          <Route path="/belongings" element={<BelongingsPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/calories" element={<CaloriesPage />} />
+          <Route path="/finance" element={<FinancePage />} />
+          <Route path="/todos" element={<TodosPage />} />
+          <Route path="/today" element={<TodayTodoPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/goals" element={<GoalsPage />} />
+          <Route path="/thoughts" element={<ThoughtsPage />} />
+          <Route path="/learning-notes" element={<LearningNotesPage />} />
+          <Route path="/weight-loss" element={<WeightLossPage />} />
+          <Route path="/civil-service" element={<CivilServiceHome />} />
+          <Route path="/civil-service/:group" element={<CivilServiceGroup />} />
+          {POINTS_FEATURE_ENABLED && <Route path="/shop" element={<ShopPage />} />}
+          <Route path="/fortune" element={<FortuneHome />} />
+          <Route path="/fortune/tarot" element={<TarotPage />} />
+          <Route path="/fortune/zodiac" element={<ZodiacPage />} />
+          <Route path="/fortune/shengxiao" element={<ShengxiaoPage />} />
+          <Route path="/fortune/iching" element={<IchingPage />} />
+          <Route path="/fortune/lot" element={<LotPage />} />
+          <Route path="/fortune/bazi" element={<BaziPage />} />
+          <Route path="/fortune/history" element={<FortuneHistoryPage />} />
+          <Route path="/newspapers" element={<NewspapersPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </>
   );
 }
@@ -164,6 +151,11 @@ function DeferredAIChatPanel() {
   );
 }
 
+function SessionLoading() {
+  const { pathname } = useLocation();
+  return <AppLoadingSkeleton pathname={pathname} />;
+}
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
     <ArcThemeSync />
@@ -174,7 +166,7 @@ const App = () => (
         <BrowserRouter>
           <LangProvider>
             <DemoModeProvider>
-              <AuthProvider>
+              <AuthProvider fallback={<SessionLoading />}>
                 <AppRoutes />
                 <DeferredAIChatPanel />
               </AuthProvider>
