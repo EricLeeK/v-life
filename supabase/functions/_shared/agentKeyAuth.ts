@@ -28,7 +28,10 @@ export async function authenticateApiKey(rawKey: string, deps: KeyAuthDependenci
   try {
     const jwk = JSON.parse(deps.signingJwk);
     if ((jwk.alg && jwk.alg !== 'ES256') || jwk.kty !== 'EC' || jwk.crv !== 'P-256' || !jwk.kid || !jwk.d) throw Error('Private ES256 signing JWK required');
-    const signer = await importJWK(jwk, 'ES256');
+    if (jwk.key_ops !== undefined && (!Array.isArray(jwk.key_ops) || !jwk.key_ops.includes('sign'))) throw Error('JWK must allow signing');
+    // Supabase CLI exports both sign/verify usages. Web Crypto only permits
+    // signing with an EC private key; narrow its usage at the import boundary.
+    const signer = await importJWK({ ...jwk, key_ops: ['sign'] }, 'ES256');
     const token = await new SignJWT({ role: 'authenticated', client_id: identity.client_id, agent_key_id: identity.client_id })
       .setProtectedHeader({ alg: 'ES256', kid: jwk.kid, typ: 'JWT' })
       .setSubject(identity.user_id).setIssuer(deps.issuer).setAudience('authenticated')
