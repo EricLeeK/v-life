@@ -269,18 +269,16 @@ export const thoughtHooks = useCrudHooks("thoughts", "thoughts");
 // ============ Special queries ============
 export function useFinanceByMonth(year: number, month: number) {
   const { isDemo, demoData } = useDemoMode();
+  const start = `${year}-${String(month).padStart(2, "0")}-01`;
+  const end = format(new Date(year, month, 1), "yyyy-MM-dd");
   const supa = useQuery({
     queryKey: ["finance", "month", year, month],
     queryFn: async () => {
-      const startDate = new Date(year, month - 1, 1);
-      startDate.setDate(startDate.getDate() - 7);
-      const endDate = new Date(year, month, 1);
-      endDate.setDate(endDate.getDate() + 7);
       const { data, error } = await supabase
         .from("finance_records")
         .select("*")
-        .gte("date", startDate.toISOString().split("T")[0])
-        .lt("date", endDate.toISOString().split("T")[0])
+        .gte("date", start)
+        .lt("date", end)
         .order("date", { ascending: true });
       if (error) throw error;
       return data;
@@ -288,12 +286,6 @@ export function useFinanceByMonth(year: number, month: number) {
     enabled: !isDemo,
   });
   if (isDemo) {
-    const startDate = new Date(year, month - 1, 1);
-    startDate.setDate(startDate.getDate() - 7);
-    const endDate = new Date(year, month, 1);
-    endDate.setDate(endDate.getDate() + 7);
-    const start = startDate.toISOString().split("T")[0];
-    const end = endDate.toISOString().split("T")[0];
     const filtered = demoData.finance_records
       .filter((r: any) => r.date >= start && r.date < end)
       .sort((a: any, b: any) => a.date.localeCompare(b.date));

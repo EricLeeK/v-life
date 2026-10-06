@@ -159,8 +159,8 @@ export default function CaloriesPage() {
           />
         </ArcScope>
 
-        <section className="life-stage grid items-center gap-x-8 gap-y-4 lg:grid-cols-[minmax(14rem,1fr)_32rem]" aria-label={t("当日热量", "Calories for this day")}>
-          <div className="min-w-0">
+        <section className="life-stage grid items-start gap-x-6 gap-y-4 xl:grid-cols-[14rem_minmax(22rem,32rem)_minmax(16rem,1fr)]" aria-label={t("热量概览", "Calorie overview")}>
+          <section className="min-w-0" aria-label={t("当日热量", "Calories for this day")}>
             <p className="text-sm text-muted-foreground">{format(parseISO(selectedDate), lang === "zh" ? "M月d日 EEE" : "EEEE, MMM d", { locale })}</p>
             <ArcScope className="mt-1 inline-flex">
               <AnimatedCounter value={totalCalories} suffix=" kcal" locale={lang === "zh" ? "zh-CN" : "en-US"} />
@@ -179,13 +179,13 @@ export default function CaloriesPage() {
                 style={{ transform: `scaleX(${Math.max(0, Math.min(1, totalCalories / target))})` }}
               />
             </div>
-          </div>
+          </section>
           <MealDistributionChart records={records} activeKey={pinnedMeal} onActiveChange={setActiveMeal} />
-        </section>
 
-        <section className="life-stage" aria-label={t("本周热量", "Weekly calories")}>
-          <h2 className="mb-3 text-sm font-medium">{t("本周", "This week")}</h2>
-          <WeeklyCalorieChart days={navDays} records={weeklyRecords} target={target} onDayChange={setSelectedDate} />
+          <section className="min-w-0" aria-label={t("本周热量", "Weekly calories")}>
+            <h2 className="mb-3 text-sm font-medium">{t("本周", "This week")}</h2>
+            <WeeklyCalorieChart days={navDays} records={weeklyRecords} target={target} onDayChange={setSelectedDate} />
+          </section>
         </section>
 
         <div className="space-y-2">

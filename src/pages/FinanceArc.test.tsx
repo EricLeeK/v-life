@@ -33,7 +33,12 @@ vi.mock("@/hooks/useData", () => ({
   useSettings: () => ({ data: { monthly_budget: 5000, exchange_rate_jpy_to_cny: 0.048 } }),
 }));
 
-afterEach(cleanup);
+const originalRecords = [...fixture.records];
+afterEach(() => {
+  cleanup();
+  fixture.records = [...originalRecords];
+  vi.useRealTimers();
+});
 
 function renderFinance() {
   return render(<MemoryRouter><FinancePage /></MemoryRouter>);
@@ -67,6 +72,53 @@ function expandWeeklyGroups() {
 }
 
 describe("Finance UIArc date range", () => {
+  it.each([
+    [2026, 10, 31, "10/01 - 10/04", 4, "10/12 - 10/18", "10/26 - 10/31", 6],
+    [2027, 1, 31, "01/01 - 01/03", 3, "01/11 - 01/17", "01/25 - 01/31", 7],
+    [2024, 2, 29, "02/01 - 02/04", 4, "02/12 - 02/18", "02/26 - 02/29", 4],
+    [2026, 2, 28, "02/01 - 02/01", 1, "02/09 - 02/15", "02/23 - 02/28", 6],
+  ] as const)("clips weeks to %i-%i, including every month-boundary expense", (year, month, lastDay, firstLabel, firstDays, middleLabel, lastLabel, lastDays) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(year, month - 1, 15));
+    const localDate = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    fixture.records = [
+      ["上月账目", new Date(year, month - 1, 0), 1],
+      ["月初账目", new Date(year, month - 1, 1), 10],
+      ["月中账目", new Date(year, month - 1, 15), 20],
+      ["月末账目", new Date(year, month - 1, lastDay), 30],
+      ["下月账目", new Date(year, month, 1), 2],
+    ].map(([name, date, amount], index) => ({
+      ...originalRecords[0], id: String(index), name: String(name), date: localDate(date as Date), amount: Number(amount), amount_cny: Number(amount),
+    }));
+
+    renderFinance();
+    expectTotal("¥60.00");
+    expect(screen.getByText("3 笔记录")).toBeInTheDocument();
+    const weeks = within(screen.getByRole("region", { name: "每周明细" }));
+    expect(weeks.getByRole("button", { name: new RegExp(`${firstLabel}.*${firstDays} 天`) })).toHaveTextContent("¥10.00");
+    expect(weeks.getByRole("button", { name: new RegExp(middleLabel) })).not.toHaveTextContent("7 天");
+    const lastWeek = weeks.getByRole("button", { name: new RegExp(lastLabel) });
+    expect(lastWeek).toHaveTextContent("¥30.00");
+    if (lastDays < 7) expect(lastWeek).toHaveTextContent(`${lastDays} 天`);
+    else expect(lastWeek).not.toHaveTextContent("7 天");
+    const trend = within(screen.getByRole("figure", { name: "每日支出趋势" })).getByRole("table");
+    expect(trend).toHaveTextContent(localDate(new Date(year, month - 1, 1)).replaceAll("-", "/"));
+    expect(trend).toHaveTextContent(localDate(new Date(year, month - 1, lastDay)).replaceAll("-", "/"));
+    expandWeeklyGroups();
+    expect(weeks.getByText("月初账目")).toBeInTheDocument();
+    expect(weeks.getByText("月末账目")).toBeInTheDocument();
+    expect(weeks.queryByText("上月账目")).not.toBeInTheDocument();
+    expect(weeks.queryByText("下月账目")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "上个月" }));
+    expectTotal("¥1.00");
+    expect(screen.getByText("1 笔记录")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "下个月" }));
+    fireEvent.click(screen.getByRole("button", { name: "下个月" }));
+    expectTotal("¥2.00");
+    expect(screen.getByText("1 笔记录")).toBeInTheDocument();
+  });
+
   it("keeps native Finance surfaces outside Arc token scope while isolating original Arc controls", () => {
     renderFinance();
 

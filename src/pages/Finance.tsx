@@ -1,7 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { addDays, endOfWeek, format, startOfWeek } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { differenceInCalendarDays, endOfMonth, endOfWeek, format, max, min, startOfMonth, startOfWeek } from "date-fns";
 import { Bus, ChevronDown, Edit2, FileText, Gamepad2, Gem, HeartPulse, Home, MoreHorizontal, Monitor, Plus, Shirt, ShoppingBag, Smartphone, Trash2, UtensilsCrossed, BookOpen, Wallet } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -37,8 +36,8 @@ const CATEGORIES_ZH = [
 ] as const;
 
 const CATEGORY_COLORS = [
-  "hsl(var(--cat-orange))", "hsl(var(--cat-teal))", "hsl(var(--cat-purple))", "hsl(var(--cat-green))",
-  "hsl(var(--cat-blue))", "hsl(var(--cat-yellow))", "hsl(var(--cat-red))",
+  "hsl(var(--finance-pie-orange))", "hsl(var(--finance-pie-teal))", "hsl(var(--finance-pie-purple))", "hsl(var(--finance-pie-green))",
+  "hsl(var(--finance-pie-blue))", "hsl(var(--finance-pie-yellow))", "hsl(var(--finance-pie-red))",
 ];
 
 const CATEGORIES_EN: Record<string, string> = {
@@ -64,21 +63,15 @@ const toLocalISODate = (date: Date) => `${date.getFullYear()}-${String(date.getM
 const todayISO = () => toLocalISODate(new Date());
 const newForm = () => ({ name: "", category: "餐饮", amount: "", currency: "JPY", date: todayISO(), notes: "" });
 
-function getWeekKey(date: string) {
-  return toLocalISODate(startOfWeek(new Date(`${date}T00:00:00`), { weekStartsOn: 1 }));
-}
-
-function getWeekLabel(date: string, lang: string) {
+function getMonthWeek(date: string) {
   const d = new Date(`${date}T00:00:00`);
-  const ws = startOfWeek(d, { weekStartsOn: 1 });
-  const we = endOfWeek(d, { weekStartsOn: 1 });
-  return `${format(ws, "MM/dd", { locale: lang === "zh" ? zhCN : undefined })} - ${format(we, "MM/dd", { locale: lang === "zh" ? zhCN : undefined })}`;
-}
-
-function getWeekMonth(date: string): string {
-  const monday = startOfWeek(new Date(`${date}T00:00:00`), { weekStartsOn: 1 });
-  const wednesday = addDays(monday, 2);
-  return `${wednesday.getFullYear()}-${String(wednesday.getMonth() + 1).padStart(2, "0")}`;
+  const start = max([startOfWeek(d, { weekStartsOn: 1 }), startOfMonth(d)]);
+  const end = min([endOfWeek(d, { weekStartsOn: 1 }), endOfMonth(d)]);
+  return {
+    key: toLocalISODate(start),
+    label: `${format(start, "MM/dd")} - ${format(end, "MM/dd")}`,
+    days: differenceInCalendarDays(end, start) + 1,
+  };
 }
 
 export default function FinancePage() {
@@ -108,7 +101,7 @@ export default function FinancePage() {
   const deleteMutation = financeHooks.useDelete();
 
   const targetMonth = `${year}-${String(month).padStart(2, "0")}`;
-  const monthRecords = useMemo<FinanceRecord[]>(() => (records as FinanceRecord[]).filter(record => getWeekMonth(record.date) === targetMonth), [records, targetMonth]);
+  const monthRecords = useMemo<FinanceRecord[]>(() => (records as FinanceRecord[]).filter(record => record.date.startsWith(`${targetMonth}-`)), [records, targetMonth]);
   const selectedRecords = useMemo<FinanceRecord[]>(() => {
     if (!dateRange) return monthRecords;
     const start = toLocalISODate(dateRange.start), end = toLocalISODate(dateRange.end);
@@ -155,15 +148,15 @@ export default function FinancePage() {
   }, [scopedRecords]);
 
   const weeklyGroups = useMemo(() => {
-    const groups = new Map<string, { label: string; items: FinanceRecord[] }>();
+    const groups = new Map<string, { label: string; days: number; items: FinanceRecord[] }>();
     scopedRecords.forEach(record => {
-      const key = getWeekKey(record.date);
-      const group = groups.get(key) ?? { label: getWeekLabel(record.date, lang), items: [] };
+      const { key, label, days } = getMonthWeek(record.date);
+      const group = groups.get(key) ?? { label, days, items: [] };
       group.items.push(record);
       groups.set(key, group);
     });
     return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [lang, scopedRecords]);
+  }, [scopedRecords]);
 
   useLayoutEffect(() => {
     if (dialogOpen || !returnFocusRef.current) return;
@@ -435,7 +428,10 @@ export default function FinancePage() {
                   <CollapsibleTrigger className="w-full text-left">
                     <Card className="transition-colors hover:border-primary/30">
                       <CardContent className="flex items-center justify-between gap-3 p-3">
-                        <span className="text-sm font-medium">{group.label}</span>
+                        <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span className="text-sm font-medium">{group.label}</span>
+                          {group.days < 7 && <span className="text-xs font-normal text-muted-foreground">{t(`${group.days} 天`, `${group.days} ${group.days === 1 ? "day" : "days"}`)}</span>}
+                        </span>
                         <span className="flex items-center gap-2 text-sm">
                           <span className="text-primary">¥{weekTotal.toFixed(2)}</span>
                           <ChevronDown className="h-4 w-4 text-muted-foreground" />

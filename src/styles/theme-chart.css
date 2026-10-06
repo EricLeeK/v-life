@@ -1,5 +1,24 @@
+/* Finance's filled slices use vivid colors; category text keeps its readable tones. */
+:root {
+  --finance-pie-orange: 22 88% 52%;
+  --finance-pie-teal: 185 78% 38%;
+  --finance-pie-purple: 256 75% 59%;
+  --finance-pie-green: 142 67% 39%;
+  --finance-pie-blue: 211 86% 53%;
+  --finance-pie-yellow: 40 95% 47%;
+  --finance-pie-red: 0 79% 57%;
+}
+
 /* Dark-mode chart/category tokens (supplement to index.css :root) */
 .dark {
+  --finance-pie-orange: 22 92% 62%;
+  --finance-pie-teal: 185 72% 48%;
+  --finance-pie-purple: 256 85% 72%;
+  --finance-pie-green: 142 68% 51%;
+  --finance-pie-blue: 211 92% 65%;
+  --finance-pie-yellow: 40 95% 60%;
+  --finance-pie-red: 0 86% 67%;
+
   --chart-1: 200 45% 62%;
   --chart-2: 100 30% 55%;
   --chart-3: 30 65% 60%;
