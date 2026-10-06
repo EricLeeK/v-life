@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildPaperLayout, packRows } from "./paperLayout";
+import { buildPaperLayout } from "./paperLayout";
+import type { NewspaperEntry, NewspaperReport, NewspaperSection } from "../../../supabase/functions/_shared/newspaperTypes";
 
-const entry = (id: string, status: string, body = "", time?: string) => ({
+const entry = (id: string, status: NewspaperEntry["status"], body = "", time?: string) => ({
   id,
   source: "todos",
   source_id: id,
@@ -11,21 +12,22 @@ const entry = (id: string, status: string, body = "", time?: string) => ({
   status,
   ...(time ? { time } : {}),
 });
-const report = (sections: any[], extra: any = {}): any => ({
-  date: "2026-10-03",
-  snapshot: { sections, metrics: [], coverage: [] },
+const report = (sections: NewspaperSection[], extra: Partial<NewspaperReport> = {}): NewspaperReport => ({
+  id: "layout-report", date: "2026-10-03", status: "archived",
+  timezone: "Asia/Shanghai", day_start_hour: 4, revision: 1,
+  snapshot: {
+    date: "2026-10-03", timezone: "Asia/Shanghai", day_start_hour: 4,
+    captured_at: "2026-10-03T00:00:00Z", source_fingerprint: "layout",
+    sections, metrics: [], coverage: [],
+  },
+  supplements: [], review: null, jobs: [], source_changed: false, review_stale: false,
+  created_at: "2026-10-03T00:00:00Z", updated_at: "2026-10-03T00:00:00Z",
   assets: [],
   hidden_sections: [],
   ...extra,
 });
 
 describe("paper layout", () => {
-  it("fills every row to exactly twelve columns", () => {
-    const rows = packRows([{ span: 8 }, { span: 6 }, { span: 4 }, { span: 4 }]);
-    expect(rows.map((r) => r.reduce((n, m) => n + m.span, 0))).toEqual([12, 12]);
-    expect(packRows([{ span: 4 }]).flat()[0].span).toBe(12);
-  });
-
   it("lifts one lead story out of its section so nothing prints twice", () => {
     const layout = buildPaperLayout(report([
       {

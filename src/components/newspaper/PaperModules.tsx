@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowUpRight, ImagePlus } from "lucide-react";
+import { ImagePlus } from "lucide-react";
 import type {
   NewspaperEntry,
   NewspaperImageAsset,
@@ -12,8 +12,6 @@ import {
   isRunningJob,
   NewspaperFigure,
 } from "./NewspaperImages";
-
-export type SourceHandler = (entry: NewspaperEntry) => void;
 
 const STATUS: Record<NewspaperEntry["status"], string> = {
   completed: "已完成",
@@ -28,19 +26,6 @@ export function clock(entry: NewspaperEntry, timezone: string) {
     minute: "2-digit",
     timeZone: timezone,
   });
-}
-
-function SourceLink({ entry, onSource }: { entry: NewspaperEntry; onSource: SourceHandler }) {
-  return (
-    <button
-      type="button"
-      className="np-source"
-      aria-label={`查看来源：${entry.title}`}
-      onClick={() => onSource(entry)}
-    >
-      来源<ArrowUpRight size={12} aria-hidden />
-    </button>
-  );
 }
 
 function Body({ text, limit = 420, className = "np-body" }: { text: string; limit?: number; className?: string }) {
@@ -65,7 +50,7 @@ function Body({ text, limit = 420, className = "np-body" }: { text: string; limi
 }
 
 function TimelineItem(
-  { entry, timezone, onSource }: { entry: NewspaperEntry; timezone: string; onSource: SourceHandler },
+  { entry, timezone }: { entry: NewspaperEntry; timezone: string },
 ) {
   const time = clock(entry, timezone);
   return (
@@ -77,14 +62,13 @@ function TimelineItem(
           {entry.status === "completed" && <span className="np-done">已完成</span>}
         </h3>
         <Body text={entry.body} limit={160} className="np-body np-body-small" />
-        <SourceLink entry={entry} onSource={onSource} />
       </div>
     </li>
   );
 }
 
 function StoryItem(
-  { entry, timezone, onSource }: { entry: NewspaperEntry; timezone: string; onSource: SourceHandler },
+  { entry, timezone }: { entry: NewspaperEntry; timezone: string },
 ) {
   const time = clock(entry, timezone);
   return (
@@ -93,7 +77,6 @@ function StoryItem(
       <Body text={entry.body} />
       <p className="np-meta-line">
         <span>{time ?? "当天"} · {STATUS[entry.status]}</span>
-        <SourceLink entry={entry} onSource={onSource} />
       </p>
     </article>
   );
@@ -101,7 +84,7 @@ function StoryItem(
 
 const QUANTITY = /-?\d[\d,]*(?:\.\d+)?\s?(?:[A-Z]{3}|千卡|kcal|kg|cm|元)/;
 
-function LedgerItem({ entry, onSource }: { entry: NewspaperEntry; onSource: SourceHandler }) {
+function LedgerItem({ entry }: { entry: NewspaperEntry }) {
   const value = QUANTITY.exec(entry.body)?.[0];
   const note = value
     ? entry.body.replace(value, "").replace(/^[\s·：:，,]+|[\s·：:，,]+$/g, "").replace(/\s·\s·\s/g, " · ")
@@ -118,13 +101,12 @@ function LedgerItem({ entry, onSource }: { entry: NewspaperEntry; onSource: Sour
         )}
       </div>
       {note && <p className="np-ledger-note">{note}</p>}
-      <SourceLink entry={entry} onSource={onSource} />
     </li>
   );
 }
 
 function EssayItem(
-  { entry, timezone, onSource }: { entry: NewspaperEntry; timezone: string; onSource: SourceHandler },
+  { entry, timezone }: { entry: NewspaperEntry; timezone: string },
 ) {
   const time = clock(entry, timezone);
   return (
@@ -132,14 +114,13 @@ function EssayItem(
       <Body text={entry.body || entry.title} limit={360} className="np-essay-text" />
       <p className="np-meta-line">
         <span>{entry.body ? `《${entry.title}》` : ""}{time ? ` ${time}` : ""}</span>
-        <SourceLink entry={entry} onSource={onSource} />
       </p>
     </article>
   );
 }
 
 function PendingItem(
-  { entry, timezone, onSource }: { entry: NewspaperEntry; timezone: string; onSource: SourceHandler },
+  { entry, timezone }: { entry: NewspaperEntry; timezone: string },
 ) {
   const time = clock(entry, timezone);
   return (
@@ -149,7 +130,6 @@ function PendingItem(
         <h3>{entry.title}</h3>
         <p className="np-meta-line">
           <span>{time ? `计划于 ${time}` : "当日计划"} · 未标记完成</span>
-          <SourceLink entry={entry} onSource={onSource} />
         </p>
       </div>
     </li>
@@ -157,10 +137,9 @@ function PendingItem(
 }
 
 export function SectionModule(
-  { module, report, onSource, onOpenAsset, onIllustrate }: {
+  { module, report, onOpenAsset, onIllustrate }: {
     module: PaperModule;
     report: NewspaperReport;
-    onSource: SourceHandler;
     onOpenAsset: (a: NewspaperImageAsset) => void;
     onIllustrate: (p: ImagePlacement) => void;
   },
@@ -174,23 +153,22 @@ export function SectionModule(
   const items = module.items.map((entry) => {
     switch (module.variant) {
       case "timeline":
-        return <TimelineItem key={entry.id} entry={entry} timezone={tz} onSource={onSource} />;
+        return <TimelineItem key={entry.id} entry={entry} timezone={tz} />;
       case "ledger":
-        return <LedgerItem key={entry.id} entry={entry} onSource={onSource} />;
+        return <LedgerItem key={entry.id} entry={entry} />;
       case "pending":
-        return <PendingItem key={entry.id} entry={entry} timezone={tz} onSource={onSource} />;
+        return <PendingItem key={entry.id} entry={entry} timezone={tz} />;
       case "essay":
-        return <EssayItem key={entry.id} entry={entry} timezone={tz} onSource={onSource} />;
+        return <EssayItem key={entry.id} entry={entry} timezone={tz} />;
       default:
-        return <StoryItem key={entry.id} entry={entry} timezone={tz} onSource={onSource} />;
+        return <StoryItem key={entry.id} entry={entry} timezone={tz} />;
     }
   });
   return (
     <section
       id={`np-mod-${module.key}`}
       tabIndex={-1}
-      className={`np-mod np-mod-${module.variant}${module.span >= 8 ? " np-mod-wide" : ""}`}
-      style={{ "--np-span": module.span } as React.CSSProperties}
+      className={`np-mod np-mod-${module.variant}`}
       aria-labelledby={`np-mod-${module.key}-title`}
     >
       <header className="np-mod-head">
@@ -242,10 +220,9 @@ function factualDeck(report: NewspaperReport, layout: PaperLayout) {
 }
 
 export function FrontPage(
-  { report, layout, onSource, onOpenAsset, onIllustrate, onSupplement }: {
+  { report, layout, onOpenAsset, onIllustrate, onSupplement }: {
     report: NewspaperReport;
     layout: PaperLayout;
-    onSource: SourceHandler;
     onOpenAsset: (a: NewspaperImageAsset) => void;
     onIllustrate: (p: ImagePlacement) => void;
     onSupplement: () => void;
@@ -260,7 +237,7 @@ export function FrontPage(
     s.items.length && !report.hidden_sections.includes(s.id)
   );
   return (
-    <div className="np-front">
+    <>
       <div className="np-front-lead">
         {mainJob ? <FigurePlaceholder job={mainJob} lead /> : main && (
           <NewspaperFigure asset={main} onOpen={onOpenAsset} lead />
@@ -282,7 +259,6 @@ export function FrontPage(
                 )
                 : <p className="np-deck">{factualDeck(report, layout)}</p>}
               <Body text={lead.body} limit={640} className="np-body np-lead-body" />
-              <SourceLink entry={lead} onSource={onSource} />
             </article>
           )
           : (
@@ -353,6 +329,6 @@ export function FrontPage(
           </button>
         )}
       </aside>
-    </div>
+    </>
   );
 }

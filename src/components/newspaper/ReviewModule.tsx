@@ -1,12 +1,11 @@
-import { useRef, useState } from "react";
-import { Check, Plus, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNewspaperDrafts } from "./NewspaperDraftContext";
 import {
   useNewspaperCommand,
   usePendingNewspaperRequest,
 } from "@/hooks/useNewspapers";
-import { todoHooks, useAddToToday, useTodayTasks } from "@/hooks/useData";
 import type { NewspaperReport } from "../../../supabase/functions/_shared/newspaperTypes";
 
 /** One review request path shared by the toolbar and the paper itself. */
@@ -46,69 +45,14 @@ export function useReviewGenerator(report: NewspaperReport) {
 }
 
 function Suggestions({ report }: { report: NewspaperReport }) {
-  const create = todoHooks.useCreate();
-  const add = useAddToToday();
-  const today = useTodayTasks();
-  const [adding, setAdding] = useState<string | null>(null);
-  const [added, setAdded] = useState<string[]>([]);
-  const created = useRef<Record<string, string>>({});
-  async function addSuggestion(suggestion: string) {
-    setAdding(suggestion);
-    try {
-      let id = created.current[suggestion];
-      if (!id) {
-        const todo = await create.mutateAsync({
-          title: suggestion,
-          importance: "medium",
-          category: "生活",
-          detail: null,
-          is_archived: false,
-          is_completed: false,
-          kind: "once",
-        });
-        id = todo.id;
-        created.current[suggestion] = id;
-      }
-      await add.mutateAsync({
-        todo_id: id,
-        difficulty: "medium",
-        base_points: 20,
-        metadata: { source: "newspaper_review", report_date: report.date },
-      });
-      const result = await today.refetch?.();
-      if (result?.error) {
-        throw new Error("任务已创建，但暂时无法核对今日列表，请到今日待办查看。");
-      }
-      setAdded((a) => [...a, suggestion]);
-      toast.success("已加入今日待办");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setAdding(null);
-    }
-  }
   if (!report.review?.suggestions.length) return null;
   return (
     <div className="np-review-next">
       <h3>明日建议</h3>
       <ol>
-        {report.review.suggestions.map((suggestion, i) => {
-          const done = added.includes(suggestion);
-          return (
-            <li key={i}>
-              <p>{suggestion}</p>
-              <button
-                type="button"
-                className="np-text-link"
-                disabled={!!adding || done}
-                onClick={() => void addSuggestion(suggestion)}
-              >
-                {done ? <Check size={14} /> : <Plus size={14} />}
-                {done ? "已加入" : adding === suggestion ? "添加中…" : "加入今日待办"}
-              </button>
-            </li>
-          );
-        })}
+        {report.review.suggestions.map((suggestion, i) => (
+          <li key={i}><p>{suggestion}</p></li>
+        ))}
       </ol>
     </div>
   );
@@ -125,8 +69,7 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
           <span className="np-mod-kicker">可选</span>
         </header>
         <p>
-          这期日报只由你的记录组成。需要时，可以请 AI
-          读一遍，写下收获、困难与明天可以试试的事——原文不会被改动。
+          从今天的记录里，读出一点收获。AI 复盘不会改动原文。
         </p>
         <button
           type="button"
@@ -153,7 +96,7 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
     <section className="np-mod np-mod-review" aria-labelledby="np-review-heading">
       <header className="np-mod-head">
         <h2 id="np-review-heading">编辑部复盘</h2>
-        <span className="np-ai-stamp">AI 分析 · 非原始记录</span>
+        <span className="np-ai-stamp">AI 分析</span>
       </header>
       {(report.review_stale || review.pending) && (
         <div className="np-stale">

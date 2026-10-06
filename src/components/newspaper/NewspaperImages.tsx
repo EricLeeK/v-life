@@ -105,7 +105,6 @@ export function NewspaperFigure(
       </button>
       <figcaption>
         <span>{asset.caption || "未填写图注"}</span>
-        <span className="np-figure-credit">图 · {modelLabel(asset.options)}</span>
       </figcaption>
     </figure>
   );
@@ -167,7 +166,7 @@ export function NewspaperImageLightbox(
             <div className="np-lightbox-text">
               <DialogPrimitive.Title>{asset?.caption || "日报配图"}</DialogPrimitive.Title>
               <DialogPrimitive.Description>
-                {asset && `${PLACEMENT_LABELS[asset.section_id as ImagePlacement] ?? ""} · ${asset.width}×${asset.height} · ${modelLabel(asset.options)}`}
+                {asset && `${PLACEMENT_LABELS[asset.section_id as ImagePlacement] ?? ""} · ${asset.width}×${asset.height}`}
               </DialogPrimitive.Description>
             </div>
             <div className="np-inline">

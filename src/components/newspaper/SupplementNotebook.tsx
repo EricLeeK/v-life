@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNewspaperDrafts } from "./NewspaperDraftContext";
-import { DateTimeField } from "@/components/arc/DateField";
 import { AlertCircle, Check, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNewspaperCommand } from "@/hooks/useNewspapers";
@@ -8,34 +7,9 @@ import type {
   NewspaperReport,
   NewspaperSupplement,
 } from "../../../supabase/functions/_shared/newspaperTypes";
-function localInput(iso: string, timezone: string) {
-  return new Intl.DateTimeFormat("sv-SE", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).format(new Date(iso)).replace(" ", "T");
-}
-function inputIso(value: string, timezone: string) {
-  const target = Date.parse(value + "Z");
-  let candidate = target;
-  for (let i = 0; i < 4; i++) {
-    const current = Date.parse(
-      localInput(new Date(candidate).toISOString(), timezone) + "Z",
-    );
-    const delta = target - current;
-    if (!delta) return new Date(candidate).toISOString();
-    candidate += delta;
-  }
-  throw new Error("这个时间在所选时区不存在，请检查夏令时或换一个时间。");
-}
 function SupplementEditor(
-  { date, timezone, item, onCreated, onCancel }: {
+  { date, item, onCreated, onCancel }: {
     date: string;
-    timezone: string;
     item?: NewspaperSupplement;
     onCreated?: () => void;
     onCancel?: () => void;
@@ -44,18 +18,15 @@ function SupplementEditor(
   const drafts = useNewspaperDrafts();
   const discarded = useRef(false);
   const [body, setBody] = useState(item?.body || "");
-  const [occurred, setOccurred] = useState(
-    item?.occurred_at ? localInput(item.occurred_at, timezone) : "",
-  );
   const [status, setStatus] = useState<"saved" | "dirty" | "saving" | "error">(
     "saved",
   );
   const [error, setError] = useState("");
   const command = useNewspaperCommand();
   const current = useRef(item);
-  const latest = useRef({ body, occurred });
-  latest.current = { body, occurred };
-  const saved = useRef({ body, occurred });
+  const latest = useRef(body);
+  latest.current = body;
+  const saved = useRef(body);
   const busy = useRef(false);
   const mounted = useRef(true);
   const created = useRef(onCreated);
@@ -66,11 +37,8 @@ function SupplementEditor(
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     const value = latest.current;
-    if (
-      saved.current.body === value.body &&
-      saved.current.occurred === value.occurred
-    ) return true;
-    if (!value.body.trim()) {
+    if (saved.current === value) return true;
+    if (!value.trim()) {
       if (mounted.current) {
         setStatus("error");
         setError("原文不能为空。可以填写内容，或删除这条补充。");
@@ -80,23 +48,16 @@ function SupplementEditor(
     busy.current = true;
     if (mounted.current) setStatus("saving");
     try {
-      while (
-        saved.current.body !== latest.current.body ||
-        saved.current.occurred !== latest.current.occurred
-      ) {
-        const next = { ...latest.current };
-        if (!next.body.trim()) break;
+      while (saved.current !== latest.current) {
+        const next = latest.current;
+        if (!next.trim()) break;
         const row = current.current;
         const result = await command.mutateAsync({
           action: "supplement_save",
           input: {
             date,
-            body: next.body,
-            occurred_at: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(next.occurred)
-              ? (row && next.occurred === saved.current.occurred
-                ? row.occurred_at
-                : inputIso(next.occurred.slice(0, 16), timezone))
-              : null,
+            body: next,
+            occurred_at: row?.occurred_at ?? null,
             ...(row ? { id: row.id, expected_updated_at: row.updated_at } : {}),
           },
         });
@@ -118,7 +79,7 @@ function SupplementEditor(
     } finally {
       busy.current = false;
     }
-  }, [command.mutateAsync, date, item, timezone]);
+  }, [command.mutateAsync, date, item]);
   useEffect(() => drafts.register(item?.id || `new-${date}`, save), [
     drafts.register,
     item?.id,
@@ -136,7 +97,7 @@ function SupplementEditor(
     if (status !== "dirty") return;
     const timer = window.setTimeout(() => void save(), 800);
     return () => clearTimeout(timer);
-  }, [body, occurred, status, save]);
+  }, [body, status, save]);
   useEffect(() => {
     if (status === "saved") return;
     const handler = (event: BeforeUnloadEvent) => {
@@ -172,16 +133,6 @@ function SupplementEditor(
         />
       </label>
       <div className="np-slip-meta">
-        <div className="np-slip-time">
-          <DateTimeField
-            label={`发生时间（${timezone}，可选）`}
-            value={occurred}
-            onChange={(next) => {
-              setOccurred(next);
-              setStatus("dirty");
-            }}
-          />
-        </div>
         <span
           className={status === "error" ? "np-slip-status np-error" : "np-slip-status"}
           role="status"
@@ -274,21 +225,19 @@ export function SupplementNotebook(
       </header>
       {!report.supplements.length && !adding && (
         <p className="np-notes-intro">
-          没有出现在待办和账单里的片刻，也值得留下。写下即自动保存，一字不改。
+          待办和账单之外的片刻，也值得留下。写下即自动保存。
         </p>
       )}
       {report.supplements.map((item) => (
         <SupplementEditor
           key={item.id}
           date={report.date}
-          timezone={report.timezone}
           item={item}
         />
       ))}
       {adding && (
         <SupplementEditor
           date={report.date}
-          timezone={report.timezone}
           onCreated={() => setAdding(false)}
           onCancel={() => setAdding(false)}
         />

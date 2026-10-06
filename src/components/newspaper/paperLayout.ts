@@ -16,8 +16,6 @@ export interface PaperModule {
   variant: PaperVariant;
   items: NewspaperEntry[];
   figures: NewspaperImageAsset[];
-  /** Columns out of 12; rows are packed so every row sums to 12. */
-  span: number;
 }
 
 export interface PaperLayout {
@@ -49,60 +47,8 @@ const byTime = (a: NewspaperEntry, b: NewspaperEntry) =>
   (a.time ? Date.parse(a.time) : Number.MAX_SAFE_INTEGER) -
   (b.time ? Date.parse(b.time) : Number.MAX_SAFE_INTEGER);
 
-/** Rough column demand: ledgers stay narrow, long prose asks for width. */
-function preferredSpan(
-  variant: PaperVariant,
-  items: NewspaperEntry[],
-  figures: number,
-): 4 | 6 | 8 {
-  if (variant === "ledger" || variant === "pending") {
-    return items.length > 8 ? 6 : 4;
-  }
-  const weight = items.length +
-    items.reduce((n, e) => n + e.body.length, 0) / 320 + figures * 2;
-  if (weight >= 7) return 8;
-  if (weight >= 3) return 6;
-  return 4;
-}
-
 export function pickLead(report: NewspaperReport) {
   return pickNewspaperLead(report.snapshot.sections, report.hidden_sections);
-}
-
-/** Fill each 12-column row exactly by widening the row's last modules. */
-export function packRows<T extends { span: number }>(
-  modules: T[],
-  columns = 12,
-): T[][] {
-  const rows: T[][] = [];
-  let row: T[] = [];
-  let used = 0;
-  const close = () => {
-    if (!row.length) return;
-    let spare = columns - used;
-    for (let i = row.length - 1; spare > 0; i = i > 0 ? i - 1 : row.length - 1) {
-      const grow = Math.min(spare, row.length === 1 ? spare : 2);
-      row[i] = { ...row[i], span: row[i].span + grow };
-      spare -= grow;
-    }
-    rows.push(row);
-    row = [];
-    used = 0;
-  };
-  const queue = [...modules];
-  while (queue.length) {
-    const fit = queue.findIndex((m) => used + m.span <= columns);
-    if (fit < 0) {
-      close();
-      continue;
-    }
-    const [module] = queue.splice(fit, 1);
-    row.push({ ...module });
-    used += module.span;
-    if (used === columns) close();
-  }
-  close();
-  return rows;
 }
 
 export function buildPaperLayout(report: NewspaperReport): PaperLayout {
@@ -134,7 +80,6 @@ export function buildPaperLayout(report: NewspaperReport): PaperLayout {
       variant,
       items: section.id === "chronicle" ? [...items].sort(byTime) : items,
       figures,
-      span: preferredSpan(variant, items, figures.length),
     });
   }
   if (pending.length) {
@@ -147,14 +92,13 @@ export function buildPaperLayout(report: NewspaperReport): PaperLayout {
       variant: "pending",
       items: [...pending].sort(byTime),
       figures: [],
-      span: 4,
     });
   }
   const all = visible.flatMap((s) => s.items);
   return {
     lead: lead?.entry ?? null,
     leadSection: lead?.section ?? null,
-    modules: packRows(modules).flat() as PaperModule[],
+    modules,
     total: all.length,
     completed: all.filter((e) => e.status === "completed").length,
     planned: pending.length,

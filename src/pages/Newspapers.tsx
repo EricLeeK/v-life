@@ -400,7 +400,7 @@ export default function NewspapersPage() {
                               />
                             )}
                             <span className="np-file-status">
-                              <span>{reportStatus(paper.status)}</span>
+                              {reportStatus(paper.status) && <span>{reportStatus(paper.status)}</span>}
                               <ArrowUpRight size={17} className="np-file-read" aria-hidden="true" />
                             </span>
                           </span>

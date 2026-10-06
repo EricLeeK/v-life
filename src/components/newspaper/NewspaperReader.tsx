@@ -1,11 +1,9 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Copy,
-  ExternalLink,
   ImagePlus,
   PenLine,
   RefreshCw,
@@ -13,12 +11,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "./NewspaperDialog";
 import {
   NewspaperDraftContext,
   useNewspaperDrafts,
@@ -35,10 +27,10 @@ import {
 } from "./NewspaperImages";
 import { buildPaperLayout } from "./paperLayout";
 import { FrontPage, jumpTo, SectionModule } from "./PaperModules";
+import { PaperFlow } from "./PaperFlow";
 import { ReviewModule, useReviewGenerator } from "./ReviewModule";
 import { NewspaperExportSheet, useNewspaperCopy } from "./NewspaperExportSheet";
 import type {
-  NewspaperEntry,
   NewspaperImageAsset,
   NewspaperReport,
 } from "../../../supabase/functions/_shared/newspaperTypes";
@@ -48,7 +40,7 @@ export const reportStatus = (status: string) =>
     ? "今日草稿"
     : status === "reconstructed"
     ? "历史补建"
-    : "已归档";
+    : "";
 
 function shortDate(date: string) {
   const d = new Date(`${date}T12:00:00`);
@@ -177,7 +169,9 @@ function Masthead({ report, count }: { report: NewspaperReport; count: number })
         )}
         <span>{count} 则记录 · 第 {report.revision} 版</span>
       </div>
-      <h1 className="np-title">生活日报</h1>
+      <h1 className="np-title">
+        <img src="/newspaper-paper/masthead.webp" alt="生活日报" width="2164" height="727" />
+      </h1>
       <div className="np-masthead-bar">
         <time dateTime={report.date}>
           {day.toLocaleDateString("zh-CN", {
@@ -187,10 +181,7 @@ function Masthead({ report, count }: { report: NewspaperReport; count: number })
             weekday: "long",
           })}
         </time>
-        <span>{reportStatus(report.status)}</span>
-        <span>
-          以 {String(report.day_start_hour).padStart(2, "0")}:00 为一天的起点
-        </span>
+        {reportStatus(report.status) && <span>{reportStatus(report.status)}</span>}
         <span>
           更新于{" "}
           {new Date(report.updated_at).toLocaleTimeString("zh-CN", {
@@ -235,30 +226,13 @@ export function NewspaperReader(
   },
 ) {
   const drafts = useNewspaperSaveBarrier();
-  const command = useNewspaperCommand();
   const layout = useMemo(() => buildPaperLayout(report), [report]);
   const [lightbox, setLightbox] = useState<NewspaperImageAsset | null>(null);
   const [studio, setStudio] = useState(false);
   const [placement, setPlacement] = useState<ImagePlacement>("main");
   const [exportOpen, setExportOpen] = useState(false);
   const [addSignal, setAddSignal] = useState(0);
-  const [source, setSource] = useState<
-    { entry: NewspaperEntry; available?: boolean; error?: string } | null
-  >(null);
   useImageJobPolling(report);
-
-  async function showSource(entry: NewspaperEntry) {
-    setSource({ entry });
-    try {
-      const result = await command.mutateAsync({
-        action: "source_get",
-        input: { date: report.date, source: entry.source, source_id: entry.source_id },
-      });
-      setSource({ entry, available: result.available });
-    } catch (e) {
-      setSource({ entry, error: (e as Error).message });
-    }
-  }
   const illustrate = (p: ImagePlacement) => {
     setPlacement(p);
     setStudio(true);
@@ -285,32 +259,26 @@ export function NewspaperReader(
         <article className="np-paper" aria-label={`${report.date} 生活日报`}>
           <Masthead report={report} count={count} />
           <EditorNotes report={report} />
-          <FrontPage
-            report={report}
-            layout={layout}
-            onSource={showSource}
-            onOpenAsset={setLightbox}
-            onIllustrate={illustrate}
-            onSupplement={supplement}
-          />
-          {layout.modules.length > 0 && (
-            <div className="np-grid">
-              {layout.modules.map((module) => (
-                <SectionModule
-                  key={module.key}
-                  module={module}
-                  report={report}
-                  onSource={showSource}
-                  onOpenAsset={setLightbox}
-                  onIllustrate={illustrate}
-                />
-              ))}
-            </div>
-          )}
-          <div className={report.review ? "np-back-page" : "np-back-page np-back-page-quiet"}>
+          <PaperFlow edition={`${report.date}:${report.review?.generated_at ?? ""}:${report.assets.filter((asset) => asset.active).map((asset) => asset.id).join(",")}`}>
+            <FrontPage
+              report={report}
+              layout={layout}
+              onOpenAsset={setLightbox}
+              onIllustrate={illustrate}
+              onSupplement={supplement}
+            />
+            {layout.modules.map((module) => (
+              <SectionModule
+                key={module.key}
+                module={module}
+                report={report}
+                onOpenAsset={setLightbox}
+                onIllustrate={illustrate}
+              />
+            ))}
             <SupplementNotebook report={report} addSignal={addSignal} />
             <ReviewModule report={report} />
-          </div>
+          </PaperFlow>
           <footer className="np-paper-footer">
             <span>V-Life 生活日报 · 原文为准，复盘为辅</span>
             <span>{report.date.replace(/-/g, ".")}</span>
@@ -326,25 +294,6 @@ export function NewspaperReader(
         />
         <NewspaperExportSheet report={report} open={exportOpen} onOpenChange={setExportOpen} />
         <NewspaperImageLightbox asset={lightbox} onClose={() => setLightbox(null)} />
-        <Dialog open={!!source} onOpenChange={(open) => !open && setSource(null)}>
-          <DialogContent className="max-h-[85vh] overflow-auto">
-            <DialogTitle>{source?.entry.title}</DialogTitle>
-            <DialogDescription>
-              {source?.error || source?.available === false
-                ? "原始记录已删除或不可用，以下仍保留归档时的原文。"
-                : source?.available
-                ? "原始记录仍可查看。下方是本期日报保存的原文。"
-                : "正在核对记录来源…"}
-            </DialogDescription>
-            {source?.error && <p className="np-error">{source.error}</p>}
-            <p className="np-body">{source?.entry.body}</p>
-            {source?.available && (
-              <Link className="np-button" to={source.entry.source_url}>
-                <ExternalLink size={15} />打开来源页面
-              </Link>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </NewspaperDraftContext.Provider>
   );
