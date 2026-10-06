@@ -159,31 +159,43 @@ export default function CaloriesPage() {
           />
         </ArcScope>
 
-        <section className="life-stage grid items-start gap-x-6 gap-y-4 xl:grid-cols-[14rem_minmax(22rem,32rem)_minmax(16rem,1fr)]" aria-label={t("热量概览", "Calorie overview")}>
-          <section className="min-w-0" aria-label={t("当日热量", "Calories for this day")}>
-            <p className="text-sm text-muted-foreground">{format(parseISO(selectedDate), lang === "zh" ? "M月d日 EEE" : "EEEE, MMM d", { locale })}</p>
-            <ArcScope className="mt-1 inline-flex">
-              <AnimatedCounter value={totalCalories} suffix=" kcal" locale={lang === "zh" ? "zh-CN" : "en-US"} />
-            </ArcScope>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {t("摄入", "Intake")} {foodCalories} · {t("运动", "Exercise")} {exerciseCalories}
-            </p>
-            <p className={`mt-1 text-sm font-medium ${remaining < 0 ? "text-cat-orange" : "text-cat-green"}`}>
-              {remaining < 0
-                ? t(`超出目标 ${Math.abs(remaining)} kcal`, `${Math.abs(remaining)} kcal over target`)
-                : t(`距目标还剩 ${remaining} kcal`, `${remaining} kcal left of ${target}`)}
-            </p>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-              <div
-                className="h-full origin-left rounded-full bg-foreground transition-transform duration-500 ease-out"
-                style={{ transform: `scaleX(${Math.max(0, Math.min(1, totalCalories / target))})` }}
-              />
+        <section className="life-stage grid items-center gap-6 xl:grid-cols-[minmax(32rem,1fr)_minmax(0,1.2fr)]" aria-label={t("热量概览", "Calorie overview")}>
+          <section className="min-w-0 space-y-4 xl:border-r xl:border-border xl:pr-6" aria-label={t("当日热量", "Calories for this day")}>
+            <div className="grid items-end gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
+              <div>
+                <p className="text-sm text-muted-foreground">{format(parseISO(selectedDate), lang === "zh" ? "M月d日 EEE" : "EEEE, MMM d", { locale })}</p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <ArcScope className="inline-flex">
+                    <AnimatedCounter value={totalCalories} locale={lang === "zh" ? "zh-CN" : "en-US"} />
+                  </ArcScope>
+                  <span className="text-sm text-muted-foreground">kcal</span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {t("摄入", "Intake")} {foodCalories} · {t("运动", "Exercise")} {exerciseCalories}
+                </p>
+              </div>
+              <div className="min-w-0 pb-1">
+                <p className={`text-sm font-medium ${remaining < 0 ? "text-cat-orange" : "text-cat-green"}`}>
+                  {remaining < 0
+                    ? t(`超出目标 ${Math.abs(remaining)} kcal`, `${Math.abs(remaining)} kcal over target`)
+                    : t(`距目标还剩 ${remaining} kcal`, `${remaining} kcal left of ${target}`)}
+                </p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                  <div
+                    className="h-full origin-left rounded-full bg-foreground transition-transform duration-500 ease-out"
+                    style={{ transform: `scaleX(${Math.max(0, Math.min(1, totalCalories / target))})` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{t("每日目标", "Daily target")} {target.toLocaleString(lang === "zh" ? "zh-CN" : "en-US")} kcal</p>
+              </div>
+            </div>
+            <div className="border-t border-border pt-4">
+              <MealDistributionChart records={records} activeKey={pinnedMeal} onActiveChange={setActiveMeal} />
             </div>
           </section>
-          <MealDistributionChart records={records} activeKey={pinnedMeal} onActiveChange={setActiveMeal} />
 
-          <section className="min-w-0" aria-label={t("本周热量", "Weekly calories")}>
-            <h2 className="mb-3 text-sm font-medium">{t("本周", "This week")}</h2>
+          <section className="min-w-0 border-t border-border pt-4 xl:border-t-0 xl:pt-0" aria-label={t("本周热量", "Weekly calories")}>
+            <h2 className="mb-3 text-sm font-medium">{t("本周趋势", "This week's trend")}</h2>
             <WeeklyCalorieChart days={navDays} records={weeklyRecords} target={target} onDayChange={setSelectedDate} />
           </section>
         </section>

@@ -6,11 +6,12 @@ import { ShareDonut, TrendLine } from "@/components/arc/ShareCharts";
 import type { LineChartDatum } from "@/vendor/uiarc/registry/components/line-chart/line-chart";
 
 const MEAL_COLOR: Record<string, string> = {
-  breakfast: "hsl(var(--cat-yellow))",
-  lunch: "hsl(var(--cat-orange))",
-  dinner: "hsl(var(--cat-purple))",
-  snack: "hsl(var(--cat-teal))",
-  exercise: "hsl(var(--cat-green))",
+  // Reuse the vivid chart palette; category text keeps its readable, quieter tones.
+  breakfast: "hsl(var(--finance-pie-yellow))",
+  lunch: "hsl(var(--finance-pie-orange))",
+  dinner: "hsl(var(--finance-pie-purple))",
+  snack: "hsl(var(--finance-pie-blue))",
+  exercise: "hsl(var(--finance-pie-green))",
 };
 
 interface CalorieRecord {
@@ -105,7 +106,7 @@ export function MealDistributionChart({
         key,
         label: labels[key] || key,
         value,
-        color: MEAL_COLOR[key] || "hsl(var(--cat-blue))",
+        color: MEAL_COLOR[key] || "hsl(var(--finance-pie-teal))",
       }))
       .sort((a, b) => b.value - a.value);
   }, [records, t, lang]);
@@ -121,8 +122,8 @@ export function MealDistributionChart({
       emptyLabel={t("暂无数据", "No data")}
       activeKey={activeKey}
       onActiveChange={onActiveChange}
-      size={208}
-      thickness={24}
+      size={160}
+      thickness={20}
     />
   );
 }
