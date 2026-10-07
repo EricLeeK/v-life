@@ -7,27 +7,35 @@ import { AppLayout } from "@/components/AppLayout";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
 import { ProjectBoard } from "@/components/ProjectBoard";
 import { ProjectModal } from "@/components/ProjectModal";
+import { ProjectDeleteDialog } from "@/components/ProjectDeleteDialog";
 import {
   useProjects,
   useCreateProject,
   useUpdateProject,
+  useDeleteProject,
 } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
+import type { Tables } from "@/integrations/supabase/types";
 
 export default function ProjectsPage() {
   const { data: projects = [], isLoading, error, refetch } = useProjects();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
   const { toast } = useToast();
   const { t } = useLang();
 
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [deletingProject, setDeletingProject] = useState<Tables<"projects"> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (projects.length > 0 && !selectedId) {
+    if (projects.length > 0 && !projects.some(project => project.id === selectedId)) {
       const active = projects.find((p) => p.status === "active");
       setSelectedId(active?.id || projects[0].id);
     }
@@ -36,6 +44,8 @@ export default function ProjectsPage() {
   const selectedProject = projects.find((p) => p.id === selectedId);
 
   const handleSaveProject = async (values: any) => {
+    if (saving) return;
+    setSaving(true);
     try {
       if (editingProject) {
         await updateProject.mutateAsync({ id: editingProject.id, ...values });
@@ -47,6 +57,25 @@ export default function ProjectsPage() {
       setEditingProject(null);
     } catch (e: any) {
       toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!deletingProject || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteProject.mutateAsync(deletingProject.id);
+      if (selectedId === deletingProject.id) {
+        const remaining = projects.filter(project => project.id !== deletingProject.id);
+        setSelectedId(remaining.find(project => project.status === "active")?.id ?? remaining[0]?.id);
+      }
+      setDeletingProject(null);
+    } catch (error) {
+      toast({ title: t("删除失败", "Delete failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -75,13 +104,19 @@ export default function ProjectsPage() {
               setProjectModalOpen(true);
             }}
             onEdit={handleEditProject}
+            editMode={editMode}
+            onDelete={setDeletingProject}
           />
         </div>}
         <div className="flex-1 min-w-0 overflow-auto">
           {selectedProject ? (
             <ProjectBoard
+              key={selectedProject.id}
               project={selectedProject}
               onEditProject={() => handleEditProject(selectedProject)}
+              onDeleteProject={() => setDeletingProject(selectedProject)}
+              editMode={editMode}
+              onToggleEditMode={() => setEditMode(value => !value)}
             />
           ) : (
             <div className="flex min-h-96 h-full items-center justify-center">
@@ -99,7 +134,9 @@ export default function ProjectsPage() {
         onOpenChange={setProjectModalOpen}
         onSave={handleSaveProject}
         initial={editingProject}
+        pending={saving}
       />
+      <ProjectDeleteDialog name={deletingProject?.name ?? null} project pending={deleting} onCancel={() => setDeletingProject(null)} onConfirm={handleDeleteProject} />
     </AppLayout>
   );
 }

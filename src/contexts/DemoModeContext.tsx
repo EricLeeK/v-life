@@ -121,12 +121,23 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setDemoData((prev) => ({
-      ...prev,
-      [table]: (prev[table] as any[]).filter((item: any) => item.id !== id),
-      ...(table === "finance_records" ? { subscription_payments: prev.subscription_payments.map(payment => payment.finance_record_id === id ? { ...payment, finance_record_id: null } : payment) } : {}),
-      ...(table === "subscriptions" ? { subscription_payments: prev.subscription_payments.filter(payment => payment.subscription_id !== id) } : {}),
-    }));
+    setDemoData((prev) => {
+      const next = {
+        ...prev,
+        [table]: (prev[table] as any[]).filter((item: any) => item.id !== id),
+        ...(table === "finance_records" ? { subscription_payments: prev.subscription_payments.map(payment => payment.finance_record_id === id ? { ...payment, finance_record_id: null } : payment) } : {}),
+        ...(table === "subscriptions" ? { subscription_payments: prev.subscription_payments.filter(payment => payment.subscription_id !== id) } : {}),
+      };
+      if (table === "projects") {
+        const taskIds = new Set(prev.project_tasks.filter(task => task.project_id === id).map(task => task.id));
+        next.project_tasks = prev.project_tasks.filter(task => task.project_id !== id);
+        next.task_tags = prev.task_tags.filter(tag => tag.project_id !== id);
+        next.habit_logs = prev.habit_logs.filter(log => !taskIds.has(log.task_id));
+      } else if (table === "project_tasks") {
+        next.habit_logs = prev.habit_logs.filter(log => log.task_id !== id);
+      }
+      return next;
+    });
   }, []);
 
   return (

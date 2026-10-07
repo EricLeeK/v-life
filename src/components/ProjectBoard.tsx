@@ -6,19 +6,25 @@ import { TaskCard } from "./TaskCard";
 import { HabitCard } from "./HabitCard";
 import { MilestoneCard } from "./MilestoneCard";
 import { TaskModal } from "./TaskModal";
-import { useProjectTasks, useUpdateProjectTask, useUpdateProject, useCreateProjectTask } from "@/hooks/useData";
+import { ProjectEditActions } from "./ProjectEditActions";
+import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
+import { useProjectTasks, useUpdateProjectTask, useUpdateProject, useCreateProjectTask, useDeleteProjectTask } from "@/hooks/useData";
+import { useToast } from "@/hooks/use-toast";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Settings2 } from "lucide-react";
+import { Pencil, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/contexts/LanguageContext";
+import type { Tables } from "@/integrations/supabase/types";
 
 const COLUMNS_ZH = [
   { id: "todo", title: "待办" },
+  { id: "this_week", title: "本周" },
   { id: "in_progress", title: "进行中" },
+  { id: "waiting", title: "等待中" },
   { id: "done", title: "已完成" },
 ] as const;
 const COLUMN_TITLE_MAP: Record<string, string> = {
-  "待办": "To Do", "进行中": "In Progress", "已完成": "Done",
+  "待办": "To Do", "本周": "This Week", "进行中": "In Progress", "等待中": "Waiting", "已完成": "Done",
 };
 
 type FilterType = "all" | "task" | "habit" | "milestone";
@@ -26,23 +32,33 @@ type FilterType = "all" | "task" | "habit" | "milestone";
 interface ProjectBoardProps {
   project: any;
   onEditProject: () => void;
+  onDeleteProject: () => void;
+  editMode: boolean;
+  onToggleEditMode: () => void;
 }
 
-export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
+export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode, onToggleEditMode }: ProjectBoardProps) {
   const { t, lang } = useLang();
   const { data: tasks = [] } = useProjectTasks(project.id);
   const updateTask = useUpdateProjectTask();
   const updateProject = useUpdateProject();
   const createTask = useCreateProjectTask();
+  const deleteTask = useDeleteProjectTask();
+  const { toast } = useToast();
   const [filter, setFilter] = useState<FilterType>("all");
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"task" | "habit" | "milestone">("task");
   const [editingTask, setEditingTask] = useState<any>(null);
+  const [deletingTask, setDeletingTask] = useState<Tables<"project_tasks"> | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const filteredTasks = useMemo(() => {
     if (filter === "all") return tasks;
     return tasks.filter((t) => t.type === filter);
   }, [tasks, filter]);
+  const columns = COLUMNS_ZH.filter(column =>
+    column.id !== "this_week" && column.id !== "waiting" || tasks.some(task => task.status === column.id));
 
   const computeProgress = (allTasks: any[]) => {
     const countable = allTasks.filter((t) => t.type !== "habit");
@@ -108,21 +124,49 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
     setTaskModalOpen(true);
   };
 
-  const handleSaveTask = (values: any) => {
-    if (editingTask) {
-      updateTask.mutate({ id: editingTask.id, project_id: project.id, ...values });
-    } else {
-      createTask.mutate({ ...values, project_id: project.id }, {
-        onSuccess: () => {
-          const newTasks = [...tasks, { ...values, id: "temp" }];
-          const newProgress = computeProgress(newTasks);
-          if (newProgress !== project.progress) {
-            updateProject.mutate({ id: project.id, progress: newProgress });
-          }
-        },
-      });
+  const syncProgress = async (nextTasks: Tables<"project_tasks">[]) => {
+    const progress = computeProgress(nextTasks);
+    if (progress !== project.progress) {
+      try {
+        await updateProject.mutateAsync({ id: project.id, progress });
+      } catch (error) {
+        toast({ title: t("工作项已更新，但进度同步失败", "Item updated, but progress sync failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+      }
     }
-    setTaskModalOpen(false);
+  };
+
+  const handleSaveTask = async (values: any) => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (editingTask) {
+        await updateTask.mutateAsync({ id: editingTask.id, ...values, project_id: project.id });
+        await syncProgress(tasks.map(task => task.id === editingTask.id ? { ...task, ...values } : task));
+      } else {
+        await createTask.mutateAsync({ ...values, project_id: project.id });
+        await syncProgress([...tasks, values]);
+      }
+      setTaskModalOpen(false);
+      setEditingTask(null);
+    } catch (error) {
+      toast({ title: t("保存失败", "Save failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!deletingTask || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteTask.mutateAsync({ id: deletingTask.id, project_id: project.id });
+      await syncProgress(tasks.filter(task => task.id !== deletingTask.id));
+      setDeletingTask(null);
+    } catch (error) {
+      toast({ title: t("删除失败", "Delete failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const filters: { key: FilterType; label: string }[] = [
@@ -135,14 +179,18 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex flex-wrap gap-3 items-center justify-between px-5 py-3 bg-card border-b border-border shrink-0">
+      <div className="flex flex-col gap-3 px-5 py-3 bg-card border-b border-border shrink-0">
+        <div className="flex items-center justify-between gap-3 min-w-0">
         <div className="flex items-center gap-3 min-w-0">
           <HairlineFigure name={moduleFigure.projects} className="workbench-mark" surface="card" /><h2 className="text-base font-semibold text-foreground truncate">{project.name}</h2>
-          <Button variant="ghost" size="icon" aria-label={t("项目设置", "Project settings")} title={t("项目设置", "Project settings")} className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={onEditProject}>
-            <Settings2 className="h-3.5 w-3.5" />
+          {editMode && <ProjectEditActions name={project.name} onEdit={onEditProject} onDelete={onDeleteProject} />}
+        </div>
+          <Button variant={editMode ? "secondary" : "outline"} className="min-h-11 shrink-0" aria-pressed={editMode} onClick={onToggleEditMode}>
+            {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+            {editMode ? t("完成编辑", "Done editing") : t("编辑", "Edit")}
           </Button>
         </div>
-        <div className="flex flex-wrap items-center gap-3 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 min-w-0">
           {/* Slim progress bar */}
           <div className="flex items-center gap-2">
             <div className="w-24 h-1.5 rounded-full bg-muted">
@@ -174,8 +222,8 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
       {/* Board */}
       <div className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin px-5 py-3">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 h-full">
-            {COLUMNS_ZH.map((col) => {
+          <div className="flex gap-4 h-full" style={{ minWidth: columns.length > 3 ? columns.length * 240 : undefined }}>
+            {columns.map((col) => {
               const colTasks = filteredTasks.filter((t) => t.status === col.id).sort((a, b) => a.sort_order - b.sort_order);
               return (
                 <Droppable key={col.id} droppableId={col.id}>
@@ -189,7 +237,7 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
                       droppableProps={provided.droppableProps}
                     >
                       {colTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
+                        <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={editMode}>
                           {(dragProvided) => (
                             <div
                               ref={dragProvided.innerRef}
@@ -197,6 +245,7 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
                               {...dragProvided.dragHandleProps}
                               className="mb-2"
                             >
+                              {editMode && <ProjectEditActions name={task.title} onEdit={() => openEditModal(task)} onDelete={() => setDeletingTask(task)} />}
                               {task.type === "habit" ? (
                                 <HabitCard task={task} projectId={project.id} />
                               ) : task.type === "milestone" ? (
@@ -227,7 +276,9 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
         projectId={project.id}
         initial={editingTask}
         defaultType={modalType}
+        pending={saving}
       />
+      <ProjectDeleteDialog name={deletingTask?.title ?? null} pending={deleting} onCancel={() => setDeletingTask(null)} onConfirm={handleDeleteTask} />
     </div>
   );
 }

@@ -47,6 +47,8 @@ export function DateField({
   label,
   value,
   onChange,
+  startValue,
+  onRangeChange,
   placeholder,
   min,
   max,
@@ -57,6 +59,8 @@ export function DateField({
   label: string;
   value: string;
   onChange: (value: string) => void;
+  startValue?: string;
+  onRangeChange?: (range: { start: string; end: string }) => void;
   placeholder?: string;
   min?: string;
   max?: string;
@@ -66,6 +70,7 @@ export function DateField({
   const { lang, t } = useLang();
   const rootRef = useRef<HTMLDivElement>(null);
   const selected = parseISODate(value);
+  const start = startValue ? parseISODate(startValue) : selected;
   const minDate = min ? parseISODate(min) ?? undefined : undefined;
   const maxDate = max ? parseISODate(max) ?? undefined : undefined;
   const presets: DateRangePreset[] = [
@@ -86,7 +91,13 @@ export function DateField({
 
   useFloatingPlacement(rootRef, 420);
 
-  const apply = (range: DateRange) => onChange(formatISODate(range.end));
+  const apply = (range: DateRange) => {
+    if (onRangeChange) {
+      onRangeChange({ start: formatISODate(range.start), end: formatISODate(range.end) });
+    } else {
+      onChange(formatISODate(range.end));
+    }
+  };
 
   return (
     <ArcScope ref={rootRef} className={inline ? "date-field date-field-inline" : "date-field"}>
@@ -101,7 +112,7 @@ export function DateField({
         />
       )}
       <DateRangePicker
-        value={selected ? { start: selected, end: selected } : null}
+        value={selected ? { start: start ?? selected, end: selected } : null}
         onChange={apply}
         label={label}
         placeholder={placeholder ?? t("选择日期", "Select a date")}

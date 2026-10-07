@@ -58,6 +58,29 @@ describe("demo record shapes", () => {
     act(() => result.current.demo.deleteRecord("todos", "new-todo"));
     expect(result.current.demo.demoData.todos).toHaveLength(originalCount);
   });
+
+  it("cascades project deletion to its items and check-ins while preserving other projects", () => {
+    const { result } = mount();
+    act(() => {
+      result.current.demo.addRecord("projects", { id: "cascade-project", name: "test" });
+      result.current.demo.addRecord("project_tasks", { id: "cascade-task", project_id: "cascade-project" });
+      result.current.demo.addRecord("habit_logs", { id: "cascade-log", task_id: "cascade-task" });
+    });
+    const otherTasks = result.current.demo.demoData.project_tasks.filter(task => task.project_id !== "cascade-project");
+    act(() => result.current.demo.deleteRecord("projects", "cascade-project"));
+    expect(result.current.demo.demoData.project_tasks).toEqual(otherTasks);
+    expect(result.current.demo.demoData.habit_logs.some(log => log.task_id === "cascade-task")).toBe(false);
+  });
+
+  it("cascades item deletion to check-ins", () => {
+    const { result } = mount();
+    act(() => {
+      result.current.demo.addRecord("project_tasks", { id: "delete-task", project_id: "keep-project" });
+      result.current.demo.addRecord("habit_logs", { id: "delete-log", task_id: "delete-task" });
+    });
+    act(() => result.current.demo.deleteRecord("project_tasks", "delete-task"));
+    expect(result.current.demo.demoData.habit_logs.some(log => log.task_id === "delete-task")).toBe(false);
+  });
 });
 
 it('records completion transitions without inventing dates for legacy completed todos', () => {

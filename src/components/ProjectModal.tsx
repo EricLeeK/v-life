@@ -24,9 +24,10 @@ interface ProjectModalProps {
   onOpenChange: (open: boolean) => void;
   onSave: (values: any) => void;
   initial?: any;
+  pending?: boolean;
 }
 
-export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectModalProps) {
+export function ProjectModal({ open, onOpenChange, onSave, initial, pending = false }: ProjectModalProps) {
   const { t } = useLang();
   const [form, setForm] = useState({
     name: "",
@@ -34,6 +35,7 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
     status: "planning",
     priority: "medium",
     target_date: "",
+    target_start_date: "",
   });
 
   useEffect(() => {
@@ -44,6 +46,7 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
         status: initial?.status || "planning",
         priority: initial?.priority || "medium",
         target_date: initial?.target_date ? initial.target_date.slice(0, 10) : "",
+        target_start_date: initial?.target_start_date?.slice(0, 10) || "",
       });
     }
   }, [open, initial]);
@@ -53,6 +56,7 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
     onSave({
       ...form,
       target_date: form.target_date || null,
+      target_start_date: form.target_start_date || null,
     });
   };
 
@@ -122,11 +126,16 @@ export function ProjectModal({ open, onOpenChange, onSave, initial }: ProjectMod
               id="proj-target-date"
               label={t("目标日期", "Target Date")}
               value={form.target_date}
+              startValue={form.target_start_date}
               onChange={(target_date) => setForm({ ...form, target_date })}
+              onRangeChange={({ start, end }) => setForm({ ...form, target_start_date: start, target_date: end })}
             />
+            {form.target_date && <Button variant="ghost" size="sm" onClick={() => setForm({ ...form, target_start_date: "", target_date: "" })}>
+              {t("清除目标日期", "Clear target dates")}
+            </Button>}
           </div>
-          <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-            {initial ? t("保存修改", "Save") : t("创建项目", "Create Project")}
+          <Button disabled={pending || !form.name.trim()} onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            {pending ? t("保存中…", "Saving…") : initial ? t("保存修改", "Save") : t("创建项目", "Create Project")}
           </Button>
         </div>
       </DialogContent>

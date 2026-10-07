@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLang } from "@/contexts/LanguageContext";
+import { ProjectEditActions } from "./ProjectEditActions";
+import type { Tables } from "@/integrations/supabase/types";
 
 interface ProjectSidebarProps {
   projects: any[];
@@ -16,9 +18,11 @@ interface ProjectSidebarProps {
   onSelect: (id: string) => void;
   onAdd: () => void;
   onEdit: (project: any) => void;
+  editMode?: boolean;
+  onDelete: (project: Tables<"projects">) => void;
 }
 
-export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }: ProjectSidebarProps) {
+export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit, editMode, onDelete }: ProjectSidebarProps) {
   const { t } = useLang();
   const [showArchived, setShowArchived] = useState(false);
 
@@ -56,7 +60,7 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
               <div className="flex items-center gap-2">
                 <span className={`h-2 w-2 rounded-full shrink-0 ${priorityDot[p.priority] || "bg-muted"}`} />
                 <span className="text-[13px] font-medium truncate flex-1 text-foreground">{p.name}</span>
-                <DropdownMenu>
+                {!editMode && <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
@@ -73,8 +77,9 @@ export function ProjectSidebar({ projects, selectedId, onSelect, onAdd, onEdit }
                       {t("编辑", "Edit")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
-                </DropdownMenu>
+                </DropdownMenu>}
               </div>
+              {editMode && <ProjectEditActions name={p.name} onEdit={() => onEdit(p)} onDelete={() => onDelete(p)} />}
               <div className="mt-2 flex items-center gap-2">
                 <div className="flex-1 h-1.5 rounded-full bg-muted">
                   <div

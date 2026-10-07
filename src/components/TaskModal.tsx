@@ -26,6 +26,7 @@ interface TaskModalProps {
   projectId: string;
   initial?: any;
   defaultType?: "task" | "habit" | "milestone";
+  pending?: boolean;
 }
 
 export function TaskModal({
@@ -35,6 +36,7 @@ export function TaskModal({
   projectId,
   initial,
   defaultType = "task",
+  pending = false,
 }: TaskModalProps) {
   const { t, lang } = useLang();
   const [form, setForm] = useState({
@@ -176,8 +178,8 @@ export function TaskModal({
               onChange={(due_date) => setForm({ ...form, due_date })}
             />
           </div>
-          <Button onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-            {initial ? t("保存修改", "Save") : t("创建工作项", "Create Item")}
+          <Button disabled={pending || !form.title.trim()} onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+            {pending ? t("保存中…", "Saving…") : initial ? t("保存修改", "Save") : t("创建工作项", "Create Item")}
           </Button>
         </div>
       </DialogContent>
