@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useEffect, useMemo, useState } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -53,7 +56,7 @@ export default function CaloriesPage() {
   const [form, setForm] = useState({ food_name: "", calories: "", meal_type: "lunch", notes: "" });
   const { toast } = useToast();
 
-  const { data: allCalorieRecords = [] } = calorieHooks.useList();
+  const { data: allCalorieRecords = [], isLoading, error, refetch } = calorieHooks.useList();
   const { data: settings } = useSettings();
   const createMutation = calorieHooks.useCreate();
   const updateMutation = calorieHooks.useUpdate();
@@ -148,7 +151,7 @@ export default function CaloriesPage() {
   );
 
   return (
-    <AppLayout title={t("热量记录", "Calories")}>
+    <AppLayout title={t("热量记录", "Calories")} description={t("记下每一餐，慢慢找到自己的节奏。", "Find your rhythm, one meal at a time.")} concept={records.length > 0 ? moduleFigure.calories : undefined}>
       <div className="space-y-4">
         <ArcScope>
           <SegmentedControl
@@ -159,7 +162,11 @@ export default function CaloriesPage() {
           />
         </ArcScope>
 
-        <section className="life-stage grid items-center gap-6 xl:grid-cols-[minmax(32rem,1fr)_minmax(0,1.2fr)]" aria-label={t("热量概览", "Calorie overview")}>
+        {allCalorieRecords.length === 0 ? <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+          <EmptyState figure={moduleFigure.calories} title={t("从今天的一餐开始", "Start with a meal today")}
+            hint={t("记下吃了什么，热量与餐次分布会慢慢清晰。", "Record a meal to start seeing your intake and meal patterns.")}
+            action={<Button onClick={() => openSheet("lunch")}>{t("记录第一餐", "Log your first meal")}</Button>} />
+        </CollectionFeedback> : <section className="life-stage grid items-center gap-6 xl:grid-cols-[minmax(32rem,1fr)_minmax(0,1.2fr)]" aria-label={t("热量概览", "Calorie overview")}>
           <section className="min-w-0 space-y-4 xl:border-r xl:border-border xl:pr-6" aria-label={t("当日热量", "Calories for this day")}>
             <div className="grid items-end gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
               <div>
@@ -198,9 +205,10 @@ export default function CaloriesPage() {
             <h2 className="mb-3 text-sm font-medium">{t("本周趋势", "This week's trend")}</h2>
             <WeeklyCalorieChart days={navDays} records={weeklyRecords} target={target} onDayChange={setSelectedDate} />
           </section>
-        </section>
+        </section>}
 
-        <div className="space-y-2">
+        {allCalorieRecords.length > 0 && records.length === 0 && <EmptyState figure={moduleFigure.calories} compact title={t("这一天还没有记录", "No records for this day")} hint={t("当天的饮食记录会显示在这里。", "Meals logged for this day will appear here.")} action={<Button onClick={() => openSheet("lunch")}>{t("记录一餐", "Log a meal")}</Button>} />}
+        {records.length > 0 && <div className="space-y-2">
         {MEAL_TYPES.map(({ key }) => {
           const mealRecords = records.filter((record) => record.meal_type === key);
           const mealTotal = mealRecords.reduce((sum: number, record) => sum + record.calories, 0);
@@ -259,7 +267,7 @@ export default function CaloriesPage() {
             </section>
           );
         })}
-        </div>
+        </div>}
 
         <BottomSheet
           open={sheetOpen}

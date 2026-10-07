@@ -8,6 +8,7 @@ import type { FortuneProfile, FortuneReadingType } from "@/lib/fortune/types";
 import { zodiacFromBirthDate, zodiacFromSunLongitude } from "@/lib/fortune/zodiac";
 import { shengxiaoFromBirthDate } from "@/lib/fortune/shengxiao";
 import type { Json } from "@/integrations/supabase/types";
+import { createDesignFortuneReadings } from "@/lib/designPreview";
 
 function parseProfile(raw: unknown): FortuneProfile | null {
   if (!raw || typeof raw !== "object") return null;
@@ -95,7 +96,7 @@ export interface FortuneReadingRow {
 
 export function useFortuneReadings() {
   const { user } = useAuth();
-  const { isDemo } = useDemoMode();
+  const { isDemo, designPreviewState } = useDemoMode();
   const qc = useQueryClient();
 
   return useQuery({
@@ -113,7 +114,7 @@ export function useFortuneReadings() {
       if (error) throw error;
       return data as FortuneReadingRow[];
     },
-    initialData: isDemo ? [] : undefined,
+    initialData: isDemo ? createDesignFortuneReadings(designPreviewState) : undefined,
   });
 }
 

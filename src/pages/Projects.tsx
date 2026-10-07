@@ -1,3 +1,7 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
+import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { ProjectSidebar } from "@/components/ProjectSidebar";
@@ -12,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
 
 export default function ProjectsPage() {
-  const { data: projects = [] } = useProjects();
+  const { data: projects = [], isLoading, error, refetch } = useProjects();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const { toast } = useToast();
@@ -54,7 +58,14 @@ export default function ProjectsPage() {
   return (
     <AppLayout title={t("项目管理", "Projects")} fullBleed>
       <div className="flex h-full flex-col md:flex-row gap-0">
-        <div className="h-56 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-border overflow-y-auto">
+        {projects.length > 0 && <div className="flex items-center gap-3 border-b border-border bg-card p-3 md:hidden">
+          <label className="sr-only" htmlFor="mobile-project">{t("选择项目", "Select project")}</label>
+          <select id="mobile-project" value={selectedId ?? ""} onChange={event => setSelectedId(event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-base text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
+            {projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
+          </select>
+          <Button className="min-h-11 shrink-0" onClick={() => { setEditingProject(null); setProjectModalOpen(true); }}>{t("新建", "New")}</Button>
+        </div>}
+        {projects.length > 0 && <div className="hidden md:block md:w-72 shrink-0 border-r border-border overflow-y-auto">
           <ProjectSidebar
             projects={projects}
             selectedId={selectedId}
@@ -65,7 +76,7 @@ export default function ProjectsPage() {
             }}
             onEdit={handleEditProject}
           />
-        </div>
+        </div>}
         <div className="flex-1 min-w-0 overflow-auto">
           {selectedProject ? (
             <ProjectBoard
@@ -73,8 +84,12 @@ export default function ProjectsPage() {
               onEditProject={() => handleEditProject(selectedProject)}
             />
           ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-              {t("请新建或选择一个项目", "Create or select a project")}
+            <div className="flex min-h-96 h-full items-center justify-center">
+              <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+                <EmptyState figure={moduleFigure.projects} title={t("把一个想法，拆成可完成的事", "Build an idea, one layer at a time")}
+                  hint={t("新建项目，用任务、习惯和里程碑推进它。", "Create a project and move it forward with tasks, habits and milestones.")}
+                  action={<Button onClick={() => { setEditingProject(null); setProjectModalOpen(true); }}>{t("新建项目", "Create a project")}</Button>} />
+              </CollectionFeedback>
             </div>
           )}
         </div>

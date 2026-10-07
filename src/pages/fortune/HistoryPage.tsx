@@ -1,3 +1,6 @@
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
@@ -23,7 +26,7 @@ const TYPE_LABEL: Record<string, { zh: string; en: string }> = {
 
 export default function HistoryPage() {
   const { t, lang } = useLang();
-  const { data = [], isLoading } = useFortuneReadings();
+  const { data = [], isLoading, error, refetch } = useFortuneReadings();
   const del = useDeleteFortuneReading();
   const [active, setActive] = useState<FortuneReadingRow | null>(null);
 
@@ -39,9 +42,11 @@ export default function HistoryPage() {
         {isLoading && <p className="text-[13px] text-muted-foreground">{t("加载中…", "Loading…")}</p>}
 
         {!isLoading && data.length === 0 && (
-          <div className="card-premium p-10 text-center text-[14px] text-muted-foreground">
-            {t("还没有记录，去抽一次牌吧", "No readings yet — try a draw")}
-          </div>
+          <CollectionFeedback error={error} retry={refetch}>
+            <EmptyState title={t("给此刻的心事，留一份记录", "A place for this moment's reflections")}
+              hint={t("每次占卜的提问与解读，都会收在这里。", "Your questions and readings will be kept here.")}
+              action={<Button asChild><Link to="/fortune/tarot">{t("去抽一张牌", "Draw a card")}</Link></Button>} />
+          </CollectionFeedback>
         )}
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">

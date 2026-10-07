@@ -1,3 +1,5 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -327,7 +329,7 @@ export default function NewspapersPage() {
               </button>
             </div>
           )}
-          <div className="np-cabinet">
+          {groups.length > 0 && <div className="np-cabinet">
             {groups.map(([month, papers]) => {
               const open = isOpen(month);
               const dates = papers.map((paper) => paper.date).sort();
@@ -412,26 +414,12 @@ export default function NewspapersPage() {
               </section>
               );
             })}
-          </div>
+          </div>}
           {!list.isLoading && !list.error && !archiveItems.length && (
-            <div className="np-empty-paper">
-              <Newspaper size={38} />
-              <h3>
-                {search ? "还没有找到这段记录" : "第一份日报，从今天开始。"}
-              </h3>
-              <p>
-                {search
-                  ? "换一个词试试，或用日期直接取报。"
-                  : "你在 V-Life 留下的记录，将在这里汇成每日的生活报纸。"}
-              </p>
-              <button
-                className="np-button np-button-primary"
-                disabled={!!opening}
-                onClick={() => void navigateDate(today)}
-              >
-                打开今天
-              </button>
-            </div>
+            <EmptyState figure={moduleFigure.newspaper}
+              title={search ? "还没有找到这段记录" : "第一份日报，从今天开始。"}
+              hint={search ? "换一个词试试，或清除搜索查看全部日报。" : "你在 V-Life 留下的记录，将在这里汇成每日的生活报纸。"}
+              action={<button className="np-button np-button-primary" disabled={!!opening} onClick={() => search ? setSearch("") : void navigateDate(today)}>{search ? "清除搜索" : "打开今天"}</button>} />
           )}
           {list.data?.hasMore && (
             <button

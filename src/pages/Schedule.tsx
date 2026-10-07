@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
@@ -161,7 +164,7 @@ export default function SchedulePage() {
     const d = new Date(days[days.length - 1]); d.setHours(23, 59, 59, 999); return d;
   }, [days, viewMode, baseDate]);
 
-  const { data: rawEvents = [] } = useScheduleByRange(rangeStart, rangeEnd);
+  const { data: rawEvents = [], isLoading, error, refetch } = useScheduleByRange(rangeStart, rangeEnd);
   const { data: allTodos = [] } = todoHooks.useList();
   const incompleteTodos = (allTodos as any[]).filter((t) => {
     if (t.is_completed || t.is_archived) return false;
@@ -539,7 +542,7 @@ export default function SchedulePage() {
   );
 
   return (
-    <AppLayout title={t("日程计划", "Schedule")}>
+    <AppLayout title={t("日程计划", "Schedule")} concept={displayEvents.length > 0 ? moduleFigure.schedule : undefined}>
       <div className="space-y-4">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -573,6 +576,12 @@ export default function SchedulePage() {
         >
           {eventForm}
         </BottomSheet>
+
+        {displayEvents.length === 0 && <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+          <EmptyState figure={moduleFigure.schedule} compact title={t("这段时间，还留着空白", "This time is yours to plan")}
+            hint={t("在日历上选择时间，或从一件新安排开始。", "Pick a time on the calendar, or add a new event.")}
+            action={<Button variant="outline" onClick={() => { setEditingItem(null); resetForm(); setDialogOpen(true); }}>{t("安排一件事", "Add an event")}</Button>} />
+        </CollectionFeedback>}
 
         {/* Month View */}
         {viewMode === "month" ? (

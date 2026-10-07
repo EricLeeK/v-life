@@ -1,3 +1,5 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { addDays, format, parseISO } from "date-fns";
 import { ArrowRight, ChevronRight } from "lucide-react";
@@ -67,6 +69,10 @@ export function WeekAgenda({ events, weekStart, today, loading, failed, onRetry 
           <p>{t("暂时没能读到日程", "The schedule could not be loaded")}</p>
           <button type="button" onClick={onRetry}>{t("重新加载", "Try again")}</button>
         </div>
+      ) : !loading && days.every(day => day.events.length === 0) ? (
+        <EmptyState figure={moduleFigure.home} compact surface="card" title={t("这一周，还可以慢慢安排", "Room to shape the week")}
+          hint={t("把重要的事放进日历，给生活留一点余地。", "Make time for what matters, and leave room to breathe.")}
+          action={<Link className="agenda-open" to={`/schedule?date=${today}&new=1`}>{t("安排这一天", "Plan the day")}<ArrowRight size={14} /></Link>} />
       ) : (
         <div className="agenda-scroll" ref={scroller}>
           {days.map((day) => {

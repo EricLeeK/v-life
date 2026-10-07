@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useDemoMode } from "@/contexts/DemoModeContext";
@@ -248,7 +251,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
             </SelectContent>
           </Select>
           <div className="flex gap-1">
-            <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={t("添加目标...", "Add goal...")}
+            <Input data-goal-input={type} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder={t("添加目标...", "Add goal...")}
               aria-label={t(`添加${label}`, `Add ${label}`)}
               className="h-7 text-xs" onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && createMutation.mutate({ title: newTitle.trim(), period: selectedPeriod })} />
             <Button size="icon" className="h-7 w-7 shrink-0" disabled={!newTitle.trim()}
@@ -265,11 +268,15 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
 
 export default function GoalsPage() {
   const { t } = useLang();
-  const { data: allGoals = [] } = useGoals();
+  const { data: allGoals = [], isLoading, error, refetch } = useGoals();
   return (
-    <AppLayout title={t("目标", "Goals")} description={t("周、月、年，三把尺子量同一件事：你想成为什么样的人。", "Week, month, year: three rulers for the same question.")}>
+    <AppLayout concept={allGoals.length > 0 ? moduleFigure.goals : undefined} title={t("目标", "Goals")} description={t("周、月、年，三把尺子量同一件事：你想成为什么样的人。", "Week, month, year: three rulers for the same question.")}>
       <div className="space-y-8">
-        <GoalStats goals={allGoals as any[]} />
+        {allGoals.length > 0 ? <GoalStats goals={allGoals as any[]} /> : <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+          <EmptyState figure={moduleFigure.goals} title={t("先定一个，够得着的目标", "Begin with a goal within reach")}
+            hint={t("这一周想完成什么？从下面的周目标写起。", "What would you like to finish this week? Start with a weekly goal below.")}
+            action={<Button onClick={() => document.querySelector<HTMLInputElement>('[data-goal-input="week"]')?.focus()}>{t("写下周目标", "Set a weekly goal")}</Button>} />
+        </CollectionFeedback>}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-10">
           <GoalColumn type="week" label={t("周目标", "Weekly")} />
           <GoalColumn type="month" label={t("月目标", "Monthly")} />

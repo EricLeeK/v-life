@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useRef, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -44,12 +47,12 @@ export default function BelongingsPage() {
   const saveInFlight = useRef(false);
   const [saving, setSaving] = useState(false);
 
-  const { data: dailyItems = [] } = belongingsDailyHooks.useList();
+  const { data: dailyItems = [], isLoading: dailyLoading, error: dailyError, refetch: reloadDaily } = belongingsDailyHooks.useList();
   const dailyCreate = belongingsDailyHooks.useCreate();
   const dailyUpdate = belongingsDailyHooks.useUpdate();
   const dailyDelete = belongingsDailyHooks.useDelete();
 
-  const { data: durableItems = [] } = belongingsDurableHooks.useList();
+  const { data: durableItems = [], isLoading: durableLoading, error: durableError, refetch: reloadDurable } = belongingsDurableHooks.useList();
   const durableCreate = belongingsDurableHooks.useCreate();
   const durableUpdate = belongingsDurableHooks.useUpdate();
   const durableDelete = belongingsDurableHooks.useDelete();
@@ -97,7 +100,7 @@ export default function BelongingsPage() {
   };
 
   return (
-    <AppLayout title={t("用品管理", "Belongings")} description={t("消耗品、耐用品和订阅，花在哪里都看得见。", "Consumables, durables and subscriptions in one place.")}>
+    <AppLayout concept={tab === "daily" && dailyItems.length > 0 ? moduleFigure.daily : tab === "durable" && durableItems.length > 0 ? moduleFigure.durable : undefined} title={t("用品管理", "Belongings")} description={t("消耗品、耐用品和订阅，花在哪里都看得见。", "Consumables, durables and subscriptions in one place.")}>
       <div className="space-y-4">
         <Tabs value={tab} onValueChange={(value) => { if (isSaving) return; setTab(value); setDailyDialog(false); setDurableDialog(false); resetEditor(); }}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
@@ -142,7 +145,7 @@ export default function BelongingsPage() {
 
           <TabsContent value="subscriptions"><SubscriptionPanel /></TabsContent>
           <TabsContent value="daily">
-            {dailyItems.length === 0 ? <p className="text-muted-foreground text-sm py-12 text-center">{t("还没有日用品。家里常备的东西，记下来就不会重复买。", "No daily items yet.")}</p> : (
+            {dailyItems.length === 0 ? <CollectionFeedback loading={dailyLoading} error={dailyError} retry={reloadDaily}><EmptyState figure={moduleFigure.daily} title={t("家里的常备物，都有个位置", "A home for your everyday essentials")} hint={t("记下日用品，下次补货前先看一眼。", "Keep track of everyday items before you restock.")} action={<Button onClick={() => { resetEditor(); setDailyDialog(true); }}>{t("添加第一件日用品", "Add your first item")}</Button>} /></CollectionFeedback> : (
               <ul className="row-list">
                 {dailyItems.map((item: any, i: number) => (
                   <li key={item.id} style={{ ['--i' as any]: i }} className="row-item enter-up">
@@ -162,7 +165,7 @@ export default function BelongingsPage() {
           </TabsContent>
 
           <TabsContent value="durable">
-            {durableItems.length === 0 ? <p className="text-muted-foreground text-sm py-12 text-center">{t("还没有耐用品。记下价格和预期寿命，就能看到每天花了多少。", "No durable items yet.")}</p> : (
+            {durableItems.length === 0 ? <CollectionFeedback loading={durableLoading} error={durableError} retry={reloadDurable}><EmptyState figure={moduleFigure.durable} title={t("让每一件好物，都用得值得", "Make the most of things you keep")} hint={t("记下购入价格和日期，看看每天摊下来多少钱。", "Add its price and purchase date to follow the daily cost.")} action={<Button onClick={() => { resetEditor(); setDurableDialog(true); }}>{t("添加第一件耐用品", "Add a durable item")}</Button>} /></CollectionFeedback> : (
               <ul className="row-list">
                 {durableItems.map((item: any, i: number) => {
                   const calc = calcDurable(item);

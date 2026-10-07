@@ -43,6 +43,7 @@ const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
 const NewspapersPage = lazy(() => import("./pages/Newspapers"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
+const HairlineDesignPage = import.meta.env.DEV ? lazy(() => import("./pages/HairlineDesign")) : null;
 const FortuneHome = lazy(() => import("./pages/fortune/FortuneHome"));
 const TarotPage = lazy(() => import("./pages/fortune/TarotPage"));
 const ZodiacPage = lazy(() => import("./pages/fortune/ZodiacPage"));
@@ -79,6 +80,7 @@ function AppRoutes() {
     <>
       <DemoBanner />
       <Routes>
+        {HairlineDesignPage && <Route path="/design/hairline" element={<Suspense fallback={<RouteSkeleton pathname="/" />}><HairlineDesignPage /></Suspense>} />}
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/oauth/consent" element={<RouteLoadBoundary><Suspense fallback={<RouteSkeleton pathname="/oauth/consent" />}><OAuthConsentPage /></Suspense></RouteLoadBoundary>} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -136,7 +138,7 @@ function DeferredAIChatPanel() {
 
   // Home has AI capture; the paper reader has its own AI review action.
   // Keep the floating launcher from covering agenda and archive content.
-  if (pathname === "/" || pathname === "/newspapers") return null;
+  if (pathname === "/" || pathname === "/newspapers" || pathname === "/design/hairline") return null;
 
   return (
     <Button

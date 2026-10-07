@@ -11,6 +11,7 @@ import { AppCommandPalette } from "@/components/arc/AppCommandPalette";
 import { RouteLoadBoundary } from "@/components/RouteLoadBoundary";
 import { RouteSkeleton, isFullBleedPath, routeSkeletonSpec } from "@/components/routeSkeletons";
 import { cn } from "@/lib/utils";
+import { HairlineFigure, type HairlineName } from "@/components/concepts/HairlineFigure";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,8 @@ interface AppLayoutProps {
   description?: ReactNode;
   /** Primary page actions, aligned with the title. */
   actions?: ReactNode;
+  /** A compact chapter illustration, only once content is available. */
+  concept?: HairlineName;
   /** Pages that draw their own level-one heading (home greeting, archive, fortune) turn this off. */
   header?: boolean;
   /** 工作台页面（学习笔记/项目管理）使用：内容贴满主区域，与顶部导航一体，无内边距 */
@@ -36,14 +39,15 @@ const EMPTY_CHROME: PageChrome = { mounted: false, header: true, fullBleed: fals
 
 const AppShellContext = createContext<{ setChrome: (chrome: PageChrome) => void } | null>(null);
 
-function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+function PageHeader({ title, description, actions, concept }: { title: string; description?: ReactNode; actions?: ReactNode; concept?: HairlineName }) {
   return (
-    <header className="page-header">
-      <div className="min-w-0">
+    <header className={cn("page-header", concept && "has-concept")}>
+      <div className="page-header-copy min-w-0">
         <h1 className="heading-font text-foreground">{title}</h1>
         {description && <p>{description}</p>}
       </div>
       {actions && <div className="page-header-actions">{actions}</div>}
+      {concept && <HairlineFigure name={concept} className="page-header-art" />}
     </header>
   );
 }
@@ -65,7 +69,7 @@ function useScrolledPast(target: HTMLElement | Window | null, offset = 56) {
 }
 
 function PageFrame({
-  children, title, description, actions, header = true, fullBleed = false,
+  children, title, description, actions, concept, header = true, fullBleed = false,
 }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const showPageHeader = !!title && header && !fullBleed;
@@ -74,7 +78,7 @@ function PageFrame({
   }
   return (
     <div className={isMobile ? "w-full p-4" : "w-full px-6 py-6 lg:px-10"} style={isMobile ? undefined : { maxWidth: "100rem" }}>
-      {showPageHeader && <PageHeader title={title!} description={description} actions={actions} />}
+      {showPageHeader && <PageHeader title={title!} description={description} actions={actions} concept={concept} />}
       {children}
     </div>
   );
@@ -189,7 +193,7 @@ export function AppShell({ pending = false }: { pending?: boolean }) {
 }
 
 export function AppLayout({
-  children, title, description, actions, header = true, fullBleed = false,
+  children, title, description, actions, concept, header = true, fullBleed = false,
 }: AppLayoutProps) {
   const shell = useContext(AppShellContext);
   const isMobile = useIsMobile();
@@ -203,7 +207,7 @@ export function AppLayout({
   }, [setChrome, title, header, fullBleed]);
 
   const frame = (
-    <PageFrame title={title} description={description} actions={actions} header={header} fullBleed={fullBleed}>
+    <PageFrame title={title} description={description} actions={actions} concept={concept} header={header} fullBleed={fullBleed}>
       {children}
     </PageFrame>
   );

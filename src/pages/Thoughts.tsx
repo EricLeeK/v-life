@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +42,7 @@ export default function ThoughtsPage() {
   const { toast } = useToast();
   const { t, lang } = useLang();
 
-  const { data: thoughts = [] } = thoughtHooks.useList();
+  const { data: thoughts = [], isLoading, error, refetch } = thoughtHooks.useList();
   const { data: settings } = useSettings();
   const createMutation = thoughtHooks.useCreate();
   const updateMutation = thoughtHooks.useUpdate();
@@ -96,7 +99,7 @@ export default function ThoughtsPage() {
   };
 
   return (
-    <AppLayout title={t("随想", "Thoughts")}>
+    <AppLayout title={t("随想", "Thoughts")} description={t("把一闪而过的念头，留在这里。", "A place for passing thoughts.")} concept={thoughts.length > 0 ? moduleFigure.thoughts : undefined}>
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>{t("全部", "All")}</Button>
@@ -153,7 +156,13 @@ export default function ThoughtsPage() {
         </div>
 
         {filtered.length === 0 ? (
-          <p className="text-muted-foreground text-sm py-8 text-center">{t("暂无随想", "No thoughts")}</p>
+          <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+            <EmptyState figure={moduleFigure.thoughts}
+              title={selectedTag ? t("这个标签下还没有随想", "No thoughts with this tag") : t("先留下一个念头", "Leave a thought here")}
+              hint={selectedTag ? t("换个标签，看看其他记录。", "Choose another tag to find your thoughts.") : t("一句话、一个问题，或今天值得记住的小事。", "A sentence, a question, or something worth remembering.")}
+              action={<Button variant={selectedTag ? "outline" : "default"} onClick={() => selectedTag ? setSelectedTag(null) : setDialogOpen(true)}>{selectedTag ? t("查看全部", "View all") : t("写下第一条随想", "Write your first thought")}</Button>}
+            />
+          </CollectionFeedback>
         ) : (
           /* Masonry layout using CSS columns */
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">

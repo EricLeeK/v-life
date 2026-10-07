@@ -1,3 +1,5 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { HairlineFigure } from "@/components/concepts/HairlineFigure";
 import { useState, useMemo } from "react";
 import { BoardColumn } from "./BoardColumn";
 import { TaskCard } from "./TaskCard";
@@ -133,14 +135,14 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 bg-card border-b border-border shrink-0">
+      <div className="flex flex-wrap gap-3 items-center justify-between px-5 py-3 bg-card border-b border-border shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <h2 className="text-base font-semibold text-foreground truncate">{project.name}</h2>
+          <HairlineFigure name={moduleFigure.projects} className="workbench-mark" surface="card" /><h2 className="text-base font-semibold text-foreground truncate">{project.name}</h2>
           <Button variant="ghost" size="icon" aria-label={t("项目设置", "Project settings")} title={t("项目设置", "Project settings")} className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={onEditProject}>
             <Settings2 className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
           {/* Slim progress bar */}
           <div className="flex items-center gap-2">
             <div className="w-24 h-1.5 rounded-full bg-muted">
@@ -152,12 +154,12 @@ export function ProjectBoard({ project, onEditProject }: ProjectBoardProps) {
             <span className="text-xs font-medium text-muted-foreground w-8 text-right">{project.progress || 0}%</span>
           </div>
           {/* Filter buttons */}
-          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5">
+          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0">
             {filters.map((f) => (
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`text-[11px] px-2.5 py-1 rounded-md transition-colors font-medium ${
+                className={`text-[11px] whitespace-nowrap px-2.5 py-1 rounded-md transition-colors font-medium ${
                   filter === f.key
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"

@@ -1,3 +1,5 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useRef, useState, type ReactNode, type FormEvent } from "react";
 import { Plus, ExternalLink, Edit2, Trash2, ReceiptText, Search, RefreshCw, Settings2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -112,7 +114,7 @@ export function SubscriptionPanel() {
   if (query.error) return <div role="alert" className="space-y-3 py-8"><p>{t("加载订阅失败", "Could not load subscriptions")}</p><p className="text-sm text-muted-foreground">{subscriptionLoadErrorMessage(query.error, lang)}</p><Button variant="outline" onClick={() => query.refetch()}>{t("重试", "Retry")}</Button></div>;
 
   return <section aria-label={t("订阅服务", "Subscriptions")} className="space-y-5">
-    <dl className="grid grid-cols-3 border-y border-border">
+    {items.length > 0 && <><dl className="grid grid-cols-3 border-y border-border">
       <div className="py-4 pr-3">
         <dt className="flex items-center gap-1 text-xs text-muted-foreground">{t("每月", "Monthly")}
           <TooltipProvider delayDuration={150}><Tooltip><TooltipTrigger type="button" aria-label={t("计算方式", "How it's counted")} className="rounded-full p-0.5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Info className="h-3 w-3" /></TooltipTrigger>
@@ -136,9 +138,12 @@ export function SubscriptionPanel() {
       <div className="relative min-w-0 flex-1 basis-32"><Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><Input aria-label={t("搜索订阅", "Search subscriptions")} placeholder={t("搜索", "Search")} value={search} onChange={e => setSearch(e.target.value)} className="h-11 pl-9 text-base sm:text-sm" /></div>
       {categories.length > 1 && <select aria-label={t("筛选分类", "Filter category")} value={category} onChange={e => setCategory(e.target.value)} className={selectClass.replace("w-full", "w-auto max-w-[9rem]")}><option value="all">{t("全部分类", "All categories")}</option>{categories.map(value => <option key={value}>{value}</option>)}</select>}
       <Button className="min-h-11" onClick={() => openEditor()}><Plus className="h-4 w-4 sm:mr-1.5" /><span className="sr-only sm:not-sr-only">{t("添加订阅", "Add subscription")}</span></Button>
-    </div>
+    </div></>}
 
-    {visible.length === 0 ? <div className="py-14 text-center"><ReceiptText className="mx-auto mb-3 h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">{items.length === 0 ? t("还没有订阅", "No subscriptions yet") : t("没有符合条件的订阅", "No matching subscriptions")}</p>{items.length === 0 && <Button variant="outline" className="mt-4 min-h-11" onClick={() => openEditor()}><Plus className="mr-1.5 h-4 w-4" />{t("添加第一项", "Add the first one")}</Button>}</div> : <ul className="border-t border-border">
+    {visible.length === 0 ? <EmptyState figure={moduleFigure.subscriptions} compact={items.length > 0}
+      title={items.length === 0 ? t("常用的服务，安心记在这里", "Keep the services you rely on in view") : t("没有符合条件的订阅", "No matching subscriptions")}
+      hint={items.length === 0 ? t("记下续费日期，在下一次扣款前看清安排。", "Track renewal dates ahead of the next charge.") : t("清除筛选，查看全部订阅。", "Clear filters to see every subscription.")}
+      action={<Button variant={items.length === 0 ? "default" : "outline"} onClick={() => { if (!items.length) openEditor(); else { setSearch(""); setFilter("all"); setCategory("all"); } }}>{items.length === 0 ? t("添加第一项", "Add the first one") : t("清除筛选", "Clear filters")}</Button>} /> : <ul className="border-t border-border">
       {visible.map(item => {
         const next = nextEvent(item);
         const meta = [item.plan, item.account, item.url ? siteLabel(item.url) : null].filter(Boolean).join(" · ");

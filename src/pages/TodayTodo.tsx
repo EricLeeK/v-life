@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { LayoutGroup, motion } from "motion/react";
 import { AppLayout } from "@/components/AppLayout";
@@ -215,7 +218,7 @@ export default function TodayTodoPage() {
   const { t, lang } = useLang();
   const { toast } = useToast();
 
-  const { data: todayTasks = [], isLoading: tasksLoading } = useTodayTasks();
+  const { data: todayTasks = [], isLoading: tasksLoading, error: tasksError, refetch: reloadTasks } = useTodayTasks();
   const { data: pastTasks = [] } = usePastIncompleteDailyTasks();
   const { data: userPoints } = useUserPoints();
   const addToToday = useAddToToday();
@@ -223,7 +226,7 @@ export default function TodayTodoPage() {
   const removeFromToday = useRemoveFromToday();
   const recalcPoints = useRecalculatePoints();
   const estimateDifficulty = useEstimateDifficulty();
-  const { data: allTodos = [] } = todoHooks.useList();
+  const { data: allTodos = [], isLoading: todosLoading, error: todosError, refetch: reloadTodos } = todoHooks.useList();
   const createTodo = todoHooks.useCreate();
   const { data: habitLogs = [] } = useTodoHabitLogs();
   const upsertHabitLog = useUpsertTodoHabitLog();
@@ -963,7 +966,7 @@ export default function TodayTodoPage() {
   );
 
   return (
-    <AppLayout title={t("今日待办", "Today's Todo")}>
+    <AppLayout title={t("今日待办", "Today's Todo")} description={t("今天，把精力放在这几件事上。", "Give today's priorities your attention.")} concept={todayTasks.length + todayHabits.length > 0 ? moduleFigure.today : undefined}>
       <LayoutGroup>
       <div className="space-y-5">
 
@@ -1030,14 +1033,11 @@ export default function TodayTodoPage() {
 
         {/* Task List */}
         {todayTasks.length === 0 && todayHabits.length === 0 ? (
-          <Card className="bg-card border-border">
-            <CardContent className="p-8 text-center">
-              <ClipboardList className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
-                {t("今天还没有任务，点击上方按钮添加", "No tasks today — tap the button above to add some")}
-              </p>
-            </CardContent>
-          </Card>
+          <CollectionFeedback loading={todosLoading} error={tasksError || todosError} retry={() => { void reloadTasks?.(); void reloadTodos?.(); }}>
+          <EmptyState figure={moduleFigure.today} title={t("今天的留白，由你安排", "Make room for today")}
+            hint={t("从待办里挑几件事，放进今天的计划。", "Choose a few tasks to focus on today.")}
+            action={<Button onClick={() => setAddDialogOpen(true)}>{t("安排今天", "Plan today")}</Button>} />
+          </CollectionFeedback>
         ) : (
           <div className="space-y-4">
             {groupedTasks.map((group) => (

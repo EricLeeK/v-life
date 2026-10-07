@@ -3,13 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Compass } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
+import { DesignPreviewBar } from "@/components/concepts/DesignPreviewBar";
 
 export function DemoBanner() {
-  const { isDemo, exitDemo } = useDemoMode();
+  const { isDemo, exitDemo, designPreviewState } = useDemoMode();
   const navigate = useNavigate();
   const { t } = useLang();
 
   if (!isDemo) return null;
+  if (designPreviewState) return <DesignPreviewBar state={designPreviewState} />;
 
   const handleExit = () => {
     exitDemo();

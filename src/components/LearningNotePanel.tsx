@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { HairlineFigure } from "@/components/concepts/HairlineFigure";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { DateField } from "@/components/arc/DateField";
@@ -420,6 +423,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
+              {notes.length > 0 && <HairlineFigure name={moduleFigure.learning} className="workbench-mark" surface="card" />}
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: course.color || "hsl(var(--cat-blue))" }} />
               <h2 className="text-lg font-semibold text-foreground truncate">{course.name}</h2>
             </div>
@@ -433,15 +437,9 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
       </div>
 
       {notes.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground px-6">
-          <BookOpen className="h-10 w-10 mb-3 opacity-60" />
-          <p className="text-sm font-medium text-foreground">{t("这个课程还没有笔记", "No notes in this course yet")}</p>
-          <p className="text-xs mt-1">{t("添加第一条 Markdown 学习笔记。", "Add your first Markdown learning note.")}</p>
-          <Button onClick={handleCreate} size="sm" className="mt-4 bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="h-4 w-4 mr-1" />
-            {t("新建笔记", "New Note")}
-          </Button>
-        </div>
+        <EmptyState figure={moduleFigure.learning} className="flex-1" title={t("这个课程还没有笔记", "No notes in this course yet")}
+          hint={t("写下今天弄懂的第一个问题。", "Start with one thing you understood today.")}
+          action={<Button onClick={handleCreate}>{t("新建笔记", "New Note")}</Button>} />
       ) : (
         <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_1fr]">
           <aside className="min-h-0 border-b lg:border-b-0 lg:border-r border-border bg-card">

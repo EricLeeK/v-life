@@ -1,4 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -209,7 +212,7 @@ function TodayCalorieSummary() {
 function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
   const { t, lang } = useLang();
   const { isDemo, addRecord, updateRecord, deleteRecord: demoDeleteRecord } = useDemoMode();
-  const { data: records = [] } = useWeightRecords();
+  const { data: records = [], isLoading, error, refetch } = useWeightRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -309,7 +312,11 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
 
         <RangeSwitch value={timeRange} onChange={setTimeRange} />
 
-        {chartData.length >= 2 ? (
+        {records.length === 0 ? <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+          <EmptyState figure={moduleFigure.weight} compact surface="card" title={t("变化，从第一个记录开始", "Change starts with a first record")}
+            hint={t("留下今天的体重，之后再看趋势。", "Log today's weight and follow the trend over time.")}
+            action={<Button variant="outline" onClick={() => setDialogOpen(true)}>{t("记录体重", "Log weight")}</Button>} />
+        </CollectionFeedback> : chartData.length >= 2 ? (
           <TrendLine
             data={filteredRecords.map((record: any) => ({
               key: record.date,
@@ -359,7 +366,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
             ))}
           </div>
         )}
-        {records.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无记录，点击右上角添加", "No records. Tap + to add")}</p>}
+
       </CardContent>
     </Card>
   );
@@ -375,9 +382,13 @@ const MEASUREMENT_FIELDS = [
 ] as const;
 
 function MeasurementTracker() {
+  const card = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (window.location.hash === "#measurements") card.current?.scrollIntoView({ block: "start" });
+  }, []);
   const { t, lang } = useLang();
   const { isDemo, addRecord, updateRecord, deleteRecord: demoDeleteRecord } = useDemoMode();
-  const { data: records = [] } = useMeasurementRecords();
+  const { data: records = [], isLoading, error, refetch } = useMeasurementRecords();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -433,7 +444,7 @@ function MeasurementTracker() {
   const latest = records.length > 0 ? records[records.length - 1] : null;
 
   return (
-    <Card>
+    <Card ref={card} id="measurements" className="scroll-mt-24">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">{t("围度记录", "Body Measurements")}</CardTitle>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -473,7 +484,11 @@ function MeasurementTracker() {
 
         <RangeSwitch value={timeRange} onChange={setTimeRange} />
 
-        {chartData.length >= 2 ? (
+        {records.length === 0 ? <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+          <EmptyState figure={moduleFigure.measurements} compact surface="card" title={t("换一把尺子，看见改变", "Another way to see your progress")}
+            hint={t("记录腰围等身体尺寸，与过去的自己比较。", "Track body measurements and compare with your earlier records.")}
+            action={<Button variant="outline" onClick={() => setDialogOpen(true)}>{t("记录围度", "Log measurements")}</Button>} />
+        </CollectionFeedback> : chartData.length >= 2 ? (
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -513,7 +528,7 @@ function MeasurementTracker() {
             ))}
           </div>
         )}
-        {records.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无记录，点击右上角添加", "No records. Tap + to add")}</p>}
+
       </CardContent>
     </Card>
   );

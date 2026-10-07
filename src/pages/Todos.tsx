@@ -1,3 +1,5 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, useRef, useLayoutEffect } from "react";
 import { motion } from "motion/react";
 import { useLocation } from "react-router-dom";
@@ -232,7 +234,7 @@ export default function TodosPage() {
 
   const { toast } = useToast();
 
-  const { data: todos = [] } = todoHooks.useList();
+  const { data: todos = [], isLoading, error, refetch } = todoHooks.useList();
 
   const existingCategories = Array.from(
     new Set(
@@ -1176,7 +1178,7 @@ export default function TodosPage() {
   );
 
   return (
-    <AppLayout title={t("待办事项", "To-Dos")}>
+    <AppLayout title={t("待办事项", "To-Dos")} description={t("把要做的事放好，再一件件完成。", "Give each task a place, then take it one at a time.")} concept={todos.length > 0 ? moduleFigure.todos : undefined}>
       <div className="space-y-5 max-w-6xl mx-auto">
         {/* Top Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-2 rounded-lg border border-border">
@@ -1240,12 +1242,13 @@ export default function TodosPage() {
 
         {/* Task List Grouped */}
         {groupedEntries.length === 0 ? (
-          <EmptyState
-            icon={ClipboardList}
-            title={t("暂无待办事项", "No to-dos")}
-            hint={t("从一条主任务开始，子任务和进度会跟着长出来。", "Start with one task; subtasks and progress grow from there.")}
-            action={<Button onClick={() => setDialogOpen(true)} className="h-9"><Plus className="h-4 w-4" />{t("添加主任务", "Add To-Do")}</Button>}
-          />
+          <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+            <EmptyState figure={moduleFigure.todos}
+              title={filters.length > 0 ? t("没有符合筛选的待办", "No matching to-dos") : t("给下一件事留个位置", "A place for your next task")}
+              hint={filters.length > 0 ? t("调整筛选条件，找回要做的事。", "Adjust your filters to find your tasks.") : t("从一条主任务开始，子任务和进度会跟着长出来。", "Start with one task; subtasks and progress grow from there.")}
+              action={<Button variant={filters.length > 0 ? "outline" : "default"} onClick={() => filters.length > 0 ? setFilters([]) : setDialogOpen(true)}>{filters.length > 0 ? t("清除筛选", "Clear filters") : t("添加主任务", "Add To-Do")}</Button>}
+            />
+          </CollectionFeedback>
         ) : (
           groupedEntries.map(([group, items]) => {
             const isCategoryCollapsed = !!collapsedCategories[group];

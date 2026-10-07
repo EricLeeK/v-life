@@ -1,3 +1,7 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
+import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import {
@@ -50,7 +54,7 @@ function loadCourseOrder(): string[] {
 }
 
 export default function LearningNotesPage() {
-  const { data: coursesData = [] } = useLearningCourses();
+  const { data: coursesData = [], isLoading, error, refetch } = useLearningCourses();
   const courses = coursesData as LearningCourse[];
   const { toast } = useToast();
   const { t } = useLang();
@@ -62,7 +66,7 @@ export default function LearningNotesPage() {
   const [courseToDelete, setCourseToDelete] = useState<LearningCourse | null>(null);
 
   const selectedCourse = courses.find((course) => course.id === selectedId);
-  const { data: notesData = [] } = useLearningNotes(selectedCourse?.id);
+  const { data: notesData = [], isLoading: notesLoading, error: notesError, refetch: reloadNotes } = useLearningNotes(selectedCourse?.id);
   const notes = notesData as LearningNote[];
 
   // 已保存的拖拽排序优先；新增课程（未在排序中）排在最前
@@ -160,7 +164,7 @@ export default function LearningNotesPage() {
   return (
     <AppLayout title={t("学习笔记", "Learning Notes")} fullBleed>
       <div className="flex h-full flex-col md:flex-row gap-0">
-        <div className="h-64 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-border">
+        {courses.length > 0 && <div className="h-64 md:h-auto md:w-72 shrink-0 border-b md:border-b-0 md:border-r border-border">
           <LearningCourseSidebar
             courses={orderedCourses}
             selectedId={selectedId}
@@ -177,9 +181,10 @@ export default function LearningNotesPage() {
             }}
             onDelete={setCourseToDelete}
           />
-        </div>
+        </div>}
         <div className="flex-1 min-w-0 min-h-0">
           {selectedCourse ? (
+            <CollectionFeedback loading={notesLoading && notes.length === 0} error={notes.length === 0 ? notesError : null} retry={reloadNotes}>
             <LearningNotePanel
               course={selectedCourse}
               notes={notes}
@@ -187,9 +192,14 @@ export default function LearningNotesPage() {
               onSaveNote={handleSaveNote}
               onDeleteNote={handleDeleteNote}
             />
+            </CollectionFeedback>
           ) : (
-            <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
-              {t("请新建或选择一个课程", "Create or select a course")}
+            <div className="flex min-h-96 h-full items-center justify-center">
+              <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+                <EmptyState figure={moduleFigure.learning} title={t("给学到的东西，留一页位置", "A page for what you learn")}
+                  hint={t("从一门课程开始，把零散的理解慢慢连起来。", "Start with a course and connect what you learn along the way.")}
+                  action={<Button onClick={() => { setEditingCourse(null); setCourseModalOpen(true); }}>{t("新建课程", "Create a course")}</Button>} />
+              </CollectionFeedback>
             </div>
           )}
         </div>

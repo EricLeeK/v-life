@@ -1,0 +1,68 @@
+.concept-figure {
+  --hairline-plate: hsl(var(--background));
+  --hairline-hi: hsl(var(--foreground));
+  --hairline-edge: hsl(var(--muted-foreground) / .8);
+  --hairline-mid: hsl(var(--muted-foreground) / .48);
+  --hairline-lo: hsl(var(--muted-foreground) / .24);
+  --hairline-stroke: 1;
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  flex-shrink: 0;
+}
+.concept-surface-card { --hairline-plate: hsl(var(--card)); }
+.concept-figure > div { width: 100%; aspect-ratio: 5 / 4; }
+/* The layered object reserves headroom for expansion; align its resting face with the surrounding content. */
+.concept-figure[data-concept="exploded"] > div { transform: translateY(-20%); }
+.concept-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  min-height: 22rem;
+  padding: 2.5rem 1.5rem;
+  margin-inline: auto;
+  max-width: 56rem;
+}
+.concept-empty-art { width: clamp(14rem, 28vw, 20rem); }
+.concept-empty-copy { flex: 0 1 22rem; min-width: 0; }
+.concept-empty-title { font-size: clamp(1.125rem, 1.8vw, 1.5rem); font-weight: 550; line-height: 1.5; text-wrap: balance; }
+.concept-empty-hint { margin-top: .625rem; max-width: 32ch; font-size: .875rem; line-height: 1.8; color: hsl(var(--muted-foreground)); text-wrap: pretty; }
+.concept-empty-action { margin-top: 1.375rem; }
+.concept-empty-action button, .concept-empty-action a { min-height: 2.75rem; }
+.concept-empty-compact { min-height: 12rem; padding: 1rem; gap: 1.5rem; }
+.concept-empty-compact .concept-empty-art { width: 10rem; }
+.concept-empty-compact .concept-empty-title { font-size: 1rem; }
+.concept-empty-compact .concept-empty-hint { font-size: .8125rem; }
+.concept-empty-compact .concept-empty-action { margin-top: .75rem; }
+.page-header.has-concept { align-items: center; flex-wrap: nowrap; gap: 1.5rem; }
+.page-header.has-concept > .page-header-copy { flex: 1; }
+.page-header .page-header-art { width: 8.5rem; order: 2; }
+.page-header.has-concept .page-header-actions { order: 1; }
+.workbench-mark { width: 4.5rem; }
+@media (max-width: 767px) { .workbench-mark { display: none; } }
+.concept-feedback { display: flex; min-height: 14rem; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; text-align: center; padding: 1.5rem; }
+.concept-loading-line { width: 6rem; height: .25rem; border-radius: var(--radius); background: hsl(var(--muted)); }
+.concept-entry { animation: concept-enter 360ms var(--ease-out, ease-out) both; }
+@keyframes concept-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.design-preview-bar { position: fixed; z-index: 100; inset: 0 0 auto; height: 40px; display: flex; align-items: center; justify-content: center; gap: 1rem; padding-inline: .75rem; background: hsl(var(--foreground)); color: hsl(var(--background)); font-size: .75rem; }
+.design-preview-bar > a { text-decoration: underline; text-underline-offset: 3px; }
+.design-preview-bar select { max-width: 6rem; background: hsl(var(--background)); color: hsl(var(--foreground)); border-radius: calc(var(--radius) - 4px); padding: .125rem .25rem; font-size: 1rem; }
+.design-preview-states { display: flex; height: 100%; }
+.design-preview-states button { min-height: 40px; min-width: 3.75rem; padding: 0 .625rem; border-bottom: 2px solid transparent; }
+.design-preview-states button[aria-pressed="true"] { border-bottom-color: currentColor; background: hsl(var(--background) / .12); }
+.design-preview-states button:focus-visible, .design-preview-bar a:focus-visible { outline: 2px solid currentColor; outline-offset: -3px; }
+@media (max-width: 639px) {
+  .concept-empty { flex-direction: column; min-height: 0; padding: 1.5rem .75rem 2rem; gap: .5rem; text-align: center; }
+  .concept-empty-art { width: 14rem; max-width: 80%; }
+  .concept-empty-copy { flex-basis: auto; }
+  .concept-empty-title { font-size: 1.25rem; }
+  .concept-empty-hint { margin-inline: auto; }
+  .concept-empty-compact { flex-direction: row; text-align: left; gap: .75rem; padding: 1rem 0; }
+  .concept-empty-compact .concept-empty-art { width: 6rem; max-width: 30%; }
+  .page-header.has-concept { gap: .5rem 1rem; flex-wrap: wrap; }
+  .page-header .page-header-art { width: 6rem; order: 1; }
+  .page-header.has-concept .page-header-actions { order: 2; flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .concept-entry { animation: none; }
+}

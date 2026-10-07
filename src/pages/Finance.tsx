@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { differenceInCalendarDays, endOfMonth, endOfWeek, format, max, min, startOfMonth, startOfWeek } from "date-fns";
@@ -76,6 +79,7 @@ function getMonthWeek(date: string) {
 
 export default function FinancePage() {
   const { t, lang } = useLang();
+  const isMobile = useIsMobile();
   const location = useLocation();
   const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
   const now = new Date();
@@ -94,7 +98,7 @@ export default function FinancePage() {
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const { toast } = useToast();
 
-  const { data: records = [] } = useFinanceByMonth(year, month);
+  const { data: records = [], isLoading, error, refetch } = useFinanceByMonth(year, month);
   const { data: settings } = useSettings();
   const createMutation = financeHooks.useCreate();
   const updateMutation = financeHooks.useUpdate();
@@ -317,9 +321,9 @@ export default function FinancePage() {
   );
 
   return (
-    <AppLayout title={t("记账", "Finance")}>
+    <AppLayout title={t("记账", "Finance")} description={t("让每一笔支出，都有迹可循。", "Make sense of where your money goes.")} concept={records.length > 0 ? moduleFigure.finance : undefined}>
       <>
-        <main className="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4 md:p-6">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
           <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="secondary" size="sm" aria-label={t("上个月", "Previous month")} onClick={() => changeMonth(-1)}>←</Button>
@@ -346,7 +350,7 @@ export default function FinancePage() {
             </div>
           </header>
 
-          <section className="life-stage grid items-start gap-x-6 gap-y-4 xl:grid-cols-[14rem_32rem_minmax(0,1fr)]" aria-label={t("支出概览", "Spending overview")}>
+          {records.length > 0 && <section className="life-stage grid items-start gap-x-6 gap-y-4 xl:grid-cols-[14rem_32rem_minmax(0,1fr)]" aria-label={t("支出概览", "Spending overview")}>
             <div>
               <div>
                 <p className="mb-1 text-sm text-muted-foreground">
@@ -387,8 +391,9 @@ export default function FinancePage() {
                 emptyLabel={t("所选范围暂无数据", "No spending in this range")}
                 activeKey={pinnedCategory}
                 onActiveChange={setActiveCategory}
-                size={208}
+                size={isMobile ? 176 : 208}
                 thickness={22}
+                className={isMobile ? "[--text-2xl:1rem]" : undefined}
               />
             </div>
 
@@ -411,16 +416,17 @@ export default function FinancePage() {
                 }}
               />
             </div>
-          </section>
+          </section>}
 
           <section className="space-y-2" aria-label={t("每周明细", "Weekly records")}>
             {weeklyGroups.length === 0 ? (
-              <EmptyState
-                icon={Wallet}
-                title={t("当前范围暂无记录", "No records in this range")}
-                hint={t("记下第一笔支出，图表和周报会随之生成。", "Add your first expense and the charts fill in from there.")}
-                action={<Button size="sm" className="h-9" onClick={event => openEditor(null, event.currentTarget)}><Plus className="h-4 w-4" />{t("记一笔", "Add Expense")}</Button>}
-              />
+              <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+                <EmptyState figure={moduleFigure.finance} compact={records.length > 0}
+                  title={t("当前范围暂无记录", "No records in this range")}
+                  hint={records.length > 0 ? t("换个日期或分类，看看其他支出。", "Try another date or category.") : t("切换日期查看，或记下一笔新支出。", "Browse another month, or add a new expense.")}
+                  action={records.length > 0 ? <Button variant="outline" onClick={() => { setDateRange(null); setActiveCategory(null); }}>{t("清除筛选", "Clear filters")}</Button> : <Button onClick={event => openEditor(null, event.currentTarget)}><Plus className="h-4 w-4" />{t("记一笔", "Add Expense")}</Button>}
+                />
+              </CollectionFeedback>
             ) : weeklyGroups.map(([key, group]) => {
               const weekTotal = group.items.reduce((sum, record) => sum + Number(record.amount_cny), 0);
               return (
@@ -479,7 +485,7 @@ export default function FinancePage() {
               );
             })}
           </section>
-        </main>
+        </div>
 
         {/* Bottom sheet everywhere: opens at the tall detent, no drag needed to see the form. */}
         <BottomSheet

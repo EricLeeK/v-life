@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import type { DemoDataStore } from "@/data/demoSeed";
 import { createDemoDataStore } from "@/data/demoSeed";
+import { createDesignPreviewData, getDesignPreviewState, type DesignPreviewState } from "@/lib/designPreview";
 
 const STORAGE_KEY = "vlife-demo-mode";
 
@@ -10,6 +11,7 @@ function generateId(): string {
 
 interface DemoModeContextType {
   isDemo: boolean;
+  designPreviewState: DesignPreviewState | null;
   enterDemo: () => void;
   exitDemo: () => void;
   demoData: DemoDataStore;
@@ -20,6 +22,7 @@ interface DemoModeContextType {
 
 const DemoModeContext = createContext<DemoModeContextType>({
   isDemo: false,
+  designPreviewState: null,
   enterDemo: () => {},
   exitDemo: () => {},
   demoData: createDemoDataStore(),
@@ -31,13 +34,9 @@ const DemoModeContext = createContext<DemoModeContextType>({
 export const useDemoMode = () => useContext(DemoModeContext);
 
 export function DemoModeProvider({ children }: { children: ReactNode }) {
-  const [isDemo, setIsDemo] = useState(() => localStorage.getItem(STORAGE_KEY) === "true");
-  const [demoData, setDemoData] = useState<DemoDataStore>(() => {
-    if (localStorage.getItem(STORAGE_KEY) === "true") {
-      return createDemoDataStore();
-    }
-    return createDemoDataStore();
-  });
+  const [designPreviewState] = useState(getDesignPreviewState);
+  const [isDemo, setIsDemo] = useState(() => getDesignPreviewState() !== null || localStorage.getItem(STORAGE_KEY) === "true");
+  const [demoData, setDemoData] = useState<DemoDataStore>(() => createDesignPreviewData(getDesignPreviewState()));
 
   const enterDemo = useCallback(() => {
     setIsDemo(true);
@@ -131,7 +130,7 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DemoModeContext.Provider value={{ isDemo, enterDemo, exitDemo, demoData, addRecord, updateRecord, deleteRecord }}>
+    <DemoModeContext.Provider value={{ isDemo, designPreviewState, enterDemo, exitDemo, demoData, addRecord, updateRecord, deleteRecord }}>
       {children}
     </DemoModeContext.Provider>
   );

@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
@@ -23,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 export function DailyPlanList() {
   const { t } = useLang();
   const { toast } = useToast();
-  const { data: items = [] } = useTodayCivilPlans();
+  const { data: items = [], isLoading, error, refetch } = useTodayCivilPlans();
   const toggle = useToggleCivilPlanComplete();
   const createItem = useCreateCivilPlanItem();
   const updateItem = useUpdateCivilPlanItem();
@@ -97,9 +100,11 @@ export function DailyPlanList() {
         </CardHeader>
         <CardContent className="space-y-2">
           {items.length === 0 && (
-            <p className="text-[13px] text-muted-foreground py-4 text-center">
-              {t("今天还没有计划，可在科目页添加，或点「额外项」", "No plans today — add in subjects or as extra")}
-            </p>
+            <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+              <EmptyState figure={moduleFigure.civil} compact surface="card" title={t("今天，先弄懂一个问题", "Understand one thing today")}
+                hint={t("从一个科目开始，安排今天的练习。", "Pick a subject and plan today's practice.")}
+                action={<Button variant="outline" onClick={() => setAddOpen(true)}>{t("添加今日计划", "Plan today's practice")}</Button>} />
+            </CollectionFeedback>
           )}
           {items.map((item) => {
             const groupLabel = SUBJECT_GROUP_LABELS[item.subject_group as SubjectGroup]?.zh || item.subject_group;

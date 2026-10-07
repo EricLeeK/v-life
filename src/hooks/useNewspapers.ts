@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { DesignPreviewState } from "@/lib/designPreview";
 import {
   createNewspaperDemo,
   executeNewspaperDemo,
@@ -28,7 +29,16 @@ export type {
   NewspaperStyle,
 };
 let memoryDemo: NewspaperDemoState | undefined;
-function loadDemo() {
+const designDemos: Partial<Record<DesignPreviewState, NewspaperDemoState>> = {};
+function loadDemo(preview: DesignPreviewState | null = null) {
+  if (preview) {
+    if (!designDemos[preview]) {
+      const data = createNewspaperDemo();
+      if (preview === "empty") data.reports = [];
+      designDemos[preview] = data;
+    }
+    return designDemos[preview]!;
+  }
   if (memoryDemo) return memoryDemo;
   try {
     const saved = sessionStorage.getItem(NEWSPAPER_DEMO_KEY);
@@ -46,9 +56,14 @@ export async function callNewspaper<T>(
   input: Record<string, unknown> = {},
   demo = false,
   idempotencyKey?: string,
+  preview: DesignPreviewState | null = null,
 ): Promise<T> {
   if (demo) {
-    const result = executeNewspaperDemo(loadDemo(), action, input);
+    const result = executeNewspaperDemo(loadDemo(preview), action, input);
+    if (preview) {
+      designDemos[preview] = result.state;
+      return result.data as T;
+    }
     memoryDemo = result.state;
     try {
       sessionStorage.setItem(NEWSPAPER_DEMO_KEY, JSON.stringify(memoryDemo));
@@ -91,12 +106,12 @@ export function useNewspaperQuery<T>(
   input: Record<string, unknown> = {},
   enabled = true,
 ) {
-  const { isDemo } = useDemoMode();
+  const { isDemo, designPreviewState } = useDemoMode();
   const { user } = useAuth();
   return useQuery({
     queryKey: ["newspaper", isDemo ? "demo" : user?.id, action, input],
     queryFn: async () => {
-      const result = await callNewspaper<T>(action, input, isDemo);
+      const result = await callNewspaper<T>(action, input, isDemo, undefined, designPreviewState);
       if (action === "get") {
         newspaperPaidRequestStore().reconcileImages(
           isDemo ? "demo" : user!.id,
@@ -129,7 +144,7 @@ export function useNewspaperImageConfig() {
   return useNewspaperQuery<NewspaperImageConfig>("image_config_get");
 }
 export function useNewspaperCommand() {
-  const { isDemo } = useDemoMode();
+  const { isDemo, designPreviewState } = useDemoMode();
   const { user } = useAuth();
   const qc = useQueryClient();
   return useMutation({
@@ -146,7 +161,7 @@ export function useNewspaperCommand() {
           isDemo ? "demo" : user!.id,
           action,
           input,
-          (key) => callNewspaper<any>(action, input, isDemo, key),
+          (key) => callNewspaper<any>(action, input, isDemo, key, designPreviewState),
           idempotencyKey,
         );
       }
@@ -155,6 +170,7 @@ export function useNewspaperCommand() {
         input,
         isDemo,
         idempotencyKey || crypto.randomUUID(),
+        designPreviewState,
       );
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["newspaper"] }),

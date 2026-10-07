@@ -1,3 +1,6 @@
+import { moduleFigure } from "@/components/concepts/catalog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, type CSSProperties } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -72,7 +75,7 @@ export default function PantryPage() {
   const [form, setForm] = useState({ name: "", category: "新鲜食材" as string, quantity: "", purchase_date: "", expiry_date: "", notes: "" });
   const { toast } = useToast();
 
-  const { data: rawItems = [], isLoading } = pantryHooks.useList();
+  const { data: rawItems = [], isLoading, error, refetch } = pantryHooks.useList();
   const items = rawItems as PantryItem[];
   const createMutation = pantryHooks.useCreate();
   const updateMutation = pantryHooks.useUpdate();
@@ -163,8 +166,9 @@ export default function PantryPage() {
   return (
     <AppLayout
       title={t("食材管理", "Pantry")}
-      description={t("家里还有什么、什么快过期，一眼看清。", "What's at home, and what needs eating first.")}
+      description={t("库存和保质期，一眼看清。", "What's at home, and what needs eating first.")}
       actions={editor}
+      concept={items.length > 0 ? moduleFigure.pantry : undefined}
     >
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -186,10 +190,14 @@ export default function PantryPage() {
           </ArcScope>
         </div>
 
-        {isLoading ? <p className="text-muted-foreground text-sm">{t("加载中...", "Loading...")}</p> : grouped.size === 0 ? (
-          <p className="text-muted-foreground text-sm py-12 text-center">
-            {items.length === 0 ? t("还没有记录食材。买菜回来，顺手记一笔。", "No pantry items yet.") : t("没有符合条件的食材。", "Nothing matches.")}
-          </p>
+        {grouped.size === 0 ? (
+          <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
+            <EmptyState figure={moduleFigure.pantry}
+              title={items.length === 0 ? t("买菜回来，顺手记一笔", "Make room for something fresh") : t("没有符合条件的食材。", "Nothing matches.")}
+              hint={items.length === 0 ? t("记下食材和保质期，下次打开就知道先吃什么。", "Add what you bought and its expiry date, so you know what to eat first.") : t("试试其他关键词，或查看全部食材。", "Try another keyword or view all pantry items.")}
+              action={<Button variant={items.length === 0 ? "default" : "outline"} onClick={() => { if (items.length === 0) { resetForm(); setDialogOpen(true); } else { setSearch(""); setFilter("全部"); } }}>{items.length === 0 ? t("添加第一份食材", "Add your first item") : t("清除筛选", "Clear filters")}</Button>}
+            />
+          </CollectionFeedback>
         ) : (
           <div>
             {categoryOrder.filter((cat) => grouped.has(cat)).map((cat) => {
