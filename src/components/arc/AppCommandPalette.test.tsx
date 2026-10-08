@@ -19,6 +19,9 @@ describe("Arc app command navigation", () => {
     fireEvent.change(input, { target: { value: "记账" } });
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => expect(screen.getByLabelText("当前路由")).toHaveTextContent("/finance"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(document.body.style.pointerEvents).not.toBe("none");
+    expect(document.body).not.toHaveAttribute("data-scroll-locked");
   });
 
   it("honors feature visibility rather than revealing hidden routes", async () => {

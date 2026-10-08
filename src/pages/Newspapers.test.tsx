@@ -77,6 +77,10 @@ describe("newspaper archive and reader", () => {
         timeout: 6000,
       });
       await waitFor(() => expect(returned).toHaveFocus(), { timeout: 6000 });
+      expect(document.body.style.overflow).not.toBe("hidden");
+      expect(document.body.style.pointerEvents).not.toBe("none");
+      expect(document.body).not.toHaveClass("np-immersive-open");
+      expect(document.querySelector(".np-flight")).not.toBeInTheDocument();
     },
     20000,
   );

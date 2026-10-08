@@ -55,6 +55,41 @@ describe("Todos original Arc task controls", () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  it.each(["删除", "取消"])("releases the page pointer lock after choosing %s in task deletion", async (action) => {
+    renderTodos();
+    const title = await screen.findByRole("button", { name: "提交论文初稿" });
+    const task = title.closest(".space-y-2") as HTMLElement;
+    fireEvent.keyDown(within(task).getByRole("button", { name: "任务操作菜单" }), { key: "Enter" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "删除" }));
+    const confirmation = await screen.findByRole("alertdialog");
+    fireEvent.click(within(confirmation).getByRole("button", { name: action }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    if (action === "删除") {
+      expect(screen.queryByRole("button", { name: "提交论文初稿" })).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByRole("button", { name: "提交论文初稿" })).toBeInTheDocument();
+    }
+    await waitFor(() => expect(document.body.style.pointerEvents).not.toBe("none"));
+    fireEvent.click(screen.getByRole("button", { name: "按重要性" }));
+    expect(screen.getByRole("button", { name: "按重要性" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it.each(["保存修改", "关闭"])("releases the page pointer lock after choosing %s in task editing", async (action) => {
+    renderTodos();
+    const title = await screen.findByRole("button", { name: "提交论文初稿" });
+    const task = title.closest(".space-y-2") as HTMLElement;
+    fireEvent.keyDown(within(task).getByRole("button", { name: "任务操作菜单" }), { key: "Enter" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "编辑任务" }));
+    const editor = await screen.findByRole("dialog", { name: "编辑待办任务" });
+    fireEvent.change(within(editor).getByRole("textbox", { name: /任务标题/ }), { target: { value: "提交修改后的论文" } });
+    fireEvent.click(within(editor).getByRole("button", { name: action }));
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "编辑待办任务" })).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: action === "保存修改" ? "提交修改后的论文" : "提交论文初稿" })).toBeInTheDocument();
+    await waitFor(() => expect(document.body.style.pointerEvents).not.toBe("none"));
+    fireEvent.click(screen.getByRole("button", { name: "按重要性" }));
+    expect(screen.getByRole("button", { name: "按重要性" })).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("uses the original segmented control to change the existing task view", async () => {
     renderTodos();
 
