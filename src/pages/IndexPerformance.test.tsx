@@ -56,7 +56,9 @@ describe("dashboard request budget", () => {
     expect(screen.queryByRole("button", { name: "打开体重趋势" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /展开全部模块/ }));
     await waitFor(() => expect(fetchedKeys().some(k => k[0] === "thoughts")).toBe(true));
-    expect(fetchedKeys()).toHaveLength(16);
+    // Preparation replaces the old exam, plan and study-time requests.
+    expect(fetchedKeys()).toHaveLength(14);
+    expect(fetchedKeys().some(k => k[0] === "civil_plans")).toBe(false);
   });
 
   it("loads replacement metrics when primary modules are hidden", async () => {

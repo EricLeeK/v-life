@@ -24,7 +24,7 @@ const domains: Record<string,string> = {
  civil_exam:'公考考试配置，含考试日期和主考试标记。',
  civil_plan:'公考学习计划；plan_date 为计划日期，is_completed 为完成状态。',
  civil_checkin:'公考学习打卡；以分钟记录 studied_minutes，不支持修改/删除。',
- civil_wrong:'公考错题；source_date 为来源日期，review_status 为复习状态。',
+ civil_wrong:'兼容旧错题接口，已连接通用备考。新录题优先 prep_create；图片与材料见 prep_guide。review_status 仅暂停/恢复，不产生复习记录。',
  civil_xingce_paper:'行测试卷记录；taken_date 为作答日期，分模块记录题量和正确数。',
  learning_course:'学习课程容器，仅开放创建/读取。',
  learning_note:'学习笔记；course_name 精确匹配已存在课程，非模糊匹配。course_name 必填；请先确保课程存在，再创建关联笔记。',

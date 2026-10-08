@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 160" role="img" aria-label="一个圆点、两个圆点、三个圆点">
+  <g fill="#faf7ef" stroke="#d4c9b7" stroke-width="2"><rect x="1" y="1" width="190" height="158" rx="12"/><rect x="215" y="1" width="190" height="158" rx="12"/><rect x="429" y="1" width="190" height="158" rx="12"/></g>
+  <g fill="#504d40"><circle cx="96" cy="80" r="13"/><circle cx="282" cy="80" r="13"/><circle cx="338" cy="80" r="13"/><circle cx="470" cy="80" r="13"/><circle cx="524" cy="80" r="13"/><circle cx="578" cy="80" r="13"/></g>
+</svg>

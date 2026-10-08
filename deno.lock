@@ -3,7 +3,8 @@
   "specifiers": {
     "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.14",
-    "npm:@imagemagick/magick-wasm@0.0.43": "0.0.43"
+    "npm:@imagemagick/magick-wasm@0.0.43": "0.0.43",
+    "npm:ts-fsrs@5.4.2": "5.4.2"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -187,6 +188,9 @@
   "npm": {
     "@imagemagick/magick-wasm@0.0.43": {
       "integrity": "sha512-+Wlr3eEl4JlqLwrhAHBlf4VDzOWiFa8L2hYl7mOMXCgq896KghEnh3Go35nuZJMfmE6lX2waBZdr+u9FVluJLA=="
+    },
+    "ts-fsrs@5.4.2": {
+      "integrity": "sha512-z4qop4pzTcyTzuJ566d9EaX/4bZZzhYfeaPImfVr+xcYT65c5oBgFDijUhCE/D+C78eaolHIhKRZ04/RwF+v2g=="
     }
   }
 }

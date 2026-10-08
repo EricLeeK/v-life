@@ -19,3 +19,9 @@ verify_jwt = false
 
 [functions.newspaper-images-worker]
 verify_jwt = false
+
+[functions.prep-api]
+verify_jwt = false
+
+[functions.prep-bridge]
+verify_jwt = false

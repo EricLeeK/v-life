@@ -65,6 +65,13 @@ function writeSchema(module: ModuleDef, operation: 'create' | 'update') {
 
 export function buildOpenApi(baseUrl: string, authorizationServer: string) {
   const paths: Record<string, unknown> = {};
+  paths['/prep'] = {post: {
+    operationId:'preparationOperation',summary:'备考操作；先 action=guide',
+    requestBody:{required:true,content:{'application/json':{schema:{
+      type:'object',required:['action'],properties:{action:{type:'string'},input:{type:'object'}}
+    }}}},
+    responses:{'200':{description:'操作结果'},'400':{description:'输入错误'},'403':{description:'权限不足'},'409':{description:'版本冲突'}}
+  }};
   for (const [operation, definition] of Object.entries(NEWSPAPER_OPERATIONS)) {
     const read = definition.permission === 'read';
     const path = operation === 'list' ? '/newspaper' : `/newspaper/${operation}`;

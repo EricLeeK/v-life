@@ -1,3 +1,4 @@
+import { isLegacyPrep, legacyPrepRead, legacyPrepMutate } from './prepLegacy.ts';
 import { classificationPolicy } from './agentClassifications.ts';
 /** User-JWT-only domain operations; the database owns agent mutation authorization and transactions. */
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -128,7 +129,7 @@ export function createAgentDataService(ctx:AgentContext){
     return data;
   }
   async function readPage(key:string,opts:AgentListOptions={},search?:string):Promise<AgentDataResult<Row[]>>{
-    permit("read");const mod=moduleOrFail(key);const limit=opts.limit??50,offset=opts.offset??0;
+    permit("read");if(isLegacyPrep(key))return legacyPrepRead(ctx,key,opts,undefined,search);const mod=moduleOrFail(key);const limit=opts.limit??50,offset=opts.offset??0;
     if(!Number.isInteger(limit)||limit<1||limit>200||!Number.isInteger(offset)||offset<0)fail("INVALID_INPUT","limit must be 1..200 and offset a non-negative integer");
     let {query:q}=await scope(ctx,mod,ctx.db.from(mod.table).select(projection(mod))); q=applyFilters(mod,q,opts);
     if(search!==undefined){const field=mod.executor?.nameField;if(!field||mod.fields.find(f=>f.name===field)?.type!=="string"||!agentMetaOf(mod).readFields.includes(field))fail("INVALID_INPUT","Module has no searchable text field");q=q.ilike(field,`%${search.replace(/[\\%_]/g,"\\$&")}%`);}
@@ -154,6 +155,7 @@ export function createAgentDataService(ctx:AgentContext){
         return {data:redact(mod,data as Row)};
       }catch(e){if(e instanceof AgentDataError)throw e;fail('INVALID_INPUT',(e as Error).message);}
     }
+    if(isLegacyPrep(key))return legacyPrepMutate(ctx,key,operation,id,payload);
     if(ctx.clientId){
       try{
         const result=await mutateIdempotently(ctx.db,{module:key,operation,id,payload,key:ctx.idempotencyKey??null,requestId:ctx.requestId??crypto.randomUUID(),toolName:ctx.toolName??`${key}_${operation}`});
@@ -222,7 +224,7 @@ export function createAgentDataService(ctx:AgentContext){
     list:readPage,
     search:(key:string,query:string,opts:AgentListOptions={})=>readPage(key,opts,query),
     export:(key:string,opts:AgentListOptions={})=>{if(!agentMetaOf(moduleOrFail(key)).exportable)fail("EXPORT_NOT_ALLOWED","Module cannot be exported");return readPage(key,{...opts,limit:opts.limit??200});},
-    async get(key:string,id:string):Promise<AgentDataResult>{permit("read");const mod=moduleOrFail(key);const {query}=await scope(ctx,mod,ctx.db.from(mod.table).select(projection(mod)));const {data,error}=await query.eq("id",id).maybeSingle();if(error)fail("DATABASE_ERROR",error.message);if(!data)fail("NOT_FOUND","Record not found");return{data:redact(mod,data)};},
+    async get(key:string,id:string):Promise<AgentDataResult>{permit("read");if(isLegacyPrep(key))return {data:(await legacyPrepRead(ctx,key,{},id)).data as Record<string,unknown>};const mod=moduleOrFail(key);const {query}=await scope(ctx,mod,ctx.db.from(mod.table).select(projection(mod)));const {data,error}=await query.eq("id",id).maybeSingle();if(error)fail("DATABASE_ERROR",error.message);if(!data)fail("NOT_FOUND","Record not found");return{data:redact(mod,data)};},
     create:(key:string,input:unknown)=>mutate(key,"create",null,input),
     update:(key:string,id:string,input:unknown)=>mutate(key,"update",id,input),
     delete:(key:string,id:string)=>mutate(key,"delete",id),

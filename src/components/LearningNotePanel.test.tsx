@@ -165,3 +165,10 @@ describe("LearningNotePanel", () => {
     vi.useRealTimers();
   });
 });
+
+ it("opens a linked note when an equally sized course replaces the initial notes", async () => {
+  const props = { course, initialNoteId: "linked", onCreateNote: vi.fn(), onSaveNote: vi.fn(), onDeleteNote: vi.fn() };
+  const { rerender } = render(<LearningNotePanel {...props} notes={[notes[0], { ...notes[0], id: "other" }]} />);
+  rerender(<LearningNotePanel {...props} notes={[{ ...notes[0], id: "first" }, { ...notes[0], id: "linked", content: "## Linked explanation" }]} />);
+  expect(await screen.findByRole("heading", { name: "Linked explanation" })).toBeInTheDocument();
+ });

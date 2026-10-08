@@ -7,6 +7,7 @@ export const AGENT_CONTRACT_VERSION = '2.8.0';
 export function buildAgentCapabilities() {
   return {
     version: AGENT_CONTRACT_VERSION,
+    preparation: { http: 'POST /prep', guide: 'prep_guide', operations: ['prep_list','prep_get','prep_create','prep_batch_create','prep_update','prep_due','prep_submit_attempt','prep_asset_upload','prep_asset_url'], review: 'one authoritative state per question across exams and Vji' },
     contract: 'vlife-agent-data',
     authentication: { preferred: 'api_key', supported: ['api_key', 'oauth'], header: 'Authorization: Bearer <credential>', api_key_management: 'V-Life Settings → Agent connections', expiration: 'custom or permanent; revocable', invalid_key: '401 API_KEY_INVALID; create a new key, do not start OAuth automatically', unavailable: '503; retry later with the same credential' },
     newspapers: { list: 'newspaper_list', get: 'newspaper_get', export: 'newspaper_export', http: '/newspaper', generation: 'explicit_only', archived_sources: 'snapshot_explicit_refresh', date_rule: 'account timezone and day_start_hour saved with each issue', image_keys: 'website_settings_only', image_status: 'queued/submitting/running/saving/succeeded/failed/unknown; unknown must not be automatically resubmitted' },

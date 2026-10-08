@@ -54,7 +54,7 @@ export function MobileNav() {
 
   const primaryItems = focusMode === "civil_service"
     ? [
-        { title: t("考公", "Civil"), url: "/civil-service", icon: GraduationCap },
+        { title: t("备考", "Civil"), url: "/preparation", icon: GraduationCap },
         { title: t("设置", "Settings"), url: "/settings", icon: Settings },
       ]
     : [
@@ -74,7 +74,7 @@ export function MobileNav() {
     { title: t("今日待办", "Today"), url: "/today", icon: CalendarCheck },
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
-    { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
+    { title: t("备考", "Preparation"), url: "/preparation", icon: GraduationCap },
     { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
     ...(POINTS_FEATURE_ENABLED ? [{ title: t("商店", "Shop"), url: "/shop", icon: ShoppingBag }] : []),
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
@@ -82,15 +82,15 @@ export function MobileNav() {
 
   const visiblePrimaryItems = primaryItems.filter((item) => {
     if (focusMode === "civil_service") return true;
-    const key = item.url.replace("/", "");
+    const key = item.url === "/preparation" ? "civil-service" : item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });
 
   const visibleMoreItems = moreItems.filter((item) => {
     if (focusMode === "civil_service") {
-      return item.url === "/civil-service" || item.url === "/settings";
+      return item.url === "/preparation" || item.url === "/settings";
     }
-    const key = item.url.replace("/", "");
+    const key = item.url === "/preparation" ? "civil-service" : item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });
   const moreActive = showMore || !visiblePrimaryItems.some(item => item.url === "/" ? pathname === "/" : pathname === item.url || pathname.startsWith(`${item.url}/`));

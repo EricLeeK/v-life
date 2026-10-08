@@ -1,3 +1,4 @@
+import { StudyMarkdown } from "@/components/preparation/StudyMarkdown";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { HairlineFigure } from "@/components/concepts/HairlineFigure";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -57,6 +58,8 @@ export type LearningNoteSaveOptions = { source?: "auto" | "manual" };
 export type LearningNoteDeleteValues = Pick<LearningNote, "id" | "course_id">;
 
 interface LearningNotePanelProps {
+  initialNoteId?: string;
+  onSelectedNoteChange?: (id: string | undefined) => void;
   course: LearningCourse;
   notes: LearningNote[];
   onCreateNote: (values: LearningNoteCreateValues) => Promise<LearningNote | undefined> | LearningNote | undefined;
@@ -103,7 +106,7 @@ const FORMAT_PROMPT = `你是一位精通 Markdown 和 Obsidian 知识管理的�
 
 只直接返回优化后的 Markdown 文本，不要包含任何前言或总结废话。`;
 
-export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onDeleteNote }: LearningNotePanelProps) {
+export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onDeleteNote, initialNoteId, onSelectedNoteChange }: LearningNotePanelProps) {
   const { t } = useLang();
   const { toast } = useToast();
   const [selectedNoteId, setSelectedNoteId] = useState<string | undefined>(() => notes[0]?.id);
@@ -135,6 +138,9 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
   formRef.current = form;
   const dirtyRef = useRef(isDirty);
   dirtyRef.current = isDirty;
+  const availableInitialNoteId = notes.find(note => note.id === initialNoteId)?.id;
+  useEffect(() => { if (availableInitialNoteId) setSelectedNoteId(availableInitialNoteId); }, [availableInitialNoteId]);
+  useEffect(() => { onSelectedNoteChange?.(selectedNote?.id); }, [selectedNote?.id, onSelectedNoteChange]);
   const selectedNoteRef = useRef(selectedNote);
   selectedNoteRef.current = selectedNote;
   const onSaveNoteRef = useRef(onSaveNote);
@@ -562,13 +568,9 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     </Button>
                   </div>
                   <div className="obsidian-markdown">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
-                      rehypePlugins={[rehypeKatex]}
-                      components={{ h1: ({ children }) => <h2>{children}</h2> }}
-                    >
+                    <StudyMarkdown>
                       {form.content || t("*(尚无内容)*", "*(No content yet)*")}
-                    </ReactMarkdown>
+                    </StudyMarkdown>
                   </div>
                 </div>
               </TabsContent>
@@ -775,13 +777,9 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                   <div className="border border-border rounded-xl p-3 bg-card flex flex-col max-h-[300px]">
                     <span className="text-[11px] font-medium text-foreground mb-2">{t("AI 优化效果预览", "AI Optimized Preview")}</span>
                     <div className="overflow-y-auto flex-1 obsidian-markdown text-xs">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
-                        rehypePlugins={[rehypeKatex]}
-                        components={{ h1: ({ children }) => <h2>{children}</h2> }}
-                      >
+                      <StudyMarkdown>
                         {generatedResult}
-                      </ReactMarkdown>
+                      </StudyMarkdown>
                     </div>
                   </div>
                 </div>

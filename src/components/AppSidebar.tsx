@@ -87,7 +87,7 @@ export function AppSidebar() {
         { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
         { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
         { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
-        { title: t("考公", "Civil Service"), url: "/civil-service", icon: GraduationCap },
+        { title: t("备考", "Preparation"), url: "/preparation", icon: GraduationCap },
         { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
       ],
     },
@@ -98,9 +98,9 @@ export function AppSidebar() {
       ...group,
       items: group.items.filter((item) => {
         if (focusMode === "civil_service") {
-          return item.url === "/civil-service";
+          return item.url === "/preparation";
         }
-        const key = item.url.replace("/", "");
+        const key = item.url === "/preparation" ? "civil-service" : item.url.replace("/", "");
         return !hiddenFeatures.includes(key);
       }),
     }))

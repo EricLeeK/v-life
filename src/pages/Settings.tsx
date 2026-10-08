@@ -371,7 +371,7 @@ export default function SettingsPage() {
               </Label>
               <p className="text-xs text-muted-foreground">
                 {t(
-                  "「仅考公」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
+                  "「仅备考」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
                   "Civil-only hides main modules and sync UI; data is kept. Switch back anytime."
                 )}
               </p>
@@ -384,7 +384,7 @@ export default function SettingsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="full">{t("全功能", "Full app")}</SelectItem>
-                  <SelectItem value="civil_service">{t("仅考公", "Civil service only")}</SelectItem>
+                  <SelectItem value="civil_service">{t("仅备考", "Preparation only")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -405,7 +405,7 @@ export default function SettingsPage() {
                 { id: "thoughts", name: t("随想", "Thoughts") },
                 { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
                 { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
-                { id: "civil-service", name: t("考公", "Civil Service") },
+                { id: "civil-service", name: t("备考", "Preparation") },
                 { id: "fortune", name: t("运势", "Fortune") },
               ].map((feature) => {
                 const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);

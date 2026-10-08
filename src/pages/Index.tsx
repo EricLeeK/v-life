@@ -19,7 +19,7 @@ import {
   useTodayTasks,
 } from "@/hooks/useData";
 import { todayPickerItems } from "@/lib/habits";
-import { usePrimaryExam, useTodayCivilPlans } from "@/hooks/useCivilService";
+import { usePreparationExamSummary } from "@/hooks/usePreparation";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { getSubscriptionEvent, summarizeSubscriptions } from "@/lib/subscriptions";
 import { useLocalDate } from "@/hooks/useLocalDate";
@@ -247,8 +247,7 @@ export default function DashboardPage() {
   const { data: weekGoals = [] } = weekGoalsQuery;
   const weightTrendQuery = useRecentWeightTrend((needsDetails || needsFallbackMetrics) && isVisible("weight-loss"));
   const { data: weightTrend = [] } = weightTrendQuery;
-  const { data: primaryExam } = usePrimaryExam((modulesExpanded || needsFallbackMetrics) && isVisible("civil-service"));
-  const { data: todayCivilPlans = [] } = useTodayCivilPlans(modulesExpanded && isVisible("civil-service"));
+  const { data: primaryExam } = usePreparationExamSummary((modulesExpanded || needsFallbackMetrics) && isVisible("civil-service"));
   const { data: allProjects = [] } = useProjects((modulesExpanded || needsFallbackMetrics) && isVisible("projects"));
   const calorieHistory = useCaloriesByRange(format(weekStart, "yyyy-MM-dd"), todayStr, insightsExpanded && isVisible("calories"));
   const { data: weekCalorieRecords = [] } = calorieHistory;
@@ -333,7 +332,6 @@ export default function DashboardPage() {
   const civilDaysLeft = primaryExam
     ? differenceInCalendarDays(parseISO(primaryExam.exam_date), now)
     : null;
-  const civilPlanDone = todayCivilPlans.filter((p) => p.is_completed).length;
 
   const pantryItems = expiringPantry.map((item: any) => ({
     item,
@@ -389,7 +387,7 @@ export default function DashboardPage() {
     },
     isVisible("civil-service") && primaryExam && {
       key: "civil-service",
-      label: t("考公倒计时", "Exam Countdown"),
+      label: t("备考倒计时", "Exam Countdown"),
       value: formatExamCountdown(civilDaysLeft, lang),
       hint: primaryExam.name,
       color: "orange" as const,
@@ -506,13 +504,13 @@ export default function DashboardPage() {
     isVisible("civil-service") && {
       id: "civil-service",
       icon: <GraduationCap className="h-4 w-4 text-foreground" />,
-      title: t("考公", "Civil Service"),
+      title: t("备考", "Preparation"),
       description: primaryExam
-        ? `${primaryExam.name} · ${t("今日计划", "Today")} ${civilPlanDone}/${todayCivilPlans.length}`
+        ? primaryExam.name
         : t("添加考试倒计时", "Add exam countdown"),
       status: primaryExam ? formatExamCountdown(civilDaysLeft, lang) : undefined,
       statusColor: "orange" as const,
-      onClick: () => navigate("/civil-service"),
+      onClick: () => navigate("/preparation"),
     },
     isVisible("thoughts") && {
       id: "thoughts",

@@ -37,6 +37,10 @@ const ThoughtsPage = lazy(() => import("./pages/Thoughts"));
 const LearningNotesPage = lazy(() => import("./pages/LearningNotes"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
 const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
+const PreparationIntegration = lazy(() => import("./pages/preparation/PreparationIntegration"));
+const PreparationBanks = lazy(() => import("./pages/preparation/PreparationBanks"));
+const PreparationPage = lazy(() => import("./pages/preparation/PreparationPage"));
+const PreparationQuestions = lazy(() => import("./pages/preparation/PreparationQuestions"));
 const CivilServiceHome = lazy(() => import("./pages/civil-service/CivilServiceHome"));
 const CivilServiceGroup = lazy(() => import("./pages/civil-service/CivilServiceGroup"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
@@ -98,8 +102,15 @@ function AppRoutes() {
           <Route path="/thoughts" element={<ThoughtsPage />} />
           <Route path="/learning-notes" element={<LearningNotesPage />} />
           <Route path="/weight-loss" element={<WeightLossPage />} />
-          <Route path="/civil-service" element={<CivilServiceHome />} />
-          <Route path="/civil-service/:group" element={<CivilServiceGroup />} />
+          <Route path="/civil-service" element={<Navigate to="/preparation" replace />} />
+          <Route path="/preparation" element={<PreparationPage />} />
+          <Route path="/preparation/exams/:examId" element={<PreparationPage />} />
+          <Route path="/preparation/questions" element={<PreparationQuestions />} />
+          <Route path="/preparation/questions/:questionId" element={<PreparationQuestions />} />
+          <Route path="/preparation/banks" element={<PreparationBanks />} />
+          <Route path="/preparation/integration" element={<PreparationIntegration />} />
+          <Route path="/preparation/review" element={<PreparationQuestions review />} />
+          <Route path="/civil-service/:group" element={<Navigate to="/preparation/questions" replace />} />
           {POINTS_FEATURE_ENABLED && <Route path="/shop" element={<ShopPage />} />}
           <Route path="/fortune" element={<FortuneHome />} />
           <Route path="/fortune/tarot" element={<TarotPage />} />

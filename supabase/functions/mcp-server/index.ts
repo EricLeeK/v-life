@@ -1,3 +1,4 @@
+import { executePrepOperation, PREP_ENTITIES } from '../_shared/prepOperations.ts';
 import { CLASSIFICATION_MODULES, CLASSIFICATION_WORKFLOW } from '../_shared/agentClassifications.ts';
 import { McpServer, StreamableHttpTransport } from 'mcp-lite';
 import { withAgentAuth } from '../_shared/agentAuth.ts';
@@ -50,6 +51,13 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
     return json({ok:false,error:{code:e.code,message:e.message,...errorRecovery(e.code)},request_id:ctx.requestId},true);
    }
   }});
+ }
+ for (const action of ['guide','list','get','due','create','batch_create','update','submit_attempt','asset_upload','asset_url']) {
+  const read=['guide','list','get','due','asset_url'].includes(action);
+  register(`prep_${action}`,`备考 ${action}。先调用 prep_guide 了解图片、共享材料、题目及复习协议。`, object({input:{type:'object',additionalProperties:true}},['input']),read?'read':'update',async(_s,{input},callCtx)=>{
+   const admin=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false}});
+   return {data:await executePrepOperation({...callCtx,admin},action,input)};
+  });
  }
  register('classification_list',CLASSIFICATION_WORKFLOW+' 返回当前用户的去重分类/标签及使用次数、预设值、allow_new、分页信息。包含已配置但尚未使用的想法标签；不返回记录正文或设置。',object({module:{type:'string',enum:CLASSIFICATION_MODULES,description:'目标模块；daily_task 读取 todo 分类。'},...paginationSchema()},['module']),'read',(s,{module,...opts})=>s.classifications(module,opts));
  register('agent_help','首次接入先调用：返回当前授权、服务器业务日期及入门指引。topic 可选 quickstart/tasks/finance/modules/classifications/errors；不写业务数据。资源客户端也可读 vlife://guide。',object({topic:{type:'string',enum:[...GUIDE_TOPICS],default:'quickstart',description:'quickstart 入门；tasks 待办工作流与示例；finance 账单汇总；modules 全部模块选用；classifications 自动分类规则；errors 错误恢复。'}}),'read',async(s,{topic})=>{

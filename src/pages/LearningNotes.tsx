@@ -1,3 +1,7 @@
+import { Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useDemoMode } from '@/contexts/DemoModeContext';
+import { useQuery } from '@tanstack/react-query';
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -65,6 +69,16 @@ export default function LearningNotesPage() {
   const [editingCourse, setEditingCourse] = useState<LearningCourse | null>(null);
   const [courseToDelete, setCourseToDelete] = useState<LearningCourse | null>(null);
 
+  const [params] = useSearchParams();
+  const requestedNote = params.get('note');
+  const [activeNote, setActiveNote] = useState<string | undefined>();
+  const {isDemo,demoData} = useDemoMode();
+  useEffect(()=>{let cancelled=false;if(!requestedNote)return;
+    if(isDemo){const note=demoData.learning_notes.find(n=>n.id===requestedNote);if(note)setSelectedId(note.course_id);return;}
+    void supabase.from('learning_notes').select('course_id').eq('id',requestedNote).maybeSingle().then(({data})=>{if(data&&!cancelled)setSelectedId(data.course_id);});
+    return()=>{cancelled=true;};
+  },[requestedNote,isDemo,demoData.learning_notes]);
+  const backlinks=useQuery({queryKey:['prep-note-backlinks',activeNote],enabled:!!activeNote&&!isDemo,queryFn:async()=>{const {data,error}=await (supabase as any).from('prep_note_links').select('question_id,prep_questions(stem_md)').eq('note_id',activeNote);if(error)throw error;return data as any[];}});
   const selectedCourse = courses.find((course) => course.id === selectedId);
   const { data: notesData = [], isLoading: notesLoading, error: notesError, refetch: reloadNotes } = useLearningNotes(selectedCourse?.id);
   const notes = notesData as LearningNote[];
@@ -186,12 +200,15 @@ export default function LearningNotesPage() {
           {selectedCourse ? (
             <CollectionFeedback loading={notesLoading && notes.length === 0} error={notes.length === 0 ? notesError : null} retry={reloadNotes}>
             <LearningNotePanel
+              initialNoteId={requestedNote||undefined}
+              onSelectedNoteChange={setActiveNote}
               course={selectedCourse}
               notes={notes}
               onCreateNote={handleCreateNote}
               onSaveNote={handleSaveNote}
               onDeleteNote={handleDeleteNote}
             />
+            {backlinks.data && backlinks.data.length>0 && <aside className="border-t border-border p-4"><h2 className="font-medium text-sm">相关错题</h2>{backlinks.data.map(link=><Link className="block text-sm underline mt-2" key={link.question_id} to={`/preparation/questions/${link.question_id}`}>{link.prep_questions?.stem_md?.slice(0,100)||'查看错题'}</Link>)}</aside>}
             </CollectionFeedback>
           ) : (
             <div className="flex min-h-96 h-full items-center justify-center">

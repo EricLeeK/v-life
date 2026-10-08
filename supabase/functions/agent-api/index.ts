@@ -1,3 +1,4 @@
+import { executePrepOperation } from '../_shared/prepOperations.ts';
 import { buildAgentGuide, GUIDE_TOPICS, errorRecovery, type GuideTopic } from '../_shared/agentGuide.ts';
 import { withAgentAuth } from '../_shared/agentAuth.ts';
 import { createAgentDataService, AgentDataError, type AgentContext, type AgentListOptions } from '../_shared/agentDataService.ts';
@@ -26,10 +27,10 @@ function errorStatus(code: string) {
 
 const listOptions=parseApiListOptions;
 
-async function body(req: Request) {
+async function body(req: Request, maxBytes = 1_000_000) {
   const length = Number(req.headers.get('content-length') ?? 0);
-  if (length > 1_000_000) throw new AgentDataError('INVALID_INPUT', 'Request body is too large');
-  try { return await req.json(); } catch { throw new AgentDataError('INVALID_INPUT', 'Request body must be valid JSON'); }
+  if (length > maxBytes) throw new AgentDataError('INVALID_INPUT', 'Request body is too large');
+  try { const raw = await req.text(); if(raw.length > maxBytes) throw new Error('too large'); return JSON.parse(raw); } catch { throw new AgentDataError('INVALID_INPUT', 'Request body must be valid JSON'); }
 }
 
 const protectedHandler = withAgentAuth(publicBaseUrl, async (req, context) => {
@@ -37,6 +38,14 @@ const protectedHandler = withAgentAuth(publicBaseUrl, async (req, context) => {
   const audit=async(args:Record<string,unknown>)=>{try {const {error}=await db.rpc('agent_log_operation',args);if(error)console.error('agent audit unavailable',requestId);}catch {console.error('agent audit unavailable',requestId);}};
   const service = createAgentDataService(context);
   const url = new URL(req.url);
+  if (url.pathname.endsWith('/prep') && req.method === 'POST') {
+    try { const payload = await body(req, 15_000_000);
+      const admin = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
+      const data = await executePrepOperation({ ...context, admin }, payload.action, payload.input || {});
+      await audit({ p_tool_name: `prep_${payload.action}`, p_operation: payload.action, p_record_id: data?.id || null, p_request_id: requestId, p_success: true, p_error_code: null });
+      return response({ ok: true, data, request_id: requestId });
+    } catch (e) { const code = e instanceof AgentDataError ? e.code : 'INVALID_INPUT'; await audit({ p_tool_name: 'prep', p_operation: 'request', p_record_id: null, p_request_id: requestId, p_success: false, p_error_code: code }); return response({ ok: false, error: { code, message: e instanceof Error ? e.message : 'Preparation operation failed' } }, errorStatus(code), requestId); }
+  }
   const route = parseApiRoute(url.pathname, req.method);
   if (route.action === 'not_found') return response({ ok: false, error: { code: 'NOT_FOUND', message: 'Endpoint not found' }, request_id: requestId }, 404, requestId);
   if (route.action === 'method_not_allowed') return response({ ok: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' }, request_id: requestId }, 405, requestId);
