@@ -28,6 +28,8 @@ export interface BottomSheetProps {
   onDetentChange?: (index: number) => void;
   closeLabel?: string;
   className?: string;
+  /** Action bar pinned under the scrolling content, so confirm controls never float over the list. */
+  footer?: ReactNode;
   children: ReactNode;
 }
 
@@ -80,7 +82,7 @@ export function BottomSheet({ trigger, open: openProp, defaultOpen = false, onOp
   </DialogPrimitive.Root>;
 }
 
-function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, onDetentChange, closeLabel = "Close", className, children, onDismiss }: Omit<BottomSheetProps, "trigger" | "open" | "defaultOpen" | "onOpenChange"> & { onDismiss: () => void }) {
+function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, onDetentChange, closeLabel = "Close", className, footer, children, onDismiss }: Omit<BottomSheetProps, "trigger" | "open" | "defaultOpen" | "onOpenChange"> & { onDismiss: () => void }) {
   const [isPresent, safeToRemove] = usePresence();
   const reduced = useReducedMotion() ?? false;
   const detentKey = detents.join(",");
@@ -376,6 +378,7 @@ function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, on
           </div>
         </div>
         <div ref={bodyRef} className={styles.body} onWheel={bodyWheel} onFocus={bodyFocus}>{children}</div>
+        {footer ? <div className={styles.footer}>{footer}</div> : null}
         <span className={styles.srOnly} role="status" aria-live="polite">{announcement}</span>
       </motion.div>
     </DialogPrimitive.Content>

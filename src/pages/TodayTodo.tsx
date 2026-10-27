@@ -53,6 +53,15 @@ const MOTIVATIONAL_QUOTES = [
   { zh: "你比你想象的更强大", en: "You're stronger than you think" },
 ];
 
+/** Compact "MM-DD" label for when a task was added to today; full timestamp goes to the tooltip. */
+function formatAddedDate(iso: string): string {
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return "";
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return `${mm}-${dd}`;
+}
+
 function CircularProgress({ value, size = 64 }: { value: number; size?: number }) {
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -651,6 +660,15 @@ export default function TodayTodoPage() {
                 </Button>
               )}
 
+              {task.created_at && (
+                <span
+                  className="shrink-0 font-mono-data text-[11px] text-muted-foreground"
+                  title={`${t("添加于", "Added at")} ${new Date(task.created_at).toLocaleString()}`}
+                >
+                  {formatAddedDate(task.created_at)}
+                </span>
+              )}
+
               <Button
                 variant="ghost" size="icon"
                 aria-label={t("删除任务", "Delete task")}
@@ -935,34 +953,36 @@ export default function TodayTodoPage() {
                   ))
                 )}
               </div>
-              {selectedTodos.length > 0 && (
-                <div className="sticky bottom-0 z-10 -mx-1 flex items-center gap-2 border-t border-border bg-card/95 px-1 py-3 backdrop-blur-sm">
-                  <span className="text-sm text-muted-foreground">{t(`已选 ${selectedTodos.length}`, `${selectedTodos.length} selected`)}</span>
-                  {POINTS && !adjustMode && Object.keys(estimatedDifficulties).length === 0 && (
-                    <Button variant="secondary" size="sm" onClick={handleAutoEstimate} disabled={isEstimating}>
-                      {isEstimating ? (
-                        <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />{t("评估中...", "Estimating...")}</>
-                      ) : (
-                        <><Sparkles className="mr-1 h-3.5 w-3.5" />{t("AI 自动评估", "Auto Estimate")}</>
-                      )}
-                    </Button>
-                  )}
-                  {POINTS && !adjustMode && Object.keys(estimatedDifficulties).length > 0 && (
-                    <Button variant="secondary" size="sm" onClick={() => setAdjustMode(true)}>
-                      <Zap className="mr-1 h-3.5 w-3.5" />{t("调整难度", "Adjust")}
-                    </Button>
-                  )}
-                  <ActionButton
-                    label={t("完成", "Done")}
-                    pendingLabel={t("加入今天…", "Adding…")}
-                    successLabel={t("已加入", "Added")}
-                    onAction={handleConfirmAdd}
-                    onActionError={() => undefined}
-                    className="ml-auto shrink-0"
-                  />
-                </div>
-              )}
     </>
+  );
+
+  // Pinned under the sheet body via BottomSheet's footer slot, so it never floats over the list.
+  const pickFooter = selectedTodos.length === 0 ? null : (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">{t(`已选 ${selectedTodos.length}`, `${selectedTodos.length} selected`)}</span>
+      {POINTS && !adjustMode && Object.keys(estimatedDifficulties).length === 0 && (
+        <Button variant="secondary" size="sm" onClick={handleAutoEstimate} disabled={isEstimating}>
+          {isEstimating ? (
+            <><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />{t("评估中...", "Estimating...")}</>
+          ) : (
+            <><Sparkles className="mr-1 h-3.5 w-3.5" />{t("AI 自动评估", "Auto Estimate")}</>
+          )}
+        </Button>
+      )}
+      {POINTS && !adjustMode && Object.keys(estimatedDifficulties).length > 0 && (
+        <Button variant="secondary" size="sm" onClick={() => setAdjustMode(true)}>
+          <Zap className="mr-1 h-3.5 w-3.5" />{t("调整难度", "Adjust")}
+        </Button>
+      )}
+      <ActionButton
+        label={t("完成", "Done")}
+        pendingLabel={t("加入今天…", "Adding…")}
+        successLabel={t("已加入", "Added")}
+        onAction={handleConfirmAdd}
+        onActionError={() => undefined}
+        className="ml-auto shrink-0"
+      />
+    </div>
   );
 
   return (
@@ -1019,6 +1039,7 @@ export default function TodayTodoPage() {
             initialDetent={1}
             className="arc-runtime"
             closeLabel={t("关闭", "Close")}
+            footer={pickFooter}
           >
             {pickTasksBody}
           </BottomSheet>

@@ -59,6 +59,9 @@
 .body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--space-1) var(--space-5) var(--space-6); overscroll-behavior: contain; scrollbar-width: thin; touch-action: pan-y; font-size: var(--text-sm); line-height: var(--leading-body); }
 .sheet:not([data-expanded]) .body { overflow: hidden; touch-action: none; }
 
+/* A pinned action bar sits outside the scroll flow, so list content never shows through it. */
+.footer { flex: none; border-top: 1px solid var(--border); background: var(--surface-raised); padding: var(--space-3) var(--space-5); }
+
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 @media (max-width: 40rem) {
