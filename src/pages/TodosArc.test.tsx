@@ -55,6 +55,35 @@ describe("Todos original Arc task controls", () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  it("creates and edits todos without unsupported tag fields", async () => {
+    const create = vi.fn().mockResolvedValue({});
+    const update = vi.fn().mockResolvedValue({});
+    const useCreate = todoHooks.useCreate;
+    const useUpdate = todoHooks.useUpdate;
+    vi.spyOn(todoHooks, "useCreate").mockImplementation(() => ({ ...useCreate(), mutateAsync: create }));
+    vi.spyOn(todoHooks, "useUpdate").mockImplementation(() => ({ ...useUpdate(), mutateAsync: update }));
+    renderTodos();
+    fireEvent.click(await screen.findByRole("button", { name: "添加主任务" }));
+    fireEvent.change(screen.getByLabelText(/任务标题/), { target: { value: "无需标签的待办" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存添加" }));
+    await waitFor(() => expect(create).toHaveBeenCalled());
+    expect(create.mock.calls[0][0]).not.toHaveProperty("tags");
+    expect(create.mock.calls[0][0]).not.toHaveProperty("tag");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "添加待办主任务" })).not.toBeInTheDocument());
+    const task = (await screen.findByRole("button", { name: "提交论文初稿" })).closest(".space-y-2") as HTMLElement;
+    fireEvent.keyDown(within(task).getByRole("button", { name: "任务操作菜单" }), { key: "Enter" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "编辑任务" }));
+    const editor = await screen.findByRole("dialog", { name: "编辑待办任务" });
+    expect(within(editor).queryByLabelText(/标签/)).not.toBeInTheDocument();
+    fireEvent.click(within(editor).getByRole("button", { name: "保存修改" }));
+    await waitFor(() => expect(update).toHaveBeenCalled());
+    expect(update.mock.calls[0][0]).not.toHaveProperty("tags");
+    expect(update.mock.calls[0][0]).not.toHaveProperty("tag");
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "编辑待办任务" })).not.toBeInTheDocument());
+    fireEvent.click(await screen.findByRole("button", { name: "添加主任务" }));
+    expect(screen.queryByLabelText(/标签/)).not.toBeInTheDocument();
+  });
+
   it.each(["删除", "取消"])("releases the page pointer lock after choosing %s in task deletion", async (action) => {
     renderTodos();
     const title = await screen.findByRole("button", { name: "提交论文初稿" });

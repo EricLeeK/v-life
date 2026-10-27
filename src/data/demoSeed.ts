@@ -309,12 +309,12 @@ function generateCalorieRecords(): Tables<"calorie_records">[] {
 export const demoCalorieRecords = generateCalorieRecords();
 
 // ============ Todos ============
-export const demoTodos: (Tables<"todos"> & { tags?: string[] })[] = [
+export const demoTodos: Tables<"todos">[] = [
   // AI学习 Category Tasks matching screenshot
   { id: "demo-t-ai-01", title: "Multi-agent PDE solving system - LEAP", detail: null, importance: "urgent", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-08T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-02", title: "秋招 agent 或者自动化开发", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-03", title: "粗读 UniNDM: A Unified Noise-driven Detection 论文", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-06T10:00:00+09:00", updated_at: "2026-05-06T10:00:00+09:00", user_id: DEMO_USER },
-  { id: "demo-t-ai-04", title: "ARIS 面试HTML", detail: null, tags: ["Agent 相关", "RAG 相关"], importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
+  { id: "demo-t-ai-04", title: "ARIS 面试HTML", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-05T10:00:00+09:00", updated_at: "2026-05-05T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-04-sub-1", parent_id: "demo-t-ai-04", title: "Self-Evolving Agents (Ctx2Skill / Native Evolution / A²RD / Voyager / Reflexion / STaR)", detail: "核心框架与架构演进", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:05:00+09:00", updated_at: "2026-05-05T10:05:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-04-sub-2", parent_id: "demo-t-ai-04", title: "Agentic RL (AgentTuning / ToolRL / RAGEN / WebRL / SWE-RL / GRPO for tool use)", detail: "工具调用的强化学习微调", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:10:00+09:00", updated_at: "2026-05-05T10:10:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-04-sub-3", parent_id: "demo-t-ai-04", title: "Multi-Agent & Long-Horizon (CAMEL / AutoGen / MetaGPT / MoA / Debate / MemGPT / LATS)", detail: "多智能体长流程协作", importance: "important", category: "AI学习", is_completed: true, is_archived: false, created_at: "2026-05-05T10:15:00+09:00", updated_at: "2026-05-05T10:15:00+09:00", user_id: DEMO_USER },

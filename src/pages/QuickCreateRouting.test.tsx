@@ -61,7 +61,7 @@ describe("dashboard quick-create routes", () => {
     const dialog = await screen.findByRole("dialog", { name: "添加待办主任务" });
     expect(dialog).toHaveAccessibleDescription("填写任务内容与优先级，创建新的待办事项。");
     expect(screen.getByPlaceholderText("例如：预约下周体检")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("例如：周末, 家里")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/标签/)).not.toBeInTheDocument();
     expect(screen.getByPlaceholderText("例如：下班路上顺便处理")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("例如：生活")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/ARIS|Agent 相关|AI学习/)).not.toBeInTheDocument();

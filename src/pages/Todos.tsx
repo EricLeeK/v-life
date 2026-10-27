@@ -85,7 +85,6 @@ const DEFAULT_TODO_CATEGORY = "未分类";
 const EMPTY_TODO_FORM = {
   title: "",
   detail: "",
-  tags: "",
   importance: "普通",
   category: "",
   kind: "once",
@@ -405,11 +404,9 @@ export default function TodosPage() {
   const handleSaveMainTask = async () => {
     if (!form.title) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
     try {
-      const parsedTags = form.tags ? form.tags.split(/[,，]/).map(s => s.trim()).filter(Boolean) : undefined;
       await createMutation.mutateAsync({
         title: form.title,
         detail: form.detail || null,
-        tags: parsedTags,
         importance: form.importance,
         category: form.kind === "habit" ? "习惯" : (form.category.trim() || DEFAULT_TODO_CATEGORY),
         kind: form.kind,
@@ -432,11 +429,9 @@ export default function TodosPage() {
 
   const handleOpenEdit = (item: any) => {
     setEditingTodo(item);
-    const tagStr = Array.isArray(item.tags) ? item.tags.join(", ") : (item.tags || "");
     setEditForm({
       title: item.title,
       detail: item.detail || "",
-      tags: tagStr,
       importance: item.importance || "普通",
       category: item.category || "",
       kind: item.kind || "once",
@@ -451,12 +446,10 @@ export default function TodosPage() {
   const handleSaveEdit = async () => {
     if (!editForm.title || !editingTodo) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
     try {
-      const parsedTags = editForm.tags ? editForm.tags.split(/[,，]/).map(s => s.trim()).filter(Boolean) : undefined;
       await updateMutation.mutateAsync({
         id: editingTodo.id,
         title: editForm.title,
         detail: editForm.detail || null,
-        tags: parsedTags,
         importance: editForm.importance,
         category: editForm.kind === "habit" ? "习惯" : editForm.category,
         kind: editForm.kind,
@@ -552,16 +545,8 @@ export default function TodosPage() {
     const totalSubtasksCount = itemSubtasks.length;
     const progressPercent = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
 
-    const hasDetailsOrSubtasks = !!item.detail || totalSubtasksCount > 0 || (Array.isArray(item.tags) && item.tags.length > 0);
+    const hasDetailsOrSubtasks = !!item.detail || totalSubtasksCount > 0;
     const isExpanded = !!expandedTasks[item.id];
-
-    // Tags processing
-    let tagsList: string[] = [];
-    if (Array.isArray(item.tags)) {
-      tagsList = item.tags;
-    } else if (typeof item.tags === "string" && item.tags.trim()) {
-      tagsList = item.tags.split(/[,，]/).map((s: string) => s.trim());
-    }
 
     return (
       <div key={item.id} style={{ ['--i' as any]: index }} className="enter-up space-y-2 mb-2.5">
@@ -725,16 +710,9 @@ export default function TodosPage() {
                 </div>
               </div>
 
-              {/* Expanded metadata section (tags & detail only, priority badge remains at top right) */}
+              {/* Expanded task details; priority remains at the top right. */}
               {isExpanded && (
                 <div className="mt-2 pt-1.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground border-t border-border">
-                  {tagsList.length > 0 && (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-muted-foreground font-normal">标签：</span>
-                      <span className="text-muted-foreground font-medium">{tagsList.join(", ")}</span>
-                    </div>
-                  )}
-
                   <div className="w-full text-muted-foreground italic mt-1 bg-muted/40 p-2 rounded-md text-xs">
                     <ArcScope className="block">
                       <InlineEdit
@@ -974,16 +952,6 @@ export default function TodosPage() {
         />
       </div>
       <div>
-        <Label htmlFor="todo-tags" className="text-xs font-medium text-foreground">{t("标签（逗号分隔）", "Tags (comma-separated)")}</Label>
-        <Input
-          id="todo-tags"
-          value={form.tags}
-          onChange={(e) => setForm({ ...form, tags: e.target.value })}
-          placeholder={t("例如：周末, 家里", "e.g. weekend, home")}
-          className="mt-1 h-9 text-sm"
-        />
-      </div>
-      <div>
         <Label htmlFor="todo-detail" className="text-xs font-medium text-foreground">{t("详细说明", "Details")}</Label>
         <Input
           id="todo-detail"
@@ -1084,15 +1052,6 @@ export default function TodosPage() {
           id="edit-title"
           value={editForm.title}
           onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-          className="mt-1 h-9 text-sm"
-        />
-      </div>
-      <div>
-        <Label htmlFor="edit-tags" className="text-xs font-medium text-foreground">{t("标签（逗号分隔）", "Tags (comma-separated)")}</Label>
-        <Input
-          id="edit-tags"
-          value={editForm.tags}
-          onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })}
           className="mt-1 h-9 text-sm"
         />
       </div>
