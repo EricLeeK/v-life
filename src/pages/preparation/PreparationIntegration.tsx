@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { AppLayout } from "@/components/AppLayout";
+import { PrepShell } from "@/components/preparation/PrepShell";
+import { ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { prepDb } from "@/hooks/usePreparation";
 import { useDemoMode } from "@/contexts/DemoModeContext";
@@ -15,9 +15,7 @@ export default function PreparationIntegration() {
     queryKey: ["prep-connections"],
     enabled: !isDemo,
     queryFn: async () => {
-      const { data, error } = await prepDb.rpc(
-        "prep_connection_list",
-      );
+      const { data, error } = await prepDb.rpc("prep_connection_list");
       if (error) throw error;
       return data as {
         id: string;
@@ -28,17 +26,20 @@ export default function PreparationIntegration() {
     },
   });
   return (
-    <AppLayout header={false} title="V 记连接">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <Link to="/preparation" className="text-muted-foreground text-sm">
-          ← 返回备考
-        </Link>
-        <h1 className="heading-font text-3xl">一道题，两处都能复习。</h1>
+    <PrepShell title="V 记连接" active="integration">
+      <div className="prep-connection prep-form">
+        <div className="prep-connection-heading">
+          <div className="prep-connection-symbol">
+            <span>V-Life</span>
+            <ArrowRightLeft size={20} />
+            <span>V 记</span>
+          </div>
+        </div>
         <p className="text-muted-foreground leading-relaxed">
           在 V 记的连接设置中绑定备考后，你的错题将出现在「V-Life ·
           备考错题」卡片盒。两端共用答案、解析、错因和复习状态。
         </p>
-        <ol className="list-decimal pl-5 space-y-3 text-sm">
+        <ol className="prep-steps">
           <li>在这里生成专用连接码。</li>
           <li>前往 V 记设置中的「V-Life 备考」，粘贴连接码并连接。</li>
           <li>打开关联卡片盒，开始复习。修改解析也会同步回来。</li>
@@ -112,10 +113,9 @@ export default function PreparationIntegration() {
               <Button
                 variant="outline"
                 onClick={async () => {
-                  const { error } = await prepDb.rpc(
-                    "prep_connection_revoke",
-                    { p_id: c.id },
-                  );
+                  const { error } = await prepDb.rpc("prep_connection_revoke", {
+                    p_id: c.id,
+                  });
                   if (error)
                     toast({ title: error.message, variant: "destructive" });
                   else {
@@ -130,6 +130,6 @@ export default function PreparationIntegration() {
           </div>
         ))}
       </div>
-    </AppLayout>
+    </PrepShell>
   );
 }

@@ -1,0 +1,129 @@
+[
+  {
+    "file": "motion-probe",
+    "state": null,
+    "size": "1440x1000",
+    "zoom": 1,
+    "motion": {
+      "load": {
+        "elements": 10,
+        "loops": 0,
+        "maxMove": 6,
+        "maxSize": 0,
+        "maxOpacity": 1,
+        "top": [
+          {
+            "el": "p.text-[13px].font-medium",
+            "move": 0,
+            "size": 0,
+            "opacity": 1,
+            "loop": false,
+            "sources": [
+              "transition:opacity"
+            ]
+          },
+          {
+            "el": "article.prep-sheet",
+            "move": 6,
+            "size": 0,
+            "opacity": 0.8,
+            "loop": false,
+            "sources": [
+              "css:prep-arrive"
+            ]
+          },
+          {
+            "el": "div.animate-pulse.motion-reduce:animate-none",
+            "move": 0,
+            "size": 0,
+            "opacity": 0.05,
+            "loop": false,
+            "sources": [
+              "css:pulse"
+            ]
+          },
+          {
+            "el": "div.animate-pulse.motion-reduce:animate-none",
+            "move": 0,
+            "size": 0,
+            "opacity": 0.05,
+            "loop": false,
+            "sources": [
+              "css:pulse"
+            ]
+          },
+          {
+            "el": "div.animate-pulse.motion-reduce:animate-none",
+            "move": 0,
+            "size": 0,
+            "opacity": 0.05,
+            "loop": false,
+            "sources": [
+              "css:pulse"
+            ]
+          },
+          {
+            "el": "div.animate-pulse.motion-reduce:animate-none",
+            "move": 0,
+            "size": 0,
+            "opacity": 0.05,
+            "loop": false,
+            "sources": [
+              "css:pulse"
+            ]
+          },
+          {
+            "el": "div.animate-pulse.motion-reduce:animate-none",
+            "move": 0,
+            "size": 0,
+            "opacity": 0.05,
+            "loop": false,
+            "sources": [
+              "css:pulse"
+            ]
+          },
+          {
+            "el": "div.animate-pulse.motion-reduce:animate-none",
+            "move": 0,
+            "size": 0,
+            "opacity": 0.05,
+            "loop": false,
+            "sources": [
+              "css:pulse"
+            ]
+          }
+        ]
+      },
+      "hero": {
+        "elements": 0,
+        "loops": 0,
+        "maxMove": 0,
+        "maxSize": 0,
+        "maxOpacity": 0,
+        "top": [],
+        "layers": 0
+      },
+      "scroll": {
+        "elements": 0,
+        "loops": 0,
+        "maxMove": 0,
+        "maxSize": 0,
+        "maxOpacity": 0,
+        "top": []
+      }
+    },
+    "issues": [
+      "控制台错误：Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozill",
+      "滚动：没有检测到随滚动出现的变化；落地页、品牌页、发布页和展览页需要一段滚动叙事"
+    ]
+  },
+  {
+    "file": "page.png",
+    "state": null,
+    "size": "1440x1000",
+    "zoom": 1,
+    "issues": [
+      "控制台错误：Encountered a script tag while rendering React component. Scripts inside React components are never executed when rendering on the client. Consider using template tag instead (https://developer.mozill"
+    ]
+  }
+]

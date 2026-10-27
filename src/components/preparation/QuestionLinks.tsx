@@ -71,7 +71,7 @@ export function QuestionLinks({
   );
   const state = data.states.find((s) => s.question_id === q.id);
   return (
-    <div className="max-w-3xl mx-auto space-y-7 border-t border-border pt-6">
+    <div className="prep-link-panel space-y-5">
       <details>
         <summary className="cursor-pointer font-medium min-h-11">
           所属题库与适用考试
@@ -336,8 +336,7 @@ export function QuestionLinks({
                 className="underline"
                 to={`/learning-notes?note=${r.note_id}`}
               >
-                {notes.find((n) => n.id === r.note_id)?.title ||
-                  "打开关联笔记"}
+                {notes.find((n) => n.id === r.note_id)?.title || "打开关联笔记"}
               </Link>
             </p>
           ))}
@@ -371,7 +370,7 @@ export function QuestionLinks({
           versions.map((v) => ({ id: v.id, name: `v${v.revision}` })),
         )}
         {version && (
-          <StudyMarkdown>
+          <StudyMarkdown variant="question">
             {versions.find((v) => v.id === version)?.content.stem_md || ""}
           </StudyMarkdown>
         )}

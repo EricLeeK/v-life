@@ -1,8 +1,23 @@
+import { QuestionAnalysis } from "@/components/preparation/QuestionAnalysis";
 import { QuestionLinks } from "@/components/preparation/QuestionLinks";
 import { StudyImageUpload } from "@/components/preparation/StudyImageUpload";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { AppLayout } from "@/components/AppLayout";
+import { PrepShell } from "@/components/preparation/PrepShell";
+import { questionExcerpt,questionTypeLabel } from "@/components/preparation/presentation";
+import {
+  ArrowRight,
+  Plus,
+  Search,
+  Pause,
+  Play,
+  Clock3,
+  ChevronDown,
+  Check,
+  CheckCheck,
+  PencilLine,
+  RotateCcw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,7 +63,10 @@ export default function PreparationQuestions({
             (!s.due_at || new Date(s.due_at) <= new Date()),
         )) &&
       !done.includes(q.id) &&
-      (!paperId || prep.data?.paperQuestions.some(r=>r.question_id===q.id&&r.paper_id===paperId)) &&
+      (!paperId ||
+        prep.data?.paperQuestions.some(
+          (r) => r.question_id === q.id && r.paper_id === paperId,
+        )) &&
       (!params.get("pitfall") ||
         prep.data?.pitfallQuestions.some(
           (r) =>
@@ -74,149 +92,176 @@ export default function PreparationQuestions({
   const question = questionId
     ? all.find((q) => q.id === questionId)
     : review
-      ? current
+      ? all.find((q) => q.id === current?.id) || current
       : null;
   return (
-    <AppLayout header={false} title={review ? "错题复习" : "错题库"}>
-      <div className="mx-auto max-w-5xl space-y-6 pb-8">
-        <Link
-          to={examId ? `/preparation/exams/${examId}` : "/preparation"}
-          className="text-sm text-muted-foreground"
-        >
-          ← 返回备考
-        </Link>
-        <header className="flex justify-between items-center gap-4">
-          <h1 className="heading-font text-3xl">
-            {review
-              ? practice
-                ? "自由练习"
-                : "今日复习"
-              : questionId
-                ? "题目与复盘"
-                : "我的错题"}
-          </h1>
-          {!review && (
-            <Button onClick={() => setEditing(!editing)}>
-              {question ? "编辑题目" : "添加题目"}
-            </Button>
-          )}
-        </header>
-        {prep.isLoading && <p role="status">正在读取题目…</p>}
-        {prep.error && (
-          <div role="alert">
-            题目未能加载。<Button onClick={() => prep.refetch()}>重试</Button>
+    <PrepShell
+      title={
+        review
+          ? practice
+            ? "自由练习"
+            : "今日复习"
+          : questionId
+            ? "题目与复盘"
+            : "错题库"
+      }
+      active="questions"
+      focus={review || !!questionId}
+      back={
+        review || questionId
+          ? examId
+            ? `/preparation/exams/${examId}`
+            : "/preparation"
+          : undefined
+      }
+      actions={
+        review ? (
+          <span className="prep-session-progress">
+            <strong>
+              {question ? String(done.length + 1).padStart(2, "0") : "—"}
+            </strong>{" "}
+            /{" "}
+            {Math.max(
+              done.length + questions.length,
+              question ? done.length + 1 : 0,
+            )}
+          </span>
+        ) : (
+          <Button variant="outline" onClick={() => setEditing(!editing)}>
+            {question ? <PencilLine size={15} /> : <Plus size={15} />}
+            {question ? "编辑题目" : "添加题目"}
+          </Button>
+        )
+      }
+    >
+      {prep.isLoading && (
+        <div className="prep-loading" role="status" aria-label="正在读取题目" />
+      )}
+      {prep.error && (
+        <div className="prep-error" role="alert">
+          题目未能加载。<Button onClick={() => prep.refetch()}>重试</Button>
+        </div>
+      )}
+      {editing && (
+        <QuestionEditor
+          question={question || undefined}
+          prep={prep}
+          examId={examId}
+          paperId={paperId}
+          onClose={() => setEditing(false)}
+        />
+      )}
+      {question && !editing && (
+        <QuestionReader
+          key={question.id}
+          question={question}
+          prep={prep}
+          review={review}
+          practice={practice}
+          onNext={() => {
+            setDone((v) => [...v, question.id]);
+            setCurrent(null);
+          }}
+        />
+      )}
+      {!questionId && !review && !editing && (
+        <>
+          <div className="prep-toolbar">
+            <select
+              aria-label="按题库筛选"
+              className="prep-select"
+              value={bankFilter}
+              onChange={(e) => setBankFilter(e.target.value)}
+            >
+              <option value="">所有题库</option>
+              {prep.data?.banks.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="按题型筛选"
+              className="prep-select"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="">所有题型</option>
+              <option value="single">单选</option>
+              <option value="multiple">多选</option>
+              <option value="judgement">判断</option>
+              <option value="text">主观题</option>
+            </select>
+            <select
+              aria-label="按标记筛选"
+              className="prep-select"
+              value={flag}
+              onChange={(e) => setFlag(e.target.value)}
+            >
+              <option value="">所有记录</option>
+              <option value="wrong">有答错记录</option>
+              <option value="yellow">有黄题记录</option>
+            </select>
+            <label className="prep-search">
+              <Search />
+              <Input
+                aria-label="搜索题目与解析"
+                placeholder="搜索题干、解析或知识点"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </label>
           </div>
-        )}
-        {editing && (
-          <QuestionEditor
-            question={question || undefined}
-            prep={prep}
-            examId={examId}
-            paperId={paperId}
-            onClose={() => setEditing(false)}
-          />
-        )}
-        {question && !editing && (
-          <QuestionReader
-            key={question.id}
-            question={question}
-            prep={prep}
-            review={review}
-            practice={practice}
-            onNext={() => {
-              setDone((v) => [...v, question.id]);
-              setCurrent(null);
-            }}
-          />
-        )}
-        {!questionId && !review && !editing && (
-          <>
-            <div className="flex flex-wrap gap-3">
-              <select
-                aria-label="按题库筛选"
-                className="border border-input rounded-md bg-background p-2"
-                value={bankFilter}
-                onChange={(e) => setBankFilter(e.target.value)}
-              >
-                <option value="">所有题库</option>
-                {prep.data?.banks.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="按题型筛选"
-                className="border border-input rounded-md bg-background p-2"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-              >
-                <option value="">所有题型</option>
-                <option value="single">单选</option>
-                <option value="multiple">多选</option>
-                <option value="judgement">判断</option>
-                <option value="text">主观题</option>
-              </select>
-              <select
-                aria-label="按标记筛选"
-                className="border border-input rounded-md bg-background p-2"
-                value={flag}
-                onChange={(e) => setFlag(e.target.value)}
-              >
-                <option value="">所有记录</option>
-                <option value="wrong">有答错记录</option>
-                <option value="yellow">有黄题记录</option>
-              </select>
-            </div>
-            <Input
-              aria-label="搜索题目与解析"
-              placeholder="搜索题干、解析或知识点…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <div className="divide-y divide-border">
-              {questions
-                .filter((q) =>
-                  `${q.stem_md} ${q.explanation_md} ${q.tags.join(" ")}`.includes(
-                    search,
-                  ),
-                )
-                .map((q) => (
-                  <Link
-                    key={q.id}
-                    to={`/preparation/questions/${q.id}`}
-                    className="block py-5 hover:bg-muted/40"
-                  >
-                    <p className="line-clamp-2 font-medium">{q.stem_md.replace(/!\[([^\]]*)\]\([^)]*\)/g,"$1")}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {q.tags.join(" · ")}
-                      {q.status === "draft" ? " · 草稿" : ""} ·{" "}
-                      {q.target_seconds
-                        ? `${q.target_seconds} 秒目标`
-                        : "未设速度目标"}
-                    </p>
-                  </Link>
-                ))}
-            </div>
-          </>
-        )}
-        {review && prep.data && !question && questions.length === 0 && (
-          <div className="py-12 text-center">
-            <h2 className="heading-font text-2xl">本轮题目已完成</h2>
-            <p className="text-muted-foreground mt-3">
-              复习状态以已同步的结果为准。
-            </p>
-            <Button asChild className="mt-5">
-              <Link to="/preparation">返回备考</Link>
-            </Button>
+          <div className="prep-question-list">
+            {questions
+              .filter((q) =>
+                `${q.stem_md} ${q.explanation_md} ${q.tags.join(" ")}`.includes(
+                  search,
+                ),
+              )
+              .map((q, i) => (
+                <Link
+                  key={q.id}
+                  to={`/preparation/questions/${q.id}`}
+                  className="prep-library-row"
+                >
+                  <span className="prep-inbox-number">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <p className="line-clamp-2">{questionExcerpt(q.stem_md)}</p>
+                    <div className="prep-inbox-meta">
+                      <span className="prep-type">
+                        {questionTypeLabel[q.question_type]}
+                      </span>
+                      <span>{q.tags.join(" · ")}</span>
+                      {q.status === "draft" && <span>草稿</span>}
+                      {q.target_seconds && <span>{q.target_seconds} 秒</span>}
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-muted-foreground" />
+                </Link>
+              ))}
           </div>
-        )}
-      </div>
-    </AppLayout>
+        </>
+      )}
+      {review && prep.data && !question && questions.length === 0 && (
+        <div className="prep-empty">
+          <CheckCheck size={32} />
+          <h2 className="heading-font text-2xl">本轮题目已完成</h2>
+          <p className="text-muted-foreground mt-3">
+            休息一下，或去错题库选一组题自由练习。
+          </p>
+          <Button asChild className="mt-5">
+            <Link to="/preparation">返回备考</Link>
+          </Button>
+        </div>
+      )}
+    </PrepShell>
   );
 }
 function QuestionReader({
-  question: q,
+  question,
   prep,
   review,
   practice,
@@ -228,6 +273,9 @@ function QuestionReader({
   practice: boolean;
   onNext: () => void;
 }) {
+  const [editedQuestion, setEditedQuestion] = useState<PrepQuestion | null>(null);
+  const q = editedQuestion && editedQuestion.revision > question.revision ? editedQuestion : question;
+  const [editingAnalysis, setEditingAnalysis] = useState(false);
   const draftKey = `prep-draft:${prep.userId}:${q.id}:${practice ? "practice" : "review"}`;
   const [draft] = useState(() => {
     try {
@@ -245,17 +293,23 @@ function QuestionReader({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [selfCorrect, setSelfCorrect] = useState(false);
-  const eventId = useRef(draft?.pendingPayload?.idempotency_key || crypto.randomUUID());
+  const eventId = useRef(
+    draft?.pendingPayload?.idempotency_key || crypto.randomUUID(),
+  );
   const presentedRevision = useRef(
     draft?.expectedRevision ??
       prep.data?.states.find((s) => s.question_id === q.id)?.revision ??
       0,
   );
-  const contentRevision = useRef(draft?.contentRevision ?? q.revision);
-  const [receipt, setReceipt] = useState<{attempt?:{mode:string};review_state?:{due_at:string}} | null>(null);
-  const [pendingPayload, setPendingPayload] = useState<Record<string,unknown> | null>(
-    draft?.pendingPayload || null,
-  );
+  const [contentRevision, setContentRevision] = useState<number>(draft?.contentRevision ?? q.revision);
+  const [receipt, setReceipt] = useState<{
+    attempt?: { mode: string };
+    review_state?: { due_at: string };
+  } | null>(null);
+  const [pendingPayload, setPendingPayload] = useState<Record<
+    string,
+    unknown
+  > | null>(draft?.pendingPayload || null);
   const { toast } = useToast();
   const material = prep.data?.materials.find((m) => m.id === q.material_id);
   const state = prep.data?.states.find((s) => s.question_id === q.id);
@@ -276,7 +330,7 @@ function QuestionReader({
           seconds,
           eventId: eventId.current,
           expectedRevision: presentedRevision.current,
-          contentRevision: contentRevision.current,
+          contentRevision: contentRevision,
           pendingPayload,
         }),
       );
@@ -289,6 +343,7 @@ function QuestionReader({
     saved,
     draftKey,
     pendingPayload,
+    contentRevision,
   ]);
   useEffect(() => {
     if (!review || revealed || paused) return;
@@ -306,7 +361,7 @@ function QuestionReader({
         answer: q.question_type === "text" ? text : answer,
         duration_seconds: seconds,
         expected_revision: presentedRevision.current,
-        content_revision: contentRevision.current,
+        content_revision: contentRevision,
         mode: practice ? "practice" : "review",
         rating,
         reason_tags: reasons,
@@ -353,168 +408,269 @@ function QuestionReader({
       setSaving(false);
     }
   };
+  const answerTone =
+    q.question_type === "text"
+      ? "neutral"
+      : !result.correct
+        ? "wrong"
+        : result.yellow
+          ? "yellow"
+          : "correct";
+  const optionImages = q.options.some((o) => o.content_md.includes("!["));
   return (
-    <div className="space-y-6">
-      {review && (
-        <div className="flex justify-between border-y border-border py-3 text-sm">
-          <span className="font-mono-data">
-            {seconds} 秒
-            {q.target_seconds
-              ? ` / 目标 ${q.target_seconds} 秒`
-              : " · 未设速度目标"}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setPaused((v) => !v)}
-          >
-            {paused ? "继续计时" : "暂停"}
-          </Button>
-        </div>
-      )}
-      <div
-        className={material ? "grid lg:grid-cols-2 gap-8" : "max-w-3xl mx-auto"}
-      >
-        {material && (
-          <details
-            open
-            className="min-w-0 border-b lg:border-b-0 lg:border-r border-border pb-5 lg:pr-7"
-          >
-            <summary className="font-medium cursor-pointer mb-4">
-              共用材料
-            </summary>
-            <StudyMarkdown>{material.content_md}</StudyMarkdown>
-          </details>
-        )}
-        <section className="min-w-0">
-          <StudyMarkdown>{q.stem_md}</StudyMarkdown>
-          <div
-            className={`mt-6 grid gap-3 ${q.options.some((o) => o.content_md.includes("![")) ? "grid-cols-2" : ""}`}
-          >
-            {q.options.map((o) => (
-              <button
-                key={o.key}
-                type="button"
-                disabled={revealed || !review}
-                aria-pressed={answer.includes(o.key)}
-                onClick={() =>
-                  setAnswer((v) =>
-                    q.question_type === "multiple"
-                      ? v.includes(o.key)
-                        ? v.filter((k) => k !== o.key)
-                        : [...v, o.key]
-                      : [o.key],
-                  )
-                }
-                className={`text-left p-4 border rounded-md min-w-0 ${answer.includes(o.key) ? "border-foreground bg-muted" : "border-border bg-card"} ${revealed && normalizeAnswer(q.correct_answer).includes(o.key) ? "ring-1 ring-cat-green" : ""}`}
-              >
-                <span className="block text-xs font-semibold mb-2">
-                  {o.key}
-                </span>
-                <StudyMarkdown>{o.content_md}</StudyMarkdown>
-              </button>
-            ))}
-          </div>
-          {q.question_type === "text" && review && (
-            <Textarea
-              className="mt-5 min-h-40"
-              aria-label="我的作答"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              disabled={revealed}
-              placeholder="先写下你的作答，再查看参考答案…"
-            />
-          )}
-          {review && !revealed && (
-            <Button
-              className="mt-5"
-              disabled={
-                q.question_type === "text" ? !text.trim() : answer.length === 0
-              }
-              onClick={() => setRevealed(true)}
-            >
-              提交答案并查看解析
-            </Button>
-          )}
-        </section>
-      </div>
-      {(!review || revealed) && (
-        <section className="max-w-3xl mx-auto border-t border-border pt-6 space-y-6">
-          <div>
-            <h2 className="heading-font text-xl mb-3">答案与解析</h2>
-            {q.question_type === "text" ? (
-              <StudyMarkdown>
-                {typeof q.correct_answer === "string" ? q.correct_answer : ""}
-              </StudyMarkdown>
-            ) : (
-              <p className="font-medium mb-4">
-                正确答案：
-                {normalizeAnswer(q.correct_answer).join("、") || "待补充"}
-                {review
-                  ? ` · ${result.correct ? (result.yellow ? "答对，但用时未达标" : "答对了") : "这次答错了"}`
-                  : ""}
-              </p>
-            )}
-            <StudyMarkdown>{q.explanation_md || "解析待补充。"}</StudyMarkdown>
-          </div>
-          <div>
-            <h2 className="heading-font text-xl mb-3">我的错因</h2>
-            <StudyMarkdown>
-              {q.analysis_md || "记录当时的错误思路，下次更容易识别。"}
-            </StudyMarkdown>
+    <div className="prep-reader">
+      <article className="prep-sheet">
+        <header className="prep-sheet-top">
+          <div className="prep-question-meta">
+            <strong>{questionTypeLabel[q.question_type]}</strong>
+            <span>·</span>
+            <span>{q.tags.join(" / ") || "待复盘"}</span>
           </div>
           {review && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {REASON_TAGS.map((r) => (
+            <div className="prep-timer">
+              <Clock3 size={14} />
+              <span className="prep-timer-value">
+                {String(Math.floor(seconds / 60)).padStart(2, "0")}:
+                {String(seconds % 60).padStart(2, "0")}
+              </span>
+              {q.target_seconds && (
+                <span className="prep-timer-target">
+                  目标 {q.target_seconds} 秒
+                </span>
+              )}
+              <button
+                aria-label={paused ? "继续计时" : "暂停"}
+                onClick={() => setPaused((v) => !v)}
+              >
+                {paused ? <Play size={13} /> : <Pause size={13} />}
+              </button>
+            </div>
+          )}
+        </header>
+        <div
+          className={`prep-question-layout ${material ? "prep-question-layout--material" : ""}`}
+        >
+          {material && (
+            <details open className="prep-material">
+              <summary>
+                共用材料
+                <ChevronDown size={15} />
+              </summary>
+              <StudyMarkdown variant="question">
+                {material.content_md}
+              </StudyMarkdown>
+            </details>
+          )}
+          <section className="prep-question-body">
+            <div className="prep-stem">
+              <StudyMarkdown variant="question">{q.stem_md}</StudyMarkdown>
+            </div>
+            <div
+              className={`prep-options ${optionImages ? "prep-options--images" : ""}`}
+            >
+              {q.options.map((o) => {
+                const correct = normalizeAnswer(q.correct_answer).includes(
+                  o.key,
+                );
+                return (
                   <button
-                    key={r}
-                    aria-pressed={reasons.includes(r)}
-                    className={`border rounded-md min-h-11 px-3 text-sm ${reasons.includes(r) ? "bg-muted border-foreground" : "border-border"}`}
+                    key={o.key}
+                    type="button"
+                    className="prep-option"
+                    disabled={revealed || !review}
+                    aria-pressed={answer.includes(o.key)}
+                    data-answer={
+                      revealed
+                        ? correct
+                          ? "correct"
+                          : answer.includes(o.key)
+                            ? "wrong"
+                            : undefined
+                        : undefined
+                    }
                     onClick={() =>
-                      setReasons((v) =>
-                        v.includes(r) ? v.filter((x) => x !== r) : [...v, r],
+                      setAnswer((v) =>
+                        q.question_type === "multiple"
+                          ? v.includes(o.key)
+                            ? v.filter((k) => k !== o.key)
+                            : [...v, o.key]
+                          : [o.key],
                       )
                     }
                   >
-                    {r}
+                    <span className="prep-option-key">{o.key}</span>
+                    <div className="prep-option-content">
+                      <StudyMarkdown variant="question">
+                        {o.content_md}
+                      </StudyMarkdown>
+                    </div>
+                    {revealed && correct && !optionImages && (
+                      <Check className="prep-option-status" size={16} />
+                    )}
                   </button>
-                ))}
+                );
+              })}
+            </div>
+            {q.question_type === "text" && review && (
+              <Textarea
+                className="min-h-40"
+                aria-label="我的作答"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                disabled={revealed}
+                placeholder="写下你的作答…"
+              />
+            )}
+            {review && !revealed && (
+              <div className="prep-actionbar">
+                <span className="prep-action-hint">
+                  {q.question_type === "multiple"
+                    ? "可选择多个答案"
+                    : q.question_type === "text"
+                      ? "完成后对照评分要点"
+                      : "选择一个答案"}
+                </span>
+                <Button
+                  className="prep-primary prep-submit-answer"
+                  aria-label="提交答案并查看解析"
+                  disabled={
+                    q.question_type === "text"
+                      ? !text.trim()
+                      : answer.length === 0
+                  }
+                  onClick={() => setRevealed(true)}
+                >
+                  提交答案
+                  <ArrowRight size={15} />
+                </Button>
               </div>
-              {q.question_type === "text" && (
-                <label className="flex gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selfCorrect}
-                    onChange={(e) => setSelfCorrect(e.target.checked)}
-                  />
-                  对照评分要点，本次作答正确
-                </label>
+            )}
+          </section>
+        </div>
+      </article>
+      {(!review || revealed) && (
+        <section className="prep-sheet prep-analysis">
+          <div
+            className="prep-result"
+            data-tone={review ? answerTone : "correct"}
+          >
+            {review && answerTone === "wrong" ? (
+              <RotateCcw size={20} />
+            ) : review && answerTone === "yellow" ? (
+              <Clock3 size={20} />
+            ) : (
+              <CheckCheck size={20} />
+            )}
+            <div className="prep-result-copy">
+              <strong>
+                {q.question_type === "text"
+                  ? "对照参考答案"
+                  : review
+                    ? result.correct
+                      ? result.yellow
+                        ? "答对了，还需要提速"
+                        : "这次答对了"
+                      : "这次答错了"
+                    : "答案与解析"}
+              </strong>
+              {q.question_type !== "text" && (
+                <span>
+                  正确答案{" "}
+                  {normalizeAnswer(q.correct_answer).join("、") || "待补充"}
+                  {review ? ` · 你的答案 ${answer.join("、")}` : ""}
+                </span>
               )}
+            </div>
+          </div>
+          <QuestionAnalysis question={q} disabled={saving || !!pendingPayload}
+            onEditingChange={setEditingAnalysis}
+            onSave={async (base, patch) => {
+              try { return await prep.editQuestion(base, patch) as PrepQuestion; }
+              catch (error) { await prep.refresh(); throw error; }
+            }}
+            onSaved={(next, base) => {
+              setEditedQuestion(next);
+              // Only commentary changed; keep the active attempt valid if its original content was current.
+              if (contentRevision === base.revision) setContentRevision(next.revision);
+              toast({ title: "题目内容已保存" });
+            }}>
+              {review && (
+                <>
+                  <p className="text-xs text-muted-foreground mt-6">
+                    这次卡在哪里？
+                  </p>
+                  <div className="prep-reasons">
+                    {REASON_TAGS.map((r) => (
+                      <button
+                        key={r}
+                        className="prep-reason"
+                        aria-pressed={reasons.includes(r)}
+                        onClick={() =>
+                          setReasons((v) =>
+                            v.includes(r)
+                              ? v.filter((x) => x !== r)
+                              : [...v, r],
+                          )
+                        }
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+          </QuestionAnalysis>
+          {review && (
+            <div className="prep-review-rating">
+              <div>
+                {q.question_type === "text" && (
+                  <label className="flex gap-2 text-sm mb-3">
+                    <input
+                      type="checkbox"
+                      checked={selfCorrect}
+                      onChange={(e) => setSelfCorrect(e.target.checked)}
+                    />
+                    对照评分要点，本次作答正确
+                  </label>
+                )}
+                <p className="text-sm font-medium">
+                  {saved ? "本次复盘已记录" : "这道题，掌握得怎么样？"}
+                </p>
+                <p className="prep-action-hint mt-1">
+                  {practice
+                    ? "本次为自由练习，不改变复习排期。"
+                    : result.yellow
+                      ? "答对但超时，按黄题安排复习。"
+                      : "选择后保存，并更新下次复习安排。"}
+                </p>
+              </div>
               {saved ? (
-                <div className="space-y-3">
+                <div>
                   {receipt?.attempt?.mode === "practice" && !practice && (
-                    <p className="text-sm text-cat-orange">
-                      题目或复习状态已更新，本次保留为练习，没有重复推进排期。
+                    <p className="text-xs text-cat-orange mb-3">
+                      另一端已更新，本次保留为练习。
                     </p>
                   )}
                   {receipt?.review_state?.due_at && (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mb-3">
                       下次复习：
                       {new Date(receipt.review_state.due_at).toLocaleString()}
                     </p>
                   )}
                   <Button
+                    className="prep-primary"
+                    disabled={editingAnalysis}
                     onClick={() => {
                       onNext();
                       void prep.refresh();
                     }}
                   >
                     下一题
+                    <ArrowRight size={15} />
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="prep-rating-buttons">
                   {[
                     [1, "重学"],
                     [2, "困难"],
@@ -523,9 +679,10 @@ function QuestionReader({
                   ].map(([rating, label]) => (
                     <Button
                       key={rating}
-                      variant={rating === 3 ? "default" : "outline"}
+                      variant="outline"
+                      className={rating === 3 ? "prep-primary" : ""}
                       disabled={
-                        saving ||
+                        saving || editingAnalysis ||
                         (Number(rating) > 1 &&
                           !(q.question_type === "text"
                             ? selfCorrect
@@ -539,11 +696,6 @@ function QuestionReader({
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">
-                {practice
-                  ? "自由练习只记录表现，不推进复习排期。"
-                  : "确认结果后同步复习状态；答对但超时仍按黄题处理。"}
-              </p>
             </div>
           )}
         </section>
@@ -552,6 +704,7 @@ function QuestionReader({
     </div>
   );
 }
+
 function QuestionEditor({
   question,
   prep,
@@ -678,7 +831,7 @@ function QuestionEditor({
   );
   return (
     <form
-      className="space-y-5 border-y border-border py-5"
+      className="prep-form space-y-5"
       onSubmit={async (e) => {
         e.preventDefault();
         if (submitting || conflict) return;
@@ -752,7 +905,11 @@ function QuestionEditor({
                 },
               });
           }
-          if(paperId)await prep.save({collection:"paperQuestions",record:{paper_id:paperId,question_id:row.id}});
+          if (paperId)
+            await prep.save({
+              collection: "paperQuestions",
+              record: { paper_id: paperId, question_id: row.id },
+            });
           localStorage.removeItem(draftKey);
           onClose();
         } catch (e) {
@@ -786,8 +943,14 @@ function QuestionEditor({
           <p className="font-medium">另一端已修改此题，你的草稿仍保留。</p>
           <details open>
             <summary>最新版本 v{conflict.revision}</summary>
-            <StudyMarkdown>
-              {[conflict.stem_md,...conflict.options.map(o=>`${o.key}. ${o.content_md}`),`答案：${normalizeAnswer(conflict.correct_answer).join("、")}`,conflict.explanation_md,conflict.analysis_md].join("\n\n")}
+            <StudyMarkdown variant="question">
+              {[
+                conflict.stem_md,
+                ...conflict.options.map((o) => `${o.key}. ${o.content_md}`),
+                `答案：${normalizeAnswer(conflict.correct_answer).join("、")}`,
+                conflict.explanation_md,
+                conflict.analysis_md,
+              ].join("\n\n")}
             </StudyMarkdown>
           </details>
           <Button
