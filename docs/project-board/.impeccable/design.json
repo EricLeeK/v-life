@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-01T03:13:03.220435+00:00",
+  "title": "Design System: V-Life Project Board",
+  "extensions": {
+    "colorMeta": {
+      "background": {
+        "role": "neutral",
+        "displayName": "background",
+        "tonalRamp": [
+          "oklch(15% 0.0049 84.56)",
+          "oklch(26% 0.0049 84.56)",
+          "oklch(38% 0.0049 84.56)",
+          "oklch(49% 0.0049 84.56)",
+          "oklch(61% 0.0049 84.56)",
+          "oklch(72% 0.0049 84.56)",
+          "oklch(84% 0.0049 84.56)",
+          "oklch(95% 0.0049 84.56)"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0156 66.87)",
+          "oklch(26% 0.0156 66.87)",
+          "oklch(38% 0.0156 66.87)",
+          "oklch(49% 0.0156 66.87)",
+          "oklch(61% 0.0156 66.87)",
+          "oklch(72% 0.0156 66.87)",
+          "oklch(84% 0.0156 66.87)",
+          "oklch(95% 0.0156 66.87)"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "card",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "primary",
+        "tonalRamp": [
+          "oklch(15% 0.0156 66.87)",
+          "oklch(26% 0.0156 66.87)",
+          "oklch(38% 0.0156 66.87)",
+          "oklch(49% 0.0156 66.87)",
+          "oklch(61% 0.0156 66.87)",
+          "oklch(72% 0.0156 66.87)",
+          "oklch(84% 0.0156 66.87)",
+          "oklch(95% 0.0156 66.87)"
+        ]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "primary-foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "muted",
+        "tonalRamp": [
+          "oklch(15% 0.0071 84.57)",
+          "oklch(26% 0.0071 84.57)",
+          "oklch(38% 0.0071 84.57)",
+          "oklch(49% 0.0071 84.57)",
+          "oklch(61% 0.0071 84.57)",
+          "oklch(72% 0.0071 84.57)",
+          "oklch(84% 0.0071 84.57)",
+          "oklch(95% 0.0071 84.57)"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "muted-foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0255 78.05)",
+          "oklch(26% 0.0255 78.05)",
+          "oklch(38% 0.0255 78.05)",
+          "oklch(49% 0.0255 78.05)",
+          "oklch(61% 0.0255 78.05)",
+          "oklch(72% 0.0255 78.05)",
+          "oklch(84% 0.0255 78.05)",
+          "oklch(95% 0.0255 78.05)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "border",
+        "tonalRamp": [
+          "oklch(15% 0.0103 84.58)",
+          "oklch(26% 0.0103 84.58)",
+          "oklch(38% 0.0103 84.58)",
+          "oklch(49% 0.0103 84.58)",
+          "oklch(61% 0.0103 84.58)",
+          "oklch(72% 0.0103 84.58)",
+          "oklch(84% 0.0103 84.58)",
+          "oklch(95% 0.0103 84.58)"
+        ]
+      },
+      "cat-green": {
+        "role": "secondary",
+        "displayName": "cat-green",
+        "tonalRamp": [
+          "oklch(15% 0.1057 136.53)",
+          "oklch(26% 0.1057 136.53)",
+          "oklch(38% 0.1057 136.53)",
+          "oklch(49% 0.1057 136.53)",
+          "oklch(61% 0.1057 136.53)",
+          "oklch(72% 0.1057 136.53)",
+          "oklch(84% 0.1057 136.53)",
+          "oklch(95% 0.1057 136.53)"
+        ]
+      },
+      "cat-blue": {
+        "role": "secondary",
+        "displayName": "cat-blue",
+        "tonalRamp": [
+          "oklch(15% 0.0939 246.27)",
+          "oklch(26% 0.0939 246.27)",
+          "oklch(38% 0.0939 246.27)",
+          "oklch(49% 0.0939 246.27)",
+          "oklch(61% 0.0939 246.27)",
+          "oklch(72% 0.0939 246.27)",
+          "oklch(84% 0.0939 246.27)",
+          "oklch(95% 0.0939 246.27)"
+        ]
+      },
+      "cat-orange": {
+        "role": "secondary",
+        "displayName": "cat-orange",
+        "tonalRamp": [
+          "oklch(15% 0.1157 47.70)",
+          "oklch(26% 0.1157 47.70)",
+          "oklch(38% 0.1157 47.70)",
+          "oklch(49% 0.1157 47.70)",
+          "oklch(61% 0.1157 47.70)",
+          "oklch(72% 0.1157 47.70)",
+          "oklch(84% 0.1157 47.70)",
+          "oklch(95% 0.1157 47.70)"
+        ]
+      },
+      "cat-purple": {
+        "role": "secondary",
+        "displayName": "cat-purple",
+        "tonalRamp": [
+          "oklch(15% 0.1498 291.16)",
+          "oklch(26% 0.1498 291.16)",
+          "oklch(38% 0.1498 291.16)",
+          "oklch(49% 0.1498 291.16)",
+          "oklch(61% 0.1498 291.16)",
+          "oklch(72% 0.1498 291.16)",
+          "oklch(84% 0.1498 291.16)",
+          "oklch(95% 0.1498 291.16)"
+        ]
+      },
+      "cat-red": {
+        "role": "secondary",
+        "displayName": "cat-red",
+        "tonalRamp": [
+          "oklch(15% 0.1483 24.84)",
+          "oklch(26% 0.1483 24.84)",
+          "oklch(38% 0.1483 24.84)",
+          "oklch(49% 0.1483 24.84)",
+          "oklch(61% 0.1483 24.84)",
+          "oklch(72% 0.1483 24.84)",
+          "oklch(84% 0.1483 24.84)",
+          "oklch(95% 0.1483 24.84)"
+        ]
+      },
+      "cat-yellow": {
+        "role": "secondary",
+        "displayName": "cat-yellow",
+        "tonalRamp": [
+          "oklch(15% 0.0958 79.86)",
+          "oklch(26% 0.0958 79.86)",
+          "oklch(38% 0.0958 79.86)",
+          "oklch(49% 0.0958 79.86)",
+          "oklch(61% 0.0958 79.86)",
+          "oklch(72% 0.0958 79.86)",
+          "oklch(84% 0.0958 79.86)",
+          "oklch(95% 0.0958 79.86)"
+        ]
+      },
+      "cat-teal": {
+        "role": "secondary",
+        "displayName": "cat-teal",
+        "tonalRamp": [
+          "oklch(15% 0.0697 203.79)",
+          "oklch(26% 0.0697 203.79)",
+          "oklch(38% 0.0697 203.79)",
+          "oklch(49% 0.0697 203.79)",
+          "oklch(61% 0.0697 203.79)",
+          "oklch(72% 0.0697 203.79)",
+          "oklch(84% 0.0697 203.79)",
+          "oklch(95% 0.0697 203.79)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "compact": {
+        "displayName": "紧凑标题",
+        "purpose": "卡片、列与侧栏项目名。"
+      },
+      "label": {
+        "displayName": "标签",
+        "purpose": "筛选和摘要。"
+      },
+      "caption": {
+        "displayName": "辅助信息",
+        "purpose": "日期、描述与类型。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "work-card-rest",
+        "value": "0 2px 3px hsl(var(--foreground)/.025),0 5px 10px -8px hsl(var(--foreground)/.12)",
+        "purpose": "卡片静止。"
+      },
+      {
+        "name": "work-card-carried",
+        "value": "0 18px 36px -12px hsl(var(--foreground)/.18),0 4px 10px -4px hsl(var(--foreground)/.1)",
+        "purpose": "仅拖动浮层。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "drag-position",
+        "value": "stiffness:850; damping:46",
+        "purpose": "位置阻尼弹簧。"
+      },
+      {
+        "name": "drag-angle",
+        "value": "stiffness:340; damping:27; clamp:-4.5deg 4.5deg",
+        "purpose": "移动速度乘 0.008 得到目标倾角；静止回正。"
+      },
+      {
+        "name": "neighbor-layout",
+        "value": "spring stiffness:380 damping:30",
+        "purpose": "邻卡让位；减少动态效果时 duration:0。"
+      },
+      {
+        "name": "distribution",
+        "value": "240ms cubic-bezier(.22,1,.36,1)",
+        "purpose": "状态分布宽度；减少动态效果时关闭。"
+      },
+      {
+        "name": "sidebar-hover",
+        "value": "150ms ease-out",
+        "purpose": "项目背景变化。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "board-mobile-max",
+        "value": "767px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "复用共享按钮；手机看板头部保证 44px 命中高度。",
+      "html": "<button class=\"ds-button-primary\">新建事项</button>",
+      "css": ".ds-button-primary{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background:hsl(var(--primary));color:hsl(var(--primary-foreground));box-shadow:0 1px 2px rgba(42,36,29,.08);border:0;border-radius:var(--radius);font-size:14px;font-weight:500;padding:8px 16px;height:40px;cursor:pointer;}.ds-button-primary:hover{background:hsl(var(--primary)/.9);box-shadow:0 2px 6px rgba(42,36,29,.12);}.ds-button-primary:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px;}@media(max-width:767px){.ds-button-primary{min-height:44px;}}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "复用共享按钮；手机看板头部保证 44px 命中高度。",
+      "html": "<button class=\"ds-button-ghost\">编辑</button>",
+      "css": ".ds-button-ghost{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;background:transparent;color:hsl(var(--foreground));border:0;border-radius:var(--radius);font-size:14px;font-weight:500;padding:8px 16px;height:40px;cursor:pointer;}.ds-button-ghost:hover{background:hsl(var(--accent));color:hsl(var(--accent-foreground));}.ds-button-ghost:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px;}@media(max-width:767px){.ds-button-ghost{min-height:44px;}}"
+    },
+    {
+      "name": "Item Input",
+      "kind": "input",
+      "refersTo": "item-input",
+      "description": "标题与权重复用共享输入框。",
+      "html": "<label class=\"ds-label\" for=\"ds-title\">标题</label><input class=\"ds-input\" id=\"ds-title\" value=\"完成文献综述\" />",
+      "css": ".ds-label{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;display:block;color:hsl(var(--foreground));font-size:14px;}.ds-input{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;height:40px;padding:8px 12px;border:1px solid hsl(var(--input));border-radius:var(--radius);background:hsl(var(--card));color:hsl(var(--foreground));font-size:14px;}.ds-input:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px;border-color:hsl(var(--ring));}"
+    },
+    {
+      "name": "Selected Filter",
+      "kind": "nav",
+      "refersTo": "filter-selected",
+      "description": "筛选选中状态以表面、阴影和 aria-pressed 共同表达。",
+      "html": "<button class=\"ds-filter\" aria-pressed=\"true\">全部</button><button class=\"ds-filter\" aria-pressed=\"false\">任务</button>",
+      "css": ".ds-filter{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;padding:6px 10px;border:0;border-radius:calc(var(--radius) - 2px);font-size:12px;min-height:32px;background:transparent;color:hsl(var(--muted-foreground));}.ds-filter[aria-pressed=\"true\"]{background:hsl(var(--card));color:hsl(var(--foreground));box-shadow:var(--shadow-btn);}.ds-filter:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px;}@media(max-width:767px){.ds-filter{min-height:44px;}}"
+    },
+    {
+      "name": "Project Status",
+      "kind": "chip",
+      "refersTo": "status-label",
+      "description": "真实项目状态签；手机隐藏。",
+      "html": "<span class=\"ds-status\">进行中</span>",
+      "css": ".ds-status{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;display:inline-block;font-size:11px;padding:4px 8px;border-radius:calc(var(--radius) - 2px);background:hsl(var(--muted));color:hsl(var(--muted-foreground));}@media(max-width:767px){.ds-status{display:none;}}"
+    },
+    {
+      "name": "Work Card",
+      "kind": "card",
+      "refersTo": "work-card",
+      "description": "标题、描述和类型的重复卡片骨架；点击正文编辑。",
+      "html": "<article class=\"ds-card\"><div role=\"button\" tabindex=\"0\" class=\"ds-card-body\"><div class=\"ds-card-title\">完成文献综述</div><p class=\"ds-card-description\">整理已阅读文献的核心方法与结论。</p><div class=\"ds-card-meta\">任务 <time datetime=\"2026-11-10\">11/10</time></div></div></article>",
+      "css": ".ds-card{font-family:Inter,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;border-radius:var(--radius);background:hsl(var(--card));color:hsl(var(--foreground));overflow:hidden;box-shadow:0 2px 3px hsl(var(--foreground)/.025),0 5px 10px -8px hsl(var(--foreground)/.12);}.ds-card-body{padding:15px 15px 12px;cursor:pointer;}.ds-card-body:focus-visible{background:hsl(var(--muted)/.5);}.ds-card-title{font-size:13px;line-height:1.65;font-weight:500;}.ds-card-description{font-size:11px;line-height:1.7;margin:6px 0 0;color:hsl(var(--muted-foreground));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}.ds-card-meta{display:flex;justify-content:space-between;gap:8px;margin-top:16px;font-size:11px;color:hsl(var(--muted-foreground));}.ds-card-meta time{font-variant-numeric:tabular-nums;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Warm Desk Ledger",
+    "overview": "这是 Warm Desk Ledger 在项目管理中的局部扩展：暖纸背景、墨色层级、语义分类色与细栏线维持原品牌，柔和纹理和拖动重量感帮助辨认与移动工作项。四列工作台的形式来自已批准原型，未重新选择 FORM，也没有随机 seed。\n\n本文件只约束项目看板及其工作项弹窗；全局品牌仍以根 DESIGN.md 为准。记录依据为实际组件、样式与最终桌面、手机、暗色和纹理选择器截图；功能与验证详情见 README.md。",
+    "keyCharacteristics": [
+      "语义色随明暗主题切换",
+      "Inter 为看板信息主字体，复用小圆角",
+      "纹理可选、拖动有重量、减少动态效果可用"
+    ],
+    "rules": [
+      {
+        "name": "Shared Palette",
+        "body": "纹理、状态与进度复用现有语义色，不建立项目专属色表。",
+        "section": "colors"
+      },
+      {
+        "name": "Lift While Carried",
+        "body": "卡片静止时保持轻阴影，仅拖动浮层使用明显抬升阴影。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 保留任务、里程碑与习惯的视觉与行为区别；习惯独立打卡。",
+      "Do 保留手机拖柄、完成和打卡的至少 44×44px 命中区。",
+      "Do 复用主题变量、双语文案和减少动态效果分支。"
+    ],
+    "donts": [
+      "Don’t 将局部四列构图、纹理或拖动倾角推广为全站规则。",
+      "Don’t 把颜色或纹理当作事项类型、完成状态的唯一提示。",
+      "Don’t 把截图中的示例项目、日期或设计试验工具栏写入产品规范。"
+    ]
+  }
+}

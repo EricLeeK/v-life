@@ -92,9 +92,9 @@ export default function ProjectsPage() {
           <select id="mobile-project" value={selectedId ?? ""} onChange={event => setSelectedId(event.target.value)} className="min-h-11 min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-base text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
             {projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
           </select>
-          <Button className="min-h-11 shrink-0" onClick={() => { setEditingProject(null); setProjectModalOpen(true); }}>{t("新建", "New")}</Button>
+          <Button className="min-h-11 shrink-0" onClick={() => { setEditingProject(null); setProjectModalOpen(true); }}>{t("新建项目", "New project")}</Button>
         </div>}
-        {projects.length > 0 && <div className="hidden md:block md:w-72 shrink-0 border-r border-border overflow-y-auto">
+        {projects.length > 0 && <div className="hidden md:block md:w-56 shrink-0 border-r border-border overflow-y-auto project-scroll-region">
           <ProjectSidebar
             projects={projects}
             selectedId={selectedId}
@@ -104,11 +104,9 @@ export default function ProjectsPage() {
               setProjectModalOpen(true);
             }}
             onEdit={handleEditProject}
-            editMode={editMode}
-            onDelete={setDeletingProject}
           />
         </div>}
-        <div className="flex-1 min-w-0 overflow-auto">
+        <div className="flex-1 min-w-0 overflow-auto project-scroll-region">
           {selectedProject ? (
             <ProjectBoard
               key={selectedProject.id}

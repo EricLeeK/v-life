@@ -93,3 +93,9 @@
   .paper-button:active:not(:disabled), .paper-checkbox:active:not(:disabled) { transform: none; }
   .paper-select-panel[data-state] { animation: none; }
 }
+
+/* Legacy primary utility buttons share the action palette; text-primary remains ink. */
+button.bg-primary, a.bg-primary { background-color:hsl(var(--action)); color:hsl(var(--action-foreground)); }
+button.bg-primary:hover, a.bg-primary:hover { background-color:hsl(var(--action-hover)); }
+button.bg-foreground.text-background { background-color:hsl(var(--action)); color:hsl(var(--action-foreground)); border-color:hsl(var(--action)); }
+button.bg-foreground.text-background:hover { background-color:hsl(var(--action-hover)); }

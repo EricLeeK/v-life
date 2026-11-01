@@ -309,7 +309,10 @@ function generateCalorieRecords(): Tables<"calorie_records">[] {
 export const demoCalorieRecords = generateCalorieRecords();
 
 // ============ Todos ============
-export const demoTodos: Tables<"todos">[] = [
+// sort_order optional here (defaults to 0): demo rows order by created_at
+// until a demo-mode drag writes explicit indexes.
+type DemoTodo = Omit<Tables<"todos">, "sort_order"> & { sort_order?: number };
+export const demoTodos: DemoTodo[] = [
   // AI学习 Category Tasks matching screenshot
   { id: "demo-t-ai-01", title: "Multi-agent PDE solving system - LEAP", detail: null, importance: "urgent", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-08T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00", user_id: DEMO_USER },
   { id: "demo-t-ai-02", title: "秋招 agent 或者自动化开发", detail: null, importance: "important", category: "AI学习", is_completed: false, is_archived: false, created_at: "2026-05-07T10:00:00+09:00", updated_at: "2026-05-07T10:00:00+09:00", user_id: DEMO_USER },
@@ -714,8 +717,8 @@ export const demoTaskTags = [
 // ============ Project Tasks ============
 export const demoProjectTasks = [
   // FEM project tasks
-  { id: TASK_FEM_AUTODIFF, title: "实现自动微分模块", description: "基于PyTorch autograd实现FEM求解器的反向传播", status: "in_progress", type: "task", due_date: "2026-05-15", sort_order: 1, weight: 3, project_id: PROJ_FEM, created_at: "2026-03-15T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
-  { id: TASK_FEM_TESTS, title: "编写单元测试", description: "覆盖核心求解器和网格模块的测试用例", status: "todo", type: "task", due_date: "2026-05-20", sort_order: 2, weight: 2, project_id: PROJ_FEM, created_at: "2026-03-15T10:00:00+09:00", updated_at: "2026-03-15T10:00:00+09:00" },
+  { id: TASK_FEM_AUTODIFF, cover_preset: "mist", title: "实现自动微分模块", description: "基于PyTorch autograd实现FEM求解器的反向传播", status: "in_progress", type: "task", due_date: "2026-05-15", sort_order: 1, weight: 3, project_id: PROJ_FEM, created_at: "2026-03-15T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
+  { id: TASK_FEM_TESTS, cover_preset: "sand", title: "编写单元测试", description: "覆盖核心求解器和网格模块的测试用例", status: "todo", type: "task", due_date: "2026-05-20", sort_order: 2, weight: 2, project_id: PROJ_FEM, created_at: "2026-03-15T10:00:00+09:00", updated_at: "2026-03-15T10:00:00+09:00" },
   { id: TASK_FEM_SURVEY, title: "文献调研", description: "调研可微分物理模拟的最新论文", status: "done", type: "task", due_date: "2026-04-01", sort_order: 3, weight: 1, project_id: PROJ_FEM, created_at: "2026-03-01T10:00:00+09:00", updated_at: "2026-04-01T10:00:00+09:00" },
   { id: TASK_FEM_MESH, title: "实现网格生成模块", description: "支持三角形和四边形网格的自动生成", status: "done", type: "task", due_date: "2026-04-15", sort_order: 4, weight: 2, project_id: PROJ_FEM, created_at: "2026-03-15T10:00:00+09:00", updated_at: "2026-04-15T10:00:00+09:00" },
   // Habit tasks for FEM project
@@ -724,8 +727,8 @@ export const demoProjectTasks = [
   { id: HABIT_READ, title: "每日阅读", description: "每天至少读30分钟论文或技术书", status: "in_progress", type: "habit", due_date: null, sort_order: 12, weight: 1, project_id: PROJ_FEM, created_at: "2026-04-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
   // Blog project tasks
   { id: TASK_BLOG_SETUP, title: "搭建框架", description: "用Astro + Tailwind搭建博客框架", status: "done", type: "task", due_date: "2026-04-25", sort_order: 1, weight: 2, project_id: PROJ_BLOG, created_at: "2026-04-15T10:00:00+09:00", updated_at: "2026-04-25T10:00:00+09:00" },
-  { id: TASK_BLOG_ARTICLE, title: "撰写第一篇文章", description: "PyTorch自定义CUDA算子教程", status: "in_progress", type: "task", due_date: "2026-05-15", sort_order: 2, weight: 3, project_id: PROJ_BLOG, created_at: "2026-04-25T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
-  { id: TASK_BLOG_DEPLOY, title: "部署上线", description: "Vercel部署 + 自定义域名", status: "todo", type: "task", due_date: "2026-05-20", sort_order: 3, weight: 1, project_id: PROJ_BLOG, created_at: "2026-04-15T10:00:00+09:00", updated_at: "2026-04-15T10:00:00+09:00" },
+  { id: TASK_BLOG_ARTICLE, cover_preset: "iris", title: "撰写第一篇文章", description: "PyTorch自定义CUDA算子教程", status: "in_progress", type: "task", due_date: "2026-05-15", sort_order: 2, weight: 3, project_id: PROJ_BLOG, created_at: "2026-04-25T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
+  { id: TASK_BLOG_DEPLOY, cover_preset: "sage", title: "部署上线", description: "Vercel部署 + 自定义域名", status: "todo", type: "task", due_date: "2026-05-20", sort_order: 3, weight: 1, project_id: PROJ_BLOG, created_at: "2026-04-15T10:00:00+09:00", updated_at: "2026-04-15T10:00:00+09:00" },
   // Thesis project tasks
   { id: TASK_THESIS_LIT, title: "完成文献综述", description: "整理可微分FEM相关文献，写综述初稿", status: "in_progress", type: "task", due_date: "2026-06-01", sort_order: 1, weight: 3, project_id: PROJ_THESIS, created_at: "2026-02-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
   { id: TASK_THESIS_EXPT, title: "设计实验方案", description: "确定基准测试和对比实验", status: "todo", type: "task", due_date: "2026-07-01", sort_order: 2, weight: 2, project_id: PROJ_THESIS, created_at: "2026-02-01T10:00:00+09:00", updated_at: "2026-02-01T10:00:00+09:00" },

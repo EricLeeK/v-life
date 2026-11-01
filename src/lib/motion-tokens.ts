@@ -15,5 +15,12 @@ export const motionTokens = {
   spring: {
     ...upstream.spring,
     smooth: { type: "spring", visualDuration: 0.34, bounce: 0 } as const,
+    /** Drag-to-reorder feel (SortableList). `dragSettle` springs items into
+     * their slots (~0.25s, damping ratio ≈ 0.77 — barely overshoots);
+     * `dragFollow` lets the carried item trail the pointer with a slight,
+     * hand-like lag. Ripple stagger is 24ms per ripple step, amplitude
+     * ×0.7 per step (see SortableEngine). */
+    dragSettle: { type: "spring", stiffness: 380, damping: 30 } as const,
+    dragFollow: { type: "spring", stiffness: 420, damping: 34 } as const,
   },
 };

@@ -48,3 +48,6 @@ temp/
 
 # Supabase CLI temp files
 supabase/.temp/
+
+# Local frame-by-frame animation comparison evidence
+.reanimate/

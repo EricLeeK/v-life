@@ -274,8 +274,8 @@ export default function CaloriesPage() {
           onOpenChange={setSheetOpen}
           title={`${editingItem ? t("编辑", "Edit") : t("添加", "Add")} ${t("记录", "Record")}`}
           description={t("写下吃了什么，热量会立刻进到当天的环图里。", "Name the food. Its calories join this day's ring.")}
-          detents={[0.62, 0.92]}
-          initialDetent={1}
+          detents={[0.46, 0.92]}
+          initialDetent={0}
           className="arc-runtime"
           closeLabel={t("关闭", "Close")}
         >

@@ -2,7 +2,7 @@
 
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, FocusEvent, KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode, WheelEvent } from "react";
+import type { CSSProperties, KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { AnimatePresence, animate, motion, useMotionValue, usePresence, useReducedMotion, useTransform } from "motion/react";
 import { X } from "lucide-react";
 import { motionTokens } from "@/lib/motion-tokens";
@@ -223,7 +223,7 @@ function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, on
     rest(target, velocity);
   }, [go, offset, onDismiss, reduced, rest, stops, top, y]);
 
-  // Touch drags on the content move the sheet until it is fully open; once open, the content scrolls and a pull down from its top moves the sheet again.
+  // Content scrolls at either height; pulling down from its start can move the sheet.
   useEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
@@ -237,15 +237,8 @@ function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, on
       if (!gesture || !touch || event.touches.length !== 1) return;
       const dx = touch.clientX - gesture.x, dy = touch.clientY - gesture.y;
       if (gesture.mode === "pending") {
-        const expanded = detentRef.current === top;
-        if (expanded) {
-          const scrollable = body.scrollHeight > body.clientHeight + 1;
-          gesture.mode = Math.abs(dy) >= Math.abs(dx) && (!scrollable || (body.scrollTop <= 0 && dy > 0)) ? "sheet" : "native";
-        } else {
-          if (Math.hypot(dx, dy) < 4) return;
-          gesture.mode = Math.abs(dy) >= Math.abs(dx) ? "sheet" : "native";
-        }
-        if (gesture.mode === "sheet") beginDrag(touch.clientY, event.timeStamp);
+        const scrollable = body.scrollHeight > body.clientHeight + 1;
+        gesture.mode = Math.abs(dy) >= Math.abs(dx) && (!scrollable || (body.scrollTop <= 0 && dy > 0)) ? "sheet" : "native";
       }
       if (gesture.mode !== "sheet") return;
       if (event.cancelable) event.preventDefault();
@@ -325,15 +318,6 @@ function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, on
     rest(next);
   }
 
-  // Scrolling or tabbing into content that is still below the fold opens the sheet the rest of the way.
-  function bodyWheel(event: WheelEvent<HTMLDivElement>) {
-    if (detentRef.current !== top && event.deltaY > 4 && !drag.current) rest(top);
-  }
-  function bodyFocus(event: FocusEvent<HTMLDivElement>) {
-    if (detentRef.current === top || !(event.target instanceof Element)) return;
-    if (event.target.getBoundingClientRect().bottom > window.innerHeight - 8) rest(top);
-  }
-
   // With focus on the sheet or its content, reading keys open the sheet first and then scroll the content.
   function sheetKey(event: KeyboardEvent<HTMLDivElement>) {
     const body = bodyRef.current;
@@ -348,7 +332,7 @@ function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, on
   }
 
   const expanded = detent === top;
-  const style = { y, opacity: presence, "--sheet-max": stops[top], "--sheet-extension": `${EXTENSION}px` } as unknown as CSSProperties;
+  const style = { y, opacity: presence, "--sheet-max": stops[top], "--sheet-current": stops[detent], "--sheet-extension": `${EXTENSION}px` } as unknown as CSSProperties;
 
   return <>
     <DialogPrimitive.Overlay asChild forceMount>
@@ -377,7 +361,7 @@ function Sheet({ title, description, detents = [.45, .92], initialDetent = 0, on
             </DialogPrimitive.Close>
           </div>
         </div>
-        <div ref={bodyRef} className={styles.body} onWheel={bodyWheel} onFocus={bodyFocus}>{children}</div>
+        <div ref={bodyRef} className={styles.body} >{children}</div>
         {footer ? <div className={styles.footer}>{footer}</div> : null}
         <span className={styles.srOnly} role="status" aria-live="polite">{announcement}</span>
       </motion.div>

@@ -18,15 +18,22 @@ import {
 } from "@/components/ui/select";
 import { useLang } from "@/contexts/LanguageContext";
 import { DateField } from "@/components/arc/DateField";
+import { Check, Minus, Sparkles } from "lucide-react";
+import { coverPresets } from "./projects/board-model";
+import "./projects/project-board.css";
+import type { Tables } from "@/integrations/supabase/types";
+
+export type TaskFormValues = Pick<Tables<"project_tasks">, "title"|"description"|"type"|"status"|"weight"|"due_date"|"cover_preset"|"project_id">;
 
 interface TaskModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (values: any) => void;
+  onSave: (values: TaskFormValues) => void;
   projectId: string;
-  initial?: any;
+  initial?: Tables<"project_tasks"> | null;
   defaultType?: "task" | "habit" | "milestone";
   pending?: boolean;
+  defaultStatus?: string;
 }
 
 export function TaskModal({
@@ -37,15 +44,17 @@ export function TaskModal({
   initial,
   defaultType = "task",
   pending = false,
+  defaultStatus = "todo",
 }: TaskModalProps) {
   const { t, lang } = useLang();
   const [form, setForm] = useState({
     title: "",
     description: "",
-    type: defaultType,
+    type: defaultType as string,
     status: "todo",
     weight: 1,
     due_date: "",
+    cover_preset: "auto",
   });
 
   useEffect(() => {
@@ -54,12 +63,13 @@ export function TaskModal({
         title: initial?.title || "",
         description: initial?.description || "",
         type: initial?.type || defaultType,
-        status: initial?.status || "todo",
+        status: initial?.status || defaultStatus,
         weight: initial?.weight ?? 1,
         due_date: initial?.due_date ? initial.due_date.slice(0, 10) : "",
+        cover_preset: initial?.cover_preset || "auto",
       });
     }
-  }, [open, initial, defaultType]);
+  }, [open, initial, defaultType, defaultStatus]);
 
   const handleSave = () => {
     if (!form.title.trim()) return;
@@ -75,7 +85,7 @@ export function TaskModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90svh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground font-display">
             {initial ? t("编辑工作项", "Edit Item") : t("新建工作项", "New Item")}
@@ -86,7 +96,7 @@ export function TaskModal({
             <Label htmlFor="task-type" className="text-foreground text-sm">{t("类型", "Type")}</Label>
             <Select
               value={form.type}
-              onValueChange={(v: any) => setForm({ ...form, type: v })}
+              onValueChange={(v) => setForm({ ...form, type: v })}
               disabled={!!initial}
             >
               <SelectTrigger id="task-type" className="border-border text-foreground">
@@ -178,6 +188,22 @@ export function TaskModal({
               onChange={(due_date) => setForm({ ...form, due_date })}
             />
           </div>
+          <fieldset>
+            <legend className="text-sm font-medium mb-2">{t("卡片纹理", "Card texture")}</legend>
+            <p className="text-xs text-muted-foreground mb-3">{t("选择彩色纹理后，卡片会显示封面与“重点事项”标记；习惯和里程碑保留各自标记，不改变优先级或进度权重。", "A colored texture adds a cover and a Focus item label. Habits and milestones keep their own labels; priority and progress weight stay unchanged.")}</p>
+            <div className="project-cover-picker">
+              {coverPresets.map(preset => <button key={preset.id} type="button" className="project-cover-option" aria-pressed={form.cover_preset === preset.id} aria-label={t(preset.zh, preset.en)} onClick={() => setForm({ ...form, cover_preset: preset.id })}>
+                {preset.id === "auto" || preset.id === "none" ? <span className="cover-empty">{preset.id === "auto" ? <Sparkles className="h-4 w-4" /> : <Minus className="h-4 w-4" />}</span> : <div className="project-cover" data-preset={preset.id} />}
+                <span className="project-cover-option-label">{t(preset.zh, preset.en)}</span>
+                <span className="project-cover-mini-content" aria-hidden="true">
+                  <span className="project-cover-mini-line" />
+                  <span className="project-cover-mini-meta"><span /><span /></span>
+                  <Check className="project-cover-mini-check" />
+                </span>
+              </button>)}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">{t("自动：里程碑使用鼠尾草纹理，其他事项保持简洁。", "Auto: sage for milestones; other items stay plain.")}</p>
+          </fieldset>
           <Button disabled={pending || !form.title.trim()} onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {pending ? t("保存中…", "Saving…") : initial ? t("保存修改", "Save") : t("创建工作项", "Create Item")}
           </Button>

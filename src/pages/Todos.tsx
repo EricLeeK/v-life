@@ -36,7 +36,6 @@ import {
   ChevronDown,
   ChevronRight,
   MoreHorizontal,
-  GripVertical,
   Check,
   AlignLeft,
   X,
@@ -44,8 +43,10 @@ import {
   Folder,
   Repeat,
 } from "lucide-react";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import { SortableList, SortableHandle } from "@/components/sortable/SortableList";
 import { todoHooks } from "@/hooks/useData";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 import { isPersistentKind } from "@/lib/habits";
 import { useToast } from "@/hooks/use-toast";
 import { useLang } from "@/contexts/LanguageContext";
@@ -154,6 +155,23 @@ const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }:
 
 export default function TodosPage() {
   const { t } = useLang();
+  const { user } = useAuth();
+  const { isDemo } = useDemoMode();
+  const categoryOrderKey = `vlife-todo-category-order:${isDemo ? "demo" : user?.id ?? "anonymous"}`;
+  const [categoryOrder, setCategoryOrder] = useState<string[]>(() => {
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(categoryOrderKey) ?? "[]");
+      return Array.isArray(saved) ? saved.filter((value): value is string => typeof value === "string") : [];
+    } catch { return []; }
+  });
+  const reorderCategories = (ids: string[]) => {
+    // Keep filtered-out categories in their saved slots.
+    let index = 0;
+    const next = categoryOrder.map(id => ids.includes(id) ? ids[index++] : id);
+    next.push(...ids.filter(id => !next.includes(id)));
+    setCategoryOrder(next);
+    try { localStorage.setItem(categoryOrderKey, JSON.stringify(next)); } catch { /* Ordering still works for this visit. */ }
+  };
   const location = useLocation();
   const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
   const [viewMode, setViewMode] = useState<ViewMode>("category");
@@ -400,6 +418,12 @@ export default function TodosPage() {
   if (viewMode === "category" && habitParents.length > 0) {
     groupedEntries.unshift(["习惯", habitParents]);
   }
+  if (viewMode === "category" && categoryOrder.length) {
+    groupedEntries.sort(([a], [b]) => {
+      const aIndex = categoryOrder.indexOf(a), bIndex = categoryOrder.indexOf(b);
+      return (aIndex < 0 ? Infinity : aIndex) - (bIndex < 0 ? Infinity : bIndex);
+    });
+  }
 
   const handleSaveMainTask = async () => {
     if (!form.title) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
@@ -478,6 +502,9 @@ export default function TodosPage() {
     if (!title) return;
 
     try {
+      // Append at the end of the manual order (sort_order 0..n-1 once dragged).
+      const siblings = childTodos.filter((t) => t.parent_id === parentId);
+      const nextOrder = siblings.reduce((m: number, s) => Math.max(m, s.sort_order ?? 0), -1) + 1;
       await createMutation.mutateAsync({
         title,
         parent_id: parentId,
@@ -485,6 +512,7 @@ export default function TodosPage() {
         importance: parentImportance,
         is_completed: false,
         is_archived: false,
+        sort_order: nextOrder,
       });
       setNewSubtaskTitle("");
       setAddingSubtaskFor(null);
@@ -509,37 +537,35 @@ export default function TodosPage() {
     }
   };
 
-  const handleSubtaskDragEnd = (result: DropResult, parentId: string, currentSubtasks: any[]) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-    if (source.index === destination.index) return;
-
-    const reordered = Array.from(currentSubtasks);
-    const [moved] = reordered.splice(source.index, 1);
-    reordered.splice(destination.index, 0, moved);
-
-    setSubtaskOrders((prev) => ({
-      ...prev,
-      [parentId]: reordered.map((s: any) => s.id),
-    }));
+  const persistSubtaskOrder = (parentId: string, orderedIds: string[]) => {
+    // Optimistic local override, then re-index the siblings 0..n-1 in the DB.
+    setSubtaskOrders((prev) => ({ ...prev, [parentId]: orderedIds }));
+    orderedIds.forEach((id, idx) => {
+      const sub = childTodos.find((st) => st.id === id);
+      if (sub && (sub.sort_order ?? 0) !== idx) {
+        updateMutation.mutate({ id, sort_order: idx });
+      }
+    });
   };
 
   const renderTodoItem = (item: any, index: number = 0) => {
     const impInfo = IMPORTANCE_MAP[item.importance] || IMPORTANCE_MAP["普通"];
     const impLabel = t(impInfo.labelZh, impInfo.labelEn);
     const rawSubtasks = childTodos.filter((t: any) => t.parent_id === item.id);
-    
-    // Sort subtasks based on local drag order
+
+    // Base order: manual sort_order first (drag writes 0..n-1), newest tie-break;
+    // subtaskOrders is the optimistic override until the refetch lands.
+    const base = [...rawSubtasks].sort(
+      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || b.created_at.localeCompare(a.created_at)
+    );
     const orders = subtaskOrders[item.id];
-    const itemSubtasks = orders && orders.length > 0
-      ? [...rawSubtasks].sort((a: any, b: any) => {
-          const idxA = orders.indexOf(a.id);
-          const idxB = orders.indexOf(b.id);
-          if (idxA === -1) return 1;
-          if (idxB === -1) return -1;
-          return idxA - idxB;
-        })
-      : rawSubtasks;
+    const itemSubtasks =
+      orders && orders.length > 0
+        ? [
+            ...orders.map((id: string) => base.find((s) => s.id === id)).filter(Boolean),
+            ...base.filter((s) => !orders.includes(s.id)),
+          ]
+        : base;
 
     const completedSubtasksCount = itemSubtasks.filter((s: any) => s.is_completed).length;
     const totalSubtasksCount = itemSubtasks.length;
@@ -605,7 +631,7 @@ export default function TodosPage() {
               <div className="flex items-center justify-between gap-2">
                 <button
                   type="button"
-                  className={`text-left text-sm font-medium text-foreground leading-snug cursor-pointer bg-transparent border-0 p-0 ${
+                  className={`min-w-0 max-w-full truncate text-left text-sm font-medium text-foreground leading-snug cursor-pointer bg-transparent border-0 p-0 ${
                     item.is_completed ? "line-through text-muted-foreground" : ""
                   }`}
                   onClick={(e) => handleTaskToggleClick(e, item.id)}
@@ -795,32 +821,20 @@ export default function TodosPage() {
                 )}
 
                 {/* Subtask Items List with Drag & Drop */}
-                <DragDropContext onDragEnd={(res) => handleSubtaskDragEnd(res, item.id, itemSubtasks)}>
-                  <Droppable droppableId={`subtasks-${item.id}`}>
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className="space-y-2"
-                      >
-                        {itemSubtasks.map((sub: any, index: number) => (
-                          <Draggable key={sub.id} draggableId={sub.id} index={index}>
-                            {(dragProvided, dragSnapshot) => (
-                              <div
-                                ref={dragProvided.innerRef}
-                                {...dragProvided.draggableProps}
-                                className={`bg-card hover:bg-muted/40 border border-border rounded-md px-3 py-2.5 flex items-center gap-2.5 text-xs text-foreground transition-colors duration-150 ${
-                                  dragSnapshot.isDragging ? "shadow-md ring-2 ring-cat-yellow/40 z-20 opacity-95" : ""
-                                } ${sub.is_completed ? "opacity-90" : ""}`}
-                              >
-                                {/* Drag handle icon */}
-                                <div
-                                  {...dragProvided.dragHandleProps}
-                                  className="p-0.5 text-muted-foreground hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
-                                  aria-label={t(`拖动子任务“${sub.title}”排序`, `Reorder subtask “${sub.title}”`)}
-                                >
-                                  <GripVertical className="h-3.5 w-3.5" />
-                                </div>
+                <SortableList
+                  items={itemSubtasks}
+                  itemId={(sub) => sub.id}
+                  onReorder={(ids) => persistSubtaskOrder(item.id, ids)}
+                  className="space-y-2"
+                  ariaLabel={t("子任务列表", "Subtasks")}
+                  labelItem={(sub) => sub.title}
+                  renderItem={(sub) => (
+                    <div
+                      className={`bg-card hover:bg-muted/40 border border-border rounded-md px-3 py-2.5 flex items-center gap-2.5 text-xs text-foreground transition-colors duration-150 ${
+                        sub.is_completed ? "opacity-90" : ""
+                      }`}
+                    >
+                      <SortableHandle />
 
                                 {/* Golden/Tan Checkbox when completed matching image */}
                                 <button
@@ -900,13 +914,8 @@ export default function TodosPage() {
                                 </div>
                               </div>
                             )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
+                />
+
               </div>
             ) : (
               /* Slim, low-height compact row for tasks without subtasks */
@@ -1209,7 +1218,15 @@ export default function TodosPage() {
             />
           </CollectionFeedback>
         ) : (
-          groupedEntries.map(([group, items]) => {
+          <SortableList
+            items={groupedEntries}
+            itemId={([group]) => group}
+            labelItem={([group]) => group}
+            itemDisabled={([group]) => viewMode !== "category" || !collapsedCategories[group]}
+            onReorder={reorderCategories}
+            ariaLabel={t("待办分类排序", "To-do category order")}
+            className="gap-5 todo-category-sortable"
+            renderItem={([group, items]) => {
             const isCategoryCollapsed = !!collapsedCategories[group];
             const rows = items as any[];
             const groupLabel = group === "未分类"
@@ -1239,6 +1256,7 @@ export default function TodosPage() {
                       aria-expanded={!isCategoryCollapsed}
                       aria-label={`${isCategoryCollapsed ? t("展开分类", "Expand category") : t("收起分类", "Collapse category")}: ${groupLabel}`}
                       className="todo-fold-head flex w-full min-w-0 items-center gap-2 px-3 py-2.5 text-left"
+                      data-sortable-handle={viewMode === "category" && isCategoryCollapsed ? "" : undefined}
                     >
                       <ChevronDown className="todo-fold-chevron h-4 w-4 shrink-0 text-muted-foreground" />
                       <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -1255,7 +1273,7 @@ export default function TodosPage() {
                 )}
               </div>
             );
-          })
+          }} />
         )}
       </div>
 
@@ -1265,8 +1283,8 @@ export default function TodosPage() {
         onOpenChange={setDialogOpen}
         title={t("添加待办主任务", "Add To-Do Task")}
         description={t("填写任务内容与优先级，创建新的待办事项。", "Add the task details and priority.")}
-        detents={[0.72, 0.94]}
-        initialDetent={1}
+        detents={[0.46, 0.94]}
+        initialDetent={0}
         className="arc-runtime"
         closeLabel={t("关闭", "Close")}
       >
@@ -1279,8 +1297,8 @@ export default function TodosPage() {
         onOpenChange={(o) => { setEditDialogOpen(o); if (!o) setEditingTodo(null); }}
         title={t("编辑待办任务", "Edit Task")}
         description={t("修改标题、优先级和分类。", "Change the title, priority, and category.")}
-        detents={[0.72, 0.94]}
-        initialDetent={1}
+        detents={[0.46, 0.94]}
+        initialDetent={0}
         className="arc-runtime"
         closeLabel={t("关闭", "Close")}
       >
@@ -1293,8 +1311,8 @@ export default function TodosPage() {
         onOpenChange={(o) => { if (!o) setNoteEditTodo(null); }}
         title={t("编辑子任务备注", "Edit Subtask Note")}
         description={noteEditTodo?.title || t("补充这条子任务的说明。", "Add a note for this subtask.")}
-        detents={[0.55, 0.82]}
-        initialDetent={1}
+        detents={[0.46, 0.82]}
+        initialDetent={0}
         className="arc-runtime"
         closeLabel={t("关闭", "Close")}
       >

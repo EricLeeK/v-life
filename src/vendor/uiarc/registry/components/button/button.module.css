@@ -12,7 +12,7 @@
 .labelContent { display: inline-flex; flex: none; align-items: center; }
 .labelPhase { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); white-space: nowrap; }
 .labelPhase svg { flex: none; }
-.primary { color: var(--background); background: var(--foreground); border-color: var(--foreground); }
+.primary { color: hsl(var(--action-foreground)); background: hsl(var(--action)); border-color: hsl(var(--action)); }
 .secondary { color: var(--foreground); background: var(--surface); border-color: var(--border); }
 .ghost { color: var(--text-secondary); background: transparent; border-color: transparent; }
 .danger { color: var(--danger); background: var(--surface); border-color: var(--border); }

@@ -1251,7 +1251,7 @@ export function useHabitLogs(taskId?: string) {
 }
 
 export function useToggleHabitLog() {
-  const { isDemo, addRecord, deleteRecord } = useDemoMode();
+  const { isDemo, demoData, addRecord, deleteRecord } = useDemoMode();
   const qc = useQueryClient();
   const supa = useMutation({
     mutationFn: async ({ taskId, projectId, logDate }: { taskId: string; projectId: string; logDate: string }) => {
@@ -1279,7 +1279,7 @@ export function useToggleHabitLog() {
   if (isDemo) {
     return {
       mutate: ({ taskId, projectId, logDate }: any) => {
-        const existing = (qc.getQueryData<any[]>(["habit_logs", taskId]) || [])
+        const existing = demoData.habit_logs
           .find((l: any) => l.task_id === taskId && l.log_date === logDate);
         if (existing) {
           deleteRecord("habit_logs", existing.id);
@@ -1291,7 +1291,7 @@ export function useToggleHabitLog() {
       },
       mutateAsync: async (args: any) => {
         const { taskId, projectId, logDate } = args;
-        const existing = (qc.getQueryData<any[]>(["habit_logs", taskId]) || [])
+        const existing = demoData.habit_logs
           .find((l: any) => l.task_id === taskId && l.log_date === logDate);
         if (existing) {
           deleteRecord("habit_logs", existing.id);

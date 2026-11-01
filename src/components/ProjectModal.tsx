@@ -19,6 +19,11 @@ import {
 import { useLang } from "@/contexts/LanguageContext";
 import { DateField } from "@/components/arc/DateField";
 
+import { ProjectIcon } from "./projects/ProjectIcon";
+import { ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { projectIconPresets, iconSvg } from "./projects/project-icons";
+
 interface ProjectModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,6 +34,7 @@ interface ProjectModalProps {
 
 export function ProjectModal({ open, onOpenChange, onSave, initial, pending = false }: ProjectModalProps) {
   const { t } = useLang();
+  const [iconsOpen, setIconsOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -36,11 +42,14 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
     priority: "medium",
     target_date: "",
     target_start_date: "",
+    icon_svg: "",
   });
 
   useEffect(() => {
     if (open) {
+      setIconsOpen(false);
       setForm({
+        icon_svg: initial?.icon_svg || "",
         name: initial?.name || "",
         description: initial?.description || "",
         status: initial?.status || "planning",
@@ -55,6 +64,7 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
     if (!form.name.trim()) return;
     onSave({
       ...form,
+      icon_svg: form.icon_svg || null,
       target_date: form.target_date || null,
       target_start_date: form.target_start_date || null,
     });
@@ -62,7 +72,7 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground font-display">
             {initial ? t("编辑项目", "Edit Project") : t("新建项目", "New Project")}
@@ -79,6 +89,22 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
               className="border-border text-foreground"
             />
           </div>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">{t("项目图标", "Project icon")}</legend>
+            <Collapsible open={iconsOpen} onOpenChange={setIconsOpen}>
+              <CollapsibleTrigger className="project-icon-disclosure" aria-label={t("选择项目图标", "Choose project icon")}>
+                <ProjectIcon name={form.name} svg={form.icon_svg} />
+                <span className="flex-1 text-left text-xs text-muted-foreground">{t("选择图标 · 30 个预设", "Choose an icon · 30 presets")}</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform" style={{transform:iconsOpen ? "rotate(180deg)" : undefined}} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <button type="button" className="project-icon-auto" aria-pressed={!form.icon_svg} onClick={() => setForm({...form, icon_svg: ""})}>{t("按项目名称自动匹配", "Match the project name automatically")}</button>
+                <div className="project-icon-picker" role="group" aria-label={t("预设图标", "Preset icons")}>
+                  {projectIconPresets.map(preset => <button key={preset.id} type="button" title={t(preset.zh,preset.en)} aria-label={t(preset.zh,preset.en)} aria-pressed={form.icon_svg === iconSvg(preset.id)} onClick={() => setForm({...form,icon_svg:iconSvg(preset.id)})}><ProjectIcon name="" svg={iconSvg(preset.id)}/></button>)}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </fieldset>
           <div>
             <Label htmlFor="proj-desc" className="text-foreground text-sm">{t("项目描述", "Description")}</Label>
             <Textarea

@@ -969,6 +969,7 @@ export type Database = {
       }
       project_tasks: {
         Row: {
+          cover_preset: string
           created_at: string | null
           description: string | null
           due_date: string | null
@@ -982,6 +983,7 @@ export type Database = {
           weight: number
         }
         Insert: {
+          cover_preset?: string
           created_at?: string | null
           description?: string | null
           due_date?: string | null
@@ -995,6 +997,7 @@ export type Database = {
           weight?: number
         }
         Update: {
+          cover_preset?: string
           created_at?: string | null
           description?: string | null
           due_date?: string | null
@@ -1022,9 +1025,11 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          icon_svg: string | null
           name: string
           priority: string
           progress: number
+          sort_order: number
           status: string
           target_date: string | null
           target_start_date: string | null
@@ -1032,12 +1037,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          icon_svg?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name: string
           priority?: string
           progress?: number
+          sort_order?: number
           status?: string
           target_date?: string | null
           target_start_date?: string | null
@@ -1045,12 +1052,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          icon_svg?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
           name?: string
           priority?: string
           progress?: number
+          sort_order?: number
           status?: string
           target_date?: string | null
           target_start_date?: string | null
@@ -1501,6 +1510,7 @@ export type Database = {
           is_paused: boolean
           kind: string
           parent_id: string | null
+          sort_order: number
           title: string
           updated_at: string
           user_id: string | null
@@ -1520,6 +1530,7 @@ export type Database = {
           is_paused?: boolean
           kind?: string
           parent_id?: string | null
+          sort_order?: number
           title: string
           updated_at?: string
           user_id?: string | null
@@ -1539,6 +1550,7 @@ export type Database = {
           is_archived?: boolean | null
           is_completed?: boolean
           parent_id?: string | null
+          sort_order?: number
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -1668,6 +1680,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      move_project_board_item: {
+        Args: { p_project_id: string; p_task_id: string; p_status: string; p_order: string[] }
+        Returns: Database["public"]["Tables"]["project_tasks"]["Row"][]
+      }
       confirm_subscription_payment: {
         Args: {
           p_amount: number

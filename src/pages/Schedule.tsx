@@ -569,8 +569,8 @@ export default function SchedulePage() {
           onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); resetForm(); } }}
           title={editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}
           description={t("填写标题与时间，安排新的日程事件。", "Add a title and time for this schedule event.")}
-          detents={[0.78, 0.94]}
-          initialDetent={1}
+          detents={[0.46, 0.94]}
+          initialDetent={0}
           className="arc-runtime"
           closeLabel={t("关闭", "Close")}
         >

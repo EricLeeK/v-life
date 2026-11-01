@@ -7,6 +7,9 @@ colors:
   card: "#ffffff"
   primary: "hsl(30 25% 10%)"
   primary-foreground: "#ffffff"
+  action: "#b65335"
+  action-hover: "#9f452c"
+  action-foreground: "#ffffff"
   muted: "hsl(40 16% 91%)"
   muted-foreground: "hsl(36 12% 40%)"
   border: "hsl(40 16% 87%)"
@@ -132,8 +135,8 @@ spacing:
   stack: "12px"
 components:
   button-primary:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.primary-foreground}"
+    backgroundColor: "{colors.action}"
+    textColor: "{colors.action-foreground}"
     rounded: "{rounded.md}"
     padding: "8px 16px"
     height: "40px"
@@ -159,7 +162,7 @@ V-Life is a bilingual personal life OS that should feel like a well-kept desk bl
 
 **Key Characteristics:**
 - Warm cream canvas (`--background`) with white elevated cards
-- Ink primary (`--foreground` / `--primary`) instead of saturated brand purple
+- Ink text (`--foreground` / `--primary`); deep Claude-clay action buttons (`--action`, #B65335), white labels at 4.91:1 contrast
 - Category accents via `--cat-*` tokens; charts via `--chart-*`
 - Fraunces for display headings; Inter for UI; JetBrains Mono for metrics
 - Hairline borders (`--line`) + soft warm-brown shadows
@@ -296,3 +299,7 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 - 以真实事件的标题和时间为主，沿用日程分类颜色；日期只作为列索引，今天使用原 `--secondary` 浅色。
 - 桌面展示七列，每列最多三条安排；今天围绕接下来要发生的安排取连续片段，并保留近期上下文。完整日程入口与事件卡都携带对应日期。
 - 手机在卡片内部横向翻阅，默认让今天可见；加载、空日程和读取失败有明确反馈。统计数据放在下方紧凑一行。
+
+### Compact bottom-sheet forms (2026-11-01)
+
+Finance, calories, schedule and todo forms open at 46% viewport height with an optional manual tall detent. Content scrolls within the visible height at either stop; long content never forces an automatic expansion. Finance save follows the last field with 16px spacing. Content-heavy daily agenda sheets retain their taller reading layout.

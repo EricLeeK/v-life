@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f7f7" />
+    <meta name="description" content="An interactive recreation of Akash's weighted drag board. Grab a card and move it between columns." />
+    <title>Onboarding & billing · Drag weight</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f3f3f3'/%3E%3Cpath d='M8 10h6v12H8zm10 0h6v8h-6z' fill='%2382b683'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preload" href="./assets/inter-regular.ttf" as="font" type="font/ttf" crossorigin />
+  </head>
+  <body>
+    <main class="scene" aria-label="Sprint task board">
+      <div class="corner top-left" aria-hidden="true"></div>
+      <div class="corner top-right" aria-hidden="true"></div>
+      <div class="corner bottom-left" aria-hidden="true"></div>
+      <div class="corner bottom-right" aria-hidden="true"></div>
+      <header class="toolbar">
+        <div class="project-heading"><h1>Onboarding &amp; billing</h1><span class="sprint">Sprint 14</span></div>
+        <div class="sprint-details">
+          <span class="date-pill"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M6 1a1 1 0 0 1 1 1v1h6V2a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h1V2a1 1 0 0 1 1-1ZM4 8v8h12V8Zm4 2h4v3H8Z"/></svg><span>Oct 27 - Nov 7</span><span class="divider"></span><span><strong>7</strong>&nbsp; days left</span></span>
+          <span class="done-pill"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="currentColor"/><path d="m6.5 10 2.3 2.3 4.6-4.6" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><strong id="completed">3</strong><span class="total"> /12</span>&nbsp; done</span></span>
+        </div>
+      </header>
+      <div class="progress-track" aria-hidden="true"><i data-progress="backlog"></i><i data-progress="progress"></i><i data-progress="review"></i><i data-progress="done"></i></div>
+      <div class="board-scroll" tabindex="0" aria-label="Task columns. Scroll horizontally on smaller screens."><div id="board" class="board"></div></div>
+    </main>
+    <footer class="utilities" aria-label="Board controls">
+      <span class="instructions">Drag a card to move it</span>
+      <button id="reset" type="button" title="Restore the original video layout">Reset board</button>
+      <button id="help" type="button" aria-expanded="false" aria-controls="keyboard-help" aria-label="Keyboard controls">?</button>
+      <div id="keyboard-help" class="keyboard-help" hidden>Tab to a card. Space to pick up.<br />Arrow keys to move. Space to drop.<br />Escape to cancel.</div>
+    </footer>
+    <p id="live" class="sr-only" role="status" aria-live="polite"></p>
+    <p id="drag-instructions" class="sr-only">Press Space to pick up. Use arrow keys to move between columns or reorder. Press Space to drop, or Escape to cancel.</p>
+    <noscript><p class="no-script">Enable JavaScript to use the interactive board.</p></noscript>
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>

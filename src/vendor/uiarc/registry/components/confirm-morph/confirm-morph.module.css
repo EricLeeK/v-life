@@ -85,7 +85,7 @@
 .secondary { background: transparent; color: var(--text-secondary); }
 .root[data-tone="danger"][data-state="confirming"] .secondary { color: color-mix(in oklch, var(--danger) 30%, var(--text-secondary)); }
 .face:is([data-face="done"], [data-face="error"]) .secondary { color: var(--foreground); }
-.primary { background: var(--foreground); color: var(--background); }
+.primary { background: hsl(var(--action)); color: hsl(var(--action-foreground)); }
 .root[data-tone="danger"] .primary { background: var(--danger); box-shadow: inset 0 1px 0 color-mix(in oklch, white 18%, transparent), 0 1px 2px color-mix(in oklch, var(--danger) 30%, transparent); }
 .secondary:active,
 .primary:active { transform: scale(.95); transition-duration: var(--duration-fast), var(--duration-fast), 90ms; }
@@ -111,7 +111,7 @@
   .trigger:hover:not(:disabled) { background: color-mix(in oklch, var(--foreground) 5%, transparent); }
   .root[data-tone="danger"] .trigger:hover:not(:disabled) { background: color-mix(in oklch, var(--danger) 8%, transparent); }
   .secondary:hover { background: color-mix(in oklch, var(--foreground) 7%, transparent); color: var(--foreground); }
-  .primary:hover { background: color-mix(in oklch, var(--foreground) 86%, var(--background)); }
+  .primary:hover { background: hsl(var(--action-hover)); }
   .root[data-tone="danger"] .primary:hover { background: color-mix(in oklch, var(--danger) 88%, var(--foreground)); }
 }
 /* Keyboard focus reads through fill, never a ring. */

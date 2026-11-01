@@ -157,9 +157,9 @@ function DeferredAIChatPanel() {
       onClick={() => setShouldLoad(true)}
       size="icon"
       aria-label="打开 AI 助手 / Open AI Assistant"
-      className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+      className="ai-assistant-fab fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50"
     >
-      <Bot className="h-6 w-6" />
+      <Bot className="h-5 w-5" />
     </Button>
   );
 }
@@ -192,3 +192,4 @@ const App = () => (
 );
 
 export default App;
+import "./components/AIChatPanel.css";

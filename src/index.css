@@ -10,6 +10,10 @@
 
 @layer base {
   :root {
+    /* Deepened Claude clay for white-label actions: 4.91:1 contrast. */
+    --action: 13.9535 54.8936% 46.0784%;
+    --action-hover: 13.0435 56.6502% 39.8039%;
+    --action-foreground: 0 0% 100%;
     /* Warm Cream Theme */
     --background: 40 20% 95%;
     --foreground: 30 25% 10%;

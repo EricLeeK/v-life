@@ -1,0 +1,174 @@
+/* SortableList — drag-to-reorder feel.
+   The list/line geometry is engine-driven (transforms only); this sheet owns
+   the resting skin, the lift/settle keyframes (small pop aside/above), the
+   drop line (text colour at 15%, grows from its middle) and reduced-motion. */
+
+.list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.list.horiz {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.item {
+  position: relative;
+}
+.item:focus {
+  outline: none;
+}
+.item:focus-visible {
+  outline: 2px solid var(--focus-ring, currentColor);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+[data-sortable-handle] {
+  touch-action: none;
+  cursor: grab;
+  display: inline-flex;
+  align-items: center;
+}
+.list.disabled [data-sortable-handle] {
+  cursor: default;
+  visibility: hidden;
+}
+
+/* carry / settle — the inner wrapper pops aside (vertical) or above (row);
+   the outer li only ever receives translate from the engine. Lift is carried
+   by the offset + scale alone (quiet shadow-less lift per the app aesthetic). */
+.inner {
+  min-width: 0;
+}
+.item[data-dz-carry] {
+  z-index: 30;
+  /* never any focus outline / ring while carried */
+  outline: none !important;
+}
+.item[data-dz-carry] .inner,
+.item[data-dz-carry] .inner * {
+  outline: none !important;
+}
+.item[data-dz-carry] .inner {
+  will-change: transform;
+  animation: dz-lift-aside 0.24s cubic-bezier(0.34, 1.3, 0.5, 1) forwards;
+}
+/* Carried item always looks the same: fully opaque, no hover tints or
+   colour transitions bleeding in while it travels (pointer-events are off). */
+.item[data-dz-carry] .inner,
+.item[data-dz-carry] .inner * {
+  opacity: 1 !important;
+  transition: none !important;
+}
+.horiz .item[data-dz-carry] .inner {
+  animation-name: dz-lift-above;
+}
+.item[data-dz-settle] {
+  z-index: 20;
+}
+.item[data-dz-settle] .inner {
+  animation: dz-settle-aside 0.3s cubic-bezier(0.22, 1.25, 0.36, 1) forwards;
+}
+.horiz .item[data-dz-settle] .inner {
+  animation-name: dz-settle-above;
+}
+
+@keyframes dz-lift-aside {
+  0% { transform: none; }
+  55% { transform: translateX(calc(var(--dz-lift-x, 30px) + 5px)) scale(0.87); }
+  100% { transform: translateX(var(--dz-lift-x, 30px)) scale(0.9); }
+}
+@keyframes dz-lift-above {
+  0% { transform: none; }
+  55% { transform: translateY(calc(var(--dz-lift-y, -60px) - 4px)) scale(1.07); }
+  100% { transform: translateY(var(--dz-lift-y, -60px)) scale(1.05); }
+}
+@keyframes dz-settle-aside {
+  from { transform: translateX(var(--dz-lift-x, 30px)) scale(0.9); }
+  to { transform: none; }
+}
+@keyframes dz-settle-above {
+  from { transform: translateY(var(--dz-lift-y, -60px)) scale(1.05); }
+  to { transform: none; }
+}
+
+/* drop line — text colour at ~15%: currentColor keeps it theme-correct
+   outside the .arc-runtime token scope (Tailwind's --foreground is a raw
+   HSL triple there, which color-mix can't parse). */
+.line {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  will-change: transform;
+}
+.line[data-dz-show] {
+  opacity: 1;
+}
+.list:not(.horiz) .line {
+  left: 2px;
+  right: 2px;
+  top: 0;
+  height: 2px;
+  margin-top: -1px;
+}
+.horiz .line {
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: 2px;
+  margin-left: -1px;
+}
+.line i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: hsl(30 25% 10% / 0.15); /* fallback */
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  transform-origin: 50% 50%;
+}
+.list:not(.horiz) .line[data-dz-grow] i {
+  animation: dz-grow-x 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.horiz .line[data-dz-grow] i {
+  animation: dz-grow-y 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes dz-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes dz-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+/* dragging cursor + selection lock */
+:global(html.dz-dragging),
+:global(html.dz-dragging) * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* reduced motion: keep only the line; lift becomes an instant offset, settle snaps */
+@media (prefers-reduced-motion: reduce) {
+  .item[data-dz-carry] .inner,
+  .item[data-dz-settle] .inner {
+    animation: none !important;
+  }
+  .list:not(.horiz) .item[data-dz-carry] .inner {
+    transform: translateX(var(--dz-lift-x, 30px)) scale(0.9);
+  }
+  .horiz .item[data-dz-carry] .inner {
+    transform: translateY(var(--dz-lift-y, -60px)) scale(1.05);
+  }
+  .line[data-dz-grow] i {
+    animation: none !important;
+  }
+}

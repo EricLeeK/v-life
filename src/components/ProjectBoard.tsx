@@ -1,36 +1,31 @@
-import { moduleFigure } from "@/components/concepts/catalog";
-import { HairlineFigure } from "@/components/concepts/HairlineFigure";
-import { useState, useMemo } from "react";
-import { BoardColumn } from "./BoardColumn";
-import { TaskCard } from "./TaskCard";
-import { HabitCard } from "./HabitCard";
-import { MilestoneCard } from "./MilestoneCard";
-import { TaskModal } from "./TaskModal";
+import { ProjectIcon } from "./projects/ProjectIcon";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { useId } from "react";
+
+import { useState, useMemo, useEffect } from "react";
+import { TaskModal, type TaskFormValues } from "./TaskModal";
 import { ProjectEditActions } from "./ProjectEditActions";
 import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
+import { WeightedTaskGrid } from "./projects/WeightedTaskGrid";
+import { ProjectWorkCard, type ProjectTask } from "./projects/ProjectWorkCard";
+import { projectColumns, byBoardOrder, projectProgress, moveProjectItem } from "./projects/board-model";
+import { useProjectBoardMove } from "@/hooks/useProjectBoardMove";
+import { CollectionFeedback } from "./concepts/CollectionFeedback";
+import { format, parseISO, isValid, differenceInCalendarDays } from "date-fns";
+import "./projects/project-board.css";
 import { useProjectTasks, useUpdateProjectTask, useUpdateProject, useCreateProjectTask, useDeleteProjectTask } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
-import { Pencil, Check } from "lucide-react";
+import { Pencil, Check, Plus, CalendarDays, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/contexts/LanguageContext";
 import type { Tables } from "@/integrations/supabase/types";
 
-const COLUMNS_ZH = [
-  { id: "todo", title: "待办" },
-  { id: "this_week", title: "本周" },
-  { id: "in_progress", title: "进行中" },
-  { id: "waiting", title: "等待中" },
-  { id: "done", title: "已完成" },
-] as const;
-const COLUMN_TITLE_MAP: Record<string, string> = {
-  "待办": "To Do", "本周": "This Week", "进行中": "In Progress", "等待中": "Waiting", "已完成": "Done",
-};
+const EMPTY_TASKS: ProjectTask[] = [];
 
 type FilterType = "all" | "task" | "habit" | "milestone";
 
 interface ProjectBoardProps {
-  project: any;
+  project: Tables<"projects">;
   onEditProject: () => void;
   onDeleteProject: () => void;
   editMode: boolean;
@@ -38,17 +33,27 @@ interface ProjectBoardProps {
 }
 
 export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode, onToggleEditMode }: ProjectBoardProps) {
-  const { t, lang } = useLang();
-  const { data: tasks = [] } = useProjectTasks(project.id);
+  const { t } = useLang();
+  const filterId = useId();
+  const reducedMotion = useReducedMotion();
+  const { data: serverTasks = EMPTY_TASKS, isLoading, error, refetch } = useProjectTasks(project.id);
+  const moveMutation = useProjectBoardMove();
+  const [moving, setMoving] = useState(false);
   const updateTask = useUpdateProjectTask();
   const updateProject = useUpdateProject();
   const createTask = useCreateProjectTask();
   const deleteTask = useDeleteProjectTask();
   const { toast } = useToast();
+  // Local mirror so drag commits re-order the DOM synchronously (FLIP); any
+  // server refresh (refetch) becomes the truth again.
+  const [localTasks, setLocalTasks] = useState<Tables<"project_tasks">[] | null>(null);
+  useEffect(() => { if (!moving) setLocalTasks(null); }, [serverTasks, moving]);
+  const tasks: Tables<"project_tasks">[] = localTasks ?? serverTasks;
   const [filter, setFilter] = useState<FilterType>("all");
   const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [defaultStatus, setDefaultStatus] = useState("todo");
   const [modalType, setModalType] = useState<"task" | "habit" | "milestone">("task");
-  const [editingTask, setEditingTask] = useState<any>(null);
+  const [editingTask, setEditingTask] = useState<ProjectTask | null>(null);
   const [deletingTask, setDeletingTask] = useState<Tables<"project_tasks"> | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -57,74 +62,48 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
     if (filter === "all") return tasks;
     return tasks.filter((t) => t.type === filter);
   }, [tasks, filter]);
-  const columns = COLUMNS_ZH.filter(column =>
-    column.id !== "this_week" && column.id !== "waiting" || tasks.some(task => task.status === column.id));
+  const columns = projectColumns.filter(column => column.id !== "this_week" || tasks.some(task => task.status === "this_week"));
+  const computeProgress = projectProgress;
+  const progress = projectProgress(tasks);
+  const countable = tasks.filter(task => task.type !== "habit");
+  const completedCount = countable.filter(task => task.status === "done").length;
+  const targetDate = project.target_date ? parseISO(project.target_date) : null;
+  const daysLeft = targetDate && isValid(targetDate) ? differenceInCalendarDays(targetDate, new Date()) : null;
 
-  const computeProgress = (allTasks: any[]) => {
-    const countable = allTasks.filter((t) => t.type !== "habit");
-    if (countable.length === 0) return 0;
-    const totalWeight = countable.reduce((s, t) => s + (t.weight || 1), 0);
-    const doneWeight = countable.filter((t) => t.status === "done").reduce((s, t) => s + (t.weight || 1), 0);
-    return Math.round((doneWeight / totalWeight) * 100);
+  const handleBoardMove = async (id: string, status: string, index: number) => {
+    if (moving) return;
+    const next = moveProjectItem(tasks, id, status, index, filteredTasks.map(task => task.id));
+    if (next.every((task, i) => task.status === tasks[i].status && task.sort_order === tasks[i].sort_order)) return;
+    setLocalTasks(next);
+    setMoving(true);
+    try {
+      const order = next.filter(task => task.status === status).sort(byBoardOrder).map(task => task.id);
+      await moveMutation.mutateAsync({ projectId: project.id, id, status, order, next });
+    } catch (error) {
+      setLocalTasks(null);
+      toast({ title: t("移动未保存，已恢复原状态", "Move was not saved; original state restored"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+    } finally { setMoving(false); }
   };
 
-  const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
-    const { draggableId, destination, source } = result;
-    const newStatus = destination.droppableId as any;
-    const task = tasks.find((t) => t.id === draggableId);
-    if (!task) return;
-    // Same column same position → no change needed
-    if (task.status === newStatus && destination.index === source.index) return;
-
-    const sameColumn = task.status === newStatus;
-    const updates: any = sameColumn ? { sort_order: destination.index } : { status: newStatus, sort_order: destination.index };
-
-    updateTask.mutate({ id: task.id, project_id: project.id, ...updates });
-
-    // Re-sort other tasks in the destination column
-    const destTasks = filteredTasks
-      .filter((t) => t.id !== draggableId && t.status === newStatus)
-      .sort((a, b) => a.sort_order - b.sort_order);
-    destTasks.splice(destination.index, 0, { id: draggableId } as any);
-    destTasks.forEach((t, i) => {
-      if (t.id !== draggableId && t.sort_order !== i) {
-        updateTask.mutate({ id: t.id, project_id: project.id, sort_order: i });
-      }
-    });
-
-    if (!sameColumn) {
-      const simulatedTasks = tasks.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t));
-      const newProgress = computeProgress(simulatedTasks);
-      if (newProgress !== project.progress) {
-        updateProject.mutate({ id: project.id, progress: newProgress });
-      }
-    }
+  const handleMilestoneToggle = (task: ProjectTask, done: boolean) => {
+    const status = done ? "done" : "todo";
+    void handleBoardMove(task.id, status, filteredTasks.filter(item => item.status === status).length);
   };
 
-  const handleMilestoneToggle = (task: any, done: boolean) => {
-    const newStatus = done ? "done" : "todo";
-    updateTask.mutate({ id: task.id, project_id: project.id, status: newStatus });
-    const simulatedTasks = tasks.map((t) => (t.id === task.id ? { ...t, status: newStatus } : t));
-    const newProgress = computeProgress(simulatedTasks);
-    if (newProgress !== project.progress) {
-      updateProject.mutate({ id: project.id, progress: newProgress });
-    }
-  };
-
-  const openAddModal = (type: "task" | "habit" | "milestone") => {
+  const openAddModal = (type: "task" | "habit" | "milestone", status = "todo") => {
+    setDefaultStatus(status);
     setModalType(type);
     setEditingTask(null);
     setTaskModalOpen(true);
   };
 
-  const openEditModal = (task: any) => {
-    setModalType(task.type);
+  const openEditModal = (task: ProjectTask) => {
+    setModalType(task.type === "habit" || task.type === "milestone" ? task.type : "task");
     setEditingTask(task);
     setTaskModalOpen(true);
   };
 
-  const syncProgress = async (nextTasks: Tables<"project_tasks">[]) => {
+  const syncProgress = async (nextTasks: Pick<ProjectTask, "type"|"status"|"weight">[]) => {
     const progress = computeProgress(nextTasks);
     if (progress !== project.progress) {
       try {
@@ -135,7 +114,7 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
     }
   };
 
-  const handleSaveTask = async (values: any) => {
+  const handleSaveTask = async (values: TaskFormValues) => {
     if (saving) return;
     setSaving(true);
     try {
@@ -177,98 +156,39 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
   ];
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Header */}
-      <div className="flex flex-col gap-3 px-5 py-3 bg-card border-b border-border shrink-0">
-        <div className="flex items-center justify-between gap-3 min-w-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <HairlineFigure name={moduleFigure.projects} className="workbench-mark" surface="card" /><h2 className="text-base font-semibold text-foreground truncate">{project.name}</h2>
-          {editMode && <ProjectEditActions name={project.name} onEdit={onEditProject} onDelete={onDeleteProject} />}
-        </div>
-          <Button variant={editMode ? "secondary" : "outline"} className="min-h-11 shrink-0" aria-pressed={editMode} onClick={onToggleEditMode}>
-            {editMode ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
-            {editMode ? t("完成编辑", "Done editing") : t("编辑", "Edit")}
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 min-w-0">
-          {/* Slim progress bar */}
-          <div className="flex items-center gap-2">
-            <div className="w-24 h-1.5 rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary/60 transition-all"
-                style={{ width: `${project.progress || 0}%` }}
-              />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground w-8 text-right">{project.progress || 0}%</span>
+    <div className="project-workspace">
+      <header className="project-board-header">
+        <div className="project-board-title-row">
+          <div className="project-board-title">
+            <ProjectIcon name={project.name} svg={project.icon_svg} />
+            <h2 className="truncate">{project.name}</h2>
+            <span className="project-status-label">{project.status === "active" ? t("进行中", "Active") : project.status === "planning" ? t("规划中", "Planning") : project.status === "paused" ? t("已暂停", "Paused") : t("已结束", "Closed")}</span>
+            <span className="project-inline-actions" data-visible={editMode} aria-hidden={!editMode} inert={!editMode}>
+              <ProjectEditActions name={project.name} onEdit={onEditProject} onDelete={onDeleteProject} />
+            </span>
           </div>
-          {/* Filter buttons */}
-          <div className="flex items-center gap-0.5 bg-muted rounded-lg p-0.5 shrink-0">
-            {filters.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`text-[11px] whitespace-nowrap px-2.5 py-1 rounded-md transition-colors font-medium ${
-                  filter === f.key
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+          <div className="project-header-actions flex items-center gap-2 shrink-0">
+            <Button variant={editMode ? "secondary" : "ghost"} className="project-mode-toggle min-h-9" aria-pressed={editMode} aria-label={editMode ? t("完成编辑", "Done editing") : t("编辑", "Edit")} aria-disabled={moving} onClick={() => { if (!moving) onToggleEditMode(); }}>
+              {editMode ? <Check className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}<span className="project-mode-label" aria-hidden="true"><span style={{visibility:editMode?'hidden':'visible'}}>{t("编辑", "Edit")}</span><span style={{visibility:editMode?'visible':'hidden'}}>{t("完成编辑", "Done editing")}</span></span>
+            </Button>
+            <Button className="min-h-9" aria-disabled={moving} onClick={() => { if (!moving) openAddModal("task"); }}><Plus className="h-3.5 w-3.5" />{t("新建事项", "New item")}</Button>
           </div>
         </div>
-      </div>
-      {/* Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden scrollbar-thin px-5 py-3">
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 h-full" style={{ minWidth: columns.length > 3 ? columns.length * 240 : undefined }}>
-            {columns.map((col) => {
-              const colTasks = filteredTasks.filter((t) => t.status === col.id).sort((a, b) => a.sort_order - b.sort_order);
-              return (
-                <Droppable key={col.id} droppableId={col.id}>
-                  {(provided) => (
-                    <BoardColumn
-                      title={lang === "zh" ? col.title : (COLUMN_TITLE_MAP[col.title] || col.title)}
-                      count={colTasks.length}
-                      onAdd={() => openAddModal("task")}
-                      innerRef={provided.innerRef}
-                      placeholder={provided.placeholder}
-                      droppableProps={provided.droppableProps}
-                    >
-                      {colTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index} isDragDisabled={editMode}>
-                          {(dragProvided) => (
-                            <div
-                              ref={dragProvided.innerRef}
-                              {...dragProvided.draggableProps}
-                              {...dragProvided.dragHandleProps}
-                              className="mb-2"
-                            >
-                              {editMode && <ProjectEditActions name={task.title} onEdit={() => openEditModal(task)} onDelete={() => setDeletingTask(task)} />}
-                              {task.type === "habit" ? (
-                                <HabitCard task={task} projectId={project.id} />
-                              ) : task.type === "milestone" ? (
-                                <MilestoneCard
-                                  task={task}
-                                  onToggle={(done) => handleMilestoneToggle(task, done)}
-                                  onClick={() => openEditModal(task)}
-                                />
-                              ) : (
-                                <TaskCard task={task} onClick={() => openEditModal(task)} />
-                              )}
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                    </BoardColumn>
-                  )}
-                </Droppable>
-              );
-            })}
+        {project.description && <p className="project-board-description line-clamp-2">{project.description}</p>}
+        <div className="project-board-summary">
+          <div className="project-summary-stats">
+            {targetDate && isValid(targetDate) && <span><CalendarDays className="h-3.5 w-3.5" />{format(targetDate,"yyyy/MM/dd")}<span>{daysLeft! < 0 ? t(`逾期 ${-daysLeft!} 天`, `${-daysLeft!} days overdue`) : daysLeft === 0 ? t("今天截止", "Due today") : t(`剩余 ${daysLeft} 天`, `${daysLeft} days left`)}</span></span>}
+            <span><CheckCircle2 className="h-3.5 w-3.5 is-complete" /><strong>{completedCount}</strong> / {countable.length} {t("已完成", "done")}</span>
+            <span title={t("按任务和里程碑权重计算，习惯不计入", "Weighted tasks and milestones; habits excluded")}><strong>{progress}%</strong> {t("加权进度", "weighted progress")}</span>
           </div>
-        </DragDropContext>
-      </div>
+          <LayoutGroup id={filterId}><div className="project-filters" aria-label={t("筛选工作项", "Filter items")}>{filters.map(f => <button key={f.key} type="button" disabled={moving} aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>{filter === f.key && <motion.span className="project-filter-slider" layoutId="project-filter" transition={reducedMotion ? {duration:0} : {type:"spring",stiffness:420,damping:34}} />}<span className="project-filter-text">{f.label}</span></button>)}</div></LayoutGroup>
+        </div>
+        <div className="project-distribution" aria-label={t("各状态事项数量分布", "Item distribution by status")}>{columns.map(col => <span key={col.id} data-status={col.id} style={{ flexGrow: filteredTasks.filter(task => task.status === col.id).length || (filteredTasks.length ? 0 : 1), flexBasis: 0 }} />)}</div>
+      </header>
+      {isLoading || error ? <div className="p-8"><CollectionFeedback loading={isLoading} error={error} retry={refetch}><span /></CollectionFeedback></div> :
+        <WeightedTaskGrid items={filteredTasks} columns={columns} disabled={editMode || moving} onMove={handleBoardMove} onAdd={status => openAddModal("task", status)} labelItem={task => task.title}
+          renderItem={task => <ProjectWorkCard task={task} disabled={moving} editMode={editMode} onEdit={() => openEditModal(task)} onDelete={() => setDeletingTask(task)} onComplete={done => handleMilestoneToggle(task, done)} />} />}
+      <div className="project-save-status" role="status">{moving ? <span className="inline-flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" />{t("正在保存…", "Saving…")}</span> : t("拖动卡片调整状态 · 里程碑可一键完成 · 习惯独立打卡", "Drag to move · Complete milestones · Check in habits")}</div>
       <TaskModal
         open={taskModalOpen}
         onOpenChange={setTaskModalOpen}
@@ -276,6 +196,7 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
         projectId={project.id}
         initial={editingTask}
         defaultType={modalType}
+        defaultStatus={defaultStatus}
         pending={saving}
       />
       <ProjectDeleteDialog name={deletingTask?.title ?? null} pending={deleting} onCancel={() => setDeletingTask(null)} onConfirm={handleDeleteTask} />
