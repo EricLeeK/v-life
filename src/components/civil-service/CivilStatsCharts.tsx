@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useMemo, useState } from "react";
 import { format, subDays, startOfWeek, startOfMonth, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
@@ -83,22 +84,22 @@ export function CivilStatsCharts({ subjectGroup }: { subjectGroup?: string }) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-[11px] text-muted-foreground">{t("总时长(分)", "Minutes")}</p>
-            <p className="font-mono-data text-xl text-foreground mt-0.5">{totalMinutes}</p>
+            <Paragraph className="text-[11px] text-muted-foreground">{t("总时长(分)", "Minutes")}</Paragraph>
+            <Paragraph className="font-mono-data text-xl text-foreground mt-0.5">{totalMinutes}</Paragraph>
           </div>
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-[11px] text-muted-foreground">{t("打卡天数", "Check-in days")}</p>
-            <p className="font-mono-data text-xl text-foreground mt-0.5">{totalCheckinDays}</p>
+            <Paragraph className="text-[11px] text-muted-foreground">{t("打卡天数", "Check-in days")}</Paragraph>
+            <Paragraph className="font-mono-data text-xl text-foreground mt-0.5">{totalCheckinDays}</Paragraph>
           </div>
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-[11px] text-muted-foreground">{t("错题", "Wrongs")}</p>
-            <p className="font-mono-data text-xl text-foreground mt-0.5">
+            <Paragraph className="text-[11px] text-muted-foreground">{t("错题", "Wrongs")}</Paragraph>
+            <Paragraph className="font-mono-data text-xl text-foreground mt-0.5">
               {totalWrongs}
               <span className="text-[11px] text-muted-foreground font-sans ml-1">
                 ({pendingWrongs} {t("待复习", "pending")}
                 {overdueWrongs > 0 ? ` · ${overdueWrongs} ${t("逾期", "overdue")}` : ""})
               </span>
-            </p>
+            </Paragraph>
           </div>
         </div>
 

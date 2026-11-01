@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { CalendarDays } from "lucide-react";
 import type { AlmanacDay } from "@/lib/fortune/almanac";
 
@@ -28,7 +29,7 @@ export function AlmanacCard({ data, lang }: { data: AlmanacDay; lang: "zh" | "en
           </span>
           <span className="text-foreground leading-relaxed">{data.ji.join(sep)}</span>
         </div>
-        {meta && <p className="text-[12px] text-muted-foreground">{meta}</p>}
+        {meta && <Paragraph className="text-[12px] text-muted-foreground">{meta}</Paragraph>}
       </div>
     </div>
   );

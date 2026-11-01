@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -169,9 +170,9 @@ function Masthead({ report, count }: { report: NewspaperReport; count: number })
         )}
         <span>{count} 则记录 · 第 {report.revision} 版</span>
       </div>
-      <h1 className="np-title">
+      <Heading as="h1" className="np-title">
         <img src="/newspaper-paper/masthead.webp" alt="生活日报" width="2164" height="727" />
-      </h1>
+      </Heading>
       <div className="np-masthead-bar">
         <time dateTime={report.date}>
           {day.toLocaleDateString("zh-CN", {

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, useReducedMotion } from 'motion/react';
@@ -197,7 +198,7 @@ export function WeightedTaskGrid<T extends BoardItem>({ items,columns,disabled,r
         const inColumn=rows.filter(item=>item.status===column.id).sort(byBoardOrder);
         const StatusIcon=column.id==='done'?CheckCircle2:column.id==='in_progress'?CircleDot:column.id==='waiting'||column.id==='this_week'?Clock3:Circle;
         return <section key={column.id} data-project-column={column.id} className={`project-column ${over===column.id?'is-over':''}`} aria-label={t(column.zh,column.en)}>
-          <header className="project-column-heading"><StatusIcon className="h-3.5 w-3.5"/><h3>{t(column.zh,column.en)}</h3><span>{inColumn.length}</span><button type="button" disabled={disabled} onClick={()=>onAdd(column.id)} aria-label={t(`在${column.zh}添加工作项`,`Add item to ${column.en}`)}><Plus className="h-4 w-4"/></button></header>
+          <header className="project-column-heading"><StatusIcon className="h-3.5 w-3.5"/><Heading as="h3">{t(column.zh,column.en)}</Heading><span>{inColumn.length}</span><button type="button" disabled={disabled} onClick={()=>onAdd(column.id)} aria-label={t(`在${column.zh}添加工作项`,`Add item to ${column.en}`)}><Plus className="h-4 w-4"/></button></header>
           <div className="project-column-list" role="list">
             {inColumn.map(item=>carry.current?.id===item.id?<div key={item.id} data-project-placeholder className="project-drop-placeholder" style={{height:carry.current.height}}/>:
               <motion.div layout="position" transition={reduced?{duration:0}:{type:'spring',stiffness:380,damping:30}} key={item.id} data-project-item={item.id} className={`project-draggable ${picked===item.id?'is-picked':''}`} tabIndex={disabled?-1:0} role="listitem" aria-label={labelItem(item)} aria-roledescription={t('可拖动工作项','draggable item')}
@@ -210,11 +211,11 @@ export function WeightedTaskGrid<T extends BoardItem>({ items,columns,disabled,r
                   if(!handle&&(target.closest('button,input,textarea,select,a,[data-no-drag]')||event.pointerType==='touch'))return;
                   pending.current={id:item.id,x:event.clientX,y:event.clientY,pointerId:event.pointerId};
                 }}>{renderItem(item)}</motion.div>)}
-            {inColumn.length===0&&<p className="project-column-empty">{t('拖到这里，或添加工作项','Drop an item here, or add one')}</p>}
+            {inColumn.length===0&&<Paragraph className="project-column-empty">{t('拖到这里，或添加工作项','Drop an item here, or add one')}</Paragraph>}
           </div>
         </section>;
       })}
     </div>
-    <p ref={live} role="status" aria-live="polite" className="sr-only"/>
+    <Paragraph ref={live} role="status" aria-live="polite" className="sr-only"/>
   </div>;
 }

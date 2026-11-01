@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
@@ -36,7 +37,7 @@ export function PrepShell({
                 <ArrowLeft size={18} />
               </Link>
             )}
-            <h1>{title}</h1>
+            <Heading as="h1">{title}</Heading>
             {focus && <span className="prep-focus-label">专注作答</span>}
           </div>
           <div className="prep-heading-actions">{actions}</div>

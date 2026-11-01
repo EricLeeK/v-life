@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -170,30 +171,30 @@ export default function CaloriesPage() {
           <section className="min-w-0 space-y-4 xl:border-r xl:border-border xl:pr-6" aria-label={t("当日热量", "Calories for this day")}>
             <div className="grid items-end gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
               <div>
-                <p className="text-sm text-muted-foreground">{format(parseISO(selectedDate), lang === "zh" ? "M月d日 EEE" : "EEEE, MMM d", { locale })}</p>
+                <Paragraph className="text-sm text-muted-foreground">{format(parseISO(selectedDate), lang === "zh" ? "M月d日 EEE" : "EEEE, MMM d", { locale })}</Paragraph>
                 <div className="mt-1 flex items-baseline gap-2">
                   <ArcScope className="inline-flex">
                     <AnimatedCounter value={totalCalories} locale={lang === "zh" ? "zh-CN" : "en-US"} />
                   </ArcScope>
                   <span className="text-sm text-muted-foreground">kcal</span>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
+                <Paragraph className="mt-2 text-sm text-muted-foreground">
                   {t("摄入", "Intake")} {foodCalories} · {t("运动", "Exercise")} {exerciseCalories}
-                </p>
+                </Paragraph>
               </div>
               <div className="min-w-0 pb-1">
-                <p className={`text-sm font-medium ${remaining < 0 ? "text-cat-orange" : "text-cat-green"}`}>
+                <Paragraph className={`text-sm font-medium ${remaining < 0 ? "text-cat-orange" : "text-cat-green"}`}>
                   {remaining < 0
                     ? t(`超出目标 ${Math.abs(remaining)} kcal`, `${Math.abs(remaining)} kcal over target`)
                     : t(`距目标还剩 ${remaining} kcal`, `${remaining} kcal left of ${target}`)}
-                </p>
+                </Paragraph>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                   <div
                     className="h-full origin-left rounded-full bg-foreground transition-transform duration-500 ease-out"
                     style={{ transform: `scaleX(${Math.max(0, Math.min(1, totalCalories / target))})` }}
                   />
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">{t("每日目标", "Daily target")} {target.toLocaleString(lang === "zh" ? "zh-CN" : "en-US")} kcal</p>
+                <Paragraph className="mt-2 text-xs text-muted-foreground">{t("每日目标", "Daily target")} {target.toLocaleString(lang === "zh" ? "zh-CN" : "en-US")} kcal</Paragraph>
               </div>
             </div>
             <div className="border-t border-border pt-4">
@@ -202,7 +203,7 @@ export default function CaloriesPage() {
           </section>
 
           <section className="min-w-0 border-t border-border pt-4 xl:border-t-0 xl:pt-0" aria-label={t("本周热量", "Weekly calories")}>
-            <h2 className="mb-3 text-sm font-medium">{t("本周趋势", "This week's trend")}</h2>
+            <Heading as="h2" className="mb-3 text-sm font-medium">{t("本周趋势", "This week's trend")}</Heading>
             <WeeklyCalorieChart days={navDays} records={weeklyRecords} target={target} onDayChange={setSelectedDate} />
           </section>
         </section>}
@@ -233,7 +234,7 @@ export default function CaloriesPage() {
                 </Button>
               </div>
               {mealRecords.length === 0 ? (
-                <p className="pl-1 text-xs text-muted-foreground">{t("暂无记录", "No records")}</p>
+                <Paragraph className="pl-1 text-xs text-muted-foreground">{t("暂无记录", "No records")}</Paragraph>
               ) : (
                 <div className="space-y-1">
                   {mealRecords.map((record) => (

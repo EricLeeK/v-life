@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
@@ -73,7 +74,7 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
           </Tabs>
 
           {items.length === 0 && (
-            <p className="text-[13px] text-muted-foreground text-center py-6">{t("暂无错题", "No wrong answers yet")}</p>
+            <Paragraph className="text-[13px] text-muted-foreground text-center py-6">{t("暂无错题", "No wrong answers yet")}</Paragraph>
           )}
 
           {items.map((item) => {
@@ -95,17 +96,17 @@ export function WrongAnswerList({ subjectGroup }: { subjectGroup?: SubjectGroup 
                         ) : (
                           <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                         )}
-                        <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                        <Paragraph className="text-sm font-medium text-foreground truncate">{item.title}</Paragraph>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 ml-[18px]">
+                      <Paragraph className="text-[11px] text-muted-foreground mt-0.5 ml-[18px]">
                         {item.subject_tag || item.subject_group} · {item.source_date}
                         {item.review_status === "pending"
                           ? ` · ${t("待复习", "To review")}`
                           : ` · ${t("已掌握", "Mastered")}`}
                         {item.next_review_date ? ` · ${t("下次", "Next")} ${item.next_review_date}` : ""}
-                      </p>
+                      </Paragraph>
                       {!isExpanded && item.knowledge_point && (
-                        <p className="text-[12px] text-[#5a9da8] mt-1 ml-[18px]">{item.knowledge_point}</p>
+                        <Paragraph className="text-[12px] text-[#5a9da8] mt-1 ml-[18px]">{item.knowledge_point}</Paragraph>
                       )}
                     </div>
                     <div className="flex shrink-0" onClick={(e) => e.stopPropagation()}>

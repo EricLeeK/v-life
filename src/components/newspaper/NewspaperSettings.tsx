@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { Check, Copy, Pencil, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,10 +50,10 @@ function PreferencesForm({ value }: { value: NewspaperPreferences }) {
         }
       }}
     >
-      <h3>每天，留下一份生活存档</h3>
-      <p className="np-muted">
+      <Heading as="h3">每天，留下一份生活存档</Heading>
+      <Paragraph className="np-muted">
         启用后按设定的时区和日界线归档。已经收藏的日报保留当时快照；往期缺失日期可手动补建。
-      </p>
+      </Paragraph>
       <label className="np-check">
         <input
           type="checkbox"
@@ -126,10 +127,10 @@ function ConfigForm({ value }: { value: NewspaperImageConfig }) {
         }
       }}
     >
-      <h3>日报图片服务</h3>
-      <p className="np-muted">
+      <Heading as="h3">日报图片服务</Heading>
+      <Paragraph className="np-muted">
         图片单独配置，不影响文字日报。只有点击生成时才调用所选服务。
-      </p>
+      </Paragraph>
       <ImageOptionsFields
         value={draft}
         onChange={(v) =>
@@ -168,11 +169,11 @@ function ConfigForm({ value }: { value: NewspaperImageConfig }) {
           />
         </label>
       </div>
-      <p className="np-muted">
+      <Paragraph className="np-muted">
         {isDemo
           ? "演示配置只保留在当前浏览器会话，不调用真实图片服务。"
           : "密钥仅保存在服务端，保存后只显示掩码，不回传原文。"}
-      </p>
+      </Paragraph>
       <button
         className="np-button np-button-primary"
         disabled={command.isPending}
@@ -374,10 +375,10 @@ export function NewspaperSettings() {
   const [editing, setEditing] = useState<NewspaperStyle | null>(null);
   return (
     <div className="np-scope np-settings">
-      <h2 className="heading-font text-xl font-semibold">生活日报</h2>
-      {preferences.isLoading && <p role="status">正在读取日报设置…</p>}
+      <Heading as="h2" className="heading-font text-xl font-semibold">生活日报</Heading>
+      {preferences.isLoading && <Paragraph role="status">正在读取日报设置…</Paragraph>}
       {preferences.error && (
-        <p className="np-error" role="alert">
+        <Paragraph className="np-error" role="alert">
           {preferences.error.message}
           <button
             className="np-text-button"
@@ -385,7 +386,7 @@ export function NewspaperSettings() {
           >
             重新加载
           </button>
-        </p>
+        </Paragraph>
       )}
       {preferences.data && (
         <PreferencesForm
@@ -397,13 +398,13 @@ export function NewspaperSettings() {
         <ConfigForm key={JSON.stringify(config.data)} value={config.data} />
       )}
       {config.error && (
-        <p className="np-error">图片配置加载失败：{config.error.message}</p>
+        <Paragraph className="np-error">图片配置加载失败：{config.error.message}</Paragraph>
       )}
       <section className="np-settings-block">
         <div className="np-split">
           <div>
-            <h3>我的配图风格</h3>
-            <p className="np-muted">将喜欢的风格留下，以后直接使用。</p>
+            <Heading as="h3">我的配图风格</Heading>
+            <Paragraph className="np-muted">将喜欢的风格留下，以后直接使用。</Paragraph>
           </div>
           <button
             className="np-button"
@@ -412,11 +413,11 @@ export function NewspaperSettings() {
             <Plus size={16} />新建风格
           </button>
         </div>
-        {styles.error && <p className="np-error">{styles.error.message}</p>}
+        {styles.error && <Paragraph className="np-error">{styles.error.message}</Paragraph>}
         {!styles.isLoading && !styles.data?.length && (
-          <p className="np-muted">
+          <Paragraph className="np-muted">
             还没有自定义风格。一键生成将使用内置编辑插画模板。
-          </p>
+          </Paragraph>
         )}
         {styles.data?.map((style) => (
           <div className="np-style-row" key={style.id}>
@@ -427,7 +428,7 @@ export function NewspaperSettings() {
                   <Check size={12} />默认
                 </span>
               )}
-              <p className="np-muted np-line-clamp">{style.prompt_template}</p>
+              <Paragraph className="np-muted np-line-clamp">{style.prompt_template}</Paragraph>
             </div>
             <div className="np-inline">
               <button

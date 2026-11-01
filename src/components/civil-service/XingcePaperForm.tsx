@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
@@ -164,13 +165,13 @@ export function XingcePaperForm({
             </div>
           ))}
         </div>
-        <p className="text-[12px] text-muted-foreground font-mono-data">
+        <Paragraph className="text-[12px] text-muted-foreground font-mono-data">
           {t("总正确率", "Overall")}: {preview.overallRate != null ? `${preview.overallRate}%` : "—"}
           {" · "}
           {t("判断", "Judgment")}: {preview.judgmentRate != null ? `${preview.judgmentRate}%` : "—"}
           {" · "}
           {preview.correct}/{preview.total}
-        </p>
+        </Paragraph>
       </div>
 
       <div className="grid grid-cols-3 gap-2">

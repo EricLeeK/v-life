@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
@@ -69,17 +70,17 @@ export default function LotPage() {
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-baseline gap-3">
-                  <p className="font-mono-data text-[28px] font-semibold text-foreground">
+                  <Paragraph className="font-mono-data text-[28px] font-semibold text-foreground">
                     {lang === "zh" ? lot.rankZh : lot.rankEn}
-                  </p>
+                  </Paragraph>
                   <span className="text-[12px] text-muted-foreground">#{lot.id}</span>
                 </div>
-                <p className="text-[16px] text-foreground">
+                <Paragraph className="text-[16px] text-foreground">
                   {lang === "zh" ? lot.verseZh : lot.verseEn}
-                </p>
-                <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                </Paragraph>
+                <Paragraph className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                   {reading}
-                </p>
+                </Paragraph>
                 <SaveReadingButton type="lot" payload={{ ...lot }} reading={reading} />
               </div>
             )}

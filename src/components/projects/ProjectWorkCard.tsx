@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { Check, CheckCircle2, CheckSquare, Flag, GripVertical, Repeat, Pencil, X } from 'lucide-react';
 import { format, isValid, parseISO, startOfWeek } from 'date-fns';
 import { useLang } from '@/contexts/LanguageContext';
@@ -20,7 +21,7 @@ export function ProjectWorkCard({task,onEdit,onDelete,onComplete,disabled=false,
     {cover!=='none'&&<div className="project-cover" data-preset={cover}><span>{task.type==='milestone'?t('里程碑','Milestone'):task.type==='habit'?t('持续积累','Keep growing'):t('重点事项','Focus item')}</span></div>}
     <div className="project-card-body">
       <div className="project-card-title"><span>{task.title}</span>{task.status==='done'&&<CheckCircle2 className="h-3.5 w-3.5 shrink-0"/>}</div>
-      {task.description&&<p className="project-card-description">{task.description}</p>}
+      {task.description&&<Paragraph className="project-card-description">{task.description}</Paragraph>}
       <div className="project-card-meta"><span className="project-card-type"><Icon className="h-3.5 w-3.5"/>{typeLabel}</span><span className="project-card-trailing">
         {due&&isValid(due)&&<time className={overdue?'is-overdue':''} dateTime={task.due_date!} title={overdue?t('已逾期','Overdue'):t('截止日期','Due date')}>{format(due,'MM/dd')}</time>}
         {task.type==='milestone'&&<button className="project-complete" type="button" aria-label={t(`${task.status==='done'?'重新打开':'完成'}${task.title}`,`${task.status==='done'?'Reopen':'Complete'} ${task.title}`)} aria-pressed={task.status==='done'} disabled={disabled||editMode} onClick={event=>{event.stopPropagation();onComplete(task.status!=='done');}}>{task.status==='done'?<Check className="h-3 w-3"/>:<span/>}</button>}

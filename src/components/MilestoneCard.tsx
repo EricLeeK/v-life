@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { memo } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Flag } from "lucide-react";
@@ -22,11 +23,11 @@ function MilestoneCardInner({ task, onToggle, onClick }: MilestoneCardProps) {
           <Flag className="h-3 w-3 text-accent-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold leading-snug text-foreground">{task.title}</p>
+          <Paragraph className="text-[13px] font-semibold leading-snug text-foreground">{task.title}</Paragraph>
           {task.due_date && (
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <Paragraph className="text-[10px] text-muted-foreground mt-1">
               {t("截止", "Due")} {format(parseISO(task.due_date), "MM/dd")}
-            </p>
+            </Paragraph>
           )}
         </div>
         <Checkbox

@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -197,10 +198,10 @@ export function QuestionLinks({
         {data.paperQuestions
           .filter((r) => r.question_id === q.id)
           .map((r) => (
-            <p className="text-sm mt-3" key={r.id}>
+            <Paragraph className="text-sm mt-3" key={r.id}>
               {data.papers.find((p) => p.id === r.paper_id)?.source} · 第{" "}
               {r.source_number || "—"} 题
-            </p>
+            </Paragraph>
           ))}
       </details>
       <details>
@@ -257,9 +258,9 @@ export function QuestionLinks({
           .filter((r) => r.question_id === q.id)
           .map((r) => (
             <div key={r.id} className="mt-4">
-              <p className="font-medium text-sm">
+              <Paragraph className="font-medium text-sm">
                 {data.pitfalls.find((p) => p.id === r.pitfall_id)?.title}
-              </p>
+              </Paragraph>
               <Link
                 className="text-sm underline"
                 to={`/preparation/questions?pitfall=${r.pitfall_id}`}
@@ -331,14 +332,14 @@ export function QuestionLinks({
         {data.noteLinks
           .filter((r) => r.question_id === q.id)
           .map((r) => (
-            <p className="mt-3 text-sm" key={r.id}>
+            <Paragraph className="mt-3 text-sm" key={r.id}>
               <Link
                 className="underline"
                 to={`/learning-notes?note=${r.note_id}`}
               >
                 {notes.find((n) => n.id === r.note_id)?.title || "打开关联笔记"}
               </Link>
-            </p>
+            </Paragraph>
           ))}
       </details>
       <details>
@@ -347,7 +348,7 @@ export function QuestionLinks({
         </summary>
         {history.map((a) => (
           <div key={a.id} className="text-sm border-b border-border py-3">
-            <p>
+            <Paragraph>
               {a.created_at ? new Date(a.created_at).toLocaleString() : "刚刚"}{" "}
               ·{" "}
               {a.correct === true
@@ -357,10 +358,10 @@ export function QuestionLinks({
                   : "未判定"}
               {a.yellow ? " · 黄题" : ""} · {a.duration_seconds ?? "—"} 秒 ·{" "}
               {a.mode === "review" ? "复习" : "练习"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            </Paragraph>
+            <Paragraph className="text-xs text-muted-foreground mt-1">
               {a.reason_tags?.join(" · ")} · 内容 v{a.content_revision}
-            </p>
+            </Paragraph>
           </div>
         ))}
         {select(

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { materialExcerpt } from "@/components/preparation/presentation";
@@ -35,12 +36,12 @@ export default function PreparationBanks() {
     <PrepShell title="题库与材料" active="banks">
       <div className="prep-two-columns">
         {prep.error && (
-          <p role="alert">
+          <Paragraph role="alert">
             数据读取失败。<Button onClick={() => prep.refetch()}>重试</Button>
-          </p>
+          </Paragraph>
         )}
         <section className="prep-form">
-          <h2 className="heading-font text-xl mb-4">共享题库</h2>
+          <Heading as="h2" className="heading-font text-xl mb-4">共享题库</Heading>
           <form
             className="flex gap-3"
             onSubmit={(e) => {
@@ -98,7 +99,7 @@ export default function PreparationBanks() {
           </div>
         </section>
         <section className="prep-form space-y-4">
-          <h2 className="heading-font text-xl">共用材料</h2>
+          <Heading as="h2" className="heading-font text-xl">共用材料</Heading>
           <form
             className="space-y-3"
             onSubmit={(e) => {
@@ -129,29 +130,29 @@ export default function PreparationBanks() {
           {prep.data?.materials.map((m) => (
             <article key={m.id} className="prep-material-item">
               <div className="flex justify-between gap-3">
-                <p className="line-clamp-2 text-sm">{materialExcerpt(m.content_md)}</p>
+                <Paragraph className="line-clamp-2 text-sm">{materialExcerpt(m.content_md)}</Paragraph>
                 <Button variant="outline" onClick={() => setEdit({ ...m })}>
                   编辑
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <Paragraph className="text-xs text-muted-foreground mt-2">
                 被{" "}
                 {
                   prep.data!.questions.filter((q) => q.material_id === m.id)
                     .length
                 }{" "}
                 道子题引用 · v{m.revision}
-              </p>
+              </Paragraph>
             </article>
           ))}
         </section>
       </div>
       {edit && (
         <section className="prep-form space-y-4">
-          <h2 className="font-medium">编辑共享材料</h2>
-          <p className="text-sm text-cat-orange">
+          <Heading as="h2" className="font-medium">编辑共享材料</Heading>
+          <Paragraph className="text-sm text-cat-orange">
             保存将更新所有引用此材料的子题；历史作答仍保留原版本。
-          </p>
+          </Paragraph>
           <Textarea
             className="min-h-60"
             aria-label="材料内容"

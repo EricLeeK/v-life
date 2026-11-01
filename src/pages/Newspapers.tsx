@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -251,7 +252,7 @@ export default function NewspapersPage() {
         >
           <header className="np-archive-header">
             <div>
-              <h1>{t("日报档案", "Newspaper archive")}</h1>
+              <Heading as="h1">{t("日报档案", "Newspaper archive")}</Heading>
             </div>
             <div className="np-inline">
               <button
@@ -314,9 +315,9 @@ export default function NewspapersPage() {
             </span>
           </div>
           {openError && (
-            <p className="np-notice np-error" role="alert">
+            <Paragraph className="np-notice np-error" role="alert">
               这份日报暂时没有打开：{openError}。请再试一次。
-            </p>
+            </Paragraph>
           )}
           {list.isLoading && (
             <div className="np-loading" role="status">正在整理档案…</div>
@@ -440,7 +441,7 @@ export default function NewspapersPage() {
             (requested === "today" && preferences.isLoading)) && (
             <div className="np-loading" role="status">
               <Newspaper size={36} />
-              <p>正在展开 {date} 的日报…</p>
+              <Paragraph>正在展开 {date} 的日报…</Paragraph>
               <button
                 data-newspaper-back
                 className="np-button"
@@ -453,10 +454,10 @@ export default function NewspapersPage() {
           )}
           {(report.error || preferences.error) && (
             <div className="np-empty-paper">
-              <h2>这份日报暂时没有打开</h2>
-              <p className="np-error">
+              <Heading as="h2">这份日报暂时没有打开</Heading>
+              <Paragraph className="np-error">
                 {report.error?.message || preferences.error?.message}
-              </p>
+              </Paragraph>
               <div className="np-inline">
                 <button className="np-button" onClick={() => report.refetch()}>
                   重新加载

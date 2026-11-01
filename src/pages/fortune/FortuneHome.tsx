@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { AlmanacCard } from "@/components/fortune/AlmanacCard";
@@ -201,13 +202,13 @@ export default function FortuneHome() {
     <AppLayout title={t("运势", "Fortune")} header={false}>
       <div className="space-y-10">
         <section>
-          <h1
+          <Heading as="h1"
             className="font-semibold leading-[1.15] tracking-tight text-foreground heading-font"
             style={{ fontSize: "clamp(28px, 3.2vw, 42px)" }}
           >
             {t("今日运势", "Today's Fortune")}
-          </h1>
-          <p className="mt-2 text-[14px] text-muted-foreground">{lunarLabelForDate(date, lang)}</p>
+          </Heading>
+          <Paragraph className="mt-2 text-[14px] text-muted-foreground">{lunarLabelForDate(date, lang)}</Paragraph>
           <div className="mt-3 flex flex-wrap gap-2">
             {tags.map((tag) => (
               <span
@@ -250,15 +251,15 @@ export default function FortuneHome() {
         <section className="space-y-4">
           <div className="flex items-baseline justify-between">
             <div>
-              <h2
+              <Heading as="h2"
                 className="font-bold leading-tight text-foreground heading-font"
                 style={{ fontSize: "clamp(24px, 3vw, 32px)" }}
               >
                 {t("今日解读", "Today's Reading")}
-              </h2>
-              <p className="mt-1 text-[12px] text-muted-foreground">
+              </Heading>
+              <Paragraph className="mt-1 text-[12px] text-muted-foreground">
                 {t("当日生成一次，刷新沿用", "Generated once per day")}
-              </p>
+              </Paragraph>
             </div>
           </div>
           <DailyHero

@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
@@ -77,18 +78,18 @@ export default function IchingPage() {
             ) : (
               <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
                 <div>
-                  <p className="font-mono-data text-[28px] font-semibold text-foreground">
+                  <Paragraph className="font-mono-data text-[28px] font-semibold text-foreground">
                     {lang === "zh" ? cast.nameZh : cast.nameEn}
-                  </p>
-                  <p className="mt-1 text-[12px] text-muted-foreground">
+                  </Paragraph>
+                  <Paragraph className="mt-1 text-[12px] text-muted-foreground">
                     {lang === "zh" ? `第 ${cast.hexagramNumber} 卦` : `Hexagram #${cast.hexagramNumber}`}
-                  </p>
+                  </Paragraph>
                   {cast.relatingNameZh && (
-                    <p className="mt-1 text-[12px] text-muted-foreground">
+                    <Paragraph className="mt-1 text-[12px] text-muted-foreground">
                       {lang === "zh"
                         ? `之卦：${cast.relatingNameZh}（第 ${cast.relatingHexagramNumber} 卦）`
                         : `Relating: ${cast.relatingNameEn} (#${cast.relatingHexagramNumber})`}
-                    </p>
+                    </Paragraph>
                   )}
                   <div className="mt-4 flex flex-col-reverse gap-1.5">
                     {cast.lines.map((line, i) => (
@@ -103,10 +104,10 @@ export default function IchingPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <Paragraph className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("解读", "Reading")}
-                  </p>
-                  <p className="text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">{reading}</p>
+                  </Paragraph>
+                  <Paragraph className="text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">{reading}</Paragraph>
                   <div className="mt-5">
                     <SaveReadingButton type="iching" question={question} payload={{ ...cast }} reading={reading} />
                   </div>

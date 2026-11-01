@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import { useId, type ReactNode } from "react";
 import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "motion/react";
 import { ChevronDown } from "lucide-react";
@@ -32,7 +33,7 @@ export function SectionDisclosure({ title, open, onOpenChange, expandLabel, coll
   return (
     <section aria-labelledby={`${id}-heading`}>
       <div className="flex items-center justify-between gap-4">
-        <h2 id={`${id}-heading`} className="type-section-title heading-font">{title}</h2>
+        <Heading as="h2" id={`${id}-heading`} className="type-section-title heading-font">{title}</Heading>
         <Button type="button" variant="outline" aria-expanded={open} aria-controls={`${id}-panel`} aria-label={actionLabel} className="min-h-11 shrink-0 px-3" onClick={() => onOpenChange(!open)}>
           <span>{open ? collapseLabel : expandLabel}</span>
           {count !== undefined && <span className="rounded-[4px] bg-muted px-1.5 py-0.5 font-mono-data text-xs text-muted-foreground">{count}</span>}

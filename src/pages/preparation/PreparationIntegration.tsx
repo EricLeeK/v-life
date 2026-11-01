@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PrepShell } from "@/components/preparation/PrepShell";
@@ -35,10 +36,10 @@ export default function PreparationIntegration() {
             <span>V 记</span>
           </div>
         </div>
-        <p className="text-muted-foreground leading-relaxed">
+        <Paragraph className="text-muted-foreground leading-relaxed">
           在 V 记的连接设置中绑定备考后，你的错题将出现在「V-Life ·
           备考错题」卡片盒。两端共用答案、解析、错因和复习状态。
-        </p>
+        </Paragraph>
         <ol className="prep-steps">
           <li>在这里生成专用连接码。</li>
           <li>前往 V 记设置中的「V-Life 备考」，粘贴连接码并连接。</li>
@@ -68,15 +69,15 @@ export default function PreparationIntegration() {
         >
           生成新的连接码
         </Button>
-        <p className="text-xs text-muted-foreground">
+        <Paragraph className="text-xs text-muted-foreground">
           生成新码会撤销旧连接码。连接码只授予备考内容和复习权限，请只填入你自己的
           V 记。
-        </p>
-        {isDemo && <p className="text-sm">演示模式不创建真实连接。</p>}
+        </Paragraph>
+        {isDemo && <Paragraph className="text-sm">演示模式不创建真实连接。</Paragraph>}
         {token && (
           <div className="border border-border rounded-md p-4 space-y-3">
-            <p className="text-sm">连接码仅在本次显示</p>
-            <code className="block break-all text-sm">{token}</code>
+            <Paragraph className="text-sm">连接码仅在本次显示</Paragraph>
+            <code className="block wrap-anywhere text-sm">{token}</code>
             <Button
               variant="outline"
               onClick={() =>
@@ -91,7 +92,7 @@ export default function PreparationIntegration() {
           </div>
         )}
         {connections.error && (
-          <p role="alert">连接状态读取失败，请稍后重试。</p>
+          <Paragraph role="alert">连接状态读取失败，请稍后重试。</Paragraph>
         )}
         {connections.data?.map((c) => (
           <div
@@ -99,15 +100,15 @@ export default function PreparationIntegration() {
             className="border-t border-border py-4 flex justify-between gap-4"
           >
             <div>
-              <p>
+              <Paragraph>
                 {c.name} · {c.revoked_at ? "已撤销" : "已启用"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              </Paragraph>
+              <Paragraph className="text-xs text-muted-foreground mt-1">
                 最近同步：
                 {c.last_used_at
                   ? new Date(c.last_used_at).toLocaleString()
                   : "尚未连接"}
-              </p>
+              </Paragraph>
             </div>
             {!c.revoked_at && (
               <Button

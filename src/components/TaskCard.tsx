@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { memo } from "react";
 import { CheckSquare } from "lucide-react";
 import { formatDistanceToNow, parseISO } from "date-fns";
@@ -38,9 +39,9 @@ function TaskCardInner({ task, onClick }: TaskCardProps) {
         <span className="text-[13px] font-medium leading-snug flex-1 text-foreground">{task.title}</span>
       </div>
       {task.description && (
-        <p className="text-[11px] text-muted-foreground line-clamp-2 mb-1.5 pl-7">
+        <Paragraph className="text-[11px] text-muted-foreground line-clamp-2 mb-1.5 pl-7">
           {task.description}
-        </p>
+        </Paragraph>
       )}
       <div className="flex items-center justify-between pl-7">
         <div className="flex items-center gap-1.5">

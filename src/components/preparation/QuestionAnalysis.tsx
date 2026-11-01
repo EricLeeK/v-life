@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useState, type ReactNode } from "react";
 import { BookOpen, PencilLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ export function QuestionAnalysis({ question, onSave, onSaved, onEditingChange, d
         <Button size="sm" variant="ghost" type="button" onClick={() => setPreview(!preview)}>{preview ? "继续编辑" : "预览"}</Button>
       </div>
       {preview ? <div className="prep-markdown-preview"><StudyMarkdown variant="question">{draft || "暂无内容。"}</StudyMarkdown></div> : <Textarea id={`prep-${field}`} className="min-h-48" value={draft} disabled={saving} onChange={(event) => setDraft(event.target.value)} />}
-      {(error || conflict) && <p role="alert" className="text-sm text-destructive mt-3">{conflict ? "题目已在其他位置更新。请核对最新内容，你的草稿仍然保留。" : error}</p>}
+      {(error || conflict) && <Paragraph role="alert" className="text-sm text-destructive mt-3">{conflict ? "题目已在其他位置更新。请核对最新内容，你的草稿仍然保留。" : error}</Paragraph>}
       {conflict && <div className="mt-3 space-y-3">
         <details><summary className="text-sm cursor-pointer">查看最新内容</summary><StudyMarkdown variant="question">{question[field] || "暂无内容。"}</StudyMarkdown></details>
         <Button size="sm" variant="outline" type="button" onClick={() => { setBase(question); setError(""); }}>保留草稿，使用最新版本</Button>
@@ -54,7 +55,7 @@ export function QuestionAnalysis({ question, onSave, onSaved, onEditingChange, d
   ) : <StudyMarkdown variant="question">{question[field] || (field === "explanation_md" ? "解析待补充。" : "记录当时的错误思路，下次更容易识别。")}</StudyMarkdown>;
   const heading = (field: Field, title: string, label: string, icon: ReactNode) => (
     <div className="prep-analysis-heading-row">
-      <h2 className="prep-analysis-heading">{icon}{label}</h2>
+      <Heading as="h2" className="prep-analysis-heading">{icon}{label}</Heading>
       {editing !== field && <Button size="sm" variant="ghost" disabled={disabled || !!editing} onClick={() => {
         setEditing(field); setBase(question); setDraft(question[field]); setPreview(false); setError(""); onEditingChange?.(true);
       }}>编辑{title}</Button>}

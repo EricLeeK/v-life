@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useMemo, useState } from "react";
 import { format, subDays, eachDayOfInterval } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
@@ -116,7 +117,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
           <CardTitle className="text-base heading-font">{t("错题统计", "Wrong answer stats")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-[13px] text-muted-foreground text-center py-8">{t("暂无错题数据", "No wrong answers yet")}</p>
+          <Paragraph className="text-[13px] text-muted-foreground text-center py-8">{t("暂无错题数据", "No wrong answers yet")}</Paragraph>
         </CardContent>
       </Card>
     );
@@ -141,9 +142,9 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
         </div>
 
         <div>
-          <p className="text-[12px] text-muted-foreground mb-2">{t("板块分布", "By subject tag")}</p>
+          <Paragraph className="text-[12px] text-muted-foreground mb-2">{t("板块分布", "By subject tag")}</Paragraph>
           {tagChartData.every((d) => d.count === 0) ? (
-            <p className="text-[13px] text-muted-foreground text-center py-4">{t("暂无板块数据", "No tag data")}</p>
+            <Paragraph className="text-[13px] text-muted-foreground text-center py-4">{t("暂无板块数据", "No tag data")}</Paragraph>
           ) : (
             <div className="w-full" style={{ height: tagChartHeight }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -179,7 +180,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
 
         {typeChartData.length > 0 && (
           <div>
-            <p className="text-[12px] text-muted-foreground mb-2">{t("题型分布", "By question type")}</p>
+            <Paragraph className="text-[12px] text-muted-foreground mb-2">{t("题型分布", "By question type")}</Paragraph>
             <div className="flex flex-wrap gap-2">
               {typeChartData.map((row, i) => (
                 <div
@@ -187,8 +188,8 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
                   className="rounded-lg border border-border px-3 py-2 min-w-[88px]"
                   style={{ borderLeftWidth: 3, borderLeftColor: TAG_COLORS[i % TAG_COLORS.length] }}
                 >
-                  <p className="text-[11px] text-muted-foreground">{row.name}</p>
-                  <p className="font-mono-data text-lg text-foreground">{row.count}</p>
+                  <Paragraph className="text-[11px] text-muted-foreground">{row.name}</Paragraph>
+                  <Paragraph className="font-mono-data text-lg text-foreground">{row.count}</Paragraph>
                 </div>
               ))}
             </div>
@@ -197,7 +198,7 @@ export function WrongAnswerStatsPanel({ subjectGroup }: { subjectGroup?: Subject
 
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-[12px] text-muted-foreground">{t("新增趋势", "New wrong answers")}</p>
+            <Paragraph className="text-[12px] text-muted-foreground">{t("新增趋势", "New wrong answers")}</Paragraph>
             <Tabs value={trendRange} onValueChange={(v) => setTrendRange(v as TrendRange)}>
               <TabsList className="bg-muted h-8">
                 <TabsTrigger value="30" className="text-[11px] px-2 h-6">
@@ -254,11 +255,11 @@ function StatTile({
 }) {
   return (
     <div className="rounded-lg bg-muted p-3">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-      <p className="font-mono-data text-xl mt-0.5" style={{ color: accent || "hsl(var(--foreground))" }}>
+      <Paragraph className="text-[11px] text-muted-foreground">{label}</Paragraph>
+      <Paragraph className="font-mono-data text-xl mt-0.5" style={{ color: accent || "hsl(var(--foreground))" }}>
         {value}
-      </p>
-      {sub && <p className="text-[10px] text-cat-orange mt-0.5">{sub}</p>}
+      </Paragraph>
+      {sub && <Paragraph className="text-[10px] text-cat-orange mt-0.5">{sub}</Paragraph>}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -208,18 +209,18 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
     <section className="flex flex-col h-full border-t border-foreground/80 pt-3">
       <div className="pb-3">
         <div className="flex items-center justify-between">
-          <h2 className="heading-font text-base font-semibold flex items-center gap-2">{icon}{label}</h2>
+          <Heading as="h2" className="heading-font text-base font-semibold flex items-center gap-2">{icon}{label}</Heading>
           <Button variant="ghost" size="sm" className="h-6 text-xs gap-1"
             onClick={() => setShowAll(!showAll)}>
             {showAll ? <><ChevronUp className="h-3 w-3" />{t("当前", "Current")}</> : <><ChevronDown className="h-3 w-3" />{t("全部", "All")}</>}
           </Button>
         </div>
-        {!showAll && <p className="mt-0.5 text-xs text-muted-foreground font-mono-data">{formatPeriod(currentPeriodStart)}</p>}
+        {!showAll && <Paragraph className="mt-0.5 text-xs text-muted-foreground font-mono-data">{formatPeriod(currentPeriodStart)}</Paragraph>}
       </div>
       <div className="flex-1 space-y-2">
         {!showAll ? (
           <>
-            {currentGoals.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</p>}
+            {currentGoals.length === 0 && <Paragraph className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</Paragraph>}
             {currentGoals.map(renderGoalItem)}
           </>
         ) : (
@@ -232,7 +233,7 @@ function GoalColumn({ type, label }: { type: GoalType; label: string }) {
                 {goals.map(renderGoalItem)}
               </div>
             ))}
-            {groupedGoals?.length === 0 && <p className="text-xs text-muted-foreground">{t("暂无历史目标", "No history")}</p>}
+            {groupedGoals?.length === 0 && <Paragraph className="text-xs text-muted-foreground">{t("暂无历史目标", "No history")}</Paragraph>}
           </div>
         )}
 

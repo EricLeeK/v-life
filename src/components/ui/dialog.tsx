@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
@@ -69,7 +70,9 @@ const DialogTitle = React.forwardRef<
     ref={ref}
     className={cn("text-lg font-semibold leading-none tracking-tight", className)}
     {...props}
-  />
+   asChild>
+    <Heading>{props.children}</Heading>
+  </DialogPrimitive.Title>
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 

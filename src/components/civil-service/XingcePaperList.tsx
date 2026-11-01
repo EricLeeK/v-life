@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,9 +39,9 @@ export function XingcePaperList() {
         </CardHeader>
         <CardContent className="space-y-2">
           {sorted.length === 0 && (
-            <p className="text-[13px] text-muted-foreground text-center py-6">
+            <Paragraph className="text-[13px] text-muted-foreground text-center py-6">
               {t("还没有套卷记录", "No papers yet")}
-            </p>
+            </Paragraph>
           )}
           {sorted.map((paper) => {
             const stats = paperTotals(paper);
@@ -48,15 +49,15 @@ export function XingcePaperList() {
               <div key={paper.id} className="rounded-lg border border-border p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
+                    <Paragraph className="text-sm font-medium text-foreground truncate">
                       {paper.source}
                       {paper.is_mock ? (
                         <span className="ml-2 text-[10px] text-cat-orange bg-cat-orange-bg px-1.5 py-0.5 rounded">
                           {t("模考", "Mock")}
                         </span>
                       ) : null}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 font-mono-data">
+                    </Paragraph>
+                    <Paragraph className="text-[11px] text-muted-foreground mt-0.5 font-mono-data">
                       {paper.taken_date}
                       {" · "}
                       {stats.correct}/{stats.total}
@@ -64,9 +65,9 @@ export function XingcePaperList() {
                       {paper.total_score != null ? ` · ${t("分", "pt")} ${paper.total_score}` : ""}
                       {paper.beat_rate != null ? ` · ${t("击败", "Beat")} ${paper.beat_rate}%` : ""}
                       {paper.duration_minutes != null ? ` · ${paper.duration_minutes}${t("分", "m")}` : ""}
-                    </p>
+                    </Paragraph>
                     {paper.notes && (
-                      <p className="text-[12px] text-muted-foreground mt-1 line-clamp-2">{paper.notes}</p>
+                      <Paragraph className="text-[12px] text-muted-foreground mt-1 line-clamp-2">{paper.notes}</Paragraph>
                     )}
                   </div>
                   <div className="flex shrink-0">

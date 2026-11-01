@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { safeConsentReturnTo } from "@/lib/agentConnections";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -154,9 +155,9 @@ export default function AuthPage() {
             <Button type="button" variant="outline" className="w-full border-border text-muted-foreground hover:bg-muted hover:text-foreground gap-2" onClick={handleGuestTour}>
               <Compass className="h-4 w-4" />{t("游客参观", "Guest Tour")}
             </Button>
-            <p className="text-xs text-center text-muted-foreground mt-2">
+            <Paragraph className="text-xs text-center text-muted-foreground mt-2">
               {t("无需注册，直接体验完整功能", "No signup needed, explore all features")}
-            </p>
+            </Paragraph>
           </div>
         </CardContent>
       </Card>

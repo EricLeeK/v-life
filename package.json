@@ -2,7 +2,7 @@
   "name": "v-life",
   "private": true,
   "version": "0.1.0",
-  "description": "V-Life \u2014 an AI-assisted personal life management web app covering schedule, finance, calories, todos, goals, pantry, belongings, thoughts, and weight loss.",
+  "description": "V-Life — an AI-assisted personal life management web app covering schedule, finance, calories, todos, goals, pantry, belongings, thoughts, and weight loss.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -49,6 +49,7 @@
     "@supabase/supabase-js": "^2.100.1",
     "@tanstack/react-query": "^5.83.0",
     "astronomy-engine": "^2.1.19",
+    "budoux": "^0.10.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -58,6 +59,7 @@
     "katex": "^0.18.1",
     "lucide-react": "1.47.0",
     "lunar-javascript": "^1.7.7",
+    "motion": "13.4.0",
     "next-themes": "0.4.6",
     "react": "19.3.0",
     "react-day-picker": "8.10.2",
@@ -76,8 +78,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "1.1.2",
     "yet-another-react-lightbox": "^3.32.2",
-    "zod": "^3.25.76",
-    "motion": "13.4.0"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

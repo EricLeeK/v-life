@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -296,7 +297,7 @@ export default function FinancePage() {
           </div>
         )}
         {form.currency !== "CNY" && form.amount && (
-          <p className="text-xs text-muted-foreground">≈ ¥{Number.isFinite(conversion.amountCny) ? conversion.amountCny.toFixed(2) : "—"} CNY ({t("汇率", "Rate")}: {conversion.rate})</p>
+          <Paragraph className="text-xs text-muted-foreground">≈ ¥{Number.isFinite(conversion.amountCny) ? conversion.amountCny.toFixed(2) : "—"} CNY ({t("汇率", "Rate")}: {conversion.rate})</Paragraph>
         )}
         <div>
           <label htmlFor="fin-date" className="mb-1 block text-sm font-medium">{t("日期", "Date")} *</label>
@@ -307,7 +308,7 @@ export default function FinancePage() {
           <input id="fin-notes" className="ledger-field" value={form.notes} onChange={event => setForm(current => ({ ...current, notes: event.target.value }))} />
         </div>
       </fieldset>
-      {saveCommitted && <p role="status" className="pb-1 text-sm text-muted-foreground">{t("记录已保存，关闭后可继续记账", "Record saved. Close this sheet to continue.")}</p>}
+      {saveCommitted && <Paragraph role="status" className="pb-1 text-sm text-muted-foreground">{t("记录已保存，关闭后可继续记账", "Record saved. Close this sheet to continue.")}</Paragraph>}
       <ActionButton
         label={t("保存", "Save")}
         pendingLabel={t("保存中…", "Saving…")}
@@ -353,17 +354,17 @@ export default function FinancePage() {
           {records.length > 0 && <section className="life-stage grid items-start gap-x-6 gap-y-4 xl:grid-cols-[14rem_32rem_minmax(0,1fr)]" aria-label={t("支出概览", "Spending overview")}>
             <div>
               <div>
-                <p className="mb-1 text-sm text-muted-foreground">
+                <Paragraph className="mb-1 text-sm text-muted-foreground">
                   {scrub?.label ?? pinnedLabel ?? t(dateRange ? "所选支出" : "本月支出", dateRange ? "Selected spending" : "Monthly spending")}
-                </p>
+                </Paragraph>
                 <ArcScope className="inline-flex">
                   <AnimatedCounter value={headlineTotal} prefix="¥" decimals={2} locale={lang === "zh" ? "zh-CN" : "en-US"} />
                 </ArcScope>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <Paragraph className="mt-1 text-xs text-muted-foreground">
                   {pinnedCategory
                     ? t(`${scopedRecords.length} 笔${pinnedLabel}`, `${scopedRecords.length} ${pinnedLabel}`)
                     : `${selectedRecords.length} ${t("笔记录", "records")}`}
-                </p>
+                </Paragraph>
                 {pinnedCategory && (
                   <button type="button" className="mt-1 min-h-8 text-sm text-foreground underline underline-offset-4" onClick={() => setActiveCategory(null)}>
                     {t("查看全部分类", "Show every category")}
@@ -380,7 +381,7 @@ export default function FinancePage() {
             </div>
 
             <div>
-              <h2 className="mb-2 text-sm font-medium">{t("分类占比", "Category breakdown")}</h2>
+              <Heading as="h2" className="mb-2 text-sm font-medium">{t("分类占比", "Category breakdown")}</Heading>
               <ShareDonut
                 data={categoryData}
                 label={t("分类支出构成", "Spending by category")}
@@ -398,7 +399,7 @@ export default function FinancePage() {
             </div>
 
             <div>
-              <h2 className="mb-2 text-sm font-medium">{t("每日支出趋势", "Daily spending trend")}</h2>
+              <Heading as="h2" className="mb-2 text-sm font-medium">{t("每日支出趋势", "Daily spending trend")}</Heading>
               <TrendLine
                 data={dailyData}
                 series={[{ key: "spending", label: pinnedLabel ?? t("支出", "Spending"), color: "hsl(var(--cat-orange))", area: true }]}

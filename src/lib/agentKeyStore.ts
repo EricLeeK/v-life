@@ -23,3 +23,11 @@ export async function revokeAgentKey(clientId: string) {
   const { error } = await supabase.rpc('agent_revoke_api_key' as never, { p_client_id: clientId } as never);
   check(error);
 }
+
+export async function deleteAgentKey(userId: string, clientId: string) {
+  const { data, error } = await supabase.from('agent_client_access' as never).delete()
+    .eq('user_id', userId).eq('client_id', clientId).eq('credential_type', 'api_key')
+    .not('revoked_at', 'is', null).select('client_id');
+  check(error);
+  if (!data?.length) throw new Error('API_KEY_DELETE_NOT_CONFIRMED');
+}

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { Flame, Minus, Plus, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLang } from "@/contexts/LanguageContext";
@@ -38,9 +39,9 @@ export function HabitWidgetStack({ habits, logs, today, onChange }: Props) {
   return (
     <section className="space-y-2" aria-label={t("今日习惯", "Today's habits")}>
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <Heading as="h3" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("今日习惯", "Habits")}
-        </h3>
+        </Heading>
         <span className="text-xs font-mono-data text-muted-foreground">
           {metCount} / {habits.length}
         </span>
@@ -97,9 +98,9 @@ function HabitRow({
           )}
         </div>
         {isPersist && (
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+          <Paragraph className="text-[11px] text-muted-foreground mt-0.5">
             {t("本周", "Week")} {week}/7
-          </p>
+          </Paragraph>
         )}
         {(habit.habit_type === "count" || habit.habit_type === "duration") && (
           <div className="mt-1">
@@ -109,9 +110,9 @@ function HabitRow({
                 style={{ width: `${Math.min(100, target ? (value / target) * 100 : 0)}%` }}
               />
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <Paragraph className="text-[11px] text-muted-foreground mt-0.5">
               {value} / {target} {unit}
-            </p>
+            </Paragraph>
           </div>
         )}
       </div>

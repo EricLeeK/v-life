@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
@@ -59,14 +60,14 @@ export function WeekAgenda({ events, weekStart, today, loading, failed, onRetry 
     <section className="week-agenda card-premium" aria-label={t("本周日程预览", "This week's agenda")} aria-busy={loading}>
       <header className="agenda-heading">
         <div className="agenda-heading-title">
-          <h2 className="heading-font">{t("这一周的安排", "The week ahead")}</h2>
+          <Heading as="h2" className="heading-font">{t("这一周的安排", "The week ahead")}</Heading>
           <span className="agenda-range">{format(weekStart, "M.d")} — {format(addDays(weekStart, 6), "M.d")}</span>
         </div>
         <Link to={`/schedule?date=${today}`} className="agenda-open">{t("完整日程", "Full calendar")}<ArrowRight size={14} /></Link>
       </header>
       {failed ? (
         <div className="agenda-notice" role="alert">
-          <p>{t("暂时没能读到日程", "The schedule could not be loaded")}</p>
+          <Paragraph>{t("暂时没能读到日程", "The schedule could not be loaded")}</Paragraph>
           <button type="button" onClick={onRetry}>{t("重新加载", "Try again")}</button>
         </div>
       ) : !loading && days.every(day => day.events.length === 0) ? (

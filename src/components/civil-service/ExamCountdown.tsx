@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { differenceInCalendarDays, parseISO, format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
 import { DateField } from "@/components/arc/DateField";
@@ -47,9 +48,9 @@ export function ExamCountdown() {
           {nearest ? (
             <>
               <div className="flex items-center justify-between gap-3 border-b border-border px-5 py-3.5">
-                <p className="heading-font text-base font-medium text-foreground">
+                <Paragraph className="heading-font text-base font-medium text-foreground">
                   {t("考试倒计时", "Exam countdown")}
-                </p>
+                </Paragraph>
                 <Button variant="outline" size="sm" onClick={() => setManageOpen(true)} className="border-border">
                   {t("管理考试", "Manage exams")}
                 </Button>
@@ -67,17 +68,17 @@ export function ExamCountdown() {
                       <Star className="h-3.5 w-3.5 fill-cat-orange text-cat-orange" aria-label={t("重点目标", "Priority target")} />
                     ) : null}
                   </div>
-                  <p className="text-sm font-medium text-foreground">{nearest.exam.name}</p>
+                  <Paragraph className="text-sm font-medium text-foreground">{nearest.exam.name}</Paragraph>
                   <div className="mt-1 flex items-baseline gap-2">
                     <span className="heading-font text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
                       {Math.max(nearest.daysLeft, 0)}
                     </span>
                     <span className="text-lg text-muted-foreground">{t("天", "days")}</span>
                   </div>
-                  <p className="mt-2 text-[13px] text-muted-foreground">
+                  <Paragraph className="mt-2 text-[13px] text-muted-foreground">
                     {t("考试日", "Exam date")} {format(parseISO(nearest.exam.exam_date), "yyyy-MM-dd")}
                     {nearest.daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
-                  </p>
+                  </Paragraph>
                 </div>
                 {laterTargets.length > 0 ? (
                   <div className="grid gap-2 border-t border-border bg-muted/40 p-3 sm:grid-cols-2 lg:grid-cols-1 lg:border-l lg:border-t-0">
@@ -92,12 +93,12 @@ export function ExamCountdown() {
                             {exam.is_primary ? (
                               <Star className="h-3 w-3 shrink-0 fill-cat-orange text-cat-orange" aria-label={t("重点目标", "Priority target")} />
                             ) : null}
-                            <p className="truncate text-[13px] font-medium text-foreground">{exam.name}</p>
+                            <Paragraph className="truncate text-[13px] font-medium text-foreground">{exam.name}</Paragraph>
                           </div>
-                          <p className="mt-1 text-[11px] text-muted-foreground">
+                          <Paragraph className="mt-1 text-[11px] text-muted-foreground">
                             {format(parseISO(exam.exam_date), "yyyy-MM-dd")}
                             {daysLeft < 0 ? ` · ${t("已过期", "Passed")}` : ""}
-                          </p>
+                          </Paragraph>
                         </div>
                         <div className="flex shrink-0 items-baseline gap-1">
                           <span className="heading-font text-2xl font-semibold text-foreground">{Math.max(daysLeft, 0)}</span>
@@ -112,8 +113,8 @@ export function ExamCountdown() {
           ) : (
             <div className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="heading-font text-xl text-foreground">{t("还没有考试倒计时", "No exam countdown yet")}</p>
-                <p className="text-[13px] text-muted-foreground mt-1">{t("添加国考 / 省考 / 事业编目标", "Add national / provincial / public institution exams")}</p>
+                <Paragraph className="heading-font text-xl text-foreground">{t("还没有考试倒计时", "No exam countdown yet")}</Paragraph>
+                <Paragraph className="text-[13px] text-muted-foreground mt-1">{t("添加国考 / 省考 / 事业编目标", "Add national / provincial / public institution exams")}</Paragraph>
               </div>
               <Button onClick={() => setManageOpen(true)} className="bg-[#d17847] hover:bg-[#c06838] text-white">
                 <Plus className="h-4 w-4 mr-1" />
@@ -177,11 +178,11 @@ function ExamManageDialog({
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   {exam.is_primary && <Star className="h-3.5 w-3.5 text-[#d17847] fill-[#d17847]" />}
-                  <p className="font-medium text-foreground truncate">{exam.name}</p>
+                  <Paragraph className="font-medium text-foreground truncate">{exam.name}</Paragraph>
                 </div>
-                <p className="text-[12px] text-muted-foreground mt-0.5">
+                <Paragraph className="text-[12px] text-muted-foreground mt-0.5">
                   {exam.exam_type} · {exam.exam_date}
-                </p>
+                </Paragraph>
               </div>
               <div className="flex gap-1 shrink-0">
                 {!exam.is_primary && (
@@ -215,12 +216,12 @@ function ExamManageDialog({
             </div>
           ))}
           {exams.length === 0 && (
-            <p className="text-[13px] text-muted-foreground text-center py-2">{t("暂无考试", "No exams yet")}</p>
+            <Paragraph className="text-[13px] text-muted-foreground text-center py-2">{t("暂无考试", "No exams yet")}</Paragraph>
           )}
         </div>
 
         <div className="border-t border-border pt-4 space-y-3">
-          <p className="text-sm font-medium text-foreground">{t("添加考试", "Add exam")}</p>
+          <Paragraph className="text-sm font-medium text-foreground">{t("添加考试", "Add exam")}</Paragraph>
           <div className="space-y-2">
             <Label htmlFor="exam-name">{t("名称", "Name")}</Label>
             <Input id="exam-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("如：2027国考", "e.g. 2027 National Exam")} />

@@ -34,13 +34,20 @@
   }
 }
 
-/* Keyboard focus stays visible inside arc scopes.
-   Foundation ships `outline: none !important` (upstream product decision);
-   this outranks it by source order at equal specificity. Mouse users still
-   see no ring (:focus-visible only). */
-.arc-runtime :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--focus-ring) !important;
-  outline-offset: 2px !important;
+/* No focus outlines anywhere — the user rejects every variant of the focus
+   box ("黑框"), including on typing fields where the caret and border state
+   already carry focus. This is site-wide on purpose: per-scope styles
+   (newspaper.css) paint their own outlines and some surfaces sit outside
+   .arc-runtime. Also neutralises Tailwind's focus-visible:ring-* utilities
+   (which render as box-shadows, not outlines). */
+*:focus-visible {
+  outline: none !important;
+  --tw-ring-color: transparent !important;
+  --tw-ring-offset-width: 0px !important;
+}
+/* Descendants outlined by an ancestor's focus (np-file sheets/tabs). */
+*:focus-visible * {
+  outline: none !important;
 }
 
 /* Summary counters use the same 20px compact metric role as static values. */

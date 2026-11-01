@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -1032,7 +1033,7 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
 
       {showHistory ? (
         <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          <p className="text-xs text-muted-foreground mb-2">{lang === "zh" ? `最近 ${sessions.length} 个会话` : `${sessions.length} recent sessions`}</p>
+          <Paragraph className="text-xs text-muted-foreground mb-2">{lang === "zh" ? `最近 ${sessions.length} 个会话` : `${sessions.length} recent sessions`}</Paragraph>
           {sessions.map((s: any) => (
             <div
               key={s.id}
@@ -1051,8 +1052,8 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
               }}
             >
               <div className="min-w-0 flex-1 text-left">
-                <p className="text-sm truncate text-foreground">{s.title || t("无标题", "Untitled")}</p>
-                <p className="text-[10px] text-muted-foreground">{format(new Date(s.updated_at), "MM/dd HH:mm")}</p>
+                <Paragraph className="text-sm truncate text-foreground">{s.title || t("无标题", "Untitled")}</Paragraph>
+                <Paragraph className="text-[10px] text-muted-foreground">{format(new Date(s.updated_at), "MM/dd HH:mm")}</Paragraph>
               </div>
               <Button
                 variant="ghost"
@@ -1065,7 +1066,7 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
               </Button>
             </div>
           ))}
-          {sessions.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("暂无历史会话", "No history")}</p>}
+          {sessions.length === 0 && <Paragraph className="text-sm text-muted-foreground text-center py-4">{t("暂无历史会话", "No history")}</Paragraph>}
         </div>
       ) : (
         <>
@@ -1074,11 +1075,11 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-8 space-y-2">
                 <Bot className="h-10 w-10 mx-auto opacity-30" />
-                <p>{t("试试说：", "Try saying:")}</p>
+                <Paragraph>{t("试试说：", "Try saying:")}</Paragraph>
                 <div className="space-y-1 text-xs">
-                  <p className="bg-muted rounded-lg px-3 py-1.5 font-normal">"午饭吃了拉面，花了30元，大概600卡"</p>
-                  <p className="bg-muted rounded-lg px-3 py-1.5 font-normal">"明天下午3点开会，大概1小时"</p>
-                  <p className="bg-muted rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5 font-normal"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</p>
+                  <Paragraph className="bg-muted rounded-lg px-3 py-1.5 font-normal">"午饭吃了拉面，花了30元，大概600卡"</Paragraph>
+                  <Paragraph className="bg-muted rounded-lg px-3 py-1.5 font-normal">"明天下午3点开会，大概1小时"</Paragraph>
+                  <Paragraph className="bg-muted rounded-lg px-3 py-1.5 flex items-center justify-center gap-1.5 font-normal"><Camera className="h-4 w-4 shrink-0" />{t("拍小票自动识别记账", "Snap receipt for auto-expense")}</Paragraph>
                 </div>
               </div>
             )}

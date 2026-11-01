@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useDemoMode } from '@/contexts/DemoModeContext';
@@ -208,7 +209,7 @@ export default function LearningNotesPage() {
               onSaveNote={handleSaveNote}
               onDeleteNote={handleDeleteNote}
             />
-            {backlinks.data && backlinks.data.length>0 && <aside className="border-t border-border p-4"><h2 className="font-medium text-sm">相关错题</h2>{backlinks.data.map(link=><Link className="block text-sm underline mt-2" key={link.question_id} to={`/preparation/questions/${link.question_id}`}>{link.prep_questions?.stem_md?.slice(0,100)||'查看错题'}</Link>)}</aside>}
+            {backlinks.data && backlinks.data.length>0 && <aside className="border-t border-border p-4"><Heading as="h2" className="font-medium text-sm">相关错题</Heading>{backlinks.data.map(link=><Link className="block text-sm underline mt-2" key={link.question_id} to={`/preparation/questions/${link.question_id}`}>{link.prep_questions?.stem_md?.slice(0,100)||'查看错题'}</Link>)}</aside>}
             </CollectionFeedback>
           ) : (
             <div className="flex min-h-96 h-full items-center justify-center">

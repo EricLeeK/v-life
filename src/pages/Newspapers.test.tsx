@@ -53,9 +53,15 @@ describe("newspaper archive and reader", () => {
     "opens an archived paper and returns to the drawer with focus restored",
     async () => {
       renderPage();
-      const papers = await screen.findAllByRole("button", {
+      let papers = await screen.findAllByRole("button", {
         name: /展开 .* 生活日报/,
       });
+      // On the first day of a month the latest drawer contains only today.
+      // Open older drawers explicitly before choosing an archived paper.
+      if (papers.length < 2) {
+        document.querySelectorAll<HTMLButtonElement>('.np-drawer-front[aria-expanded="false"]').forEach(drawer => fireEvent.click(drawer));
+        papers = await screen.findAllByRole("button", { name: /展开 .* 生活日报/ });
+      }
       const label = papers[1].getAttribute("aria-label")!;
       await act(async () => {
         fireEvent.click(papers[1]);

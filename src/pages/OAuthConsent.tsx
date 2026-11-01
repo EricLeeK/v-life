@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { OAuthAuthorizationDetails } from "@supabase/supabase-js";
@@ -59,23 +60,23 @@ export default function OAuthConsentPage() {
   if (!authorizationId) return <div className="min-h-screen flex items-center justify-center bg-background p-4"><Card className="w-full max-w-lg">
     <CardHeader><CardTitle>这个连接没有完成</CardTitle></CardHeader>
     <CardContent className="space-y-4">
-      <p className="text-sm leading-relaxed text-muted-foreground">此页面用于确认 Agent 发起的授权请求，不能用作 Agent 的回调地址。你可以在设置中生成 API Key，复制给 Agent 直接连接。</p>
+      <Paragraph className="text-sm leading-relaxed text-muted-foreground">此页面用于确认 Agent 发起的授权请求，不能用作 Agent 的回调地址。你可以在设置中生成 API Key，复制给 Agent 直接连接。</Paragraph>
       <Button onClick={() => navigate('/settings#agent-connections')}>用 API Key 连接</Button>
     </CardContent>
   </Card></div>;
   return <div className="min-h-screen flex items-center justify-center bg-background p-4"><Card className="w-full max-w-lg">
     <CardHeader><CardTitle>连接 V-Life Agent</CardTitle></CardHeader>
     <CardContent className="space-y-5">
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-      {!details && !redirect && !error && <p>正在读取授权请求…</p>}
-      {redirect && <><p>此 Agent 已获得 OAuth 授权。继续连接会沿用已保存的数据权限，不会新增或升级权限。</p><p className="text-sm text-muted-foreground">如果连接被禁止，请到设置中撤销旧连接，再由 Agent 发起新的授权请求。</p><Button onClick={() => window.location.assign(redirect)}>继续连接</Button></>}
+      {error && <Paragraph role="alert" className="text-sm text-destructive">{error}</Paragraph>}
+      {!details && !redirect && !error && <Paragraph>正在读取授权请求…</Paragraph>}
+      {redirect && <><Paragraph>此 Agent 已获得 OAuth 授权。继续连接会沿用已保存的数据权限，不会新增或升级权限。</Paragraph><Paragraph className="text-sm text-muted-foreground">如果连接被禁止，请到设置中撤销旧连接，再由 Agent 发起新的授权请求。</Paragraph><Button onClick={() => window.location.assign(redirect)}>继续连接</Button></>}
       {details && <>
-        <p><strong>{details.client.name || "Agent"}</strong> 请求访问你的 V-Life 数据。</p>
-        <p className="text-sm text-muted-foreground break-all">回调地址：{details.redirect_uri}</p>
+        <Paragraph><strong>{details.client.name || "Agent"}</strong> 请求访问你的 V-Life 数据。</Paragraph>
+        <Paragraph className="text-sm text-muted-foreground wrap-anywhere">回调地址：{details.redirect_uri}</Paragraph>
         <fieldset disabled={busy} className="space-y-3"><legend className="mb-3 font-medium">允许的数据操作</legend>
           {([['read_enabled', '读取数据'], ['write_enabled', '新增和修改数据'], ['delete_enabled', '删除数据']] as const).map(([key, label]) => <label key={key} className="flex items-center gap-3"><input type="checkbox" checked={permissions[key]} onChange={(e) => setPermissions((p) => ({ ...p, [key]: e.target.checked }))} />{label}</label>)}
         </fieldset>
-        <p className="text-sm text-muted-foreground">仅访问你的数据；API Key、视觉 Key 和日历订阅 Token 不会提供给 Agent。</p>
+        <Paragraph className="text-sm text-muted-foreground">仅访问你的数据；API Key、视觉 Key 和日历订阅 Token 不会提供给 Agent。</Paragraph>
         <div className="flex gap-3 justify-end"><Button variant="outline" onClick={() => decide(false)} disabled={busy}>拒绝</Button><Button onClick={() => decide(true)} disabled={busy}>{busy ? "处理中…" : "允许访问"}</Button></div>
       </>}
     </CardContent></Card></div>;

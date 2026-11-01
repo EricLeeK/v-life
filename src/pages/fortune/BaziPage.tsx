@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
@@ -65,9 +66,9 @@ export default function BaziPage() {
 
         {!hasBirthDate ? (
           <div className="card-premium p-8 text-center">
-            <p className="text-[14px] text-muted-foreground">
+            <Paragraph className="text-[14px] text-muted-foreground">
               {t("请先在设置填写生日", "Please add birthday in Settings")}
-            </p>
+            </Paragraph>
             <Link
               to="/settings"
               className="mt-4 inline-flex rounded-lg bg-cat-orange-bg px-4 py-2 text-[13px] font-medium text-cat-orange transition-colors hover:opacity-90"
@@ -79,16 +80,16 @@ export default function BaziPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
             <div className="card-premium space-y-5 p-5">
               <div>
-                <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+                <Paragraph className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                   {t("生日日柱", "Birth day pillar")}
-                </p>
-                <p className="mt-1 font-mono-data text-[40px] font-semibold text-foreground">
+                </Paragraph>
+                <Paragraph className="mt-1 font-mono-data text-[40px] font-semibold text-foreground">
                   {birthBundle?.dayPillar || pillar!.label}
-                </p>
+                </Paragraph>
                 {birthBundle?.naYin && (
-                  <p className="mt-1 text-[13px] text-muted-foreground">
+                  <Paragraph className="mt-1 text-[13px] text-muted-foreground">
                     {t("纳音", "Nayin")} · {birthBundle.naYin}
-                  </p>
+                  </Paragraph>
                 )}
               </div>
               <div className="rounded-lg bg-muted px-3 py-2 text-[12px] text-muted-foreground">
@@ -120,12 +121,12 @@ export default function BaziPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <Paragraph className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("今日提醒", "Today's note")}
-                  </p>
-                  <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                  </Paragraph>
+                  <Paragraph className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                     {reading}
-                  </p>
+                  </Paragraph>
                   <SaveReadingButton
                     type="bazi"
                     payload={{

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { ImagePlus } from "lucide-react";
 import type {
@@ -34,7 +35,7 @@ function Body({ text, limit = 420, className = "np-body" }: { text: string; limi
   const long = text.length > limit;
   return (
     <>
-      <p className={long && !open ? `${className} np-folded` : className}>{text}</p>
+      <Paragraph className={long && !open ? `${className} np-folded` : className}>{text}</Paragraph>
       {long && (
         <button
           type="button"
@@ -57,10 +58,10 @@ function TimelineItem(
     <li className="np-tl-item">
       <time className={time ? "np-tl-time" : "np-tl-time np-tl-allday"}>{time ?? "当天"}</time>
       <div className="np-tl-body">
-        <h3>
+        <Heading as="h3">
           {entry.title}
           {entry.status === "completed" && <span className="np-done">已完成</span>}
-        </h3>
+        </Heading>
         <Body text={entry.body} limit={160} className="np-body np-body-small" />
       </div>
     </li>
@@ -73,11 +74,11 @@ function StoryItem(
   const time = clock(entry, timezone);
   return (
     <article className="np-story">
-      <h3>{entry.title}</h3>
+      <Heading as="h3">{entry.title}</Heading>
       <Body text={entry.body} />
-      <p className="np-meta-line">
+      <Paragraph className="np-meta-line">
         <span>{time ?? "当天"} · {STATUS[entry.status]}</span>
-      </p>
+      </Paragraph>
     </article>
   );
 }
@@ -100,7 +101,7 @@ function LedgerItem({ entry }: { entry: NewspaperEntry }) {
           </>
         )}
       </div>
-      {note && <p className="np-ledger-note">{note}</p>}
+      {note && <Paragraph className="np-ledger-note">{note}</Paragraph>}
     </li>
   );
 }
@@ -112,9 +113,9 @@ function EssayItem(
   return (
     <article className="np-essay">
       <Body text={entry.body || entry.title} limit={360} className="np-essay-text" />
-      <p className="np-meta-line">
+      <Paragraph className="np-meta-line">
         <span>{entry.body ? `《${entry.title}》` : ""}{time ? ` ${time}` : ""}</span>
-      </p>
+      </Paragraph>
     </article>
   );
 }
@@ -127,10 +128,10 @@ function PendingItem(
     <li className="np-pending-item">
       <span className="np-pending-box" aria-hidden />
       <div>
-        <h3>{entry.title}</h3>
-        <p className="np-meta-line">
+        <Heading as="h3">{entry.title}</Heading>
+        <Paragraph className="np-meta-line">
           <span>{time ? `计划于 ${time}` : "当日计划"} · 未标记完成</span>
-        </p>
+        </Paragraph>
       </div>
     </li>
   );
@@ -172,7 +173,7 @@ export function SectionModule(
       aria-labelledby={`np-mod-${module.key}-title`}
     >
       <header className="np-mod-head">
-        <h2 id={`np-mod-${module.key}-title`}>{module.title}</h2>
+        <Heading as="h2" id={`np-mod-${module.key}-title`}>{module.title}</Heading>
         <span className="np-mod-kicker">{module.items.length} 则</span>
         {module.section !== "pending" && (
           <button
@@ -190,7 +191,7 @@ export function SectionModule(
         <NewspaperFigure key={asset.id} asset={asset} onOpen={onOpenAsset} />
       ))}
       {module.variant === "pending" && (
-        <p className="np-mod-note">这些是当天的计划，没有计入完成。</p>
+        <Paragraph className="np-mod-note">这些是当天的计划，没有计入完成。</Paragraph>
       )}
       {list
         ? <ul className={`np-list np-list-${module.variant}`}>{items}</ul>
@@ -245,28 +246,28 @@ export function FrontPage(
         {lead
           ? (
             <article className="np-lead">
-              <p className="np-lead-meta">
+              <Paragraph className="np-lead-meta">
                 头条 · {leadSection?.title}
                 {leadTime ? ` · ${leadTime}` : ""} · {STATUS[lead.status]}
-              </p>
-              <h2 className="np-headline">{lead.title}</h2>
+              </Paragraph>
+              <Heading as="h2" className="np-headline">{lead.title}</Heading>
               {report.review?.overview
                 ? (
-                  <p className="np-deck">
+                  <Paragraph className="np-deck">
                     <span className="np-ai-stamp">AI 概述</span>
                     {report.review.overview}
-                  </p>
+                  </Paragraph>
                 )
-                : <p className="np-deck">{factualDeck(report, layout)}</p>}
+                : <Paragraph className="np-deck">{factualDeck(report, layout)}</Paragraph>}
               <Body text={lead.body} limit={640} className="np-body np-lead-body" />
             </article>
           )
           : (
             <div className="np-front-empty">
-              <h2 className="np-headline">这一天的纸页，还是空白的。</h2>
-              <p>
+              <Heading as="h2" className="np-headline">这一天的纸页，还是空白的。</Heading>
+              <Paragraph>
                 还没有归入这一天的记录。可以先写下一段经历；之后在网站里记录的事，更新快照后会排进版面。
-              </p>
+              </Paragraph>
               <button type="button" className="np-button" onClick={onSupplement}>
                 写一段补充
               </button>
@@ -274,7 +275,7 @@ export function FrontPage(
           )}
       </div>
       <aside className="np-index" aria-labelledby="np-index-title">
-        <h2 id="np-index-title">本期导读</h2>
+        <Heading as="h2" id="np-index-title">本期导读</Heading>
         {report.snapshot.metrics.length > 0 && (
           <dl className="np-figures">
             {report.snapshot.metrics.map((m, i) => (

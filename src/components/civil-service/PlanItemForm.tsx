@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState, useEffect } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { DateField, DateTimeField } from "@/components/arc/DateField";
@@ -134,9 +135,9 @@ export function PlanItemForm({
           <DateTimeField id="plan-end-time" label={t("结束（可选）", "End (optional)")} value={endLocal} onChange={setEndLocal} />
         </div>
       </div>
-      <p className="text-[11px] text-muted-foreground">
+      <Paragraph className="text-[11px] text-muted-foreground">
         {t("有起止时间可同步到日程，否则同步到待办「考公」", "With time → schedule; otherwise → todos (Civil)")}
-      </p>
+      </Paragraph>
       <div className="space-y-2">
         <Label htmlFor="plan-detail">{t("备注", "Detail")}</Label>
         <Textarea id="plan-detail" value={detail} onChange={(e) => setDetail(e.target.value)} rows={2} />

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useRef, useState, type ReactNode, type FormEvent } from "react";
@@ -25,7 +26,7 @@ function Field({ id, label, children }: { id: string; label: string; children: R
 }
 /** A labelled row of buttons: the choice reads as the options themselves. */
 function Choice({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: { value: string; label: string }[] }) {
-  return <div className="space-y-1.5"><p className="text-sm font-medium leading-none">{label}</p><ArcScope><SegmentedControl label={label} value={value} onValueChange={onChange} options={options} /></ArcScope></div>;
+  return <div className="space-y-1.5"><Paragraph className="text-sm font-medium leading-none">{label}</Paragraph><ArcScope><SegmentedControl label={label} value={value} onValueChange={onChange} options={options} /></ArcScope></div>;
 }
 function cycle(item: Subscription, zh: boolean) {
   if (item.billing_unit === "month" && item.billing_interval === 12) return zh ? "年" : "yr";
@@ -106,12 +107,12 @@ export function SubscriptionPanel() {
     const what = event.kind === "trial" ? t("试用结束", " trial ends") : event.kind === "charge" ? t("扣款", " charge") : t("到期", " expires");
     return { text: `${when}${what}`, tone: event.needsAttention ? "tone-warn" : "tone-ok" };
   };
-  const modalError = error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null;
+  const modalError = error ? <Paragraph role="alert" className="text-sm text-destructive">{error}</Paragraph> : null;
   const safeLink = (url: string | null) => url && /^https?:\/\//i.test(url) ? url : undefined;
   const iconButton = "h-9 w-9 text-muted-foreground hover:text-foreground";
 
-  if (query.isLoading) return <p role="status" className="py-12 text-center text-muted-foreground">{t("正在加载订阅…", "Loading subscriptions…")}</p>;
-  if (query.error) return <div role="alert" className="space-y-3 py-8"><p>{t("加载订阅失败", "Could not load subscriptions")}</p><p className="text-sm text-muted-foreground">{subscriptionLoadErrorMessage(query.error, lang)}</p><Button variant="outline" onClick={() => query.refetch()}>{t("重试", "Retry")}</Button></div>;
+  if (query.isLoading) return <Paragraph role="status" className="py-12 text-center text-muted-foreground">{t("正在加载订阅…", "Loading subscriptions…")}</Paragraph>;
+  if (query.error) return <div role="alert" className="space-y-3 py-8"><Paragraph>{t("加载订阅失败", "Could not load subscriptions")}</Paragraph><Paragraph className="text-sm text-muted-foreground">{subscriptionLoadErrorMessage(query.error, lang)}</Paragraph><Button variant="outline" onClick={() => query.refetch()}>{t("重试", "Retry")}</Button></div>;
 
   return <section aria-label={t("订阅服务", "Subscriptions")} className="space-y-5">
     {items.length > 0 && <><dl className="grid grid-cols-3 border-y border-border">
@@ -150,12 +151,12 @@ export function SubscriptionPanel() {
         return <li key={item.id} className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 border-b border-border px-1.5 py-3 transition-colors hover:bg-muted/45 sm:grid-cols-[minmax(0,1fr)_8.5rem_9.5rem_auto]">
           <div className="min-w-0">
             <div className="flex min-w-0 items-baseline gap-2"><button onClick={() => { setDetails(item); setError(""); }} className="row-title truncate text-left underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{item.name}</button><span className="hidden shrink-0 text-xs text-muted-foreground sm:inline">{item.category}</span></div>
-            {meta && <p className="row-meta truncate">{meta}</p>}
+            {meta && <Paragraph className="row-meta truncate">{meta}</Paragraph>}
           </div>
-          <p className="whitespace-nowrap text-right font-mono-data text-sm font-semibold tabular-nums sm:text-left">{item.billing_type === "usage" && <span className="mr-0.5 font-normal text-muted-foreground" title={t("按量估算", "Usage estimate")}>≈</span>}{money(item.amount, item.currency, lang)}<span className="font-normal text-muted-foreground"> / {cycle(item, zh)}</span></p>
+          <Paragraph className="whitespace-nowrap text-right font-mono-data text-sm font-semibold tabular-nums sm:text-left">{item.billing_type === "usage" && <span className="mr-0.5 font-normal text-muted-foreground" title={t("按量估算", "Usage estimate")}>≈</span>}{money(item.amount, item.currency, lang)}<span className="font-normal text-muted-foreground"> / {cycle(item, zh)}</span></Paragraph>
           <div className="flex min-w-0 items-center gap-2 sm:block">
-            <p className={`status-text text-sm ${next.tone}`}>{next.text}</p>
-            <p className="flex items-center gap-1.5 whitespace-nowrap font-mono-data text-xs text-muted-foreground sm:mt-0.5">{item.next_date.slice(5)}{item.auto_renew && item.status !== "ended" && <span role="img" aria-label={t("自动续费", "Auto-renews")} title={t("自动续费", "Auto-renews")}><RefreshCw className="h-3 w-3" aria-hidden /></span>}</p>
+            <Paragraph className={`status-text text-sm ${next.tone}`}>{next.text}</Paragraph>
+            <Paragraph className="flex items-center gap-1.5 whitespace-nowrap font-mono-data text-xs text-muted-foreground sm:mt-0.5">{item.next_date.slice(5)}{item.auto_renew && item.status !== "ended" && <span role="img" aria-label={t("自动续费", "Auto-renews")} title={t("自动续费", "Auto-renews")}><RefreshCw className="h-3 w-3" aria-hidden /></span>}</Paragraph>
           </div>
           <div className="flex items-center justify-end gap-0.5">
             <span className={`flex items-center gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100`}>
@@ -195,9 +196,9 @@ export function SubscriptionPanel() {
     </DialogContent></Dialog>
 
     <Dialog open={!!details} onOpenChange={open => { if (!open) setDetails(null); }}><DialogContent className="max-h-[90dvh] overflow-y-auto"><DialogHeader><DialogTitle>{details?.name}</DialogTitle><DialogDescription className="sr-only">{t("订阅详情与付款记录", "Subscription details and payment history")}</DialogDescription></DialogHeader>
-      {[details?.plan, details?.account, details?.notes].some(Boolean) && <p className="break-all text-sm text-muted-foreground">{[details?.plan, details?.account, details?.notes].filter(Boolean).join(" · ")}</p>}
-      <h3 className="text-sm font-semibold">{t("付款记录", "Payment history")}</h3>
-      {history.isLoading ? <p className="text-sm text-muted-foreground">{t("加载中…", "Loading…")}</p> : history.error ? <p role="alert" className="text-sm">{t("付款记录加载失败，请重新打开。", "Could not load payments. Reopen to retry.")}</p> : !history.data?.length ? <p className="text-sm text-muted-foreground">{t("暂无付款记录", "No payments yet")}</p> : <ul className="row-list">{history.data.map(row => <li key={row.id} className="row-item flex items-center justify-between gap-3 py-2.5"><div className="row-main"><p className="font-mono-data text-sm">{row.paid_on}</p><p className="row-meta">{t("账期", "Period")} {row.period_date}{row.finance_record_id && <> · <span role="img" aria-label={t("已记账", "Expense linked")} title={t("已记账", "Expense linked")}><ReceiptText className="inline h-3 w-3 align-[-2px]" aria-hidden /></span></>}</p></div><span className="font-mono-data text-sm font-semibold">{money(row.amount, row.currency, lang)}</span></li>)}</ul>}
+      {[details?.plan, details?.account, details?.notes].some(Boolean) && <Paragraph className="wrap-anywhere text-sm text-muted-foreground">{[details?.plan, details?.account, details?.notes].filter(Boolean).join(" · ")}</Paragraph>}
+      <Heading as="h3" className="text-sm font-semibold">{t("付款记录", "Payment history")}</Heading>
+      {history.isLoading ? <Paragraph className="text-sm text-muted-foreground">{t("加载中…", "Loading…")}</Paragraph> : history.error ? <Paragraph role="alert" className="text-sm">{t("付款记录加载失败，请重新打开。", "Could not load payments. Reopen to retry.")}</Paragraph> : !history.data?.length ? <Paragraph className="text-sm text-muted-foreground">{t("暂无付款记录", "No payments yet")}</Paragraph> : <ul className="row-list">{history.data.map(row => <li key={row.id} className="row-item flex items-center justify-between gap-3 py-2.5"><div className="row-main"><Paragraph className="font-mono-data text-sm">{row.paid_on}</Paragraph><Paragraph className="row-meta">{t("账期", "Period")} {row.period_date}{row.finance_record_id && <> · <span role="img" aria-label={t("已记账", "Expense linked")} title={t("已记账", "Expense linked")}><ReceiptText className="inline h-3 w-3 align-[-2px]" aria-hidden /></span></>}</Paragraph></div><span className="font-mono-data text-sm font-semibold">{money(row.amount, row.currency, lang)}</span></li>)}</ul>}
     </DialogContent></Dialog>
 
     <Dialog open={!!deleting} onOpenChange={open => { if (!open && !busy) setDeleting(null); }}><DialogContent><DialogHeader><DialogTitle>{t("删除订阅", "Delete subscription")} · {deleting?.name}</DialogTitle><DialogDescription>{t("付款记录一并删除，已记的账保留。", "Payment history is deleted; finance records stay.")}</DialogDescription></DialogHeader>{modalError}

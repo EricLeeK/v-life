@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useNewspaperDrafts } from "./NewspaperDraftContext";
 import { useEffect, useMemo, useState } from "react";
 import { Check, Download, ImagePlus, Maximize2, Minimize2 } from "lucide-react";
@@ -126,10 +127,10 @@ export function FigurePlaceholder(
       role="status"
     >
       <span className="np-figure-pending-sheen" aria-hidden />
-      <p>
+      <Paragraph>
         {job.status === "saving" ? "正在冲印配图" : "正在绘制配图"}
         <small>可以继续阅读，完成后会自动排进版面</small>
-      </p>
+      </Paragraph>
     </div>
   );
 }
@@ -316,11 +317,11 @@ export function ImageStudio(
       }
     >
       {needsKey && (
-        <p className="np-callout">
+        <Paragraph className="np-callout">
           还没有可用的图片服务。到
           <Link className="np-text-link" to="/settings#settings-newspaper">设置 · 生活日报</Link>
           保存 Grsai、OpenAI 或 Gemini 的密钥后即可生成。
-        </p>
+        </Paragraph>
       )}
       <fieldset className="np-sheet-group">
         <legend>放在哪里</legend>
@@ -385,9 +386,9 @@ export function ImageStudio(
         </summary>
         <ImageOptionsFields value={chosen} onChange={setOptions} compact />
         {providerMismatch && (
-          <p className="np-muted">
+          <Paragraph className="np-muted">
             当前保存的是 {IMAGE_PROVIDER_LABELS[config.data!.provider]} 的密钥；换用其他服务前，请先在设置中保存它的密钥。
-          </p>
+          </Paragraph>
         )}
         {options && (
           <button type="button" className="np-text-link" onClick={() => setOptions(null)}>
@@ -408,7 +409,7 @@ export function ImageStudio(
             onChange={(e) => setPrompt(e.target.value)}
           />
         </label>
-        <p className="np-muted">只影响这一次生成，不会改动画风模板。</p>
+        <Paragraph className="np-muted">只影响这一次生成，不会改动画风模板。</Paragraph>
         {prompt !== null && (
           <button type="button" className="np-text-link" onClick={() => setPrompt(null)}>
             还原自动提示词
@@ -416,7 +417,7 @@ export function ImageStudio(
         )}
       </details>
       {jobs.filter((j) => j.status === "unknown").map((j) => (
-        <p className="np-callout" key={j.id}>
+        <Paragraph className="np-callout" key={j.id}>
           这次生成的结果尚待确认，服务商可能已经接收；为避免重复扣费不会自动重交。
           <button
             type="button"
@@ -431,18 +432,18 @@ export function ImageStudio(
           >
             检查状态
           </button>
-        </p>
+        </Paragraph>
       ))}
       {jobs.filter((j) => j.status === "failed").slice(0, 1).map((j) => (
-        <p className="np-error" key={j.id}>
+        <Paragraph className="np-error" key={j.id}>
           上一次没有画成：{j.error || "请检查配置后再试一次。"}
-        </p>
+        </Paragraph>
       ))}
       <section className="np-sheet-group" aria-label="候选配图">
-        <h3 className="np-sheet-heading">
+        <Heading as="h3" className="np-sheet-heading">
           {placementLabel(report, placement)}候选
           <span>{candidates.length ? `${candidates.length} 张` : "还没有"}</span>
-        </h3>
+        </Heading>
         {candidates.length
           ? (
             <ul className="np-candidates">
@@ -505,7 +506,7 @@ export function ImageStudio(
               ))}
             </ul>
           )
-          : <p className="np-muted">生成后会出现在这里，并自动排进版面。</p>}
+          : <Paragraph className="np-muted">生成后会出现在这里，并自动排进版面。</Paragraph>}
       </section>
     </NewspaperSheet>
   );

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -136,9 +137,9 @@ function RewardPopup({ tier, onClose }: { tier: string; onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
       >
         <msg.icon className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--cat-orange))]" />
-        <h2 id="reward-popup-title" className="text-lg font-semibold text-foreground">
+        <Heading as="h2" id="reward-popup-title" className="text-lg font-semibold text-foreground">
           {lang === "zh" ? msg.zh : msg.en}
-        </h2>
+        </Heading>
         <Button onClick={onClose} className="mt-4 bg-[hsl(var(--cat-orange))] hover:bg-[hsl(var(--cat-orange))] text-white">
           {lang === "zh" ? "继续" : "Continue"}
         </Button>
@@ -593,11 +594,11 @@ export default function TodayTodoPage() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium ${task.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
+              <Paragraph className={`text-sm font-medium ${task.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
                 {task.todos?.title || t("未知任务", "Unknown task")}
-              </p>
+              </Paragraph>
               {task.todos?.detail && (
-                <p className="text-xs mt-0.5 truncate text-muted-foreground">{task.todos.detail}</p>
+                <Paragraph className="text-xs mt-0.5 truncate text-muted-foreground">{task.todos.detail}</Paragraph>
               )}
               {POINTS && has4D && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
@@ -609,7 +610,7 @@ export default function TodayTodoPage() {
                 </div>
               )}
               {POINTS && has4D && meta.ai_encouragement && (
-                <p className="text-[11px] mt-1 italic text-muted-foreground">{meta.ai_encouragement}</p>
+                <Paragraph className="text-[11px] mt-1 italic text-muted-foreground">{meta.ai_encouragement}</Paragraph>
               )}
             </div>
 
@@ -818,16 +819,16 @@ export default function TodayTodoPage() {
                   className="shrink-0"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
+              <Paragraph className="text-xs text-muted-foreground">
                 {t("会同步写入“待办事项”，并自动选中加入今天。", "Will be saved to To-Dos and auto-selected for today.")}
-              </p>
+              </Paragraph>
             </div>
 
               <div className="space-y-1">
                 {displayTodos.length === 0 ? (
-                  <p className="text-sm text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  <Paragraph className="text-sm text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>
                     {t("所有待办都已完成或已添加", "All to-dos are done or already added")}
-                  </p>
+                  </Paragraph>
                 ) : (
                   displayTodos.map((todo: any) => (
                     <label
@@ -883,9 +884,9 @@ export default function TodayTodoPage() {
                           </div>
                         )}
                         {POINTS && selectedTodos.includes(todo.id) && estimatedEvaluations[todo.id]?.ai_encouragement && (
-                          <p className="text-[9px] mt-1 italic text-muted-foreground leading-snug">
+                          <Paragraph className="text-[9px] mt-1 italic text-muted-foreground leading-snug">
                             "{estimatedEvaluations[todo.id].ai_encouragement}"
-                          </p>
+                          </Paragraph>
                         )}
                       </div>
                       {POINTS && selectedTodos.includes(todo.id) && (
@@ -1017,16 +1018,16 @@ export default function TodayTodoPage() {
         <div className="flex items-center gap-4">
           <CircularProgress value={progressPct} size={72} />
           <div className="flex-1">
-            <p className="text-sm font-medium text-foreground">
+            <Paragraph className="text-sm font-medium text-foreground">
               {completedCount} / {totalCount} {t("已完成", "completed")}
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+            </Paragraph>
+            <Paragraph className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
               {totalCount === 0
                 ? t("今天还没有任务，快去添加吧！", "No tasks yet — add some!")
                 : completedCount === totalCount && totalCount > 0
                   ? t("全部完成！太棒了！", "All done! Amazing!")
                   : t("继续加油！", "Keep going!")}
-            </p>
+            </Paragraph>
           </div>
           <Button onClick={() => handleAddDialogOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />{t("添加任务", "Add Tasks")}
@@ -1064,10 +1065,10 @@ export default function TodayTodoPage() {
             {groupedTasks.map((group) => (
               <Card key={group.parent?.id || Math.random().toString()} className="bg-card border-border overflow-hidden shadow-sm">
                 <div className="bg-muted/30 border-b border-border px-4 py-2.5 flex items-center justify-between">
-                  <h3 className="font-bold text-foreground flex items-center gap-2">
+                  <Heading as="h3" className="font-bold text-foreground flex items-center gap-2">
                     <ClipboardList className="h-4 w-4 text-cat-orange" />
                     {group.parent?.title || t("未知主任务", "Unknown Project")}
-                  </h3>
+                  </Heading>
                   <Badge variant="outline" className="bg-card text-xs border-border">
                     {group.tasks.filter((t: any) => t.is_completed).length} / {group.tasks.length}
                   </Badge>
@@ -1105,9 +1106,9 @@ export default function TodayTodoPage() {
               <div className="flex flex-col gap-5 pt-5">
                 {pastGroups.map((group) => (
                   <section key={group.date} className="flex flex-col gap-2">
-                    <h3 className="px-1 text-xs font-medium text-muted-foreground">
+                    <Heading as="h3" className="px-1 text-xs font-medium text-muted-foreground">
                       {t(PAST_DATE_LABELS[group.label].zh, PAST_DATE_LABELS[group.label].en)}
-                    </h3>
+                    </Heading>
                     {group.tasks.map((task: any) => (
                       <motion.div key={task.id} layout="position" layoutId={`daily-${task.todo_id || task.id}`} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}>
                       <Card className="bg-card border-border shadow-sm">
@@ -1119,11 +1120,11 @@ export default function TodayTodoPage() {
                               aria-label={task.todos?.title || t("完成任务", "Complete task")}
                             />
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-foreground">
+                              <Paragraph className="text-sm font-medium text-foreground">
                                 {task.todos?.title || t("未知任务", "Unknown task")}
-                              </p>
+                              </Paragraph>
                               {task.todos?.detail && (
-                                <p className="mt-0.5 truncate text-xs text-muted-foreground">{task.todos.detail}</p>
+                                <Paragraph className="mt-0.5 truncate text-xs text-muted-foreground">{task.todos.detail}</Paragraph>
                               )}
                             </div>
                             <Button
@@ -1230,7 +1231,7 @@ export default function TodayTodoPage() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                     <div className="space-y-1">
-                      <p className="font-semibold text-foreground">{t("1. 认知负荷 (Cognitive Load)", "1. Cognitive Load")}</p>
+                      <Paragraph className="font-semibold text-foreground">{t("1. 认知负荷 (Cognitive Load)", "1. Cognitive Load")}</Paragraph>
                       <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-muted-foreground">
                         <li><strong>L1:</strong> {t("机械/无脑操作 (如: 倒垃圾, 整理桌面)", "Routine/No-brain (e.g. trash, desk clean)")}</li>
                         <li><strong>L2:</strong> {t("轻度思考 (如: 回复日常邮件, 浏览网页)", "Light thinking (e.g. routine emails, browsing)")}</li>
@@ -1241,7 +1242,7 @@ export default function TodayTodoPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <p className="font-semibold text-foreground">{t("2. 意志力消耗 (Willpower & Resistance)", "2. Willpower & Resistance")}</p>
+                      <Paragraph className="font-semibold text-foreground">{t("2. 意志力消耗 (Willpower & Resistance)", "2. Willpower & Resistance")}</Paragraph>
                       <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-muted-foreground">
                         <li><strong>L1:</strong> {t("极度享受/娱乐 (如: 玩游戏, 看剧)", "Enjoyable/Entertainment (e.g. games, shows)")}</li>
                         <li><strong>L2:</strong> {t("轻松愉快/有动力 (如: 业余兴趣爱好)", "Pleasurable (e.g. personal hobbies)")}</li>
@@ -1252,7 +1253,7 @@ export default function TodayTodoPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <p className="font-semibold text-foreground">{t("3. 时间跨度 (Duration Estimate)", "3. Duration Estimate")}</p>
+                      <Paragraph className="font-semibold text-foreground">{t("3. 时间跨度 (Duration Estimate)", "3. Duration Estimate")}</Paragraph>
                       <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-muted-foreground">
                         <li><strong>L1:</strong> {t("碎片时间 (< 15分钟) [倍率 0.5]", "Micro-task (< 15m) [Mult 0.5]")}</li>
                         <li><strong>L2:</strong> {t("短时专注 (15 - 45分钟, ~1个番茄钟) [倍率 1.0]", "Short focus (15-45m, ~1 pomodoro) [Mult 1.0]")}</li>
@@ -1263,7 +1264,7 @@ export default function TodayTodoPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <p className="font-semibold text-foreground">{t("4. 重要性与成长价值 (Impact & Growth)", "4. Impact & Growth")}</p>
+                      <Paragraph className="font-semibold text-foreground">{t("4. 重要性与成长价值 (Impact & Growth)", "4. Impact & Growth")}</Paragraph>
                       <ul className="list-disc list-inside pl-1 space-y-0.5 text-[11px] text-muted-foreground">
                         <li><strong>L1:</strong> {t("琐事，对长期目标无影响", "Trivial tasks, no long-term impact")}</li>
                         <li><strong>L2:</strong> {t("维持生活的必要任务", "Necessary for normal life maintenance")}</li>
@@ -1277,30 +1278,30 @@ export default function TodayTodoPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
                   <div className="space-y-1 bg-muted/30 p-3 rounded-lg border border-border/60">
-                    <p className="font-bold text-foreground">{t("裁判长算法公式", "Referee XP Formula")}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <Paragraph className="font-bold text-foreground">{t("裁判长算法公式", "Referee XP Formula")}</Paragraph>
+                    <Paragraph className="text-[11px] text-muted-foreground">
                       1. <strong>{t("基础分", "Base XP")}</strong> = ({t("认知负荷", "Cognitive")} + {t("意志力消耗", "Willpower")}) × 5<br />
                       2. <strong>{t("时间加权", "Time scaled")}</strong> = {t("基础分", "Base XP")} × {t("时间倍率", "Time multiplier")}<br />
                       3. <strong>{t("最终 XP", "Final XP")}</strong> = Math.round({t("时间加权", "Time scaled")} + {t("成长奖励", "Growth reward")})
-                    </p>
+                    </Paragraph>
                   </div>
                   
                   <div className="space-y-1 bg-muted/20 p-3 rounded-lg border border-border/60">
-                    <p className="font-semibold text-foreground">{t("完成奖励", "Completion Bonus")}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <Paragraph className="font-semibold text-foreground">{t("完成奖励", "Completion Bonus")}</Paragraph>
+                    <Paragraph className="text-[11px] text-muted-foreground">
                       {t("全部完成或完成度 ≥80%：", "All done or progress ≥80%:")} <strong>+50 XP</strong><br />
                       {t("完成度在 0% 到 80% 之间：", "Progress between 0% and 80%:")} <strong>+15 XP</strong>
-                    </p>
+                    </Paragraph>
                   </div>
 
                   <div className="space-y-1 bg-muted/20 p-3 rounded-lg border border-border/60">
-                    <p className="font-semibold text-foreground">{t("连续加成 (Streak Mult)", "Streak Multiplier")}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <Paragraph className="font-semibold text-foreground">{t("连续加成 (Streak Mult)", "Streak Multiplier")}</Paragraph>
+                    <Paragraph className="text-[11px] text-muted-foreground">
                       {t("连续 1-6 天: ×1.0 倍", "1-6 days: ×1.0")}<br />
                       {t("连续 7-13 天: ×1.5 倍", "7-13 days: ×1.5")}<br />
                       {t("连续 14-29 天: ×2.0 倍", "14-29 days: ×2.0")}<br />
                       {t("连续 30天以上: ×3.0 倍", "30+ days: ×3.0")}
-                    </p>
+                    </Paragraph>
                   </div>
                 </div>
               </CardContent>

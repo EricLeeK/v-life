@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -48,10 +49,10 @@ function Suggestions({ report }: { report: NewspaperReport }) {
   if (!report.review?.suggestions.length) return null;
   return (
     <div className="np-review-next">
-      <h3>明日建议</h3>
+      <Heading as="h3">明日建议</Heading>
       <ol>
         {report.review.suggestions.map((suggestion, i) => (
-          <li key={i}><p>{suggestion}</p></li>
+          <li key={i}><Paragraph>{suggestion}</Paragraph></li>
         ))}
       </ol>
     </div>
@@ -65,12 +66,12 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
     return (
       <section className="np-mod np-mod-review np-review-empty" aria-labelledby="np-review-heading">
         <header className="np-mod-head">
-          <h2 id="np-review-heading">编辑部复盘</h2>
+          <Heading as="h2" id="np-review-heading">编辑部复盘</Heading>
           <span className="np-mod-kicker">可选</span>
         </header>
-        <p>
+        <Paragraph>
           从今天的记录里，读出一点收获。AI 复盘不会改动原文。
-        </p>
+        </Paragraph>
         <button
           type="button"
           className="np-button"
@@ -80,9 +81,9 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
           <Sparkles size={15} />{review.label}
         </button>
         {review.pending && (
-          <p className="np-muted">
+          <Paragraph className="np-muted">
             上一次请求的结果尚未确认。检查结果会沿用同一次请求，不会重复调用 AI。
-          </p>
+          </Paragraph>
         )}
       </section>
     );
@@ -95,7 +96,7 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
   return (
     <section className="np-mod np-mod-review" aria-labelledby="np-review-heading">
       <header className="np-mod-head">
-        <h2 id="np-review-heading">编辑部复盘</h2>
+        <Heading as="h2" id="np-review-heading">编辑部复盘</Heading>
         <span className="np-ai-stamp">AI 分析</span>
       </header>
       {(report.review_stale || review.pending) && (
@@ -115,11 +116,11 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
           </button>
         </div>
       )}
-      <p className="np-review-overview">{r.overview}</p>
+      <Paragraph className="np-review-overview">{r.overview}</Paragraph>
       <div className="np-review-cols">
         {columns.filter(([, items]) => items.length).map(([label, items]) => (
           <div key={label}>
-            <h3>{label}</h3>
+            <Heading as="h3">{label}</Heading>
             <ul>
               {items.map((item, i) => <li key={i}>{item}</li>)}
             </ul>
@@ -127,7 +128,7 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
         ))}
       </div>
       <Suggestions report={report} />
-      <p className="np-mod-foot">
+      <Paragraph className="np-mod-foot">
         写于{" "}
         {new Date(r.generated_at).toLocaleString("zh-CN", {
           timeZone: report.timezone,
@@ -137,7 +138,7 @@ export function ReviewModule({ report }: { report: NewspaperReport }) {
           minute: "2-digit",
         })}
         {" "}· 依据第 {r.source_revision} 版记录
-      </p>
+      </Paragraph>
     </section>
   );
 }

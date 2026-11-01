@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { DateField } from "@/components/arc/DateField";
 import { PaperTrends } from "@/components/preparation/PaperTrends";
 import { useState } from "react";
@@ -176,7 +177,7 @@ export default function PreparationPage() {
       {data && (!examId || tab === "questions") && (
         <section className="prep-review-inbox" aria-label="今日待复习">
           <div className="prep-review-start">
-            <h2>今日待复习</h2>
+            <Heading as="h2">今日待复习</Heading>
             <div className="prep-due-number">
               {due.length}
               <span>道题</span>
@@ -201,12 +202,12 @@ export default function PreparationPage() {
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div>
-                  <p className="prep-inbox-title">
+                  <Paragraph className="prep-inbox-title">
                     {questionExcerpt(q.stem_md)}
-                  </p>
-                  <p className="prep-inbox-meta">
+                  </Paragraph>
+                  <Paragraph className="prep-inbox-meta">
                     {q.tags.join(" · ") || "待复盘"}
-                  </p>
+                  </Paragraph>
                 </div>
                 <ArrowRight size={15} />
               </Link>
@@ -214,10 +215,10 @@ export default function PreparationPage() {
             {due.length === 0 && (
               <div className="py-8">
                 <CheckCheck className="text-cat-green mb-3" size={24} />
-                <p className="font-medium">今天的复习已清空</p>
-                <p className="text-sm text-muted-foreground mt-2">
+                <Paragraph className="font-medium">今天的复习已清空</Paragraph>
+                <Paragraph className="text-sm text-muted-foreground mt-2">
                   也可以选一组错题，自由练习。
-                </p>
+                </Paragraph>
               </div>
             )}
             <div className="prep-inbox-more">
@@ -242,12 +243,12 @@ export default function PreparationPage() {
       {data && !examId && (
         <section>
           <div className="prep-section-heading">
-            <h2>
+            <Heading as="h2">
               我的考试
               <span className="prep-section-caption">
                 {data.exams.filter((e) => !e.is_archived).length} 项
               </span>
-            </h2>
+            </Heading>
             <Link
               className="prep-subtle-link"
               to={all ? "/preparation" : "/preparation?view=exams"}
@@ -274,10 +275,10 @@ export default function PreparationPage() {
                 >
                   <div className="prep-exam-top">
                     <div>
-                      <h3>{e.name}</h3>
-                      <p className="prep-exam-date">
+                      <Heading as="h3">{e.name}</Heading>
+                      <Paragraph className="prep-exam-date">
                         {examDateLabel(e.exam_date)}
-                      </p>
+                      </Paragraph>
                     </div>
                     {e.is_primary && <span className="prep-pin">已置顶</span>}
                   </div>
@@ -300,7 +301,7 @@ export default function PreparationPage() {
           {data.exams.length === 0 && (
             <div className="prep-empty">
               <CalendarDays size={24} />
-              <h2>下一场考试，从这里开始</h2>
+              <Heading as="h2">下一场考试，从这里开始</Heading>
               <Button
                 className="mt-4"
                 variant="outline"
@@ -335,7 +336,7 @@ export default function PreparationPage() {
       )}
       {data && exam && tab === "settings" && (
         <section className="prep-form space-y-5">
-          <h2 className="heading-font text-xl">考试信息</h2>
+          <Heading as="h2" className="heading-font text-xl">考试信息</Heading>
           <form
             className="space-y-3"
             onSubmit={(e) => {
@@ -381,10 +382,10 @@ export default function PreparationPage() {
             </label>
             <Button disabled={prep.saving}>保存考试</Button>
           </form>
-          <h2 className="heading-font text-xl">关联题库</h2>
-          <p className="text-sm text-muted-foreground">
+          <Heading as="h2" className="heading-font text-xl">关联题库</Heading>
+          <Paragraph className="text-sm text-muted-foreground">
             题库新增的题目会自动出现在本考试，同一道题始终共用复习状态。
-          </p>
+          </Paragraph>
           {data.banks.map((b) => {
             const membership = data.examBanks.find(
               (r) => r.exam_id === examId && r.bank_id === b.id,
@@ -475,10 +476,10 @@ export default function PreparationPage() {
       )}
       {exam && tab === "notes" && (
         <section className="prep-form space-y-3">
-          <h2 className="heading-font text-xl">从错题回到知识</h2>
-          <p className="text-sm text-muted-foreground">
+          <Heading as="h2" className="heading-font text-xl">从错题回到知识</Heading>
+          <Paragraph className="text-sm text-muted-foreground">
             在题目详情中关联学习笔记，沉淀解题方法与易错点。
-          </p>
+          </Paragraph>
           <Button asChild variant="outline">
             <Link to="/learning-notes">打开学习笔记</Link>
           </Button>
@@ -530,7 +531,7 @@ function PaperSection({
   return (
     <section className="space-y-5">
       <div className="flex justify-between">
-        <h2 className="heading-font text-xl">套卷记录</h2>
+        <Heading as="h2" className="heading-font text-xl">套卷记录</Heading>
         <Button
           onClick={() => {
             setEditId(undefined);
@@ -595,9 +596,9 @@ function PaperSection({
               </label>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <Paragraph className="text-xs text-muted-foreground">
             分项成绩来自整卷，不要求录入全部题目。
-          </p>
+          </Paragraph>
           {sections.map((s, i) => (
             <div
               key={i}
@@ -674,14 +675,14 @@ function PaperSection({
           .map((p) => (
             <article key={p.id} className="prep-material-item">
               <div className="flex justify-between">
-                <h3 className="font-medium">{p.source}</h3>
+                <Heading as="h3" className="font-medium">{p.source}</Heading>
                 <span className="font-mono-data">
                   {p.total_score ?? "—"} 分
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
+              <Paragraph className="text-sm text-muted-foreground mt-1">
                 {p.taken_date} · {p.duration_minutes ?? "—"} 分钟
-              </p>
+              </Paragraph>
               <div className="flex flex-wrap gap-3 mt-3">
                 <Button
                   variant="ghost"

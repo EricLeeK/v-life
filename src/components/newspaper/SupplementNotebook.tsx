@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNewspaperDrafts } from "./NewspaperDraftContext";
 import { AlertCircle, Check, Plus, Trash2 } from "lucide-react";
@@ -180,12 +181,12 @@ function SupplementEditor(
           )}
       </div>
       {status === "error" && (
-        <p className="np-error" role="alert">
+        <Paragraph className="np-error" role="alert">
           {error}{" "}
           <button type="button" className="np-text-link" onClick={() => void save()}>
             重试保存
           </button>
-        </p>
+        </Paragraph>
       )}
     </div>
   );
@@ -220,13 +221,13 @@ export function SupplementNotebook(
       aria-labelledby="np-supplement-heading"
     >
       <header className="np-mod-head">
-        <h2 id="np-supplement-heading">生活的另一面</h2>
+        <Heading as="h2" id="np-supplement-heading">生活的另一面</Heading>
         <span className="np-mod-kicker">我的补充 · 原文保存</span>
       </header>
       {!report.supplements.length && !adding && (
-        <p className="np-notes-intro">
+        <Paragraph className="np-notes-intro">
           待办和账单之外的片刻，也值得留下。写下即自动保存。
-        </p>
+        </Paragraph>
       )}
       {report.supplements.map((item) => (
         <SupplementEditor

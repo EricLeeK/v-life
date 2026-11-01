@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -156,10 +157,10 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
         <div className="flex items-end gap-3">
           {isEating ? <UtensilsCrossed className="h-5 w-5 mb-1.5 text-muted-foreground" /> : <Timer className="h-5 w-5 mb-1.5 text-muted-foreground" />}
           <div>
-            <p className="text-xs text-muted-foreground">{isEating ? t("距离开始禁食", "Until fasting") : t("距离可以进食", "Until eating")}</p>
-            <p className="font-mono-data text-3xl font-semibold text-foreground tracking-tight" aria-live="polite">
+            <Paragraph className="text-xs text-muted-foreground">{isEating ? t("距离开始禁食", "Until fasting") : t("距离可以进食", "Until eating")}</Paragraph>
+            <Paragraph className="font-mono-data text-3xl font-semibold text-foreground tracking-tight" aria-live="polite">
               {hoursLeft}<span className="text-base text-muted-foreground mx-1">{t("小时", "h")}</span>{String(minsLeft).padStart(2, "0")}<span className="text-base text-muted-foreground ml-1">{t("分", "m")}</span>
-            </p>
+            </Paragraph>
           </div>
         </div>
         <div>
@@ -173,13 +174,13 @@ function FastingTimer({ startHour, startMinute = 0 }: { startHour: number; start
             <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <Paragraph className="text-sm text-muted-foreground">
           {t("进食", "Eat")} <span className="font-mono-data text-foreground">{formatTime(eatingStartMin)}–{formatTime(eatingEndMin)}</span>
           <span className="mx-2 text-border">|</span>
           {t("禁食", "Fast")} <span className="font-mono-data text-foreground">{formatTime(eatingEndMin)}–{formatTime(eatingStartMin)}</span>
           <span className="mx-2 text-border">|</span>
           <span className="inline-block h-2.5 w-0.5 bg-destructive align-middle mr-1.5" aria-hidden />{t("现在", "Now")}
-        </p>
+        </Paragraph>
       </CardContent>
     </Card>
   );
@@ -342,7 +343,7 @@ function WeightTracker({ targetWeight }: { targetWeight: number | null }) {
             }}
           />
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</p>
+          <Paragraph className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</Paragraph>
         )}
 
         {records.length > 0 && (
@@ -502,7 +503,7 @@ function MeasurementTracker() {
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</p>
+          <Paragraph className="text-xs text-muted-foreground text-center py-8">{t("需要至少2条记录才能显示曲线图", "At least 2 records needed to display chart")}</Paragraph>
         )}
 
         {records.length > 0 && (
@@ -592,9 +593,9 @@ export default function WeightLossPage() {
               <span className="text-sm text-muted-foreground">kg</span>
             </div>
             <Button size="sm" onClick={handleSaveSettings}>{t("保存设置", "Save Settings")}</Button>
-            <p className="text-xs text-muted-foreground">
+            <Paragraph className="text-xs text-muted-foreground">
               {t("进食时段", "Eating window")}：{startHour}:{String(startMinute).padStart(2, "0")} - {Math.floor(((startHour * 60 + startMinute) + 8 * 60) / 60) % 24}:{String(((startHour * 60 + startMinute) + 8 * 60) % 60).padStart(2, "0")} | {t("时区", "Timezone")}：{Intl.DateTimeFormat().resolvedOptions().timeZone}
-            </p>
+            </Paragraph>
           </CardContent>
         </Card>
       </div>

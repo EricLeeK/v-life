@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useMemo } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +51,7 @@ export function ScheduleAnalysis({ events }: { events: ScheduleEvent[] }) {
           <CardTitle className="text-sm">{t("时间分配", "Time Distribution")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground text-center py-6">{t("暂无数据", "No data")}</p>
+          <Paragraph className="text-xs text-muted-foreground text-center py-6">{t("暂无数据", "No data")}</Paragraph>
         </CardContent>
       </Card>
     );

@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Progress } from "@/components/ui/progress";
@@ -118,18 +119,18 @@ function MetricCard({ label, value, hint, color }: {
   const c = color ? CAT[color] : null;
   return (
     <div data-testid="dashboard-metric" className="life-metric min-w-0">
-      <p className="text-xs text-muted-foreground font-medium">{label}</p>
+      <Paragraph className="text-xs text-muted-foreground font-medium">{label}</Paragraph>
       <div className="mt-1 text-foreground">
         {typeof value === "number" ? (
           <ArcScope className="inline-flex arc-metric-compact">
             <AnimatedCounter value={value} />
           </ArcScope>
         ) : (
-          <p className="type-metric-compact font-mono-data tracking-tight">{value}</p>
+          <Paragraph className="type-metric-compact font-mono-data tracking-tight">{value}</Paragraph>
         )}
       </div>
       {hint && (
-        <p className={`text-caption mt-1 ${c ? c.text : "text-muted-foreground"}`}>{hint}</p>
+        <Paragraph className={`text-caption mt-1 ${c ? c.text : "text-muted-foreground"}`}>{hint}</Paragraph>
       )}
     </div>
   );
@@ -154,8 +155,8 @@ function PipelineRow({ icon, iconColor, title, subtitle, pill, pillColor, to }: 
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground line-clamp-2" title={title}>{title}</p>
-        {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
+        <Paragraph className="text-sm font-medium text-foreground line-clamp-2" title={title}>{title}</Paragraph>
+        {subtitle && <Paragraph className="text-xs text-muted-foreground truncate">{subtitle}</Paragraph>}
       </div>
       {pill && pc && (
         <span className={`status-text shrink-0 ${pc.text}`}>
@@ -193,10 +194,10 @@ function FeatureCard({ icon, title, description, status, statusColor, onClick }:
         )}
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <Paragraph className="text-sm font-semibold text-foreground">{title}</Paragraph>
         <ArrowRight aria-hidden="true" className="module-arrow h-3.5 w-3.5 shrink-0 text-muted-foreground" />
       </div>
-      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</p>
+      <Paragraph className="text-xs text-muted-foreground mt-1 leading-relaxed">{description}</Paragraph>
     </button>
   );
 }
@@ -627,14 +628,14 @@ export default function DashboardPage() {
         </div>
         {latestWeight !== null && Number.isFinite(latestWeight) ? (
           <div className="flex items-baseline justify-between gap-3">
-            <p className="type-metric-compact font-mono-data">{latestWeight.toFixed(1)} <span className="text-xs text-muted-foreground font-normal">kg</span></p>
+            <Paragraph className="type-metric-compact font-mono-data">{latestWeight.toFixed(1)} <span className="text-xs text-muted-foreground font-normal">kg</span></Paragraph>
             {weightDiff !== null && Number.isFinite(weightDiff) && (
               <span className={`text-caption font-medium ${weightDiff <= 0 ? "text-cat-teal" : "text-cat-orange"}`}>
                 {weightDiff > 0 ? "+" : ""}{weightDiff.toFixed(1)} kg
               </span>
             )}
           </div>
-        ) : <p className="text-sm text-muted-foreground">{t("暂无记录，点击添加", "No records yet")}</p>}
+        ) : <Paragraph className="text-sm text-muted-foreground">{t("暂无记录，点击添加", "No records yet")}</Paragraph>}
       </button>
     ),
     isVisible("finance") && (
@@ -649,13 +650,13 @@ export default function DashboardPage() {
           <Wallet className="h-4 w-4 text-cat-orange" />
           <span className="text-sm font-semibold">{t("本月支出", "Monthly Spending")}</span>
         </div>
-        <p className="type-metric-compact font-mono-data">¥{totalSpending.toFixed(0)}</p>
+        <Paragraph className="type-metric-compact font-mono-data">¥{totalSpending.toFixed(0)}</Paragraph>
         {hasBudget && budgetUsedPercent !== null ? (
           <>
             <Progress value={budgetUsedPercent} className="h-1 mt-3" />
-            <p className="text-caption text-muted-foreground mt-1">{Math.round(budgetUsedPercent)}% {t("已使用", "used")}</p>
+            <Paragraph className="text-caption text-muted-foreground mt-1">{Math.round(budgetUsedPercent)}% {t("已使用", "used")}</Paragraph>
           </>
-        ) : <p className="text-caption text-muted-foreground mt-1">{t("尚未设置月预算", "Monthly budget not set")}</p>}
+        ) : <Paragraph className="text-caption text-muted-foreground mt-1">{t("尚未设置月预算", "Monthly budget not set")}</Paragraph>}
       </button>
     ),
     isVisible("weight-loss") && (
@@ -670,12 +671,12 @@ export default function DashboardPage() {
           <Timer className="h-4 w-4 text-cat-teal" />
           <span className="text-sm font-semibold">{t("16+8 断食", "16+8 Fasting")}</span>
         </div>
-        <p className={`type-metric-compact font-semibold ${isEatingWindow ? "text-cat-green" : "text-cat-orange"}`}>
+        <Paragraph className={`type-metric-compact font-semibold ${isEatingWindow ? "text-cat-green" : "text-cat-orange"}`}>
           {isEatingWindow ? t("进食窗口", "Eating Window") : t("断食中", "Fasting")}
-        </p>
-        <p className="text-caption text-muted-foreground mt-1">
+        </Paragraph>
+        <Paragraph className="text-caption text-muted-foreground mt-1">
           {t("进食", "Eating")} {String(Math.floor(eatingStartMin / 60)).padStart(2, "0")}:{String(eatingStartMin % 60).padStart(2, "0")}–{String(Math.floor(eatingEndMin / 60) % 24).padStart(2, "0")}:{String(eatingEndMin % 60).padStart(2, "0")}
-        </p>
+        </Paragraph>
       </button>
     ),
     isVisible("pantry") && (
@@ -691,7 +692,7 @@ export default function DashboardPage() {
           <span className="text-sm font-semibold">{t("食材预警", "Pantry Alerts")}</span>
         </div>
         {pantryItems.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("暂无到期提醒", "No expiry alerts")}</p>
+          <Paragraph className="text-sm text-muted-foreground">{t("暂无到期提醒", "No expiry alerts")}</Paragraph>
         ) : (
           <div className="space-y-1.5">
             {pantryItems.slice(0, 3).map(({ item, days }) => (
@@ -717,10 +718,10 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 mb-3"><Target className="h-4 w-4 text-cat-green" /><span className="text-sm font-semibold">{t("剩余预算", "Budget Remaining")}</span></div>
         {hasBudget ? (
           <>
-            <p className="type-metric-compact font-mono-data text-cat-green">¥{(budget - totalSpending).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-            <p className="text-caption text-muted-foreground mt-1">{Math.round(budgetRemainingPercent ?? 0)}% {t("剩余", "left")}</p>
+            <Paragraph className="type-metric-compact font-mono-data text-cat-green">¥{(budget - totalSpending).toLocaleString(undefined, { maximumFractionDigits: 0 })}</Paragraph>
+            <Paragraph className="text-caption text-muted-foreground mt-1">{Math.round(budgetRemainingPercent ?? 0)}% {t("剩余", "left")}</Paragraph>
           </>
-        ) : <p className="text-sm text-muted-foreground">{t("尚未设置月预算", "Monthly budget not set")}</p>}
+        ) : <Paragraph className="text-sm text-muted-foreground">{t("尚未设置月预算", "Monthly budget not set")}</Paragraph>}
       </button>
     ),
     isVisible("calories") && (
@@ -732,8 +733,8 @@ export default function DashboardPage() {
         onClick={() => navigate("/calories")}
       >
         <div className="flex items-center gap-2 mb-3"><CheckCircle2 className="h-4 w-4 text-cat-blue" /><span className="text-sm font-semibold">{t("本周热量达标", "Weekly Calorie Target")}</span></div>
-        <p className="type-metric-compact font-mono-data">{weekCalorieDaysTotal > 0 ? `${weekCalorieDaysOnTarget}/${weekCalorieDaysTotal}` : "—"}</p>
-        <p className="text-caption text-muted-foreground mt-1">{weekCalorieDaysTotal > 0 ? t("天达标", "days on target") : t("本周暂无记录", "No records this week")}</p>
+        <Paragraph className="type-metric-compact font-mono-data">{weekCalorieDaysTotal > 0 ? `${weekCalorieDaysOnTarget}/${weekCalorieDaysTotal}` : "—"}</Paragraph>
+        <Paragraph className="text-caption text-muted-foreground mt-1">{weekCalorieDaysTotal > 0 ? t("天达标", "days on target") : t("本周暂无记录", "No records this week")}</Paragraph>
       </button>
     ),
     isVisible("goals") && (
@@ -747,10 +748,10 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2 mb-3"><CircleCheck className="h-4 w-4 text-cat-purple" /><span className="text-sm font-semibold">{t("本周目标完成", "Weekly Goals")}</span></div>
         {weekGoals.length > 0 ? (
           <>
-            <p className="type-metric-compact font-mono-data">{completedGoals}/{weekGoals.length}</p>
+            <Paragraph className="type-metric-compact font-mono-data">{completedGoals}/{weekGoals.length}</Paragraph>
             <Progress value={goalProgressPct} className="h-1 mt-3" />
           </>
-        ) : <p className="text-sm text-muted-foreground">{t("尚未设置本周目标", "No weekly goals yet")}</p>}
+        ) : <Paragraph className="text-sm text-muted-foreground">{t("尚未设置本周目标", "No weekly goals yet")}</Paragraph>}
       </button>
     ),
     (isVisible("schedule") || isVisible("learning-notes")) && (
@@ -762,7 +763,7 @@ export default function DashboardPage() {
         onClick={() => navigate(isVisible("learning-notes") ? "/learning-notes" : "/schedule")}
       >
         <div className="flex items-center gap-2 mb-3"><Clock className="h-4 w-4 text-cat-teal" /><span className="text-sm font-semibold">{t("本周学习时间", "Study Time This Week")}</span></div>
-        <p className="type-metric-compact font-mono-data">{studyHours.toFixed(1)}<span className="text-xs text-muted-foreground font-normal">h</span></p>
+        <Paragraph className="type-metric-compact font-mono-data">{studyHours.toFixed(1)}<span className="text-xs text-muted-foreground font-normal">h</span></Paragraph>
       </button>
     ),
   ].filter(Boolean) as React.ReactNode[];
@@ -772,7 +773,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <section className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <h1 className="type-dashboard-display heading-font text-foreground">{greeting}</h1>
+            <Heading as="h1" className="type-dashboard-display heading-font text-foreground">{greeting}</Heading>
           </div>
           <nav aria-label={t("快捷记录", "Quick capture")} className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {quickActions.map((action) => {
@@ -813,7 +814,7 @@ export default function DashboardPage() {
         {showTodosOverview && (
           <section>
             <div className="mb-3 flex items-baseline justify-between gap-3">
-              <h2 className="type-section-title heading-font">{t("优先待办", "Priority to-dos")}</h2>
+              <Heading as="h2" className="type-section-title heading-font">{t("优先待办", "Priority to-dos")}</Heading>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="card-premium overflow-hidden" role="region" aria-label={t("今日待办", "Today's to-dos")}>
@@ -824,7 +825,7 @@ export default function DashboardPage() {
                 <div className="pipeline-list p-1.5">
                   {openTodayTasks.length === 0 ? (
                     <div className="px-4 py-5 text-center">
-                      <p className="text-sm text-muted-foreground">{todayTasks.length > 0 ? t("今天的待办都完成了", "Today's to-dos are done") : t("今天还没有待办", "Nothing on today yet")}</p>
+                      <Paragraph className="text-sm text-muted-foreground">{todayTasks.length > 0 ? t("今天的待办都完成了", "Today's to-dos are done") : t("今天还没有待办", "Nothing on today yet")}</Paragraph>
                       <Link to="/today" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("去添加今日待办", "Add to today")}</Link>
                     </div>
                   ) : previewTodayTasks.map((task) => {
@@ -843,7 +844,7 @@ export default function DashboardPage() {
                 <div className="pipeline-list p-1.5">
                   {otherTodos.length === 0 ? (
                     <div className="px-4 py-5 text-center">
-                      <p className="text-sm text-muted-foreground">{t("没有还没加入今天的待办", "Every open to-do is already on today")}</p>
+                      <Paragraph className="text-sm text-muted-foreground">{t("没有还没加入今天的待办", "Every open to-do is already on today")}</Paragraph>
                       <Link to="/todos?new=1" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("新增待办", "Add to-do")}</Link>
                     </div>
                   ) : otherTodos.map((todo) => {
@@ -860,7 +861,7 @@ export default function DashboardPage() {
 
         {attention.length > 0 && (
           <section aria-label={t("需要留意", "Needs attention")} className="card-premium px-4">
-            <h2 className="pt-4 pb-2 text-sm font-semibold">{t("需要留意", "Needs attention")}</h2>
+            <Heading as="h2" className="pt-4 pb-2 text-sm font-semibold">{t("需要留意", "Needs attention")}</Heading>
             <ul className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 divide-y divide-border lg:divide-y-0 pb-2">
               {attention.map((item) => (
                 <li key={item.key}>
@@ -892,10 +893,10 @@ export default function DashboardPage() {
         {insightCards.length > 0 && (
           <SectionDisclosure title={t("状态洞察", "Status insights")} open={insightsExpanded} onOpenChange={setInsightsExpanded} expandLabel={t("展开状态洞察", "Expand insights")} collapseLabel={t("收起洞察", "Collapse insights")}>
             {insightsLoading ? (
-              <p role="status" className="text-sm text-muted-foreground">{t("正在加载本周洞察…", "Loading this week's insights…")}</p>
+              <Paragraph role="status" className="text-sm text-muted-foreground">{t("正在加载本周洞察…", "Loading this week's insights…")}</Paragraph>
             ) : insightsFailed ? (
               <div role="alert" className="flex items-center gap-3 text-sm">
-                <p>{t("洞察数据未能加载，请重试。", "Couldn't load insights. Please retry.")}</p>
+                <Paragraph>{t("洞察数据未能加载，请重试。", "Couldn't load insights. Please retry.")}</Paragraph>
                 <button type="button" className="min-h-11 rounded-md border border-border px-3 focus-visible:ring-2 focus-visible:ring-ring" onClick={() => insightQueries.filter(query => query.error).forEach(query => { void query.refetch(); })}>
                   {t("重试", "Retry")}
                 </button>

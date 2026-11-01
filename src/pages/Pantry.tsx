@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -204,7 +205,7 @@ export default function PantryPage() {
               const catItems = grouped.get(cat) || [];
               return (
                 <section key={cat} className="row-group">
-                  <h3 className="row-group-title">{lang === "zh" ? cat : getCategoryLabel(cat)}<span className="count" aria-hidden>{catItems.length}</span></h3>
+                  <Heading as="h3" className="row-group-title">{lang === "zh" ? cat : getCategoryLabel(cat)}<span className="count" aria-hidden>{catItems.length}</span></Heading>
                   <ul className="row-list">
                     {catItems.map((item: PantryItem, i: number) => {
                       const status = getStatus(item.expiry_date, today);

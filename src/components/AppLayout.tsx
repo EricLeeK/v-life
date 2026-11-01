@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Suspense } from "react";
@@ -43,8 +44,8 @@ function PageHeader({ title, description, actions, concept }: { title: string; d
   return (
     <header className={cn("page-header", concept && "has-concept")}>
       <div className="page-header-copy min-w-0">
-        <h1 className="heading-font text-foreground">{title}</h1>
-        {description && <p>{description}</p>}
+        <Heading as="h1" className="heading-font text-foreground">{title}</Heading>
+        {description && <Paragraph>{description}</Paragraph>}
       </div>
       {actions && <div className="page-header-actions">{actions}</div>}
       {concept && <HairlineFigure name={concept} className="page-header-art" />}
@@ -90,8 +91,8 @@ function BarTitle({ title, visible, asHeading }: { title?: string; visible: bool
     "text-[13px] font-medium text-muted-foreground transition-opacity duration-200",
     asHeading ? "" : visible ? "opacity-100" : "opacity-0",
   );
-  if (asHeading) return <h1 className={className}>{title}</h1>;
-  return <p className={className} aria-hidden={!visible || undefined}>{title}</p>;
+  if (asHeading) return <Heading as="h1" className={className}>{title}</Heading>;
+  return <Paragraph className={className} aria-hidden={!visible || undefined}>{title}</Paragraph>;
 }
 
 function AppChrome({

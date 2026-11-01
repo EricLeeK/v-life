@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 
@@ -23,12 +24,12 @@ export function DailyHero(props: {
       </div>
       <div className="grid gap-6 p-5 lg:grid-cols-[1fr_220px] lg:items-start">
         <div className="min-w-0">
-          <p className="font-mono-data text-[13px] font-medium text-cat-yellow">
+          <Paragraph className="font-mono-data text-[13px] font-medium text-cat-yellow">
             {lang === "zh" ? `整体 ${overallPercent}` : `Overall ${overallPercent}`}
-          </p>
-          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
+          </Paragraph>
+          <Paragraph className="mt-3 max-w-3xl text-[15px] leading-relaxed text-muted-foreground sm:text-[16px]">
             {body}
-          </p>
+          </Paragraph>
           {needsProfile && (
             <Link
               to="/settings"
@@ -41,12 +42,12 @@ export function DailyHero(props: {
           )}
         </div>
         <div className="rounded-lg bg-muted px-4 py-4 text-center">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Paragraph className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             {lang === "zh" ? "整体" : "Overall"}
-          </p>
-          <p className="mt-1 font-mono-data text-[40px] font-semibold leading-none text-foreground">
+          </Paragraph>
+          <Paragraph className="mt-1 font-mono-data text-[40px] font-semibold leading-none text-foreground">
             {overallPercent}
-          </p>
+          </Paragraph>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { memo } from "react";
 import { Repeat, Flame } from "lucide-react";
 import { useHabitLogs, useToggleHabitLog } from "@/hooks/useData";
@@ -108,9 +109,9 @@ function HabitCardInner({ task, projectId }: HabitCardProps) {
       <div className="flex items-center justify-center">
         <CircularProgress value={progress} />
       </div>
-      <p className="text-[10px] text-muted-foreground mt-1 text-center">
+      <Paragraph className="text-[10px] text-muted-foreground mt-1 text-center">
         {lang === "zh" ? `本周 ${completedThisWeek} / ${weeklyGoal}` : `Week ${completedThisWeek} / ${weeklyGoal}`}
-      </p>
+      </Paragraph>
       <button
         onClick={handleToggle}
         disabled={toggleMutation.isPending}

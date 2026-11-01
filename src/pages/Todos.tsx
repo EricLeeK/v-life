@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, useRef, useLayoutEffect } from "react";
@@ -1120,9 +1121,9 @@ export default function TodosPage() {
 
   const subtaskNoteForm = (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground font-medium line-clamp-2 bg-muted/40 p-2 rounded-md border border-border">
+      <Paragraph className="text-xs text-muted-foreground font-medium line-clamp-2 bg-muted/40 p-2 rounded-md border border-border">
         {noteEditTodo?.title}
-      </p>
+      </Paragraph>
       <div>
         <Label htmlFor="subtask-note" className="text-xs text-muted-foreground font-medium">{t("备注详情 / 说明", "Note details")}</Label>
         <textarea

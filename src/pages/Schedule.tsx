@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -536,7 +537,7 @@ export default function SchedulePage() {
         )}
       </div>
       {editingIsSeries && (
-        <p className="text-xs text-muted-foreground text-center">{t("编辑或删除将影响整个重复系列", "Editing or deleting will affect the entire recurring series")}</p>
+        <Paragraph className="text-xs text-muted-foreground text-center">{t("编辑或删除将影响整个重复系列", "Editing or deleting will affect the entire recurring series")}</Paragraph>
       )}
     </div>
   );

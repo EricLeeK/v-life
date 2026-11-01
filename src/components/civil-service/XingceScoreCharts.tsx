@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useMemo, useState } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,20 +47,20 @@ export function XingceScoreCharts() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-[11px] text-muted-foreground">{t("套卷数", "Papers")}</p>
-            <p className="font-mono-data text-xl text-foreground mt-0.5">{papers.length}</p>
+            <Paragraph className="text-[11px] text-muted-foreground">{t("套卷数", "Papers")}</Paragraph>
+            <Paragraph className="font-mono-data text-xl text-foreground mt-0.5">{papers.length}</Paragraph>
           </div>
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-[11px] text-muted-foreground">{t("最近正确率", "Latest rate")}</p>
-            <p className="font-mono-data text-xl text-foreground mt-0.5">
+            <Paragraph className="text-[11px] text-muted-foreground">{t("最近正确率", "Latest rate")}</Paragraph>
+            <Paragraph className="font-mono-data text-xl text-foreground mt-0.5">
               {latest?.overallRate != null ? `${latest.overallRate}%` : "—"}
-            </p>
+            </Paragraph>
           </div>
           <div className="rounded-lg bg-muted p-3">
-            <p className="text-[11px] text-muted-foreground">{t("判断正确率", "Judgment")}</p>
-            <p className="font-mono-data text-xl text-foreground mt-0.5">
+            <Paragraph className="text-[11px] text-muted-foreground">{t("判断正确率", "Judgment")}</Paragraph>
+            <Paragraph className="font-mono-data text-xl text-foreground mt-0.5">
               {latest?.judgmentRate != null ? `${latest.judgmentRate}%` : "—"}
-            </p>
+            </Paragraph>
           </div>
         </div>
 
@@ -71,11 +72,11 @@ export function XingceScoreCharts() {
         </Tabs>
 
         {chartData.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground text-center py-8">{t("暂无数据", "No data")}</p>
+          <Paragraph className="text-[13px] text-muted-foreground text-center py-8">{t("暂无数据", "No data")}</Paragraph>
         ) : (
           <>
             <div>
-              <p className="text-[12px] text-muted-foreground mb-2">{t("总正确率 / 总分 / 击败率", "Overall / Score / Beat")}</p>
+              <Paragraph className="text-[12px] text-muted-foreground mb-2">{t("总正确率 / 总分 / 击败率", "Overall / Score / Beat")}</Paragraph>
               <div className="h-52 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
@@ -92,7 +93,7 @@ export function XingceScoreCharts() {
               </div>
             </div>
             <div>
-              <p className="text-[12px] text-muted-foreground mb-2">{t("分科正确率", "Subject rates")}</p>
+              <Paragraph className="text-[12px] text-muted-foreground mb-2">{t("分科正确率", "Subject rates")}</Paragraph>
               <div className="h-52 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>

@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { useLang } from "@/contexts/LanguageContext";
@@ -248,7 +249,7 @@ export function WrongAnswerForm({
             {t("AI 识图填草稿", "AI draft")}
           </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground">{t("支持 Ctrl+V 粘贴图片", "Ctrl+V to paste image")}</p>
+        <Paragraph className="text-[11px] text-muted-foreground">{t("支持 Ctrl+V 粘贴图片", "Ctrl+V to paste image")}</Paragraph>
         {(previewDataUrl || imageUrl) && (
           <img src={previewDataUrl || imageUrl} alt="" className="mt-2 max-h-40 rounded-md border border-border object-contain" />
         )}
@@ -264,7 +265,7 @@ export function WrongAnswerForm({
       </div>
 
       <div className="rounded-lg border border-border p-3 space-y-3">
-        <p className="text-[13px] font-medium text-foreground">{t("题型与选项", "Question type & options")}</p>
+        <Paragraph className="text-[13px] font-medium text-foreground">{t("题型与选项", "Question type & options")}</Paragraph>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-2">
             <Label htmlFor="wrong-type">{t("题型", "Type")}</Label>

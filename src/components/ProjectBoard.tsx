@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { ProjectIcon } from "./projects/ProjectIcon";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useId } from "react";
@@ -161,7 +162,7 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
         <div className="project-board-title-row">
           <div className="project-board-title">
             <ProjectIcon name={project.name} svg={project.icon_svg} />
-            <h2 className="truncate">{project.name}</h2>
+            <Heading as="h2" className="truncate">{project.name}</Heading>
             <span className="project-status-label">{project.status === "active" ? t("进行中", "Active") : project.status === "planning" ? t("规划中", "Planning") : project.status === "paused" ? t("已暂停", "Paused") : t("已结束", "Closed")}</span>
             <span className="project-inline-actions" data-visible={editMode} aria-hidden={!editMode} inert={!editMode}>
               <ProjectEditActions name={project.name} onEdit={onEditProject} onDelete={onDeleteProject} />
@@ -174,7 +175,7 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
             <Button className="min-h-9" aria-disabled={moving} onClick={() => { if (!moving) openAddModal("task"); }}><Plus className="h-3.5 w-3.5" />{t("新建事项", "New item")}</Button>
           </div>
         </div>
-        {project.description && <p className="project-board-description line-clamp-2">{project.description}</p>}
+        {project.description && <Paragraph className="project-board-description line-clamp-2">{project.description}</Paragraph>}
         <div className="project-board-summary">
           <div className="project-summary-stats">
             {targetDate && isValid(targetDate) && <span><CalendarDays className="h-3.5 w-3.5" />{format(targetDate,"yyyy/MM/dd")}<span>{daysLeft! < 0 ? t(`逾期 ${-daysLeft!} 天`, `${-daysLeft!} days overdue`) : daysLeft === 0 ? t("今天截止", "Due today") : t(`剩余 ${daysLeft} 天`, `${daysLeft} days left`)}</span></span>}

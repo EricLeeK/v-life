@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
@@ -17,7 +18,7 @@ export function BoardColumn({ title, count, children, onAdd, innerRef, placehold
   return (
     <div className="flex flex-col w-64 min-w-64 shrink-0 md:w-full md:min-w-0 md:shrink h-full" {...droppableProps}>
       <div className="flex items-center justify-between px-2 py-2 shrink-0">
-        <h3 className="text-[13px] font-medium text-foreground">{title}</h3>
+        <Heading as="h3" className="text-[13px] font-medium text-foreground">{title}</Heading>
         <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full font-medium">{count}</span>
       </div>
       <div ref={innerRef} className="space-y-2 pr-0.5 overflow-y-auto scrollbar-thin min-h-[100px]">

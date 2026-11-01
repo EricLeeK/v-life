@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -35,9 +36,9 @@ export default function CivilServiceGroup() {
           </Button>
         </div>
 
-        <p className="text-[13px] text-muted-foreground">
+        <Paragraph className="text-[13px] text-muted-foreground">
           {tags.join(" · ")}
-        </p>
+        </Paragraph>
 
         {isXingce && (
           <>

@@ -1,3 +1,4 @@
+import { markdownTypography } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -9,8 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Edit2, FlaskConical, Home, Bot, Brain, Tag } from "lucide-react";
+import {
+  Plus, Trash2, Edit2, FlaskConical, Home, Bot, Brain, Tag,
+  Lightbulb, Sparkles, PenLine, BookOpen, Compass, Quote, Coffee, Moon, Sun,
+  Cloud, Leaf, Heart, Star, Zap, Anchor, Music, Camera, Target, Clock, Feather, Mountain,
+} from "lucide-react";
 import { thoughtHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -33,6 +39,25 @@ const PRESET_TAGS = [
 const TAG_LABELS: Record<string, string> = {
   "科研": "Research", "生活": "Life", "AI": "AI", "杂念": "Random",
 };
+
+/** Curated lucide set for thought icons — stored by name in thoughts.icon.
+ *  Legacy rows with emoji strings still render through ThoughtIcon's fallback. */
+const THOUGHT_ICONS: Record<string, React.ElementType> = {
+  lightbulb: Lightbulb, sparkles: Sparkles, pen: PenLine, book: BookOpen,
+  compass: Compass, quote: Quote, coffee: Coffee, moon: Moon, sun: Sun,
+  cloud: Cloud, leaf: Leaf, heart: Heart, star: Star, zap: Zap,
+  anchor: Anchor, music: Music, camera: Camera, target: Target,
+  clock: Clock, feather: Feather, brain: Brain, mountain: Mountain,
+};
+
+/** Renders a stored thought icon: lucide by name (hairline 1.5), raw string
+ *  (legacy emoji) otherwise, nothing when empty. */
+function ThoughtIcon({ name, className }: { name?: string | null; className?: string }) {
+  if (!name) return null;
+  const Icon = THOUGHT_ICONS[name];
+  if (Icon) return <Icon className={className ?? "h-4 w-4 text-muted-foreground"} strokeWidth={1.5} />;
+  return <span className="text-lg leading-none">{name}</span>;
+}
 
 export default function ThoughtsPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -121,7 +146,50 @@ export default function ThoughtsPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-[1fr_60px] gap-2">
                   <div><Label htmlFor="thought-title">{t("标题（可选）", "Title (optional)")}</Label><Input id="thought-title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-                  <div><Label htmlFor="thought-icon">{t("图标", "Icon")}</Label><Input id="thought-icon" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="😊" className="text-center" /></div>
+                  <div>
+                    <Label htmlFor="thought-icon">{t("图标", "Icon")}</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="thought-icon"
+                          type="button"
+                          variant="outline"
+                          aria-label={t("选择图标", "Pick an icon")}
+                          title={t("再次点击已选图标可移除", "Click the selected icon again to remove it")}
+                          className="w-full h-9 px-0 justify-center"
+                        >
+                          {form.icon ? (
+                            <ThoughtIcon name={form.icon} className="h-4 w-4 text-foreground" />
+                          ) : (
+                            <Sparkles className="h-4 w-4 text-muted-foreground/50" strokeWidth={1.5} />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-56 p-2" align="end">
+                        <div className="grid grid-cols-6 gap-1">
+                          {Object.entries(THOUGHT_ICONS).map(([name, Icon]) => {
+                            const active = form.icon === name;
+                            return (
+                              <button
+                                key={name}
+                                type="button"
+                                aria-label={name}
+                                aria-pressed={active}
+                                onClick={() => setForm((f) => ({ ...f, icon: active ? "" : name }))}
+                                className={`h-8 w-8 rounded-md inline-flex items-center justify-center transition-colors ${
+                                  active
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" strokeWidth={1.5} />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
                 <div><Label htmlFor="thought-content">{t("内容", "Content")} * (Markdown)</Label><Textarea id="thought-content" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={6} /></div>
                 <div>
@@ -171,7 +239,7 @@ export default function ThoughtsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      {thought.icon && <span className="text-lg">{thought.icon}</span>}
+                      {thought.icon && <ThoughtIcon name={thought.icon} className="h-4 w-4 shrink-0 text-muted-foreground" />}
                       <span className="font-medium text-sm truncate">{thought.title || thought.content.split("\n")[0].slice(0, 30)}</span>
                     </div>
                     <div className="flex gap-1 shrink-0">
@@ -180,7 +248,7 @@ export default function ThoughtsPage() {
                     </div>
                   </div>
                   <div className="prose prose-sm prose-invert max-w-none text-sm text-muted-foreground">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{thought.content}</ReactMarkdown>
+                    <ReactMarkdown components={markdownTypography} remarkPlugins={[remarkGfm]}>{thought.content}</ReactMarkdown>
                   </div>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
                     {thought.tags?.map((tag: string) => {

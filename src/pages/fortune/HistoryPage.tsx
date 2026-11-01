@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { Link } from "react-router-dom";
@@ -39,7 +40,7 @@ export default function HistoryPage() {
           backLabel={t("返回运势", "Back to Fortune")}
         />
 
-        {isLoading && <p className="text-[13px] text-muted-foreground">{t("加载中…", "Loading…")}</p>}
+        {isLoading && <Paragraph className="text-[13px] text-muted-foreground">{t("加载中…", "Loading…")}</Paragraph>}
 
         {!isLoading && data.length === 0 && (
           <CollectionFeedback error={error} retry={refetch}>
@@ -100,9 +101,9 @@ export default function HistoryPage() {
               <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-[11px] text-muted-foreground">
                 {JSON.stringify(active.payload, null, 2)}
               </pre>
-              <p className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground">
+              <Paragraph className="text-[15px] leading-relaxed whitespace-pre-wrap text-foreground">
                 {active.reading}
-              </p>
+              </Paragraph>
               <Button
                 variant="destructive"
                 onClick={async () => {

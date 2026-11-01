@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { Link } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
@@ -47,10 +48,10 @@ export default function CivilServiceHome() {
                       <Icon className="h-5 w-5" style={{ color: GROUP_COLORS[g] }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="heading-font text-base text-foreground">{SUBJECT_GROUP_LABELS[g].zh}</p>
-                      <p className="text-[12px] text-muted-foreground">
+                      <Paragraph className="heading-font text-base text-foreground">{SUBJECT_GROUP_LABELS[g].zh}</Paragraph>
+                      <Paragraph className="text-[12px] text-muted-foreground">
                         {t("计划 · 错题", "Plans · Wrongs")}
-                      </p>
+                      </Paragraph>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </CardContent>

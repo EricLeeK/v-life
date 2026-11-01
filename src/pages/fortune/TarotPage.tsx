@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
@@ -83,9 +84,9 @@ export default function TarotPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)]">
           {/* Controls */}
           <div className="card-premium space-y-4 p-5">
-            <p className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+            <Paragraph className="text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
               {t("今天想问什么？", "What do you want to ask?")}
-            </p>
+            </Paragraph>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
               {TOPICS.map((item) => (
                 <button
@@ -118,9 +119,9 @@ export default function TarotPage() {
           <div className="card-premium min-h-[320px] p-5">
             {cards.length === 0 ? (
               <div className="flex h-full min-h-[280px] flex-col items-center justify-center text-center">
-                <p className="text-[14px] text-muted-foreground">
+                <Paragraph className="text-[14px] text-muted-foreground">
                   {t("选好问题后点抽牌，牌面会铺在这里", "Choose a question and draw — cards appear here")}
-                </p>
+                </Paragraph>
               </div>
             ) : (
               <div className="space-y-6">
@@ -130,13 +131,13 @@ export default function TarotPage() {
                       key={c.position}
                       className="rounded-lg border border-border bg-muted px-4 py-5 text-center"
                     >
-                      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      <Paragraph className="text-[11px] uppercase tracking-wide text-muted-foreground">
                         {lang === "zh" ? POS_LABEL[c.position].zh : POS_LABEL[c.position].en}
-                      </p>
-                      <p className="mt-2 text-[16px] font-semibold text-foreground">
+                      </Paragraph>
+                      <Paragraph className="mt-2 text-[16px] font-semibold text-foreground">
                         {lang === "zh" ? c.card.nameZh : c.card.nameEn}
-                      </p>
-                      <p className="mt-1 text-[12px] text-[#c49840]">
+                      </Paragraph>
+                      <Paragraph className="mt-1 text-[12px] text-[#c49840]">
                         {c.upright
                           ? lang === "zh"
                             ? "正位"
@@ -144,20 +145,20 @@ export default function TarotPage() {
                           : lang === "zh"
                             ? "逆位"
                             : "Reversed"}
-                      </p>
-                      <p className="mt-2 text-[12px] leading-snug text-muted-foreground">
+                      </Paragraph>
+                      <Paragraph className="mt-2 text-[12px] leading-snug text-muted-foreground">
                         {cardKeywords(c.card, c.upright, lang)}
-                      </p>
+                      </Paragraph>
                     </div>
                   ))}
                 </div>
                 <div>
-                  <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <Paragraph className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
                     {t("解读", "Reading")}
-                  </p>
-                  <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
+                  </Paragraph>
+                  <Paragraph className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground whitespace-pre-wrap">
                     {reading}
-                  </p>
+                  </Paragraph>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => void draw()}>

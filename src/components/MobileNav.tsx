@@ -1,3 +1,4 @@
+import { Heading } from "@/components/ui/typography";
 import {
   Newspaper,
   LayoutDashboard,
@@ -156,7 +157,7 @@ export function MobileNav() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
-              <h2 className="text-sm font-semibold">{t("更多功能", "More features")}</h2>
+              <Heading as="h2" className="text-sm font-semibold">{t("更多功能", "More features")}</Heading>
               <button type="button" aria-label={t("关闭更多菜单", "Close more menu")} className="paper-button inline-flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={closeMore}><X className="h-4 w-4" /></button>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">

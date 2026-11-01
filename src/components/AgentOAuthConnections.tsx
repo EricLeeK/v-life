@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useCallback, useEffect, useState } from 'react';
 import type { OAuthGrant } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,18 +69,18 @@ export function AgentOAuthConnections() {
   const rows = new Map(records.map((r) => [r.client_id, { id: r.client_id, name: r.client_name, record: r, grant: false }]));
   for (const grant of grants) { const id = oauthClientId(grant.client); const row = rows.get(id); rows.set(id, { id, name: grant.client.name || id, record: row?.record, grant: true }); }
   return <Card><CardHeader><CardTitle className="text-base">OAuth 连接（兼容方式）</CardTitle></CardHeader><CardContent className="space-y-4">
-    <p className="text-sm text-muted-foreground">在 Agent 的 MCP 连接设置中填写以下地址，选择 OAuth 登录，并在 V-Life 中批准需要的数据权限。</p>
-    <code className="block break-all rounded bg-muted p-3 text-xs">{endpoint}</code>
+    <Paragraph className="text-sm text-muted-foreground">在 Agent 的 MCP 连接设置中填写以下地址，选择 OAuth 登录，并在 V-Life 中批准需要的数据权限。</Paragraph>
+    <code className="block wrap-anywhere rounded bg-muted p-3 text-xs">{endpoint}</code>
     <div className="flex gap-2"><Button variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(endpoint); setNotice('连接地址已复制。'); } catch { setError('复制失败，请手动复制上方地址。'); } }}>复制连接地址</Button><Button variant="outline" size="sm" onClick={load} disabled={busy}>{busy ? '处理中…' : '刷新连接'}</Button></div>
-    <div className="space-y-2"><p className="text-sm text-muted-foreground">需要直接调用 JSON API 时使用同一 OAuth 授权：</p><code className="block break-all rounded bg-muted p-3 text-xs">{apiEndpoint}</code><Button variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(apiEndpoint); setNotice('API 地址已复制。'); } catch { setError('复制失败，请手动复制上方地址。'); } }}>复制 API 地址</Button></div>
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-    {notice && <p role="status" className="text-sm">{notice}</p>}
-    {!loaded && !error && <p className="text-sm text-muted-foreground">正在读取连接…</p>}
-    {loaded && !error && rows.size === 0 && <p className="text-sm text-muted-foreground">还没有授权的 Agent。</p>}
+    <div className="space-y-2"><Paragraph className="text-sm text-muted-foreground">需要直接调用 JSON API 时使用同一 OAuth 授权：</Paragraph><code className="block wrap-anywhere rounded bg-muted p-3 text-xs">{apiEndpoint}</code><Button variant="outline" size="sm" onClick={async () => { try { await navigator.clipboard.writeText(apiEndpoint); setNotice('API 地址已复制。'); } catch { setError('复制失败，请手动复制上方地址。'); } }}>复制 API 地址</Button></div>
+    {error && <Paragraph role="alert" className="text-sm text-destructive">{error}</Paragraph>}
+    {notice && <Paragraph role="status" className="text-sm">{notice}</Paragraph>}
+    {!loaded && !error && <Paragraph className="text-sm text-muted-foreground">正在读取连接…</Paragraph>}
+    {loaded && !error && rows.size === 0 && <Paragraph className="text-sm text-muted-foreground">还没有授权的 Agent。</Paragraph>}
     {[...rows.values()].map((row) => {
       const action = agentConnectionAction(row.record?.revoked_at, row.grant);
       const label = action === 'retry' ? '重试撤销 OAuth' : action === 'remove' ? '移除' : '撤销连接';
-      return <div key={row.id} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm"><div><p className="font-medium">{row.name || row.id}</p><p className="text-muted-foreground">{row.record?.revoked_at ? '数据访问已禁止' : row.record ? [row.record.read_enabled && '读取', row.record.write_enabled && '新增/修改', row.record.delete_enabled && '删除'].filter(Boolean).join(' · ') || '无数据权限' : 'OAuth 已连接，尚未授予数据权限'}</p>{row.record?.last_used_at && <p className="text-xs text-muted-foreground">最近使用：{new Date(row.record.last_used_at).toLocaleString()}</p>}</div><Button variant="destructive" size="sm" disabled={busy} onClick={() => (action === 'remove' ? remove(row.id) : revoke(row.id, row.name))}>{label}</Button></div>;
+      return <div key={row.id} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm"><div><Paragraph className="font-medium">{row.name || row.id}</Paragraph><Paragraph className="text-muted-foreground">{row.record?.revoked_at ? '数据访问已禁止' : row.record ? [row.record.read_enabled && '读取', row.record.write_enabled && '新增/修改', row.record.delete_enabled && '删除'].filter(Boolean).join(' · ') || '无数据权限' : 'OAuth 已连接，尚未授予数据权限'}</Paragraph>{row.record?.last_used_at && <Paragraph className="text-xs text-muted-foreground">最近使用：{new Date(row.record.last_used_at).toLocaleString()}</Paragraph>}</div><Button variant="destructive" size="sm" disabled={busy} onClick={() => (action === 'remove' ? remove(row.id) : revoke(row.id, row.name))}>{label}</Button></div>;
     })}
   </CardContent></Card>;
 }

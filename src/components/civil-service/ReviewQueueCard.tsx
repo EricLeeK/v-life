@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useLang } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,20 +23,20 @@ export function ReviewQueueCard() {
       </CardHeader>
       <CardContent className="space-y-2">
         {due.length === 0 && (
-          <p className="text-[13px] text-muted-foreground text-center py-4">
+          <Paragraph className="text-[13px] text-muted-foreground text-center py-4">
             {t("今天没有到期错题", "No wrong answers due today")}
-          </p>
+          </Paragraph>
         )}
         {due.map((item) => (
           <div key={item.id} className="rounded-lg border border-border p-3 flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
+              <Paragraph className="text-sm font-medium text-foreground truncate">{item.title}</Paragraph>
+              <Paragraph className="text-[11px] text-muted-foreground mt-0.5">
                 {item.subject_tag || item.subject_group}
                 {item.knowledge_point ? ` · ${item.knowledge_point}` : ""}
                 {" · "}
                 {t("间隔", "Interval")} {item.review_interval_days || 1}{t("天", "d")}
-              </p>
+              </Paragraph>
             </div>
             <div className="flex shrink-0 gap-1">
               <Button

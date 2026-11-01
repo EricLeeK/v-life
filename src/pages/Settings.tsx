@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { NewspaperSettings } from "@/components/newspaper/NewspaperSettings";
 import { AgentConnections } from "@/components/AgentConnections";
 import { useState, useRef, useMemo } from "react";
@@ -300,7 +301,7 @@ export default function SettingsPage() {
           (mobile keeps AppLayout's p-4 since the negative margins are md: only). */}
       <div className="mt-2 space-y-10 md:px-6 lg:px-10">
         <section id="settings-general" className="scroll-mt-24 space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("通用", "General")}</h2>
+          <Heading as="h2" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("通用", "General")}</Heading>
         {/* Account & Appearance */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("账号与外观", "Account & Appearance")}</CardTitle></CardHeader>
@@ -313,9 +314,9 @@ export default function SettingsPage() {
                 onChange={(e) => update("display_name", e.target.value)}
                 placeholder={t("输入你的昵称", "Enter your display name")}
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <Paragraph className="text-xs text-muted-foreground mt-1">
                 {t("设置后会在首页问候语中显示", "Shown in the greeting on your dashboard")}
-              </p>
+              </Paragraph>
             </div>
             <div>
               <Label htmlFor="theme-select">{t("主题模式", "Theme Mode")}</Label>
@@ -327,9 +328,9 @@ export default function SettingsPage() {
                   <SelectItem value="system">{t("跟随系统", "System")}</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground mt-1">
+              <Paragraph className="text-xs text-muted-foreground mt-1">
                 {t("可以在浅色暖奶油与深色炭灰主题间自由切换", "Switch between Light Cream and Dark Charcoal themes")}
-              </p>
+              </Paragraph>
             </div>
           </CardContent>
         </Card>
@@ -340,7 +341,7 @@ export default function SettingsPage() {
           <CardContent>
             <div className="flex flex-col gap-2">
               <Label htmlFor="settings-day-start">{t("新的一天从几点开始？", "When does a new day start?")}</Label>
-              <p className="text-xs text-muted-foreground">{t("如果你经常熬夜，可以设置凌晨几点才算新的一天（比如设置 2:00，那么凌晨 1 点还是算昨天）。", "If you stay up late, you can shift the start of the day (e.g., set to 2:00 AM, and 1:00 AM will still count towards yesterday).")}</p>
+              <Paragraph className="text-xs text-muted-foreground">{t("如果你经常熬夜，可以设置凌晨几点才算新的一天（比如设置 2:00，那么凌晨 1 点还是算昨天）。", "If you stay up late, you can shift the start of the day (e.g., set to 2:00 AM, and 1:00 AM will still count towards yesterday).")}</Paragraph>
               <Select value={String(draft.day_start_hour || 0)} onValueChange={(v) => update("day_start_hour", Number(v))}>
                 <SelectTrigger id="settings-day-start" className="w-full sm:w-[200px] mt-2"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -369,12 +370,12 @@ export default function SettingsPage() {
               <Label htmlFor="settings-focus-mode" className="font-medium text-sm text-foreground">
                 {t("专注模式", "Focus mode")}
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <Paragraph className="text-xs text-muted-foreground">
                 {t(
                   "「仅备考」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
                   "Civil-only hides main modules and sync UI; data is kept. Switch back anytime."
                 )}
-              </p>
+              </Paragraph>
               <Select
                 value={(draft.app_focus_mode as string) || "full"}
                 onValueChange={(v) => update("app_focus_mode", v)}
@@ -388,12 +389,12 @@ export default function SettingsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <Paragraph className="text-xs text-muted-foreground">
               {t(
                 "在此选择要在侧边栏和手机导航中显示的非核心模块。关闭某个模块仅做视觉隐藏，您存过的历史数据不会受到任何影响。",
                 "Choose which modules to display in the sidebar and mobile nav. Disabling a module only hides it visually; your historical data remains completely safe."
               )}
-            </p>
+            </Paragraph>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               {[
                 { id: "pantry", name: t("食材管理", "Pantry") },
@@ -440,33 +441,33 @@ export default function SettingsPage() {
         <section id="settings-newspaper" className="scroll-mt-24 space-y-6"><NewspaperSettings /></section>
 
         <section id="settings-ai" className="scroll-mt-24 space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("AI", "AI")}</h2>
+          <Heading as="h2" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("AI", "AI")}</Heading>
         {/* Hosted AI status */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("托管 AI", "Hosted AI")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             {hostedAi?.active ? (
               <>
-                <p className="text-sm">
+                <Paragraph className="text-sm">
                   {t("状态：已开通", "Status: Active")}
                   {hostedAi.entitlement?.expires_at
                     ? ` · ${t("到期", "Expires")} ${new Date(hostedAi.entitlement.expires_at).toLocaleDateString()}`
                     : ""}
-                </p>
-                <p className="text-sm text-muted-foreground">
+                </Paragraph>
+                <Paragraph className="text-sm text-muted-foreground">
                   {t("本月用量", "Monthly usage")}: {hostedAi.monthlyUsed.toLocaleString()} / {(hostedAi.entitlement?.monthly_token_limit ?? 0).toLocaleString()} tokens
-                </p>
-                <p className="text-sm text-muted-foreground">
+                </Paragraph>
+                <Paragraph className="text-sm text-muted-foreground">
                   {t("今日请求", "Today's requests")}: {hostedAi.dailyUsed} / {hostedAi.entitlement?.daily_request_limit ?? 0}
-                </p>
-                <p className="text-xs text-muted-foreground">
+                </Paragraph>
+                <Paragraph className="text-xs text-muted-foreground">
                   {t("开通后纯文本走 DeepSeek、看图走 Gemini；超额不会自动改用你自己的 Key。", "Hosted text uses DeepSeek and vision uses Gemini; over-quota does not auto-fall back to your own key.")}
-                </p>
+                </Paragraph>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <Paragraph className="text-sm text-muted-foreground">
                 {t("未开通 · 输入兑换码开通，或在下方使用自带 Key", "Not active · redeem a code below, or use your own API key")}
-              </p>
+              </Paragraph>
             )}
             {!isDemo && (
               <>
@@ -489,12 +490,12 @@ export default function SettingsPage() {
                     {redeeming ? t("兑换中...", "Redeeming...") : t("兑换", "Redeem")}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <Paragraph className="text-xs text-muted-foreground">
                   {t(
                     "兑换码可开通或续期托管 AI 会员（月卡 30 天 / 年卡 365 天），重复兑换自动顺延；也可在下方使用自己的 API Key。",
                     "Codes activate or extend hosted-AI membership (30-day monthly / 365-day yearly; redemptions stack). Your own API key below works independently.",
                   )}
-                </p>
+                </Paragraph>
               </>
             )}
           </CardContent>
@@ -512,21 +513,21 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="bg-muted/40 border border-border rounded-xl p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-semibold text-foreground flex items-center gap-1">
+              <Paragraph className="font-semibold text-foreground flex items-center gap-1">
                 💡 {t("自动模型分流说明", "Smart Model Routing")}
-              </p>
-              <p>
+              </Paragraph>
+              <Paragraph>
                 {t(
                   "• 常规模型：用于绝大部分纯文本对话、笔记润色、格式排版与计划生成，推荐 DeepSeek（高性价比）。",
                   "• General Model: For ordinary text chat, note polishing, and layout optimization (e.g. DeepSeek)."
                 )}
-              </p>
-              <p>
+              </Paragraph>
+              <Paragraph>
                 {t(
                   "• 视觉模型：当上传或分析图片时自动切换使用，推荐 Google Gemini 视觉模型（如 gemini-2.5-flash）。",
                   "• Vision Model: Auto-switched when images are uploaded or analyzed (e.g. Gemini 2.5 Flash)."
                 )}
-              </p>
+              </Paragraph>
             </div>
 
             {/* 1. 常规模型 */}
@@ -645,7 +646,7 @@ export default function SettingsPage() {
             <div className="pt-2 border-t border-border flex items-center justify-between">
               <div>
                 <Label htmlFor="settings-ai-mode">{t("AI 操作模式", "AI Operation Mode")}</Label>
-                <p className="text-xs text-muted-foreground">{t("确认模式：预览后执行 / 直接模式：自动执行+撤销", "Confirm: preview then execute / Direct: auto-execute + undo")}</p>
+                <Paragraph className="text-xs text-muted-foreground">{t("确认模式：预览后执行 / 直接模式：自动执行+撤销", "Confirm: preview then execute / Direct: auto-execute + undo")}</Paragraph>
               </div>
               <Switch aria-label={t("AI 操作模式", "AI Operation Mode")} id="settings-ai-mode" checked={draft.ai_mode === "direct"} onCheckedChange={(v) => update("ai_mode", v ? "direct" : "confirm")} />
             </div>
@@ -657,18 +658,18 @@ export default function SettingsPage() {
         <AgentConnections />
 
         <section id="settings-schedule" className="scroll-mt-24 space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("日程", "Schedule")}</h2>
+          <Heading as="h2" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("日程", "Schedule")}</Heading>
         {/* Calendar Sync (Apple Calendar subscription) */}
         {!isDemo && (
           <Card>
             <CardHeader><CardTitle className="text-base">{t("日历同步", "Calendar Sync")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-xs text-muted-foreground">
+              <Paragraph className="text-xs text-muted-foreground">
                 {t(
                   "把 V-Life 日程以只读订阅日历的形式同步到苹果日历，最短每 5 分钟自动刷新；在苹果日历里的修改不会写回 V-Life。",
                   "Sync your V-Life schedule into Apple Calendar as a read-only subscribed calendar, auto-refreshing as often as every 5 minutes. Edits in Apple Calendar do not flow back.",
                 )}
-              </p>
+              </Paragraph>
               {feedToken ? (
                 <>
                   <Button asChild size="sm" className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -701,24 +702,24 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <p>
+                    <Paragraph>
                       {t(
                         "点上面的按钮会直接唤起日历 app 的订阅确认框——位置选 iCloud，iPhone / iPad 自动同步，自动刷新可设为每 5 分钟。",
                         "Tap the button above to open Calendar's subscribe dialog — choose the iCloud location so iPhone/iPad sync too, and set auto-refresh to every 5 minutes.",
                       )}
-                    </p>
-                    <p>
+                    </Paragraph>
+                    <Paragraph>
                       {t(
                         "按钮没反应（如被浏览器或 PWA 拦截）时再手动操作：macOS 日历 → 文件 → 新建日历订阅；iOS：设置 → 日历 → 账户 → 添加账户 → 其他 → 订阅日历。",
                         "If the button is blocked (some in-app browsers/PWA), do it manually: macOS Calendar → File → New Calendar Subscription; iOS: Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar.",
                       )}
-                    </p>
-                    <p>
+                    </Paragraph>
+                    <Paragraph>
                       {t(
                         "重置后旧订阅会停止更新，需要用新链接重新订阅。",
                         "After a reset the old subscription stops updating; re-subscribe with the new URL.",
                       )}
-                    </p>
+                    </Paragraph>
                   </div>
                 </>
               ) : (
@@ -738,7 +739,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="settings-show-goals-ball">{t("在日程中显示目标悬浮球", "Show goals ball in schedule")}</Label>
-                <p className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</p>
+                <Paragraph className="text-xs text-muted-foreground">{t("开启后在日程页面右下角显示当前目标", "Shows current goals in bottom-right of schedule page")}</Paragraph>
               </div>
               <Switch aria-label={t("在日程中显示目标悬浮球", "Show goals ball in schedule")} id="settings-show-goals-ball" checked={draft.show_goals_in_schedule !== false} onCheckedChange={(v) => update("show_goals_in_schedule", v)} />
             </div>
@@ -748,7 +749,7 @@ export default function SettingsPage() {
         </section>
 
         <section id="settings-personal" className="scroll-mt-24 space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("个性", "Personal")}</h2>
+          <Heading as="h2" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("个性", "Personal")}</Heading>
         {/* Fortune profile — collapsed by default */}
         <Collapsible defaultOpen={false}>
           <Card>
@@ -845,12 +846,12 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                         {cusp?.cuspSensitive && (
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <Paragraph className="mt-1 text-xs text-muted-foreground">
                             {t(
                               "交界日：填写出生时辰可用太阳黄经更精确判定。",
                               "Cusp day: add birth hour for Sun-longitude precision.",
                             )}
-                          </p>
+                          </Paragraph>
                         )}
                       </div>
                       <div>
@@ -898,7 +899,7 @@ export default function SettingsPage() {
         </section>
 
         <section id="settings-health" className="scroll-mt-24 space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("健康·财务", "Health · Finance")}</h2>
+          <Heading as="h2" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("健康·财务", "Health · Finance")}</Heading>
         {/* Calories */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("热量设置", "Calorie Settings")}</CardTitle></CardHeader>
@@ -915,10 +916,10 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <Label id="settings-exchange-rate-label">JPY → CNY 汇率</Label>
-                <p className="text-xs text-muted-foreground">
+                <Paragraph className="text-xs text-muted-foreground">
                   {t("当前:", "Current:")} 1 JPY = {draft.exchange_rate_jpy_to_cny} CNY
                   {draft.exchange_rate_updated_at && ` (${t("更新于", "Updated")} ${new Date(draft.exchange_rate_updated_at).toLocaleDateString()})`}
-                </p>
+                </Paragraph>
               </div>
               <Button variant="secondary" size="sm" aria-labelledby="settings-exchange-rate-label" onClick={fetchExchangeRate}>{t("获取最新汇率", "Fetch Latest Rate")}</Button>
             </div>
@@ -931,7 +932,7 @@ export default function SettingsPage() {
         </section>
 
         <section id="settings-data" className="scroll-mt-24 space-y-6">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("数据", "Data")}</h2>
+          <Heading as="h2" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("数据", "Data")}</Heading>
         {/* Data Management */}
         <Card>
           <CardHeader><CardTitle className="text-base">{t("数据管理", "Data Management")}</CardTitle></CardHeader>
@@ -943,9 +944,9 @@ export default function SettingsPage() {
             <Button variant="secondary" onClick={() => fileInputRef.current?.click()} className="w-full">
               <Upload className="h-4 w-4 mr-2" />{t("导入数据", "Import Data")} (JSON)
             </Button>
-            <p className="text-xs text-muted-foreground">
+            <Paragraph className="text-xs text-muted-foreground">
               {t("导入会将数据写入数据库（按 ID 合并），同时存入本地缓存供离线查看。", "Import writes data to database (merged by ID) and caches locally for offline viewing.")}
-            </p>
+            </Paragraph>
           </CardContent>
         </Card>
         </section>

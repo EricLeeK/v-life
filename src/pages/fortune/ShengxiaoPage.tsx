@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
@@ -95,9 +96,9 @@ export default function ShengxiaoPage() {
           }
         />
 
-        <p className="text-[13px] text-muted-foreground">
+        <Paragraph className="text-[13px] text-muted-foreground">
           {almanac.dayPillar} · {almanac.chongsha} · {relationLabel}
-        </p>
+        </Paragraph>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <MetricPercentCard label={t("整体", "Overall")} value={percents.overall} />
@@ -107,12 +108,12 @@ export default function ShengxiaoPage() {
         </div>
 
         <div className="card-premium p-6">
-          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Paragraph className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
             {lang === "zh" ? `属${SHENGXIAO_LABELS[animal].zh}` : SHENGXIAO_LABELS[animal].en}
-          </p>
-          <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground">
+          </Paragraph>
+          <Paragraph className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground">
             {reading || rule.body}
-          </p>
+          </Paragraph>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={() => void polish()} disabled={loading}>
               {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}

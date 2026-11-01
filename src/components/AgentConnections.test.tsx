@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentConnections } from './AgentConnections';
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), revoke: vi.fn(), copy: vi.fn(), user: { id: 'owner' } as { id: string } | null, isDemo: false, exitDemo: vi.fn() }));
-vi.mock('@/lib/agentKeyStore', () => ({ listAgentKeys: mocks.list, createAgentKey: mocks.create, revokeAgentKey: mocks.revoke }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), create: vi.fn(), revoke: vi.fn(), remove: vi.fn(), copy: vi.fn(), user: { id: 'owner' } as { id: string } | null, isDemo: false, exitDemo: vi.fn() }));
+vi.mock('@/lib/agentKeyStore', () => ({ listAgentKeys: mocks.list, createAgentKey: mocks.create, revokeAgentKey: mocks.revoke, deleteAgentKey: mocks.remove }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }));
 vi.mock('@/contexts/DemoModeContext', () => ({ useDemoMode: () => ({ isDemo: mocks.isDemo, exitDemo: mocks.exitDemo }) }));
 vi.mock('./AgentOAuthConnections', () => ({ AgentOAuthConnections: () => <p>OAuth 暂不可用</p> }));
@@ -68,6 +68,25 @@ describe('API key connection journey', () => {
     fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: '撤销 Key' }));
     await screen.findByRole('alert');
     expect(screen.getByText('尚未使用')).toBeInTheDocument();
+  });
+  it('deletes revoked keys and preserves active keys', async () => {
+    mocks.list.mockResolvedValue([{ ...record, revoked_at: '2026-10-08T04:00:00Z' }, { ...record, client_id: 'active', client_name: 'Active' }]);
+    mocks.remove.mockResolvedValue(undefined);
+    render(<AgentConnections />);
+    fireEvent.click(await screen.findByRole('button', { name: '删除 Hermes' }));
+    await waitFor(() => expect(screen.queryByText('Hermes')).not.toBeInTheDocument());
+    expect(mocks.remove).toHaveBeenCalledWith('owner', 'key_1');
+    expect(screen.getByRole('button', { name: '撤销 Active' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '删除 Active' })).not.toBeInTheDocument();
+  });
+  it('preserves revoked records when deletion fails', async () => {
+    mocks.list.mockResolvedValue([{ ...record, revoked_at: '2026-10-08T04:00:00Z' }]);
+    mocks.remove.mockRejectedValue(Error('offline'));
+    render(<AgentConnections />);
+    fireEvent.click(await screen.findByRole('button', { name: '删除 Hermes' }));
+    await screen.findByRole('alert');
+    expect(screen.getByText('Hermes')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '删除 Hermes' })).toBeEnabled();
   });
   it('loads OAuth only when requested and its failure cannot hide API keys', async () => {
     mocks.list.mockResolvedValue([record]); render(<AgentConnections />);

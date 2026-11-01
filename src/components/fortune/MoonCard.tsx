@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { Moon } from "lucide-react";
 import type { MoonPhaseInfo } from "@/lib/fortune/moon";
 
@@ -10,17 +11,17 @@ export function MoonCard({ data, lang }: { data: MoonPhaseInfo; lang: "zh" | "en
           {lang === "zh" ? "月相" : "Moon"}
         </span>
       </div>
-      <p className="font-mono-data text-[28px] font-semibold text-foreground">
+      <Paragraph className="font-mono-data text-[28px] font-semibold text-foreground">
         {lang === "zh" ? data.phaseZh : data.phaseEn}
-      </p>
-      <p className="mt-1 font-mono-data text-[12px] text-muted-foreground">
+      </Paragraph>
+      <Paragraph className="mt-1 font-mono-data text-[12px] text-muted-foreground">
         {lang === "zh"
           ? `亮度 ${Math.round(data.illumination * 100)}%`
           : `${Math.round(data.illumination * 100)}% lit`}
-      </p>
-      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+      </Paragraph>
+      <Paragraph className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
         {lang === "zh" ? data.blurbZh : data.blurbEn}
-      </p>
+      </Paragraph>
     </div>
   );
 }

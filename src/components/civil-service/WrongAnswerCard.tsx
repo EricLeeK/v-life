@@ -1,3 +1,5 @@
+import { markdownTypography } from "@/components/ui/typography";
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -44,12 +46,12 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
   return (
     <div className="space-y-3">
       {item.title && (
-        <p className="text-sm font-semibold text-foreground">{item.title}</p>
+        <Paragraph className="text-sm font-semibold text-foreground">{item.title}</Paragraph>
       )}
 
       {item.content && (
         <div className="wrong-answer-serif wrong-answer-body prose max-w-none text-foreground">
-          <ReactMarkdown remarkPlugins={markdownPlugins} rehypePlugins={rehypePlugins}>
+          <ReactMarkdown components={markdownTypography} remarkPlugins={markdownPlugins} rehypePlugins={rehypePlugins}>
             {item.content}
           </ReactMarkdown>
         </div>
@@ -101,14 +103,14 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
             {showAnswer ? t("收起正确答案", "Hide answer") : t("查看正确答案", "Show answer")}
           </button>
           {showAnswer && (
-            <p className="mt-1 text-[13px] font-medium text-cat-green">
+            <Paragraph className="mt-1 text-[13px] font-medium text-cat-green">
               {t("正确答案", "Correct answer")}：{item.correct_answer}
               {item.user_answer && item.user_answer !== item.correct_answer && (
                 <span className="ml-2 text-cat-orange">
                   （{t("你的选择", "Your choice")}：{item.user_answer}）
                 </span>
               )}
-            </p>
+            </Paragraph>
           )}
         </div>
       )}
@@ -123,9 +125,9 @@ export function WrongAnswerCard({ item }: { item: CivilWrongAnswer }) {
       )}
 
       {item.knowledge_point && (
-        <p className="text-[12px] text-cat-teal">
+        <Paragraph className="text-[12px] text-cat-teal">
           {t("知识点", "Knowledge")}：{item.knowledge_point}
-        </p>
+        </Paragraph>
       )}
 
       {showInlineImage && (

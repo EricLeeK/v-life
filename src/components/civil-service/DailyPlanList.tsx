@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -20,6 +21,7 @@ import { PlanItemForm } from "./PlanItemForm";
 import { SyncPlanButton } from "./SyncPlanButton";
 import { isPlanSynced } from "@/lib/civilPlanSync";
 import { SUBJECT_GROUP_LABELS, type SubjectGroup } from "@/lib/civilServiceSubjects";
+import { SortableList, SortableHandle } from "@/components/sortable/SortableList";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,6 +42,14 @@ export function DailyPlanList() {
   } | null>(null);
 
   const done = items.filter((i) => i.is_completed).length;
+
+  // Drag reorder → re-index today's items 0..n-1 (sort_order column, ASC).
+  const persistOrder = (orderedIds: string[]) => {
+    orderedIds.forEach((id, idx) => {
+      const it = items.find((i) => i.id === id);
+      if (it && (it.sort_order ?? 0) !== idx) updateItem.mutate({ id, sort_order: idx });
+    });
+  };
 
   const handleCreate = async (values: any) => {
     await createItem.mutateAsync({
@@ -106,27 +116,34 @@ export function DailyPlanList() {
                 action={<Button variant="outline" onClick={() => setAddOpen(true)}>{t("添加今日计划", "Plan today's practice")}</Button>} />
             </CollectionFeedback>
           )}
-          {items.map((item) => {
-            const groupLabel = SUBJECT_GROUP_LABELS[item.subject_group as SubjectGroup]?.zh || item.subject_group;
-            return (
-              <div
-                key={item.id}
-                className={`flex items-start gap-2 rounded-lg border border-border p-3 ${item.is_completed ? "opacity-60" : ""}`}
-              >
-                <Checkbox
+          <SortableList
+            items={items}
+            itemId={(it) => it.id}
+            onReorder={persistOrder}
+            className="space-y-2"
+            ariaLabel={t("每日计划", "Daily plan")}
+            labelItem={(it) => it.title}
+            renderItem={(item) => {
+              const groupLabel = SUBJECT_GROUP_LABELS[item.subject_group as SubjectGroup]?.zh || item.subject_group;
+              return (
+                <div
+                  className={`flex items-start gap-2 rounded-lg border border-border p-3 ${item.is_completed ? "opacity-60" : ""}`}
+                >
+                  <SortableHandle className="mt-0.5 shrink-0 inline-flex items-center p-0.5 text-muted-foreground/40 hover:text-muted-foreground" />
+                  <Checkbox
                   checked={item.is_completed}
                   onCheckedChange={() => toggle.mutate(item)}
                   className="mt-0.5"
                   aria-label={t(`标记“${item.title}”完成状态`, `Toggle completion for “${item.title}”`)}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm text-foreground ${item.is_completed ? "line-through" : ""}`}>{item.title}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                  <Paragraph className={`text-sm text-foreground ${item.is_completed ? "line-through" : ""}`}>{item.title}</Paragraph>
+                  <Paragraph className="text-[11px] text-muted-foreground mt-0.5">
                     {groupLabel}
                     {item.subject_tag ? ` · ${item.subject_tag}` : ""}
                     {item.source === "daily_extra" ? ` · ${t("今日额外", "Extra")}` : ""}
                     {item.start_time ? ` · ${format(new Date(item.start_time), "HH:mm")}` : ""}
-                  </p>
+                  </Paragraph>
                 </div>
                 <div className="flex shrink-0">
                   <SyncPlanButton item={item} size="icon" />
@@ -150,8 +167,9 @@ export function DailyPlanList() {
                   </Button>
                 </div>
               </div>
-            );
-          })}
+              );
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -189,9 +207,9 @@ export function DailyPlanList() {
           <DialogHeader>
             <DialogTitle className="heading-font">{t("同步更新主模式？", "Also sync to main mode?")}</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <Paragraph className="text-sm text-muted-foreground">
             {t("该计划已同步到日程或待办，是否一并更新？", "This plan was synced. Update the linked schedule/todo too?")}
-          </p>
+          </Paragraph>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => applyEdit(false)}>{t("仅更新考公", "Civil only")}</Button>
             <Button className="bg-[#d17847] hover:bg-[#c06838] text-white" onClick={() => applyEdit(true)}>

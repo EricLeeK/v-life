@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -97,12 +98,12 @@ export function ToolGrid({ lang }: { lang: "zh" | "en" }) {
           <Icon className={`h-4 w-4 ${item.color}`} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-semibold text-foreground">
+          <Paragraph className="text-[14px] font-semibold text-foreground">
             {lang === "zh" ? item.zh : item.en}
-          </p>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
+          </Paragraph>
+          <Paragraph className="mt-0.5 text-[12px] text-muted-foreground">
             {lang === "zh" ? item.descZh : item.descEn}
-          </p>
+          </Paragraph>
         </div>
         <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-border transition-colors group-hover:text-muted-foreground" />
       </button>
@@ -114,15 +115,15 @@ export function ToolGrid({ lang }: { lang: "zh" | "en" }) {
       <section>
         <div className="mb-4 flex items-baseline justify-between">
           <div>
-            <h2
+            <Heading as="h2"
               className="font-bold leading-tight text-foreground heading-font"
               style={{ fontSize: "clamp(22px, 2.6vw, 28px)" }}
             >
               {lang === "zh" ? "西式占卜" : "Western"}
-            </h2>
-            <p className="mt-1 text-[12px] text-muted-foreground">
+            </Heading>
+            <Paragraph className="mt-1 text-[12px] text-muted-foreground">
               {lang === "zh" ? "塔罗与星座" : "Tarot & zodiac"}
-            </p>
+            </Paragraph>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">{west.map(renderCard)}</div>
@@ -131,15 +132,15 @@ export function ToolGrid({ lang }: { lang: "zh" | "en" }) {
       <section>
         <div className="mb-4 flex items-baseline justify-between">
           <div>
-            <h2
+            <Heading as="h2"
               className="font-bold leading-tight text-foreground heading-font"
               style={{ fontSize: "clamp(22px, 2.6vw, 28px)" }}
             >
               {lang === "zh" ? "中式运势" : "Chinese"}
-            </h2>
-            <p className="mt-1 text-[12px] text-muted-foreground">
+            </Heading>
+            <Paragraph className="mt-1 text-[12px] text-muted-foreground">
               {lang === "zh" ? "易经、求签、生肖与日柱" : "I Ching, lots, shengxiao & day pillar"}
-            </p>
+            </Paragraph>
           </div>
           <button
             type="button"

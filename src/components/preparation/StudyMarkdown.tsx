@@ -1,3 +1,5 @@
+import { markdownTypography } from "@/components/ui/typography";
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
@@ -45,12 +47,12 @@ function AssetMarkdown({ children, variant }: MarkdownProps) {
   return (
     <>
       {resolved.isError && (
-        <p role="alert" className="text-sm text-destructive">
+        <Paragraph role="alert" className="text-sm text-destructive">
           图片加载失败。
           <button onClick={() => resolved.refetch()} className="underline">
             重试
           </button>
-        </p>
+        </Paragraph>
       )}
       <MarkdownContent variant={variant}>{markdown}</MarkdownContent>
     </>
@@ -65,7 +67,8 @@ function MarkdownContent({ children, variant }: MarkdownProps) {
         remarkPlugins={[remarkGfm, remarkMath, remarkBreaks]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          h1: ({ children }) => <h2>{children}</h2>,
+          ...markdownTypography,
+          h1: ({ children }) => <Heading as="h2">{children}</Heading>,
           table: ({children}) => variant==="question" ? <div className="prep-table-scroll"><table>{children}</table></div> : <table>{children}</table>,
           img: ({ src, alt }) => (
             <img

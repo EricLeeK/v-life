@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -176,7 +177,7 @@ export function TaskModal({
                 disabled
                 className="border-border text-foreground"
               />
-              <p className="text-xs text-muted-foreground mt-1">{t("习惯默认不计入项目进度", "Habits don't count toward project progress")}</p>
+              <Paragraph className="text-xs text-muted-foreground mt-1">{t("习惯默认不计入项目进度", "Habits don't count toward project progress")}</Paragraph>
             </div>
           )}
           <div>
@@ -202,7 +203,7 @@ export function TaskModal({
                 </span>
               </button>)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2">{t("自动：里程碑使用鼠尾草纹理，其他事项保持简洁。", "Auto: sage for milestones; other items stay plain.")}</p>
+            <Paragraph className="text-[11px] text-muted-foreground mt-2">{t("自动：里程碑使用鼠尾草纹理，其他事项保持简洁。", "Auto: sage for milestones; other items stay plain.")}</Paragraph>
           </fieldset>
           <Button disabled={pending || !form.title.trim()} onClick={handleSave} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {pending ? t("保存中…", "Saving…") : initial ? t("保存修改", "Save") : t("创建工作项", "Create Item")}

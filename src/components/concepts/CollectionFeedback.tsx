@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import type { ReactNode } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,11 @@ export function CollectionFeedback({ loading, error, retry, children }: {
   const { t } = useLang();
   if (loading) return <div role="status" className="concept-feedback text-muted-foreground">
     <span className="concept-loading-line" aria-hidden="true" />
-    <p>{t("正在读取记录…", "Loading records…")}</p>
+    <Paragraph>{t("正在读取记录…", "Loading records…")}</Paragraph>
   </div>;
   if (error) return <div role="alert" className="concept-feedback">
-    <p>{t("暂时无法读取记录", "Records could not be loaded")}</p>
-    <p className="text-sm text-muted-foreground">{t("请重试，已有记录仍会保留。", "Please retry. Your saved records are kept.")}</p>
+    <Paragraph>{t("暂时无法读取记录", "Records could not be loaded")}</Paragraph>
+    <Paragraph className="text-sm text-muted-foreground">{t("请重试，已有记录仍会保留。", "Please retry. Your saved records are kept.")}</Paragraph>
     {retry && <Button variant="outline" onClick={() => { void retry(); }}>{t("重新加载", "Try again")}</Button>}
   </div>;
   return <>{children}</>;

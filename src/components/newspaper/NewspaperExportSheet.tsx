@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { Copy, Download, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -77,7 +78,7 @@ export function NewspaperExportSheet(
             <span className="np-check-count">{s.items.length}</span>
           </label>
         ))}
-        <p className="np-muted">补充原文始终随日报导出。</p>
+        <Paragraph className="np-muted">补充原文始终随日报导出。</Paragraph>
       </fieldset>
       <div className="np-sheet-actions">
         <button
@@ -129,7 +130,7 @@ export function NewspaperExportSheet(
       </fieldset>
       <fieldset className="np-sheet-group">
         <legend>阅读时显示的版块</legend>
-        <p className="np-muted">隐藏只影响版面，不会删除原文，导出时仍可选择。</p>
+        <Paragraph className="np-muted">隐藏只影响版面，不会删除原文，导出时仍可选择。</Paragraph>
         {report.snapshot.sections.map((section) => (
           <label className="np-check" key={section.id}>
             <input
@@ -159,9 +160,9 @@ export function NewspaperExportSheet(
       </fieldset>
       <fieldset className="np-sheet-group">
         <legend>快照</legend>
-        <p className="np-muted">
+        <Paragraph className="np-muted">
           日报保存的是当时的快照。原始记录改动后，更新快照才会纳入；补充与配图不受影响。
-        </p>
+        </Paragraph>
         <button
           type="button"
           className="np-button"

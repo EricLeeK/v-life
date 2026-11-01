@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
@@ -17,14 +18,14 @@ export function FortunePageHeader(props: {
           <ArrowLeft className="h-3.5 w-3.5" />
           {props.backLabel}
         </Link>
-        <h1
+        <Heading as="h1"
           className="font-semibold leading-[1.15] tracking-tight text-foreground heading-font"
           style={{ fontSize: "clamp(28px, 3.2vw, 42px)" }}
         >
           {props.title}
-        </h1>
+        </Heading>
         {props.subtitle && (
-          <p className="mt-2 text-[14px] text-muted-foreground">{props.subtitle}</p>
+          <Paragraph className="mt-2 text-[14px] text-muted-foreground">{props.subtitle}</Paragraph>
         )}
       </div>
       {props.actions && <div className="shrink-0">{props.actions}</div>}

@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { FortunePageHeader } from "@/components/fortune/FortunePageHeader";
@@ -126,16 +127,16 @@ export default function ZodiacPage() {
         </div>
 
         <div className="card-premium p-6">
-          <p className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+          <Paragraph className="mb-2 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
             {lang === "zh" ? ZODIAC_LABELS[sign].zh : ZODIAC_LABELS[sign].en}
             {loadingHoro ? (lang === "zh" ? " · 拉取中…" : " · Loading…") : ""}
-          </p>
+          </Paragraph>
           {loadError && !horoscope && (
-            <p className="mb-3 text-[13px] text-[#d17847]">
+            <Paragraph className="mb-3 text-[13px] text-[#d17847]">
               {t("未能拉取网上日运，以下为本地底稿", "Could not fetch live horoscope — draft shown")}
-            </p>
+            </Paragraph>
           )}
-          <p className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground">{body}</p>
+          <Paragraph className="max-w-3xl text-[15px] leading-relaxed text-muted-foreground">{body}</Paragraph>
           <div className="mt-5 flex flex-wrap gap-2">
             <Button onClick={() => void polish()} disabled={loading || loadingHoro}>
               {loading ? t("生成中…", "Working…") : t("AI 润色", "AI polish")}

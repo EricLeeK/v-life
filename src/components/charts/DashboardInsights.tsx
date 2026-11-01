@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useLang } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -26,8 +27,8 @@ function InsightCard({ icon, iconBg, value, label, trend, trendColor }: InsightC
           </span>
         )}
       </div>
-      <p className="text-[20px] font-semibold text-foreground font-mono-data leading-tight">{value}</p>
-      <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+      <Paragraph className="text-[20px] font-semibold text-foreground font-mono-data leading-tight">{value}</Paragraph>
+      <Paragraph className="text-[11px] text-muted-foreground mt-0.5">{label}</Paragraph>
     </div>
   );
 }
@@ -129,7 +130,7 @@ export function DashboardInsights({
 
   return (
     <div>
-      <p className="text-sm font-medium text-muted-foreground mb-3">{t("数据概览", "Key Insights")}</p>
+      <Paragraph className="text-sm font-medium text-muted-foreground mb-3">{t("数据概览", "Key Insights")}</Paragraph>
       <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none" style={{ scrollbarWidth: "none" }}>
         {insights.map((insight, i) => (
           <InsightCard key={i} {...insight} />

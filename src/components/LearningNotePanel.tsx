@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { StudyMarkdown } from "@/components/preparation/StudyMarkdown";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { HairlineFigure } from "@/components/concepts/HairlineFigure";
@@ -431,9 +432,9 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
             <div className="flex items-center gap-2">
               {notes.length > 0 && <HairlineFigure name={moduleFigure.learning} className="workbench-mark" surface="card" />}
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: course.color || "hsl(var(--cat-blue))" }} />
-              <h2 className="text-lg font-semibold text-foreground truncate">{course.name}</h2>
+              <Heading as="h2" className="text-lg font-semibold text-foreground truncate">{course.name}</Heading>
             </div>
-            {course.description && <p className="mt-1 text-sm text-muted-foreground">{course.description}</p>}
+            {course.description && <Paragraph className="mt-1 text-sm text-muted-foreground">{course.description}</Paragraph>}
           </div>
           <Button onClick={handleCreate} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="h-4 w-4 mr-1" />
@@ -547,7 +548,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                 <div className="h-full min-h-[360px] overflow-y-auto rounded-2xl border border-border bg-card p-6">
                   <div className="mb-6 border-b border-border pb-4 flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-2xl font-bold text-foreground tracking-tight">{form.title || t("未命名笔记", "Untitled Note")}</h3>
+                      <Heading as="h3" className="text-2xl font-bold text-foreground tracking-tight">{form.title || t("未命名笔记", "Untitled Note")}</Heading>
                       <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         {form.note_date && <span className="font-mono bg-muted/60 px-2 py-0.5 rounded-md">{format(new Date(`${form.note_date}T00:00:00`), "yyyy/MM/dd")}</span>}
                         {textToTags(form.tagsText).map((tag) => (
@@ -705,10 +706,10 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
             {/* Mode 2: Format Rules Explanation */}
             {aiToolMode === "format" && (
               <div className="bg-muted/50 border border-border rounded-xl p-4 text-xs text-muted-foreground space-y-2">
-                <p className="font-medium text-foreground flex items-center gap-1.5">
+                <Paragraph className="font-medium text-foreground flex items-center gap-1.5">
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   {t("Obsidian 级别 Markdown 排版优化规则", "Obsidian Markdown Optimization Rules")}
-                </p>
+                </Paragraph>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>{t("自动构建清晰的标题层级（H1 / H2 / H3）", "Auto-structure title hierarchy (H1/H2/H3)")}</li>
                   <li>{t("调整段落、列表、代码块与公式块的呼吸感空行", "Add proper breathing space and empty lines between sections")}</li>

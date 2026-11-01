@@ -1,3 +1,4 @@
+import { Paragraph } from "@/components/ui/typography";
 import { useState } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { Target, X } from "lucide-react";
@@ -72,7 +73,7 @@ export function GoalsBall() {
               </div>
             );
           })}
-          {totalCount === 0 && <p className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</p>}
+          {totalCount === 0 && <Paragraph className="text-xs text-muted-foreground">{t("暂无目标", "No goals")}</Paragraph>}
         </div>
       </PopoverContent>
     </Popover>

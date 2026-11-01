@@ -18,6 +18,7 @@ export function LangProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem("vlife-lang", lang);
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
   }, [lang]);
 
   const toggleLang = () => setLang((l) => (l === "zh" ? "en" : "zh"));

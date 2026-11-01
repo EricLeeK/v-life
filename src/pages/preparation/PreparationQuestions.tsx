@@ -1,3 +1,4 @@
+import { Heading, Paragraph } from "@/components/ui/typography";
 import { QuestionAnalysis } from "@/components/preparation/QuestionAnalysis";
 import { QuestionLinks } from "@/components/preparation/QuestionLinks";
 import { StudyImageUpload } from "@/components/preparation/StudyImageUpload";
@@ -229,7 +230,7 @@ export default function PreparationQuestions({
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <p className="line-clamp-2">{questionExcerpt(q.stem_md)}</p>
+                    <Paragraph className="line-clamp-2">{questionExcerpt(q.stem_md)}</Paragraph>
                     <div className="prep-inbox-meta">
                       <span className="prep-type">
                         {questionTypeLabel[q.question_type]}
@@ -248,10 +249,10 @@ export default function PreparationQuestions({
       {review && prep.data && !question && questions.length === 0 && (
         <div className="prep-empty">
           <CheckCheck size={32} />
-          <h2 className="heading-font text-2xl">本轮题目已完成</h2>
-          <p className="text-muted-foreground mt-3">
+          <Heading as="h2" className="heading-font text-2xl">本轮题目已完成</Heading>
+          <Paragraph className="text-muted-foreground mt-3">
             休息一下，或去错题库选一组题自由练习。
-          </p>
+          </Paragraph>
           <Button asChild className="mt-5">
             <Link to="/preparation">返回备考</Link>
           </Button>
@@ -596,9 +597,9 @@ function QuestionReader({
             }}>
               {review && (
                 <>
-                  <p className="text-xs text-muted-foreground mt-6">
+                  <Paragraph className="text-xs text-muted-foreground mt-6">
                     这次卡在哪里？
-                  </p>
+                  </Paragraph>
                   <div className="prep-reasons">
                     {REASON_TAGS.map((r) => (
                       <button
@@ -633,29 +634,29 @@ function QuestionReader({
                     对照评分要点，本次作答正确
                   </label>
                 )}
-                <p className="text-sm font-medium">
+                <Paragraph className="text-sm font-medium">
                   {saved ? "本次复盘已记录" : "这道题，掌握得怎么样？"}
-                </p>
-                <p className="prep-action-hint mt-1">
+                </Paragraph>
+                <Paragraph className="prep-action-hint mt-1">
                   {practice
                     ? "本次为自由练习，不改变复习排期。"
                     : result.yellow
                       ? "答对但超时，按黄题安排复习。"
                       : "选择后保存，并更新下次复习安排。"}
-                </p>
+                </Paragraph>
               </div>
               {saved ? (
                 <div>
                   {receipt?.attempt?.mode === "practice" && !practice && (
-                    <p className="text-xs text-cat-orange mb-3">
+                    <Paragraph className="text-xs text-cat-orange mb-3">
                       另一端已更新，本次保留为练习。
-                    </p>
+                    </Paragraph>
                   )}
                   {receipt?.review_state?.due_at && (
-                    <p className="text-xs text-muted-foreground mb-3">
+                    <Paragraph className="text-xs text-muted-foreground mb-3">
                       下次复习：
                       {new Date(receipt.review_state.due_at).toLocaleString()}
-                    </p>
+                    </Paragraph>
                   )}
                   <Button
                     className="prep-primary"
@@ -940,7 +941,7 @@ function QuestionEditor({
           role="alert"
           className="border border-border rounded-md p-4 space-y-3"
         >
-          <p className="font-medium">另一端已修改此题，你的草稿仍保留。</p>
+          <Paragraph className="font-medium">另一端已修改此题，你的草稿仍保留。</Paragraph>
           <details open>
             <summary>最新版本 v{conflict.revision}</summary>
             <StudyMarkdown variant="question">

@@ -1,0 +1,32 @@
+/* Progressive text-only enhancements. No font, colour or type-scale overrides. */
+:where(h1, h2, h3, [data-card-title], .type-action-title, .type-dashboard-display) {
+  text-wrap: balance;
+}
+:where(p, li, dd, [data-description]) { text-wrap: pretty; }
+:where(td, th, time, output, input[type="number"], input[inputmode="decimal"], .recharts-cartesian-axis-tick-value, [role="timer"], [data-numeric], .type-metric, .type-metric-compact, .font-mono-data, .np-figures strong, .np-drawer-card strong) {
+  font-variant-numeric: tabular-nums;
+}
+:where(button, [role="button"], [role="tab"], .flex > label, .inline-flex > label) { white-space: nowrap; }
+/* Only shrink the text-bearing items, not every flex child. */
+:where(.truncate, [data-truncate], .flex > :has(.truncate), .inline-flex > :has(.truncate)) { min-width: 0; }
+:where(.truncate, [data-truncate]) { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+:lang(zh) { text-autospace: normal; text-spacing-trim: trim-start; }
+:lang(en) { text-autospace: no-autospace; text-spacing-trim: space-all; }
+:is(code, pre, kbd, samp, input, textarea, [contenteditable="true"], .font-mono, .font-mono-data),
+:is(code, pre, kbd, samp, input, textarea, [contenteditable="true"], .font-mono, .font-mono-data) * {
+  text-autospace: no-autospace;
+  text-spacing-trim: space-all;
+}
+/* keep-all is opt-in ONLY on React-owned, BudouX-segmented headings. */
+[data-phrase-heading]:lang(zh) { word-break: keep-all; overflow-wrap: anywhere; text-wrap: balance; }
+p[data-zh-measure]:lang(zh) { max-inline-size: var(--zh-measure); text-align: justify; }
+.np-essay-text:lang(zh), [data-text-indent]:lang(zh) { text-spacing-trim: space-first; }
+/* A safe replacement for breaking through every Latin word or punctuation pair. */
+.wrap-anywhere { overflow-wrap: anywhere; word-break: normal; }
+
+/* These newspaper selectors explicitly override the base numeric role. */
+.np-drawer-card strong, .np-figures strong { font-variant-numeric: tabular-nums lining-nums; }
+
+:where(.np-file-story, .np-summary-value, .np-lightbox-text) { min-width: 0; }
+
+:where([data-phrase-run]) { min-width: 0; }
