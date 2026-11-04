@@ -1074,7 +1074,7 @@ export default function TodosPage() {
           <ProjectIcon name={project.name} svg={project.icon_svg} />
           <span className="warehouse-project-name">{project.name}</span>
           <span className="warehouse-project-label">{t("项目", "Project")}</span>
-          <span className="warehouse-project-count">{completed}/{projectCards.length}</span>
+          <span className="warehouse-project-count" title={t(`已完成 ${completed} 项，共 ${projectCards.length} 项`, `${completed} completed out of ${projectCards.length}`)}>{completed}/{projectCards.length}</span>
         </button>
         <div id={`warehouse-project-${projectId}`} className="warehouse-project-list" data-collapsed={collapsed || undefined} inert={collapsed || undefined}>
           <div>
@@ -1221,6 +1221,7 @@ export default function TodosPage() {
               ? t("未分类", "Uncategorized")
               : group;
             const unfinished = rows.filter((row) => !row.is_completed);
+            const completed = rows.length - unfinished.length;
 
             const projectBuckets = new Map<string, WarehouseCard[]>();
             const entries: Array<{ id: string; item?: any; projectCards?: WarehouseCard[] }> = [];
@@ -1264,7 +1265,7 @@ export default function TodosPage() {
                       <ChevronDown className="todo-fold-chevron h-4 w-4 shrink-0 text-muted-foreground" />
                       <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span className="shrink-0 text-sm font-medium leading-5 text-foreground">{groupLabel}</span>
-                      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{unfinished.length}/{rows.length}</span>
+                      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground" title={t(`已完成 ${completed} 项，共 ${rows.length} 项`, `${completed} completed out of ${rows.length}`)}>{completed}/{rows.length}</span>
                       {isCategoryCollapsed && unfinished[0] && (
                         <span className="min-w-0 truncate text-xs text-muted-foreground">· {unfinished[0].title}</span>
                       )}

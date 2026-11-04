@@ -147,6 +147,22 @@ describe("Todos original Arc task controls", () => {
     expect(header).toHaveAttribute("aria-expanded", "false");
   });
 
+  it("shows completed over total for personal and mixed categories, and updates after checking a task", async () => {
+    renderTodos();
+    const life = screen.getByRole("button", {name:"收起分类: 生活"});
+    const work = screen.getByRole("button", {name:"收起分类: 工作"});
+    expect(within(life).getByTitle("已完成 1 项，共 5 项")).toHaveTextContent("1/5");
+    expect(within(work).getByTitle("已完成 2 项，共 8 项")).toHaveTextContent("2/8");
+    expect(within(screen.getByRole("button", {name:"收起分类: AI学习"})).getByTitle("已完成 0 项，共 8 项")).toHaveTextContent("0/8");
+
+    const task = screen.getByRole("button", {name:"买日用品"}).closest(".space-y-2") as HTMLElement;
+    fireEvent.click(within(task).getByRole("button", {name:"标记为已完成"}));
+    await waitFor(() => expect(within(life).getByTitle("已完成 2 项，共 5 项")).toHaveTextContent("2/5"));
+
+    fireEvent.click(screen.getByRole("button", {name:"完成部署上线"}));
+    await waitFor(() => expect(within(work).getByTitle("已完成 3 项，共 8 项")).toHaveTextContent("3/8"));
+  });
+
   it("moves the original cards when the parent project changes category", () => {
     function Reclassify() {
       const { demoData, updateRecord } = useDemoMode();
