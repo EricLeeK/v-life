@@ -1,3 +1,5 @@
+import { CategoryInput } from "./TaskCategoryInput";
+import { taskCategories } from "@/lib/taskCategories";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -20,7 +22,9 @@ import { useLang } from "@/contexts/LanguageContext";
 import { DateField } from "@/components/arc/DateField";
 
 import { ProjectIcon } from "./projects/ProjectIcon";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Minus, Sparkles } from "lucide-react";
+import { coverPresets, projectCoverAccent } from "./projects/board-model";
+import "./projects/project-board.css";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { projectIconPresets, iconSvg } from "./projects/project-icons";
 
@@ -30,12 +34,15 @@ interface ProjectModalProps {
   onSave: (values: any) => void;
   initial?: any;
   pending?: boolean;
+  categories?: string[];
 }
 
-export function ProjectModal({ open, onOpenChange, onSave, initial, pending = false }: ProjectModalProps) {
+export function ProjectModal({ open, onOpenChange, onSave, initial, pending = false, categories = [] }: ProjectModalProps) {
   const { t } = useLang();
   const [iconsOpen, setIconsOpen] = useState(false);
+  const [colorsOpen, setColorsOpen] = useState(false);
   const [form, setForm] = useState({
+    category: "",
     name: "",
     description: "",
     status: "planning",
@@ -43,13 +50,17 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
     target_date: "",
     target_start_date: "",
     icon_svg: "",
+    cover_preset: "auto",
   });
 
   useEffect(() => {
     if (open) {
       setIconsOpen(false);
+      setColorsOpen(false);
       setForm({
         icon_svg: initial?.icon_svg || "",
+        cover_preset: initial?.cover_preset || "auto",
+        category: initial?.category || "",
         name: initial?.name || "",
         description: initial?.description || "",
         status: initial?.status || "planning",
@@ -64,11 +75,14 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
     if (!form.name.trim()) return;
     onSave({
       ...form,
+      category: form.category.trim() || null,
       icon_svg: form.icon_svg || null,
       target_date: form.target_date || null,
       target_start_date: form.target_start_date || null,
     });
   };
+
+  const selectedColor = coverPresets.find(p => p.id === form.cover_preset) || coverPresets[0];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,6 +103,13 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
               className="border-border text-foreground"
             />
           </div>
+          <div>
+            <Label htmlFor="proj-category" className="text-foreground text-sm">{t("分类", "Category")}</Label>
+            <CategoryInput id="proj-category" value={form.category}
+              onChange={category => setForm({ ...form, category })}
+              existingCategories={taskCategories(categories.map(category => ({category})), [{category:initial?.category}])}
+              placeholder={t("选择或输入分类，如科研、工作、生活", "Choose or enter a category")} />
+          </div>
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium">{t("项目图标", "Project icon")}</legend>
             <Collapsible open={iconsOpen} onOpenChange={setIconsOpen}>
@@ -102,6 +123,28 @@ export function ProjectModal({ open, onOpenChange, onSave, initial, pending = fa
                 <div className="project-icon-picker" role="group" aria-label={t("预设图标", "Preset icons")}>
                   {projectIconPresets.map(preset => <button key={preset.id} type="button" title={t(preset.zh,preset.en)} aria-label={t(preset.zh,preset.en)} aria-pressed={form.icon_svg === iconSvg(preset.id)} onClick={() => setForm({...form,icon_svg:iconSvg(preset.id)})}><ProjectIcon name="" svg={iconSvg(preset.id)}/></button>)}
                 </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </fieldset>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">{t("项目颜色", "Project color")}</legend>
+            <Collapsible open={colorsOpen} onOpenChange={setColorsOpen}>
+              <CollapsibleTrigger className="project-icon-disclosure" aria-label={t("选择项目颜色", "Choose project color")}>
+                <span className="project-color-preview" aria-hidden="true">
+                  {form.cover_preset !== "none" && <span className="project-cover" data-preset={projectCoverAccent(initial?.id || form.name, form.cover_preset)} />}
+                </span>
+                <span className="flex-1 text-left text-xs text-muted-foreground">{t(selectedColor.zh, selectedColor.en)}</span>
+                <ChevronDown className="h-3.5 w-3.5 transition-transform" style={{transform:colorsOpen ? "rotate(180deg)" : undefined}} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2">
+                <div className="project-cover-picker" role="group" aria-label={t("项目纹理色", "Project textures")}>
+                  {coverPresets.map(preset => <button key={preset.id} type="button" className="project-cover-option" aria-pressed={form.cover_preset === preset.id} aria-label={t(preset.zh, preset.en)} onClick={() => setForm({...form, cover_preset:preset.id})}>
+                    {preset.id === "auto" || preset.id === "none" ? <span className="cover-empty">{preset.id === "auto" ? <Sparkles className="h-4 w-4" /> : <Minus className="h-4 w-4" />}</span> : <span className="project-cover" data-preset={preset.id} />}
+                    <span className="project-cover-option-label">{t(preset.zh, preset.en)}</span>
+                    <span className="project-cover-mini-content" aria-hidden="true"><span className="project-cover-mini-line" /><span className="project-cover-mini-meta"><span /><span /></span><Check className="project-cover-mini-check" /></span>
+                  </button>)}
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">{t("代办仓库中的项目卡会同步使用这个颜色。", "Project cards in the task library share this color.")}</p>
               </CollapsibleContent>
             </Collapsible>
           </fieldset>

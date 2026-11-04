@@ -39,7 +39,7 @@ export type RouteSkeletonSpec = {
 const ROUTES: Array<RouteSkeletonSpec & { match: (pathname: string) => boolean }> = [
   { match: (p) => p === "/", kind: "dashboard", titleZh: "首页概览", titleEn: "Dashboard", statusZh: "正在加载首页", statusEn: "Loading the dashboard", header: false, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/schedule"), kind: "schedule", titleZh: "日程计划", titleEn: "Schedule", statusZh: "正在加载日程", statusEn: "Loading the schedule", header: true, fullBleed: false, description: false },
-  { match: (p) => p.startsWith("/todos"), kind: "todos", titleZh: "待办事项", titleEn: "To-Dos", statusZh: "正在加载待办事项", statusEn: "Loading to-dos", header: true, fullBleed: false, description: false },
+  { match: (p) => p.startsWith("/todos"), kind: "todos", titleZh: "代办仓库", titleEn: "Task Library", statusZh: "正在加载代办仓库", statusEn: "Loading to-dos", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/today"), kind: "today", titleZh: "今日待办", titleEn: "Today's Todo", statusZh: "正在加载今日待办", statusEn: "Loading today's to-dos", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/finance"), kind: "finance", titleZh: "记账", titleEn: "Finance", statusZh: "正在加载记账", statusEn: "Loading finance", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/calories"), kind: "calories", titleZh: "热量记录", titleEn: "Calories", statusZh: "正在加载热量记录", statusEn: "Loading calories", header: true, fullBleed: false, description: false },

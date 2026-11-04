@@ -5,7 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { DemoModeProvider } from "@/contexts/DemoModeContext";
+import { DemoModeProvider, useDemoMode } from "@/contexts/DemoModeContext";
 import { LangProvider, useLang } from "@/contexts/LanguageContext";
 import { todoHooks } from "@/hooks/useData";
 import TodosPage from "@/pages/Todos";
@@ -99,8 +99,9 @@ describe("Todos original Arc task controls", () => {
       expect(screen.getByRole("button", { name: "提交论文初稿" })).toBeInTheDocument();
     }
     await waitFor(() => expect(document.body.style.pointerEvents).not.toBe("none"));
-    fireEvent.click(screen.getByRole("button", { name: "按重要性" }));
-    expect(screen.getByRole("button", { name: "按重要性" })).toHaveAttribute("aria-pressed", "true");
+    const category = screen.getAllByRole("button", { name: /^收起分类:/ })[0];
+    fireEvent.click(category);
+    expect(category).toHaveAttribute("aria-expanded", "false");
   });
 
   it.each(["保存修改", "关闭"])("releases the page pointer lock after choosing %s in task editing", async (action) => {
@@ -115,17 +116,62 @@ describe("Todos original Arc task controls", () => {
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "编辑待办任务" })).not.toBeInTheDocument());
     expect(screen.getByRole("button", { name: action === "保存修改" ? "提交修改后的论文" : "提交论文初稿" })).toBeInTheDocument();
     await waitFor(() => expect(document.body.style.pointerEvents).not.toBe("none"));
-    fireEvent.click(screen.getByRole("button", { name: "按重要性" }));
-    expect(screen.getByRole("button", { name: "按重要性" })).toHaveAttribute("aria-pressed", "true");
+    const category = screen.getAllByRole("button", { name: /^收起分类:/ })[0];
+    fireEvent.click(category);
+    expect(category).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("uses the original segmented control to change the existing task view", async () => {
+  it("groups personal tasks and project cards under one category and folds them together", () => {
     renderTodos();
+    expect(screen.queryByRole("group", { name: "任务视图" })).not.toBeInTheDocument();
+    const header = screen.getByRole("button", { name: "收起分类: 工作" });
+    const category = header.closest(".todo-fold") as HTMLElement;
+    expect(within(category).getByRole("button", { name: "加入今天：部署上线" })).toBeInTheDocument();
+    expect(within(category).getByRole("button", { name: "回复导师邮件" })).toBeInTheDocument();
+    const blog = within(category).getByRole("region", {name:"来自项目 · 个人技术博客"});
+    expect(within(blog).getByRole("button", {name:"加入今天：部署上线"})).toBeInTheDocument();
+    expect(within(blog).getByRole("button", {name:"加入今天：撰写第一篇文章"})).toBeInTheDocument();
+    expect(within(category).getAllByRole("region", {name:"来自项目 · 个人技术博客"})).toHaveLength(1);
+    const projectToggle = within(blog).getByRole("button", {name:"收起项目: 个人技术博客"});
+    fireEvent.click(projectToggle);
+    expect(blog.querySelector(".warehouse-project-list")).toHaveAttribute("inert");
+    expect(projectToggle).toHaveAttribute("aria-expanded", "false");
+    expect(within(category).getByRole("button", {name:"回复导师邮件"})).toBeInTheDocument();
+    fireEvent.click(projectToggle);
+    expect(screen.queryByRole("button", { name: "收起分类: 个人技术博客" })).not.toBeInTheDocument();
+    const research = screen.getByRole("button", {name:"收起分类: 科研"}).closest(".todo-fold") as HTMLElement;
+    expect(within(research).getByRole("region", {name:"来自项目 · 毕业论文"})).toBeInTheDocument();
+    expect(within(research).getByRole("region", {name:"来自项目 · 可微分FEM框架"})).toBeInTheDocument();
+    fireEvent.click(header);
+    expect(category.querySelector(".todo-fold-list")).toHaveAttribute("inert");
+    expect(header).toHaveAttribute("aria-expanded", "false");
+  });
 
-    const views = await screen.findByRole("group", { name: "任务视图" });
-    expect(within(views).getByRole("button", { name: "按分类" })).toHaveAttribute("aria-pressed", "true");
-    fireEvent.click(within(views).getByRole("button", { name: "按重要性" }));
-    expect(within(views).getByRole("button", { name: "按重要性" })).toHaveAttribute("aria-pressed", "true");
+  it("moves the original cards when the parent project changes category", () => {
+    function Reclassify() {
+      const { demoData, updateRecord } = useDemoMode();
+      return <button onClick={() => updateRecord("projects", demoData.projects.find(p => p.name === "个人技术博客")!.id, {category:"科研"})}>修改项目分类</button>;
+    }
+    renderTodos(<Reclassify />);
+    const original = screen.getByRole("button", {name:"加入今天：部署上线"}).closest("[data-project-task]")!.getAttribute("data-project-task");
+    fireEvent.click(screen.getByRole("button", {name:"修改项目分类"}));
+    const research = screen.getByRole("button", {name:"收起分类: 科研"}).closest(".todo-fold") as HTMLElement;
+    expect(within(research).getByRole("button", {name:"加入今天：部署上线"}).closest("[data-project-task]")).toHaveAttribute("data-project-task", original);
+    expect(screen.getAllByRole("button", {name:"加入今天：部署上线"})).toHaveLength(1);
+    expect(within(research).getByRole("region", {name:"来自项目 · 毕业论文"})).toBeInTheDocument();
+  });
+
+  it("updates the existing warehouse group when its project color changes", () => {
+    function Recolor() {
+      const { demoData, updateRecord } = useDemoMode();
+      return <button onClick={() => updateRecord("projects", demoData.projects.find(p => p.name === "个人技术博客")!.id, {cover_preset:"rose"})}>修改项目颜色</button>;
+    }
+    renderTodos(<Recolor />);
+    const group = screen.getByRole("region", {name:"来自项目 · 个人技术博客"});
+    const original = group.querySelector("[data-project-task]")!.getAttribute("data-project-task");
+    fireEvent.click(screen.getByRole("button", {name:"修改项目颜色"}));
+    expect(group.querySelector(".project-cover")).toHaveAttribute("data-preset", "rose");
+    expect(group.querySelector("[data-project-task]")).toHaveAttribute("data-project-task", original);
   });
 
   it("applies and removes the selected category from the parent task list", async () => {

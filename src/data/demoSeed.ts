@@ -150,7 +150,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
       id: `demo-se-wake-${dateStr}`, title: "起床",
       start_time: fmt(d, wakeHour), end_time: fmt(d, wakeHour, 30),
       importance: "normal", status: "confirmed", color: "#5b8c44", notes: null,
-      parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+      project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
     });
 
     if (isWeekend) {
@@ -160,7 +160,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
           id: `demo-se-dinner-${dateStr}`, title: "和朋友聚餐",
           start_time: fmt(d, 18), end_time: fmt(d, 20),
           importance: "normal", status: "confirmed", color: "#8b7bb8", notes: "札幌站附近",
-          parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+          project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
         });
       }
       if (dayOfWeek === 0) {
@@ -168,7 +168,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
           id: `demo-se-video-${dateStr}`, title: "视频通话 彤彤",
           start_time: fmt(d, 15), end_time: fmt(d, 16),
           importance: "normal", status: "confirmed", color: "#8b7bb8", notes: null,
-          parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+          project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
         });
       }
     } else {
@@ -177,7 +177,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
         id: `demo-se-lunch-${dateStr}`, title: "午餐",
         start_time: fmt(d, 12), end_time: fmt(d, 12, 45),
         importance: "normal", status: "confirmed", color: "#5b8c44", notes: null,
-        parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+        project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
       });
       for (const cls of WEEKDAY_CLASSES[dayOfWeek] ?? []) {
         events.push({
@@ -185,7 +185,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
           start_time: fmt(d, Math.floor(cls.startHour), (cls.startHour % 1) * 60),
           end_time: fmt(d, Math.floor(cls.endHour), (cls.endHour % 1) * 60),
           importance: "important", status: "confirmed", color: cls.color, notes: cls.notes,
-          parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+          project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
         });
       }
       events.push({
@@ -193,7 +193,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
         start_time: fmt(d, 17), end_time: fmt(d, 18),
         importance: "normal", status: "confirmed", color: "#d17847",
         notes: WEEKDAY_GYM_NOTES[dayOfWeek] ?? null,
-        parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+        project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
       });
     }
 
@@ -202,7 +202,7 @@ function generateScheduleEvents(): Tables<"schedule_events">[] {
       id: `demo-se-sleep-${dateStr}`, title: "睡觉",
       start_time: fmt(d, 23), end_time: fmt(d, 23, 30),
       importance: "normal", status: "confirmed", color: "#5b8c44", notes: null,
-      parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
+      project_task_id: null, todo_id: null, parent_event_id: null, recurrence: null, created_at: created, updated_at: created, user_id: DEMO_USER,
     });
   }
   return events;
@@ -693,9 +693,9 @@ $$P(A_k|B) = \\frac{P(A_k) P(B|A_k)}{\\sum_{i=1}^{n} P(A_i) P(B|A_i)}$$`,
 
 // ============ Projects ============
 export const demoProjects = [
-  { id: PROJ_FEM, name: "可微分FEM框架", description: "基于PyTorch的可微分有限元方法框架，支持自动微分和GPU加速", status: "active", priority: "high", progress: 60, target_date: "2026-09-01", user_id: DEMO_USER, created_at: "2026-03-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
-  { id: PROJ_BLOG, name: "个人技术博客", description: "用Astro搭建的技术博客，分享AI/ML学习笔记和编程技巧", status: "active", priority: "medium", progress: 30, target_date: "2026-06-01", user_id: DEMO_USER, created_at: "2026-04-15T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
-  { id: PROJ_THESIS, name: "毕业论文", description: "硕士毕业论文：可微分有限元方法在结构优化中的应用", status: "active", priority: "high", progress: 20, target_date: "2026-12-01", user_id: DEMO_USER, created_at: "2026-02-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
+  { id: PROJ_FEM, name: "可微分FEM框架", cover_preset: "auto", category: "科研", description: "基于PyTorch的可微分有限元方法框架，支持自动微分和GPU加速", status: "active", priority: "high", progress: 60, target_date: "2026-09-01", user_id: DEMO_USER, created_at: "2026-03-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
+  { id: PROJ_BLOG, name: "个人技术博客", cover_preset: "auto", category: "工作", description: "用Astro搭建的技术博客，分享AI/ML学习笔记和编程技巧", status: "active", priority: "medium", progress: 30, target_date: "2026-06-01", user_id: DEMO_USER, created_at: "2026-04-15T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
+  { id: PROJ_THESIS, name: "毕业论文", cover_preset: "auto", category: "科研", description: "硕士毕业论文：可微分有限元方法在结构优化中的应用", status: "active", priority: "high", progress: 20, target_date: "2026-12-01", user_id: DEMO_USER, created_at: "2026-02-01T10:00:00+09:00", updated_at: "2026-05-08T10:00:00+09:00" },
 ];
 
 // ============ Task Tags ============

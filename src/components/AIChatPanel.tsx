@@ -113,6 +113,8 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         return new Date(y, m - 1, d, h || 0, min || 0, s || 0).toISOString();
       };
       return {
+        project_task_id: data.project_task_id ?? null,
+        todo_id: data.todo_id ?? null,
         title: data.title || "未命名事件",
         start_time: parseLocalTime(data.start_time),
         end_time: parseLocalTime(data.end_time),
@@ -192,6 +194,8 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
       };
     case "project":
       return {
+        cover_preset: data.cover_preset || "auto",
+        category: data.category?.trim() || null,
         name: data.name || "未命名项目",
         description: data.description || null,
         status: data.status || "planning",

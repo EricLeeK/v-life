@@ -47,3 +47,13 @@ export function moveProjectItem<T extends BoardItem>(items: T[], id: string, sta
   if (moved.status !== status) items.filter(item => item.status === moved.status && item.id !== id).sort(byBoardOrder).forEach((item,sort_order) => updates.set(item.id,{ ...item,sort_order }));
   return items.map(item => updates.get(item.id) ?? item);
 }
+
+
+// A project keeps the same quiet cover tint wherever its group appears.
+export function projectCoverAccent(projectId: string, preset?: string | null): CoverPreset {
+  if (preset && preset !== 'auto' && coverPresets.some(color => color.id === preset)) return preset as CoverPreset;
+  const colors = coverPresets.slice(2);
+  let hash = 0;
+  for (const character of projectId) hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  return colors[hash % colors.length].id;
+}

@@ -18,6 +18,7 @@ vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: api.toast }) }))
 vi.mock("@/hooks/useProjectToday", () => ({ useProjectTodayAction: () => ({ mutate: vi.fn() }) }));
 vi.mock("@/hooks/useProjectBoardMove", () => ({ useProjectBoardMove: () => ({ mutateAsync: api.move }) }));
 vi.mock("@/hooks/useData", () => ({
+  todoHooks: { useList: () => ({ data: [] }) },
   useSettings: () => ({ data: {} }),
   getLocalDateString: () => "2026-11-04",
   useProjects: () => ({ data: api.projects }),

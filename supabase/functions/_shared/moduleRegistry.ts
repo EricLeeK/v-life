@@ -232,7 +232,10 @@ export const MODULES: ModuleDef[] = [
       { name: "importance", type: "string", enum: ["紧急", "重要", "普通", "低"] },
       { name: "notes", type: "string" },
       { name: "status", type: "string", updateOnly: true },
+      { name: "project_task_id", type: "string", description: "安排已有项目任务时填写检索到的原卡 ID，与 todo_id 互斥" },
+      { name: "todo_id", type: "string", description: "安排已有个人待办时填写原待办 ID，与 project_task_id 互斥" },
     ],
+    notes: "给已有任务安排时段时先查原卡，按真实 ID 关联。可安排多个独立时段。取消或结束时段只影响日程。",
     matchFields: ["title", "date"],
     updateFields: ["title", "start_time", "end_time", "importance", "status", "notes"],
     executor: { nameField: "title", queryKeys: ["schedule"], dateField: "start_time" },
@@ -241,7 +244,7 @@ export const MODULES: ModuleDef[] = [
     key: "todo",
     labelZh: "待办",
     labelEn: "To-Do",
-    headingZh: "待办事项",
+    headingZh: "代办仓库",
     table: "todos",
     index: 4,
     actions: { create: true, update: true, delete: true },
@@ -419,16 +422,18 @@ export const MODULES: ModuleDef[] = [
     actions: { create: true, update: true, delete: true },
     fields: [
       { name: "name", type: "string", required: true },
+      { name: "category", type: "string", vocab: "open" },
+      { name: "cover_preset", type: "string", enum: ["auto", "none", "sage", "sand", "clay", "mist", "iris", "ocean", "rose", "graphite", "honey"] },
       { name: "description", type: "string" },
       { name: "status", type: "string", enum: ["planning", "active", "paused", "completed", "archived"] },
       { name: "priority", type: "string", enum: ["high", "medium", "low"] },
       { name: "target_date", type: "date" },
     ],
     matchFields: ["name"],
-    updateFields: ["name", "description", "status", "priority", "target_date"],
+    updateFields: ["name", "category", "cover_preset", "description", "status", "priority", "target_date"],
     executor: { nameField: "name", queryKeys: ["projects"], needsUserId: true },
     notes:
-      '项目状态：planning=规划中, active=进行中, paused=暂停中, completed=已完成, archived=已归档。默认 status="planning", priority="medium"。',
+      '项目 category 与 todo.category 共享分类词表，优先复用现有值。仓库中的项目任务按所属项目的分类汇总。cover_preset 为项目纹理色，所有仓库项目卡同步：auto=自动, none=无封面, sage=鼠尾草, sand=暖沙, clay=陶土, mist=雾蓝, iris=鸢尾, ocean=海盐, rose=玫瑰纸, graphite=石墨, honey=琥珀。项目状态：planning=规划中, active=进行中, paused=暂停中, completed=已完成, archived=已归档。默认 status="planning", priority="medium"。',
   },
   {
     key: "project_task",
@@ -717,7 +722,7 @@ const PROMPT_DEFAULTS = `## 默认值规则
 
 const PROMPT_VOCAB = `## 开放字段与封闭字段
 - **封闭字段**：模块定义里写成 \`"A"|"B"|"C"\` 的枚举（如 finance.category、meal_type、currency）。必须用枚举值，禁止自创；不确定时用「其他」。
-- **开放字段**：todo.category、belongings_daily.category、thought.tags、project_name、course_name。以请求末尾的「用户词表」为准：词表里有的必须原样使用，没有的可以按用户原词新建。禁止用封闭枚举去否定用户已经在用的分类/标签/名称。
+- **开放字段**：todo.category、project.category、belongings_daily.category、thought.tags、project_name、course_name。以请求末尾的「用户词表」为准：词表里有的必须原样使用，没有的可以按用户原词新建。禁止用封闭枚举去否定用户已经在用的分类/标签/名称。
 - 定位某一条记录仍须调用 read_data。用户词表只列值，不是完整清单。`;
 
 const PROMPT_CROSS_MODULE = `## 跨模块识别

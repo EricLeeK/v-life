@@ -63,7 +63,7 @@ export function AppSidebar() {
       items: [
         { title: t("首页概览", "Dashboard"), url: "/", icon: LayoutDashboard },
         { title: t("日程计划", "Schedule"), url: "/schedule", icon: CalendarDays },
-        { title: t("待办事项", "To-Dos"), url: "/todos", icon: CheckSquare },
+        { title: t("代办仓库", "Task Library"), url: "/todos", icon: CheckSquare },
         { title: t("今日待办", "Today's Todo"), url: "/today", icon: CalendarCheck },
       ],
     },

@@ -1025,6 +1025,8 @@ export type Database = {
       }
       projects: {
         Row: {
+          cover_preset: string
+          category: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -1040,7 +1042,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cover_preset?: string
           icon_svg?: string | null
+          category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -1055,7 +1059,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cover_preset?: string
           icon_svg?: string | null
+          category?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -1073,6 +1079,8 @@ export type Database = {
       }
       schedule_events: {
         Row: {
+          project_task_id: string | null
+          todo_id: string | null
           color: string | null
           created_at: string
           end_time: string
@@ -1088,6 +1096,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          project_task_id?: string | null
+          todo_id?: string | null
           color?: string | null
           created_at?: string
           end_time: string
@@ -1103,6 +1113,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          project_task_id?: string | null
+          todo_id?: string | null
           color?: string | null
           created_at?: string
           end_time?: string
@@ -1118,6 +1130,20 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "schedule_events_project_task_id_fkey"
+            columns: ["project_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_events_todo_id_fkey"
+            columns: ["todo_id"]
+            isOneToOne: false
+            referencedRelation: "todos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "schedule_events_parent_event_id_fkey"
             columns: ["parent_event_id"]
@@ -1686,6 +1712,10 @@ export type Database = {
       agent_project_today: {
         Args: { p_title: string; p_project_name?: string; p_task_id?: string; p_apply?: boolean }
         Returns: Json
+      }
+      set_project_task_done: {
+        Args: { p_project_id: string; p_task_id: string; p_done: boolean }
+        Returns: undefined
       }
       project_today_action: {
         Args: { p_project_id: string; p_task_id: string; p_day: string; p_action: string }

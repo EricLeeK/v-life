@@ -340,7 +340,7 @@ export default function TodayTodoPage() {
     }
   };
 
-  // Create the temp task in the todos table (synced to 待办事项) with all
+  // Create the temp task in the todos table (synced to 代办仓库) with all
   // required fields populated, then auto-select it for today.
   const handleAddTempTask = async () => {
     const title = tempTaskTitle.trim();
@@ -365,7 +365,7 @@ export default function TodayTodoPage() {
         setSelectedTodos((prev) => (prev.includes(newId) ? prev : [...prev, newId]));
       }
       setTempTaskTitle("");
-      toast({ title: t("已加入待办事项并选中", "Added to To-Dos and selected") });
+      toast({ title: t("已加入代办仓库并选中", "Added to To-Dos and selected") });
     } catch (err: any) {
       toast({
         title: t("添加失败", "Failed to add task"),
@@ -832,7 +832,7 @@ export default function TodayTodoPage() {
                 />
               </div>
               <Paragraph className="text-xs text-muted-foreground">
-                {t("会同步写入“待办事项”，并自动选中加入今天。", "Will be saved to To-Dos and auto-selected for today.")}
+                {t("会同步写入“代办仓库”，并自动选中加入今天。", "Will be saved to To-Dos and auto-selected for today.")}
               </Paragraph>
             </div>
 
@@ -1081,8 +1081,8 @@ export default function TodayTodoPage() {
               const busy = projectAction.isPending && projectAction.variables?.id === task.id;
               const identity = { id: task.id, projectId: task.project_id };
               return <li key={task.id} className="flex min-h-16 items-center gap-3 py-2">
-                <Checkbox checked={done} disabled={done || busy} aria-label={t(`完成${task.title}`, `Complete ${task.title}`)}
-                  onCheckedChange={() => projectAction.mutate({ ...identity, action: "complete" })} />
+                <Checkbox checked={done} disabled={busy} aria-label={t(`完成${task.title}`, `Complete ${task.title}`)}
+                  onCheckedChange={() => projectAction.mutate({ ...identity, action: done ? "reopen" : "complete" })} />
                 <div className="min-w-0 flex-1">
                   <div className={`break-words text-sm font-medium motion-safe:transition-colors ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>{task.title}</div>
                 </div>

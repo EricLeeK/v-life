@@ -65,6 +65,7 @@ export function formatUserVocabBlock(snap: UserVocabSnapshot): string {
   const lines = ["## 用户词表（以实际数据为准，覆盖默认枚举）"];
   const rows: Array<[string, string[]]> = [
     ["todo.category", snap.todoCategories],
+    ["project.category", snap.todoCategories],
     ["belongings_daily.category", snap.dailyBelongingCategories],
     ["subscription.category", snap.subscriptionCategories ?? []],
     ["thought.tags", snap.thoughtTags],
@@ -115,7 +116,7 @@ export async function fetchUserVocab(
   sb: VocabClient,
   settings?: { custom_thought_tags?: unknown } | null,
 ): Promise<UserVocabSnapshot> {
-  const [todoRows, dailyRows, thoughtRows, projectNames, courseNames, subscriptionRows] = await Promise.all([
+  const [todoRows, dailyRows, thoughtRows, projectNames, courseNames, subscriptionRows, projectRows] = await Promise.all([
     columnValues(sb, "todos", "category"),
     columnValues(sb, "belongings_daily", "category"),
     (async () => {
@@ -130,10 +131,11 @@ export async function fetchUserVocab(
     nameValues(sb, "projects"),
     nameValues(sb, "learning_courses"),
     columnValues(sb, "subscriptions", "category"),
+    columnValues(sb, "projects", "category"),
   ]);
 
   return {
-    todoCategories: normalizeVocabList(todoRows),
+    todoCategories: normalizeVocabList([...todoRows, ...projectRows]),
     dailyBelongingCategories: normalizeVocabList(dailyRows),
     subscriptionCategories: normalizeVocabList(subscriptionRows),
     thoughtTags: collectThoughtTags(thoughtRows, settings?.custom_thought_tags),

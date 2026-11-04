@@ -55,7 +55,7 @@ export function MobileNav() {
         { title: t("首页", "Home"), url: "/", icon: LayoutDashboard },
         { title: t("日程", "Schedule"), url: "/schedule", icon: CalendarDays },
         { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
-        { title: t("待办", "To-Do"), url: "/todos", icon: CheckSquare },
+        { title: t("代办仓库", "Task Library"), url: "/todos", icon: CheckSquare },
       ];
 
   const moreItems = [

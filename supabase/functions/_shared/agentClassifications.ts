@@ -8,7 +8,7 @@ export function classificationPolicy(module:string) {
  if(!field)return null;
  const allowNew=field.vocab==='open'||!field.enum;
  return {
-  module,field:field.name,source_module:module==='daily_task'?'todo':module,
+  module,field:field.name,source_module:['daily_task','project'].includes(module)?'todo':module,
   allow_new:allowNew,multiple:field.type==='array',
   presets:field.enum??(module==='thought'?['科研','生活','AI','杂念']:module==='todo'||module==='daily_task'?['未分类','习惯']:[]),
   creation:allowNew?'在新增记录时直接填写新的分类/标签，成功保存后即成为现有值；无需单独创建分类。':'固定枚举，只能使用 presets；历史数据中的其他值不能用于新写入。',

@@ -5,7 +5,7 @@ export const conceptCatalog = {
   daily: { figure: "drawer", title: "日用品", path: "/belongings", metaphor: "常备物抽屉", gesture: "手指经过哪一格，那一格就轻轻拉开。" },
   durable: { figure: "laptop", title: "耐用品", path: "/belongings?tab=durable", metaphor: "陪伴日常的设备", gesture: "屏幕随指针展开，离开回到原来的角度。" },
   subscriptions: { figure: "plug", title: "订阅服务", path: "/belongings?tab=subscriptions", metaphor: "持续连接的服务", gesture: "插头靠近插座，离开后自然垂落。" },
-  todos: { figure: "riffle", title: "待办", path: "/todos", metaphor: "一件件翻开的待办", gesture: "抽出一张任务卡，邻近卡片逐张让开；移开后自然归位。" },
+  todos: { figure: "riffle", title: "代办仓库", path: "/todos", metaphor: "一件件翻开的待办", gesture: "抽出一张任务卡，邻近卡片逐张让开；移开后自然归位。" },
   today: { figure: "focus", title: "今日待办", path: "/today", metaphor: "此刻的专注时钟", gesture: "移动指针拨动钟针，离开回到专注的起点。" },
   schedule: { figure: "calendar", title: "日程", path: "/schedule", metaphor: "翻到下一天", gesture: "台历纸页向上翻起，移开后轻落。" },
   finance: { figure: "vault", title: "记账", path: "/finance", metaphor: "收好每一笔的金库", gesture: "拨盘随指针转动，锁栓在刻度间回应。" },

@@ -11,6 +11,30 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("project target range", () => {
+  it("saves the chosen project texture and restores it when reopened", () => {
+    const save = vi.fn();
+    const { rerender } = render(<ProjectModal open initial={{id:"project-1", name:"论文", cover_preset:"mist"}} onOpenChange={() => {}} onSave={save} />);
+    fireEvent.click(screen.getByRole("button", {name:"选择项目颜色"}));
+    expect(screen.getByRole("button", {name:"雾蓝"})).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(screen.getByRole("button", {name:"海盐"}));
+    fireEvent.click(screen.getByRole("button", {name:"保存修改"}));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({cover_preset:"ocean"}));
+    rerender(<ProjectModal open={false} onOpenChange={() => {}} onSave={save} />);
+    rerender(<ProjectModal open initial={save.mock.calls[0][0]} onOpenChange={() => {}} onSave={save} />);
+    fireEvent.click(screen.getByRole("button", {name:"选择项目颜色"}));
+    expect(screen.getByRole("button", {name:"海盐"})).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("reuses an existing task category and saves it on the project", () => {
+    const save = vi.fn();
+    render(<ProjectModal open initial={{name:"论文", category:"科研"}} categories={["科研", "工作", "生活"]} onOpenChange={() => {}} onSave={save} />);
+    expect(screen.getByRole("textbox", {name:"分类"})).toHaveValue("科研");
+    fireEvent.click(screen.getByRole("button", {name:"展开分类列表"}));
+    fireEvent.click(screen.getByRole("option", {name:"工作"}));
+    fireEvent.click(screen.getByRole("button", {name:"保存修改"}));
+    expect(save).toHaveBeenCalledWith(expect.objectContaining({category:"工作"}));
+  });
+
   it("keeps both dates after Apply, save, and reopening the saved project", async () => {
     const save = vi.fn();
     const initial = { name: "论文", target_date: "2026-11-30" };

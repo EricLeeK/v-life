@@ -1,3 +1,4 @@
+import { taskCategories } from "@/lib/taskCategories";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -9,6 +10,7 @@ import { ProjectBoard } from "@/components/ProjectBoard";
 import { ProjectModal } from "@/components/ProjectModal";
 import { ProjectDeleteDialog } from "@/components/ProjectDeleteDialog";
 import {
+  todoHooks,
   useProjects,
   useCreateProject,
   useUpdateProject,
@@ -20,6 +22,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export default function ProjectsPage() {
   const { data: projects = [], isLoading, error, refetch } = useProjects();
+  const { data: todos = [] } = todoHooks.useList();
   const createProject = useCreateProject();
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
@@ -128,6 +131,7 @@ export default function ProjectsPage() {
         </div>
       </div>
       <ProjectModal
+        categories={taskCategories(todos, projects)}
         open={projectModalOpen}
         onOpenChange={setProjectModalOpen}
         onSave={handleSaveProject}

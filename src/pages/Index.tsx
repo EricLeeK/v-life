@@ -427,7 +427,7 @@ export default function DashboardPage() {
     isVisible("todos") && {
       id: "todos",
       icon: <CheckSquare className="h-4 w-4 text-foreground" />,
-      title: t("待办事项", "To-Dos"),
+      title: t("代办仓库", "Task Library"),
       description: pendingTodos.length > 0 ? `${pendingTodos.length} ${t("个待完成", "pending")}` : t("今天没有待办", "Nothing pending today"),
       status: urgentTodos.length > 0 ? `${urgentTodos.length} ${t("紧急", "urgent")}` : undefined,
       statusColor: "red" as const,

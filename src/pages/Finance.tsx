@@ -494,7 +494,7 @@ export default function FinancePage() {
           onOpenChange={closeEditor}
           title={`${editingItem ? t("编辑", "Edit") : t("新增", "New")} ${t("记录", "Record")}`}
           description={t("记录名称、金额、分类和日期。", "Record the name, amount, category, and date.")}
-          detents={[0.46, 0.92]}
+          detents={[0.72, 0.92]}
           initialDetent={0}
           className="arc-runtime"
           closeLabel={t("关闭", "Close")}

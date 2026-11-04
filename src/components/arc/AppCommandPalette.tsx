@@ -10,7 +10,7 @@ import { ArcScope } from "./ArcScope";
 
 const routes = [
   ["/", "首页概览", "Dashboard", "今天", "Today"],
-  ["/todos", "待办事项", "To-Dos", "今天", "Today"],
+  ["/todos", "代办仓库", "Task Library", "今天", "Today"],
   ["/today", "今日待办", "Today's Todo", "今天", "Today"],
   ["/schedule", "日程计划", "Schedule", "今天", "Today"],
   ["/finance", "记账", "Finance", "生活", "Life"],
@@ -36,7 +36,7 @@ export function AppCommandPalette() {
   const items = routes.filter(([path]) => {
     if (path === "/settings") return true;
     return !hidden.includes(path.slice(1));
-  }).map(([path, zh, en, groupZh, groupEn]) => ({ id: path, label: t(zh, en), group: t(groupZh, groupEn), keywords: [zh, en, path] }));
+  }).map(([path, zh, en, groupZh, groupEn]) => ({ id: path, label: t(zh, en), group: t(groupZh, groupEn), keywords: path === "/todos" ? [zh, en, path, "待办", "待办事项", "To-Dos"] : [zh, en, path] }));
 
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {

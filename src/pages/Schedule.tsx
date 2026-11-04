@@ -1,3 +1,4 @@
+import { useWarehouseProjectTasks } from "@/hooks/useProjectToday";
 import { Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -48,6 +49,8 @@ const SCHEDULE_COLOR_NAMES: Record<string, { zh: string; en: string }> = {
 
 type ViewMode = "1day" | "3day" | "week" | "month";
 
+type TaskSource = { kind: "project" | "todo"; id: string; title: string; label: string };
+
 // Generate recurring instances from a master event's recurrence rule
 function generateInstances(
   master: { title: string; importance: string; status: string; color: string | null; notes: string | null },
@@ -73,11 +76,7 @@ function generateInstances(
         const instStart = new Date(current);
         instStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
         instances.push({
-          title: master.title,
-          importance: master.importance,
-          status: master.status,
-          color: master.color,
-          notes: master.notes,
+          ...master,
           start_time: instStart.toISOString(),
           end_time: new Date(instStart.getTime() + duration).toISOString(),
         });
@@ -99,11 +98,7 @@ function generateInstances(
       const instStart = new Date(current);
       instStart.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
       instances.push({
-        title: master.title,
-        importance: master.importance,
-        status: master.status,
-        color: master.color,
-        notes: master.notes,
+        ...master,
         start_time: instStart.toISOString(),
         end_time: new Date(instStart.getTime() + duration).toISOString(),
       });
@@ -123,6 +118,8 @@ export default function SchedulePage() {
   const { t, lang } = useLang();
   const location = useLocation();
   const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
+  const initialSource: TaskSource | null = openCreateFromDashboard ? location.state?.source ?? null : null;
+  const [source, setSource] = useState<TaskSource | null>(initialSource);
   const today = format(new Date(), "yyyy-MM-dd");
   const [baseDate, setBaseDate] = useState(() => { const d = dateFromSearch(location.search) ?? new Date(); d.setHours(0, 0, 0, 0); return d; });
   useEffect(() => {
@@ -138,7 +135,7 @@ export default function SchedulePage() {
   const [dialogOpen, setDialogOpen] = useState(openCreateFromDashboard);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [form, setForm] = useState({
-    title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00",
+    title: initialSource?.title ?? "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00",
     importance: "普通", status: "未开始", color: "", notes: "",
     recurrence_type: "none" as string, recurrence_end_date: "", recurrence_days: [] as number[],
   });
@@ -167,6 +164,21 @@ export default function SchedulePage() {
 
   const { data: rawEvents = [], isLoading, error, refetch } = useScheduleByRange(rangeStart, rangeEnd);
   const { data: allTodos = [] } = todoHooks.useList();
+  const projectQuery = useWarehouseProjectTasks();
+  const projectCards = projectQuery.data ?? [];
+  const sources = new Map<string, TaskSource>();
+  for (const task of allTodos) {
+    sources.set(`todo:${task.id}`, { kind: "todo", id:task.id, title:task.title, label: t("代办仓库", "Task Library") });
+  }
+  for (const task of projectCards) {
+    sources.set(`project:${task.id}`, { kind: "project", id:task.id, title:task.title, label: task.projects.name });
+  }
+  const eventSource = (event: {project_task_id?: string | null; todo_id?: string | null; title:string}): TaskSource | null => {
+    const kind = event.project_task_id ? "project" : "todo";
+    const id = event.project_task_id || event.todo_id;
+    if (!id) return null;
+    return sources.get(`${kind}:${id}`) ?? {kind,id,title:event.title,label:t("关联任务","Linked task")};
+  };
   const incompleteTodos = (allTodos as any[]).filter((t) => {
     if (t.is_completed || t.is_archived) return false;
     if (t.parent_id) return true;
@@ -185,8 +197,10 @@ export default function SchedulePage() {
   // begin after the master date, so hiding a matching master would leave the
   // series blank on its first day. For a weekly rule, the master only counts
   // when its weekday is one of the selected weekdays.
-  const displayEvents = useMemo(() => {
-    return rawEvents.filter((event: any) => {
+  const displayEvents = rawEvents.map((event: any) => {
+      const linked = eventSource(event);
+      return linked ? { ...event, title: linked.title } : event;
+    }).filter((event: any) => {
       const recurrence = event.recurrence as { type?: string; days_of_week?: number[] } | null;
       if (!recurrence || event.parent_event_id || recurrence.type === "none" || recurrence.type !== "weekly") return true;
       const daysOfWeek = recurrence.days_of_week;
@@ -195,7 +209,6 @@ export default function SchedulePage() {
       const weekday = start.getDay() === 0 ? 7 : start.getDay();
       return daysOfWeek.includes(weekday);
     });
-  }, [rawEvents]);
 
   const getEventsForDay = useCallback((day: Date) => {
     const dayStart = new Date(day);
@@ -210,11 +223,15 @@ export default function SchedulePage() {
   }, [displayEvents]);
 
   const resetForm = useCallback(() => {
+    setSource(null);
     const today = format(new Date(), "yyyy-MM-dd");
     setForm({ title: "", start_date: today, start_time: "09:00", end_date: today, end_time: "10:00", importance: "普通", status: "未开始", color: "", notes: "", recurrence_type: "none", recurrence_end_date: "", recurrence_days: [] });
   }, []);
 
+  const savingRef = useRef(false);
+  const [saving, setSaving] = useState(false);
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!form.title.trim() || !form.start_date || !form.end_date || !form.start_time || !form.end_time) {
       toast({ title: t("请填写标题和时间", "Please fill in title and time"), variant: "destructive" }); return;
     }
@@ -233,6 +250,8 @@ export default function SchedulePage() {
         toast({ title: t("请选择每周重复的日期", "Choose at least one weekday for weekly repeat"), variant: "destructive" }); return;
       }
 
+      savingRef.current = true;
+      setSaving(true);
       const recurrence = isRecurring ? {
         type: form.recurrence_type,
         interval: 1,
@@ -241,7 +260,9 @@ export default function SchedulePage() {
       } : null;
 
       const basePayload = {
-        title: form.title.trim(),
+        project_task_id: source?.kind === "project" ? source.id : null,
+        todo_id: source?.kind === "todo" ? source.id : null,
+        title: source?.title || form.title.trim(),
         importance: form.importance,
         status: form.status,
         color: form.color || null,
@@ -313,9 +334,10 @@ export default function SchedulePage() {
       }
       setDialogOpen(false); setEditingItem(null); resetForm();
     } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    finally { savingRef.current = false; setSaving(false); }
   };
 
-  const openEdit = useCallback((event: any) => {
+  const openEdit = (event: any) => {
     // If clicking an instance, find and edit the master
     const masterId = event.parent_event_id;
     const actualEvent = masterId
@@ -323,9 +345,11 @@ export default function SchedulePage() {
       : event;
     const start = new Date(actualEvent.start_time);
     const end = new Date(actualEvent.end_time);
+    const linked = eventSource(actualEvent);
+    setSource(linked);
     setEditingItem(actualEvent);
     setForm({
-      title: actualEvent.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
+      title: linked?.title ?? actualEvent.title, start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
       end_date: format(end, "yyyy-MM-dd"), end_time: format(end, "HH:mm"),
       importance: actualEvent.importance || "普通", status: actualEvent.status, color: actualEvent.color || "", notes: actualEvent.notes || "",
       recurrence_type: (actualEvent.recurrence as any)?.type || "none",
@@ -333,7 +357,7 @@ export default function SchedulePage() {
       recurrence_days: (actualEvent.recurrence as any)?.days_of_week || [],
     });
     setDialogOpen(true);
-  }, [rawEvents]);
+  };
 
   const handleDelete = async () => {
     if (!editingItem) return;
@@ -356,6 +380,7 @@ export default function SchedulePage() {
   }, [updateMutation]);
 
   const handleCreateAt = useCallback((start: Date, end: Date) => {
+    setSource(null);
     setEditingItem(null);
     setForm({
       title: "", start_date: format(start, "yyyy-MM-dd"), start_time: format(start, "HH:mm"),
@@ -411,20 +436,52 @@ export default function SchedulePage() {
     return master?.recurrence && (master.recurrence as any).type !== "none";
   })();
 
+  const eventActions = (
+    <div className="flex gap-2">
+      <Button onClick={handleSave} disabled={saving} className="flex-1">{t("保存", "Save")}{editingIsSeries ? t("（整个系列）", " (entire series)") : ""}</Button>
+      {editingItem && (
+        <ConfirmMorph
+          className="confirm-quiet"
+          tone="danger"
+          icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+          label={<span className="sr-only">{t("删除事件", "Delete event")}</span>}
+          prompt={editingIsSeries ? t("删除整个重复系列？", "Delete the entire series?") : t("删除这个事件？", "Delete this event?")}
+          confirmLabel={t("删除", "Delete")}
+          cancelLabel={t("取消", "Cancel")}
+          doneLabel={t("已删除", "Deleted")}
+          onConfirm={handleDelete}
+        />
+      )}
+    </div>
+  );
+
   const eventForm = (
     <div className="space-y-3">
-      {incompleteTodos.length > 0 && (
-        <div>
-          <Combobox id="quick-todo-select" label={t("从待办快速选择", "Quick Pick from To-Dos")} placeholder={t("搜索待办作为标题…", "Search a to-do as title…")} onValueChange={(v) => {
-            const todo = incompleteTodos.find((t: any) => t.id === v);
-            if (todo) setForm({ ...form, title: todo.title, notes: todo.detail || form.notes });
-          }} options={incompleteTodos.map((todo: any) => {
-            const parent = todo.parent_id ? allTodos.find((p: any) => p.id === todo.parent_id) : null;
-            return { value: todo.id, label: parent ? `${parent.title} > ${todo.title}` : todo.title, keywords: [todo.title, todo.category ?? ""] };
-          })} />
+      {projectQuery.error && <p role="alert" className="text-xs text-muted-foreground">{t("项目列表暂时无法读取", "Project tasks unavailable")} <button type="button" onClick={() => void projectQuery.refetch()}>{t("重试", "Retry")}</button></p>}
+      {source ? (
+        <div className="flex items-center gap-2 rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          <span className="min-w-0 flex-1 break-words">{source.kind === "project" ? t("来自项目", "From project") : t("关联任务", "Linked task")} · {source.label} · {source.title}</span>
+          <button type="button" className="shrink-0 underline-offset-2 hover:underline" onClick={() => setSource(null)}>{t("解除关联", "Unlink")}</button>
         </div>
+      ) : (incompleteTodos.length > 0 || projectCards.length > 0) && (
+        <Combobox id="quick-todo-select" label={t("从代办仓库选择", "Choose from Task Library")} placeholder={t("搜索个人待办或项目任务…", "Search tasks…")}
+          onValueChange={value => {
+            const item = sources.get(value);
+            if (!item) return;
+            setSource(item);
+            setForm(draft => ({...draft, title:item.title}));
+          }}
+          options={[
+            ...incompleteTodos.map((todo: any) => {
+              const parent = todo.parent_id ? allTodos.find((p: any) => p.id === todo.parent_id) : null;
+              return {value:`todo:${todo.id}`, label:parent ? `${parent.title} › ${todo.title}` : todo.title, keywords:[todo.title,todo.category ?? ""]};
+            }),
+            ...projectCards.filter(card => card.status !== "done" && card.projects.status !== "archived").map(card => ({
+              value:`project:${card.id}`, label:`${card.projects.name} › ${card.title}`, keywords:[card.title,card.projects.name],
+            })),
+          ]} />
       )}
-      <div><Label htmlFor="event-title">{t("标题", "Title")} *</Label><Input id="event-title" className="mt-1 h-9 text-base" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+      <div><Label htmlFor="event-title">{t("标题", "Title")} *</Label><Input id="event-title" readOnly={!!source} className="mt-1 h-9 text-base" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label htmlFor="event-start-date">{t("开始日期", "Start Date")} *</Label><DateField id="event-start-date" label={t("开始日期", "Start Date")} value={form.start_date} onChange={(start_date) => setForm({ ...form, start_date, end_date: start_date })} /></div>
         <div><Label htmlFor="event-start-time">{t("开始时间", "Start Time")}</Label><TimeField id="event-start-time" label={t("开始时间", "Start Time")} value={form.start_time} onChange={(start_time) => setForm({ ...form, start_time })} /></div>
@@ -520,22 +577,7 @@ export default function SchedulePage() {
           </div>
         )}
       </div>
-      <div className="flex gap-2">
-        <Button onClick={handleSave} className="flex-1">{t("保存", "Save")}{editingIsSeries ? t("（整个系列）", " (entire series)") : ""}</Button>
-        {editingItem && (
-          <ConfirmMorph
-  className="confirm-quiet"
-            tone="danger"
-            icon={<Trash2 className="h-4 w-4" aria-hidden="true" />}
-            label={<span className="sr-only">{t("删除事件", "Delete event")}</span>}
-            prompt={editingIsSeries ? t("删除整个重复系列？", "Delete the entire series?") : t("删除这个事件？", "Delete this event?")}
-            confirmLabel={t("删除", "Delete")}
-            cancelLabel={t("取消", "Cancel")}
-            doneLabel={t("已删除", "Deleted")}
-            onConfirm={handleDelete}
-          />
-        )}
-      </div>
+
       {editingIsSeries && (
         <Paragraph className="text-xs text-muted-foreground text-center">{t("编辑或删除将影响整个重复系列", "Editing or deleting will affect the entire recurring series")}</Paragraph>
       )}
@@ -564,13 +606,14 @@ export default function SchedulePage() {
           <Button size="sm" className="shrink-0 h-9" onClick={() => { setEditingItem(null); resetForm(); setDialogOpen(true); }}><Plus className="h-4 w-4 mr-1" />{t("新建", "New")}</Button>
         </div>
 
-        {/* Event form rises from the bottom, opens at the tall detent */}
+        {/* Keep the action bar above the viewport edge while long forms scroll. */}
         <BottomSheet
           open={dialogOpen}
           onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); resetForm(); } }}
           title={editingItem ? t("编辑事件", "Edit Event") : t("新建事件", "New Event")}
+          footer={eventActions}
           description={t("填写标题与时间，安排新的日程事件。", "Add a title and time for this schedule event.")}
-          detents={[0.46, 0.94]}
+          detents={[0.72, 0.94]}
           initialDetent={0}
           className="arc-runtime"
           closeLabel={t("关闭", "Close")}

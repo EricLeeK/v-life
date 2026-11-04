@@ -67,7 +67,7 @@ describe("fetchUserVocab", () => {
       todos: [{ category: "工作" }, { category: "设计" }, { category: "工作" }],
       belongings_daily: [{ category: "清洁用品" }],
       thoughts: [{ tags: ["灵感"] }],
-      projects: [{ name: "毕业论文" }],
+      projects: [{ name: "毕业论文", category:"科研" }],
       learning_courses: [{ name: "机器学习" }],
     };
     const sb = {
@@ -80,7 +80,7 @@ describe("fetchUserVocab", () => {
       }),
     };
     const snap = await fetchUserVocab(sb, { custom_thought_tags: ["自定义"] });
-    expect(snap.todoCategories).toEqual(["工作", "设计"]);
+    expect(snap.todoCategories).toEqual(["工作", "设计", "科研"]);
     expect(snap.dailyBelongingCategories).toEqual(["清洁用品"]);
     expect(snap.thoughtTags).toEqual(["灵感", "自定义"]);
     expect(snap.projectNames).toEqual(["毕业论文"]);

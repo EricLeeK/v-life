@@ -85,6 +85,8 @@
 .project-cover::after { content:''; position:absolute; inset:0; background-image:url('/project-covers/grain.png'); opacity:.1; mix-blend-mode:soft-light; pointer-events:none; }
 .project-cover>span { position:absolute; z-index:1; bottom:9px; left:12px; padding:3px 7px; border-radius:calc(var(--radius) - 2px); font-size:10px; line-height:1.4; background:hsl(var(--card)/.93); color:hsl(var(--foreground)); }
 .project-cover-picker { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.project-color-preview { position:relative; flex:none; width:32px; height:32px; overflow:hidden; border:1px solid hsl(var(--border)/.6); border-radius:8px; background:hsl(var(--muted)); }
+.project-color-preview .project-cover { height:100%; }
 /* Reserve the same footprint while a swatch becomes a miniature work card. */
 .project-cover-option { position:relative; isolation:isolate; height:86px; min-width:0; font-size:11px; border:1px solid transparent; border-radius:var(--radius); color:hsl(var(--muted-foreground)); text-align:left; transition:border-color 260ms ease, color 220ms ease; }
 .project-cover-option::before { content:''; position:absolute; inset:3px; z-index:-1; border-radius:inherit; background:hsl(var(--card)); box-shadow:0 2px 5px hsl(var(--foreground)/.08); opacity:0; transform:scale(.94); transition:opacity 220ms ease,transform 320ms cubic-bezier(.22,1,.36,1); }

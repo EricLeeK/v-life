@@ -1,9 +1,14 @@
+import { ProjectIcon } from "@/components/projects/ProjectIcon";
+import { projectCoverAccent } from "@/components/projects/board-model";
+import "@/components/projects/project-board.css";
+import { CategoryInput } from "@/components/TaskCategoryInput";
+import { taskCategories, taskCategory } from "@/lib/taskCategories";
 import { Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { useState, useRef, useLayoutEffect } from "react";
 import { motion } from "motion/react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +50,9 @@ import {
   Repeat,
 } from "lucide-react";
 import { SortableList, SortableHandle } from "@/components/sortable/SortableList";
-import { todoHooks } from "@/hooks/useData";
+import { CalendarClock, CalendarPlus } from "lucide-react";
+import { useWarehouseProjectTasks, useProjectTodayAction } from "@/hooks/useProjectToday";
+import { getLocalDateString, useSettings, todoHooks } from "@/hooks/useData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { isPersistentKind } from "@/lib/habits";
@@ -55,7 +62,6 @@ import { ArcScope } from "@/components/arc/ArcScope";
 import ConfirmMorph, { type ConfirmMorphState } from "@/vendor/uiarc/registry/components/confirm-morph/confirm-morph";
 import FilterToolbar, { type FilterChip, type FilterField, type FilterOption } from "@/vendor/uiarc/registry/components/filter-toolbar/filter-toolbar";
 import InlineEdit from "@/vendor/uiarc/registry/components/inline-edit/inline-edit";
-import SegmentedControl from "@/vendor/uiarc/registry/components/segmented-control/segmented-control";
 
 const IMPORTANCE_LEVELS = [
   { key: "紧急", labelEn: "Urgent", variant: "tint-destructive" as const },
@@ -75,7 +81,8 @@ const IMPORTANCE_MAP: Record<string, { labelZh: string; labelEn: string; variant
   低优先: { labelZh: "低优先", labelEn: "Low", variant: "tint" },
 };
 
-type ViewMode = "category" | "importance" | "all";
+type WarehouseCard = NonNullable<ReturnType<typeof useWarehouseProjectTasks>["data"]>[number];
+
 const CATEGORY_FILTER_ID = "category";
 const COMPLETION_FILTER_ID = "completion";
 const ARCHIVE_FILTER_ID = "archive";
@@ -93,65 +100,6 @@ const EMPTY_TODO_FORM = {
   habit_type: "checkin",
   habit_target: "",
   habit_unit: "",
-};
-
-const CategoryInput = ({ id, value, onChange, existingCategories, placeholder }: {
-  id?: string;
-  value: string;
-  onChange: (val: string) => void;
-  existingCategories: string[];
-  placeholder?: string;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const { t } = useLang();
-  return (
-    <div className="relative mt-1">
-      <div className="relative flex items-center">
-        <Input
-          id={id}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="pr-8 h-9 text-sm"
-          aria-expanded={existingCategories.length > 0 ? isOpen : undefined}
-          aria-haspopup={existingCategories.length > 0 ? "listbox" : undefined}
-        />
-        {existingCategories.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setIsOpen(!isOpen)}
-            className="absolute right-2 text-muted-foreground hover:text-muted-foreground focus:outline-none"
-            style={{ zIndex: 5 }}
-            aria-label={isOpen ? t("收起分类列表", "Collapse category list") : t("展开分类列表", "Expand category list")}
-            aria-expanded={isOpen}
-          >
-            <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
-          </button>
-        )}
-      </div>
-      {isOpen && existingCategories.length > 0 && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} aria-hidden="true" />
-          <div role="listbox" className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto bg-card border border-border rounded-lg shadow-lg z-20 py-1">
-            {existingCategories.map((cat: string) => (
-              <button
-                key={cat}
-                type="button"
-                role="option"
-                onClick={() => {
-                  onChange(cat);
-                  setIsOpen(false);
-                }}
-                className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-muted/40 transition-colors"
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
 };
 
 export default function TodosPage() {
@@ -174,8 +122,11 @@ export default function TodosPage() {
     try { localStorage.setItem(categoryOrderKey, JSON.stringify(next)); } catch { /* Ordering still works for this visit. */ }
   };
   const location = useLocation();
+  const cards = useWarehouseProjectTasks();
+  const { data: settings } = useSettings();
+  const day = getLocalDateString(new Date(), settings?.day_start_hour || 0);
+  const changeCard = useProjectTodayAction(day);
   const openCreateFromDashboard = new URLSearchParams(location.search).get("new") === "1";
-  const [viewMode, setViewMode] = useState<ViewMode>("category");
   const [filters, setFilters] = useState<AppliedFilter[]>([]);
   const [archivedBatch, setArchivedBatch] = useState<string[]>([]);
   const [archivePending, setArchivePending] = useState(false);
@@ -201,6 +152,7 @@ export default function TodosPage() {
 
   // Category Collapse State
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
+  const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
 
   // Expanded Tasks State (default ARIS expanded)
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({
@@ -220,7 +172,7 @@ export default function TodosPage() {
       }
       pendingLockRef.current = null;
     }
-  }, [collapsedCategories, expandedTasks]);
+  }, [collapsedCategories, collapsedProjects, expandedTasks]);
 
   const handleCategoryToggleClick = (e: React.MouseEvent, group: string) => {
     const targetEl = e.currentTarget as HTMLElement;
@@ -233,6 +185,12 @@ export default function TodosPage() {
       ...prev,
       [group]: !prev[group],
     }));
+  };
+
+  const handleProjectToggleClick = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    const element = event.currentTarget;
+    pendingLockRef.current = { element, initialTop: element.getBoundingClientRect().top };
+    setCollapsedProjects(current => ({ ...current, [id]: !current[id] }));
   };
 
   const handleTaskToggleClick = (e: React.MouseEvent, taskId: string) => {
@@ -254,13 +212,7 @@ export default function TodosPage() {
 
   const { data: todos = [], isLoading, error, refetch } = todoHooks.useList();
 
-  const existingCategories = Array.from(
-    new Set(
-      todos
-        .map((t: any) => t.category?.trim() || "")
-        .filter((c: string) => c !== "" && c !== "未分类" && c !== "Uncategorized")
-    )
-  ) as string[];
+  const existingCategories = taskCategories(todos, (cards.data ?? []).map(card => card.projects));
 
   const createMutation = todoHooks.useCreate();
   const updateMutation = todoHooks.useUpdate();
@@ -274,6 +226,14 @@ export default function TodosPage() {
   const categoryFilter = filters.find((filter) => filter.id === CATEGORY_FILTER_ID)?.value;
   const completionFilter = filters.find((filter) => filter.id === COMPLETION_FILTER_ID)?.value;
   const archiveFilter = filters.find((filter) => filter.id === ARCHIVE_FILTER_ID)?.value;
+  const projectRows = (cards.data ?? []).filter(card => {
+    const archived = card.projects.status === "archived";
+    if (archiveFilter !== "all" && archived !== (archiveFilter === "archived")) return false;
+    if (categoryFilter && (taskCategory(card.projects.category) === "未分类" ? UNCATEGORIZED_FILTER_VALUE : taskCategory(card.projects.category)) !== categoryFilter) return false;
+    if (completionFilter === "completed") return card.status === "done";
+    if (completionFilter === "incomplete") return card.status !== "done";
+    return true;
+  });
   const nonArchivedParents = parentTodos.filter((t: any) => !t.is_archived);
   const hasCompletedNonArchived = nonArchivedParents.some((t: any) => t.is_completed);
   const filteredParents = parentTodos.filter((todo: any) => {
@@ -386,45 +346,30 @@ export default function TodosPage() {
     };
   });
 
-  const habitParents = sortedParents.filter((t: any) => t.kind === "habit" && !t.is_archived);
-  const groupedSource = viewMode === "category"
-    ? sortedParents.filter((t: any) => t.kind !== "habit" || t.is_archived)
-    : sortedParents;
-
-  const grouped = viewMode === "category"
-    ? groupedSource.reduce((acc: Record<string, any[]>, t: any) => {
-        const cat = t.category ? t.category.trim() : "";
-        const key = cat === "" || cat === "未分类" || cat === "Uncategorized" ? "未分类" : cat;
-        (acc[key] = acc[key] || []).push(t);
-        return acc;
-      }, {})
-    : viewMode === "importance"
-    ? groupedSource.reduce((acc: Record<string, any[]>, t: any) => {
-        const impInfo = IMPORTANCE_MAP[t.importance] || IMPORTANCE_MAP["普通"];
-        const impKey = impInfo.labelZh;
-        (acc[impKey] = acc[impKey] || []).push(t);
-        return acc;
-      }, {})
-    : { "全部": groupedSource };
-
-  const groupedEntries = Object.entries(grouped).sort(([aKey], [bKey]) => {
-    if (viewMode === "importance") {
-      const order: Record<string, number> = { "紧急": 0, "重要": 1, "普通": 2, "低优先": 3 };
-      return (order[aKey] ?? 99) - (order[bKey] ?? 99);
-    }
-    if (aKey === "未分类") return 1;
-    if (bKey === "未分类") return -1;
-    return aKey.localeCompare(bKey);
+  // Project cards join the same category buckets without becoming copied todos.
+  const projectEntries = projectRows.map(card => ({
+    id: `project:${card.id}`,
+    title: card.title,
+    category: taskCategory(card.projects.category),
+    importance: "普通",
+    is_completed: card.status === "done",
+    projectCard: card,
+  }));
+  const grouped: Record<string, any[]> = Object.create(null);
+  for (const item of [...sortedParents, ...projectEntries]) {
+    const category = taskCategory(item.category);
+    (grouped[category] ??= []).push(item);
+  }
+  const groupedEntries = Object.entries(grouped).sort(([a], [b]) => {
+    const aIndex = categoryOrder.indexOf(a), bIndex = categoryOrder.indexOf(b);
+    if (aIndex >= 0 || bIndex >= 0) return (aIndex < 0 ? Infinity : aIndex) - (bIndex < 0 ? Infinity : bIndex);
+    if (a === "习惯") return -1;
+    if (b === "习惯") return 1;
+    if (a === "未分类") return 1;
+    if (b === "未分类") return -1;
+    return a.localeCompare(b);
   });
-  if (viewMode === "category" && habitParents.length > 0) {
-    groupedEntries.unshift(["习惯", habitParents]);
-  }
-  if (viewMode === "category" && categoryOrder.length) {
-    groupedEntries.sort(([a], [b]) => {
-      const aIndex = categoryOrder.indexOf(a), bIndex = categoryOrder.indexOf(b);
-      return (aIndex < 0 ? Infinity : aIndex) - (bIndex < 0 ? Infinity : bIndex);
-    });
-  }
+  for (const [, rows] of groupedEntries) rows.sort((a, b) => Number(a.is_completed) - Number(b.is_completed));
 
   const handleSaveMainTask = async () => {
     if (!form.title) { toast({ title: t("请填写标题", "Please fill title"), variant: "destructive" }); return; }
@@ -1048,9 +993,6 @@ export default function TodosPage() {
           )}
         </div>
       )}
-      <Button onClick={handleSaveMainTask} className="w-full mt-3 h-9">
-        {t("保存添加", "Add Task")}
-      </Button>
     </div>
   );
 
@@ -1113,11 +1055,62 @@ export default function TodosPage() {
           />
         </div>
       </div>
-      <Button onClick={handleSaveEdit} className="w-full mt-3 h-9">
-        {t("保存修改", "Save Changes")}
-      </Button>
     </div>
   );
+
+  const renderProjectGroup = (projectCards: WarehouseCard[]) => {
+    const project = projectCards[0].projects;
+    const projectId = projectCards[0].project_id;
+    const collapsed = !!collapsedProjects[projectId];
+    const completed = projectCards.filter(card => card.status === "done").length;
+    return (
+      <section className="warehouse-project-group mb-2.5" aria-label={t(`来自项目 · ${project.name}`, `From project · ${project.name}`)}>
+        <button type="button" className="warehouse-project-head"
+          aria-expanded={!collapsed} aria-controls={`warehouse-project-${projectId}`}
+          aria-label={t(`${collapsed ? "展开" : "收起"}项目: ${project.name}`, `${collapsed ? "Expand" : "Collapse"} project: ${project.name}`)}
+          onClick={event => handleProjectToggleClick(event, projectId)}>
+          {project.cover_preset !== "none" && <div className="project-cover" data-preset={projectCoverAccent(projectId, project.cover_preset)} aria-hidden="true" />}
+          <ChevronDown size={14} className="warehouse-project-chevron" style={{ transform: collapsed ? "rotate(-90deg)" : undefined }} />
+          <ProjectIcon name={project.name} svg={project.icon_svg} />
+          <span className="warehouse-project-name">{project.name}</span>
+          <span className="warehouse-project-label">{t("项目", "Project")}</span>
+          <span className="warehouse-project-count">{completed}/{projectCards.length}</span>
+        </button>
+        <div id={`warehouse-project-${projectId}`} className="warehouse-project-list" data-collapsed={collapsed || undefined} inert={collapsed || undefined}>
+          <div>
+            {projectCards.map(card => {
+              const done = card.status === "done";
+              const arranged = card.today_date === day;
+              const pending = changeCard.isPending && changeCard.variables?.id === card.id;
+              const identity = { id: card.id, projectId };
+              return (
+                <div key={card.id} data-project-task={card.id} className="warehouse-project-row">
+                  <button type="button" disabled={pending}
+                    aria-label={t(`${done ? "重新打开" : "完成"}${card.title}`, `${done ? "Reopen" : "Complete"} ${card.title}`)}
+                    aria-pressed={done}
+                    className={`warehouse-project-check ${done ? "is-complete" : ""}`}
+                    onClick={() => changeCard.mutate({ ...identity, action: done ? "reopen" : "finish" })}>
+                    {done && <Check size={11} strokeWidth={3} />}
+                  </button>
+                  <span className={`warehouse-project-task-title ${done ? "is-complete" : ""}`}>{card.title}</span>
+                  <div className="warehouse-row-actions flex shrink-0 items-center gap-1 text-muted-foreground">
+                    {!done && <Button size="icon" variant="ghost" className="h-8 w-8" disabled={arranged || pending}
+                      title={arranged ? t("已加入今天", "On today") : t("加入今天", "Add to today")}
+                      aria-label={t(`加入今天：${card.title}`, `Add to today: ${card.title}`)}
+                      onClick={() => changeCard.mutate({ ...identity, action: "add" })}>{arranged ? <Check size={14} /> : <CalendarPlus size={14} />}</Button>}
+                    {!done && <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
+                      <Link to="/schedule?new=1" state={{ source: { kind: "project", id: card.id, title: card.title, label: project.name } }}
+                        title={t("安排时间", "Schedule time")} aria-label={t(`安排时间：${card.title}`, `Schedule time: ${card.title}`)}><CalendarClock size={14} /></Link>
+                    </Button>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const subtaskNoteForm = (
     <div className="space-y-3">
@@ -1147,22 +1140,12 @@ export default function TodosPage() {
   );
 
   return (
-    <AppLayout title={t("待办事项", "To-Dos")} description={t("把要做的事放好，再一件件完成。", "Give each task a place, then take it one at a time.")} concept={todos.length > 0 ? moduleFigure.todos : undefined}>
+    <AppLayout title={t("代办仓库", "Task Library")} description={t("个人待办和项目任务，都在这里。", "Your personal to-dos and project tasks, together.")} concept={todos.length > 0 ? moduleFigure.todos : undefined}>
       <div className="space-y-5 max-w-6xl mx-auto">
         {/* Top Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-2 rounded-lg border border-border">
           <div className="min-w-0 flex-1">
             <ArcScope className="flex flex-wrap items-center gap-2">
-              <SegmentedControl
-                options={[
-                  { value: "category", label: t("按分类", "By Category") },
-                  { value: "importance", label: t("按重要性", "By Priority") },
-                  { value: "all", label: t("全部", "All") },
-                ]}
-                value={viewMode}
-                onValueChange={(value) => setViewMode(value as ViewMode)}
-                label={t("任务视图", "Task view")}
-              />
               <div className="todo-filter-fit">
               <FilterToolbar
                 filters={displayFilters}
@@ -1209,8 +1192,12 @@ export default function TodosPage() {
           </div>
         </div>
 
+        {cards.error && <div role="alert" className="flex items-center gap-2 text-sm text-muted-foreground">
+          {t("暂时无法读取项目任务", "Project tasks unavailable")}
+          <Button variant="ghost" size="sm" onClick={() => void cards.refetch()}>{t("重试", "Retry")}</Button>
+        </div>}
         {/* Task List Grouped */}
-        {groupedEntries.length === 0 ? (
+        {groupedEntries.length === 0 && projectRows.length === 0 && !cards.isLoading && !cards.error ? (
           <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
             <EmptyState figure={moduleFigure.todos}
               title={filters.length > 0 ? t("没有符合筛选的待办", "No matching to-dos") : t("给下一件事留个位置", "A place for your next task")}
@@ -1223,7 +1210,7 @@ export default function TodosPage() {
             items={groupedEntries}
             itemId={([group]) => group}
             labelItem={([group]) => group}
-            itemDisabled={([group]) => viewMode !== "category" || !collapsedCategories[group]}
+            itemDisabled={([group]) => !collapsedCategories[group]}
             onReorder={reorderCategories}
             ariaLabel={t("待办分类排序", "To-do category order")}
             className="gap-5 todo-category-sortable"
@@ -1232,16 +1219,31 @@ export default function TodosPage() {
             const rows = items as any[];
             const groupLabel = group === "未分类"
               ? t("未分类", "Uncategorized")
-              : viewMode === "importance"
-              ? t(group, IMPORTANCE_MAP[group]?.labelEn || group)
               : group;
             const unfinished = rows.filter((row) => !row.is_completed);
 
+            const projectBuckets = new Map<string, WarehouseCard[]>();
+            const entries: Array<{ id: string; item?: any; projectCards?: WarehouseCard[] }> = [];
+            for (const item of rows) {
+              if (!item.projectCard) {
+                entries.push({ id: item.id, item });
+                continue;
+              }
+              const card: WarehouseCard = item.projectCard;
+              const bucket = projectBuckets.get(card.project_id);
+              if (bucket) bucket.push(card);
+              else {
+                const projectCards = [card];
+                projectBuckets.set(card.project_id, projectCards);
+                entries.push({ id: `project:${card.project_id}`, projectCards });
+              }
+            }
+
             const taskList = (
               <div className="space-y-1 pt-2">
-                {rows.map((item) => (
-                  <motion.div key={item.id} layout="position" transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}>
-                    {renderTodoItem(item)}
+                {entries.map((entry) => (
+                  <motion.div key={entry.id} layout="position" transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}>
+                    {entry.projectCards ? renderProjectGroup(entry.projectCards) : renderTodoItem(entry.item)}
                   </motion.div>
                 ))}
               </div>
@@ -1249,7 +1251,7 @@ export default function TodosPage() {
 
             return (
               <div key={group}>
-                {viewMode === "all" ? taskList : (
+                {(
                   <div className="todo-fold" data-folded={isCategoryCollapsed || undefined}>
                     <button
                       type="button"
@@ -1257,7 +1259,7 @@ export default function TodosPage() {
                       aria-expanded={!isCategoryCollapsed}
                       aria-label={`${isCategoryCollapsed ? t("展开分类", "Expand category") : t("收起分类", "Collapse category")}: ${groupLabel}`}
                       className="todo-fold-head flex w-full min-w-0 items-center gap-2 px-3 py-2.5 text-left"
-                      data-sortable-handle={viewMode === "category" && isCategoryCollapsed ? "" : undefined}
+                      data-sortable-handle={isCategoryCollapsed ? "" : undefined}
                     >
                       <ChevronDown className="todo-fold-chevron h-4 w-4 shrink-0 text-muted-foreground" />
                       <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -1278,13 +1280,14 @@ export default function TodosPage() {
         )}
       </div>
 
-            {/* Add Main Task — rises from the bottom, opens at the tall detent */}
+      {/* Keep actions visible while the form scrolls. */}
       <BottomSheet
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         title={t("添加待办主任务", "Add To-Do Task")}
+        footer={<Button onClick={handleSaveMainTask} className="w-full h-9">{t("保存添加", "Add Task")}</Button>}
         description={t("填写任务内容与优先级，创建新的待办事项。", "Add the task details and priority.")}
-        detents={[0.46, 0.94]}
+        detents={[0.72, 0.94]}
         initialDetent={0}
         className="arc-runtime"
         closeLabel={t("关闭", "Close")}
@@ -1292,13 +1295,13 @@ export default function TodosPage() {
         {addTaskForm}
       </BottomSheet>
 
-            {/* Edit Main Task — rises from the bottom, opens at the tall detent */}
       <BottomSheet
         open={editDialogOpen}
         onOpenChange={(o) => { setEditDialogOpen(o); if (!o) setEditingTodo(null); }}
         title={t("编辑待办任务", "Edit Task")}
+        footer={<Button onClick={handleSaveEdit} className="w-full h-9">{t("保存修改", "Save Changes")}</Button>}
         description={t("修改标题、优先级和分类。", "Change the title, priority, and category.")}
-        detents={[0.46, 0.94]}
+        detents={[0.72, 0.94]}
         initialDetent={0}
         className="arc-runtime"
         closeLabel={t("关闭", "Close")}
@@ -1306,13 +1309,13 @@ export default function TodosPage() {
         {editTaskForm}
       </BottomSheet>
 
-            {/* Subtask Note — rises from the bottom, opens at the tall detent */}
+      {/* Subtask notes share the same comfortable opening height. */}
       <BottomSheet
         open={!!noteEditTodo}
         onOpenChange={(o) => { if (!o) setNoteEditTodo(null); }}
         title={t("编辑子任务备注", "Edit Subtask Note")}
         description={noteEditTodo?.title || t("补充这条子任务的说明。", "Add a note for this subtask.")}
-        detents={[0.46, 0.82]}
+        detents={[0.72, 0.82]}
         initialDetent={0}
         className="arc-runtime"
         closeLabel={t("关闭", "Close")}

@@ -22,7 +22,11 @@ export function ProjectWorkCard({task,onEdit,onDelete,onComplete,onAddToday,inTo
     <div className="project-card-body">
       <div className="project-card-title"><span>{task.title}</span>{task.status==='done'&&<CheckCircle2 className="h-3.5 w-3.5 shrink-0"/>}</div>
       {task.description&&<Paragraph className="project-card-description">{task.description}</Paragraph>}
-      <div className="project-card-meta"><span className="project-card-type"><Icon className="h-3.5 w-3.5"/>{typeLabel}</span><span className="project-card-trailing">
+      <div className="project-card-meta">{task.type === 'task' ? <button type="button" className="project-card-type" disabled={disabled || editMode}
+        aria-label={t(`${task.status === 'done' ? '重新打开' : '完成'}${task.title}`, `${task.status === 'done' ? 'Reopen' : 'Complete'} ${task.title}`)}
+        aria-pressed={task.status === 'done'} onClick={() => onComplete(task.status !== 'done')}>
+        {task.status === 'done' ? <CheckCircle2 size={14}/> : <CheckSquare size={14}/>}{typeLabel}
+      </button> : <span className="project-card-type"><Icon className="h-3.5 w-3.5"/>{typeLabel}</span>}<span className="project-card-trailing">
         {due&&isValid(due)&&<time className={overdue?'is-overdue':''} dateTime={task.due_date!} title={overdue?t('已逾期','Overdue'):t('截止日期','Due date')}>{format(due,'MM/dd')}</time>}
         {task.type==='milestone'&&<button className="project-complete" type="button" aria-label={t(`${task.status==='done'?'重新打开':'完成'}${task.title}`,`${task.status==='done'?'Reopen':'Complete'} ${task.title}`)} aria-pressed={task.status==='done'} disabled={disabled||editMode} onClick={event=>{event.stopPropagation();onComplete(task.status!=='done');}}>{task.status==='done'?<Check className="h-3 w-3"/>:<span/>}</button>}
         {task.type === 'task' && task.status !== 'done' && onAddToday && (
