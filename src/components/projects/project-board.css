@@ -177,3 +177,21 @@ html.project-is-dragging,html.project-is-dragging * { cursor:grabbing!important;
 .project-icon-picker button:hover,.project-icon-auto:hover { background:hsl(var(--muted)/.5); }
 .project-icon-disclosure:focus-visible,.project-icon-picker button:focus-visible,.project-icon-auto:focus-visible { outline:2px solid hsl(var(--ring)); outline-offset:2px; }
 @media(max-width:767px) { .project-icon-picker button { min-height:44px; } }
+
+.project-today-action {
+  display: inline-grid; place-items: center; flex: none;
+  width: 24px; height: 24px; border-radius: 5px;
+  color: hsl(var(--muted-foreground));
+}
+.project-today-action:hover:enabled, .project-today-action:focus-visible {
+  background: hsl(var(--muted)); color: hsl(var(--foreground));
+}
+.project-today-action[data-arranged="true"] { color: hsl(var(--cat-green)); }
+@media (hover: hover) and (pointer: fine) {
+  .project-today-action:not([data-arranged="true"]) { opacity: 0; }
+  .project-work-card:hover .project-today-action,
+  .project-work-card:focus-within .project-today-action { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .project-today-action { transition: opacity 140ms ease, color 140ms ease; }
+}

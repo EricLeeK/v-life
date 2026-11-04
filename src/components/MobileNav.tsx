@@ -19,7 +19,6 @@ import {
   BookOpen,
   ShoppingBag,
   Sparkles,
-  GraduationCap,
   X,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -48,17 +47,11 @@ export function MobileNav() {
   const { t, lang, toggleLang } = useLang();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
-  const focusMode = (settings as any)?.app_focus_mode || "full";
   const morePanelId = useId();
   const moreButtonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const primaryItems = focusMode === "civil_service"
-    ? [
-        { title: t("备考", "Civil"), url: "/preparation", icon: GraduationCap },
-        { title: t("设置", "Settings"), url: "/settings", icon: Settings },
-      ]
-    : [
+  const primaryItems = [
         { title: t("首页", "Home"), url: "/", icon: LayoutDashboard },
         { title: t("日程", "Schedule"), url: "/schedule", icon: CalendarDays },
         { title: t("记账", "Finance"), url: "/finance", icon: Wallet },
@@ -75,23 +68,18 @@ export function MobileNav() {
     { title: t("今日待办", "Today"), url: "/today", icon: CalendarCheck },
     { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
     { title: t("减肥", "Weight"), url: "/weight-loss", icon: Scale },
-    { title: t("备考", "Preparation"), url: "/preparation", icon: GraduationCap },
     { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
     ...(POINTS_FEATURE_ENABLED ? [{ title: t("商店", "Shop"), url: "/shop", icon: ShoppingBag }] : []),
     { title: t("设置", "Settings"), url: "/settings", icon: Settings },
   ];
 
   const visiblePrimaryItems = primaryItems.filter((item) => {
-    if (focusMode === "civil_service") return true;
-    const key = item.url === "/preparation" ? "civil-service" : item.url.replace("/", "");
+    const key = item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });
 
   const visibleMoreItems = moreItems.filter((item) => {
-    if (focusMode === "civil_service") {
-      return item.url === "/preparation" || item.url === "/settings";
-    }
-    const key = item.url === "/preparation" ? "civil-service" : item.url.replace("/", "");
+    const key = item.url.replace("/", "");
     return !hiddenFeatures.includes(key);
   });
   const moreActive = showMore || !visiblePrimaryItems.some(item => item.url === "/" ? pathname === "/" : pathname === item.url || pathname.startsWith(`${item.url}/`));

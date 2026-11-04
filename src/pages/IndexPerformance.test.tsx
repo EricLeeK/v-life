@@ -36,7 +36,8 @@ describe("dashboard request budget", () => {
   it("does not fetch hidden history or duplicate financial/todo datasets", async () => {
     const { client, fetchedKeys } = mount();
     await waitFor(() => expect(client.isFetching()).toBe(0));
-    expect(fetchedKeys()).toHaveLength(8);
+    expect(fetchedKeys()).toHaveLength(9);
+    expect(fetchedKeys().filter(k => k[0] === "projects" && k[1] === "today")).toHaveLength(1);
     // Today's task preview and the visible week agenda each need one shared query.
     expect(fetchedKeys().filter(k => k[0] === "daily_tasks" && k[1] === "today")).toHaveLength(1);
     expect(fetchedKeys().filter(k => k[0] === "schedule" && k[1] === "range")).toHaveLength(1);
@@ -49,7 +50,7 @@ describe("dashboard request budget", () => {
     fireEvent.click(screen.getByRole("button", { name: "展开状态洞察" }));
     await waitFor(() => expect(fetchedKeys().some(k => k[0] === "calories" && k[1] === "range")).toBe(true));
     expect(await screen.findByText("本周暂无记录")).toBeVisible();
-    expect(fetchedKeys()).toHaveLength(11);
+    expect(fetchedKeys()).toHaveLength(12);
     fireEvent.click(screen.getByRole("button", { name: "收起洞察" }));
     // The exit animation can retain inert DOM; the closed panel must be inaccessible.
     expect(screen.getByRole("button", { name: "展开状态洞察" })).toHaveAttribute("aria-expanded", "false");
@@ -57,7 +58,7 @@ describe("dashboard request budget", () => {
     fireEvent.click(screen.getByRole("button", { name: /展开全部模块/ }));
     await waitFor(() => expect(fetchedKeys().some(k => k[0] === "thoughts")).toBe(true));
     // Preparation replaces the old exam, plan and study-time requests.
-    expect(fetchedKeys()).toHaveLength(14);
+    expect(fetchedKeys()).toHaveLength(15);
     expect(fetchedKeys().some(k => k[0] === "civil_plans")).toBe(false);
   });
 

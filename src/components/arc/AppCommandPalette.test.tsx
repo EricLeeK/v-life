@@ -12,6 +12,16 @@ function show() { return render(<MemoryRouter><AppCommandPalette /><Location /><
 
 beforeEach(() => { settings.hidden_features = []; settings.app_focus_mode = "full"; });
 describe("Arc app command navigation", () => {
+  it("keeps normal navigation for retired exam-only settings and removes exam commands", async () => {
+    settings.app_focus_mode = "civil_service";
+    show();
+    fireEvent.click(screen.getByRole("button", { name: /搜索功能/ }));
+    await screen.findByRole("combobox", { name: "搜索功能" });
+    expect(screen.getByRole("option", { name: /学习笔记/ })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /随想/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /考公|备考/ })).not.toBeInTheDocument();
+  });
+
   it("filters the original command list and executes the selected route with Enter", async () => {
     show();
     fireEvent.click(screen.getByRole("button", { name: /搜索功能/ }));

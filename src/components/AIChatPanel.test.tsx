@@ -10,7 +10,7 @@ const api = vi.hoisted(() => ({
   insertPantry: vi.fn(),
 }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: api.from, functions: { invoke: api.invoke } } }));
-vi.mock("@/hooks/useData", () => ({ useSettings: () => ({ data: { ai_mode: "confirm" } }) }));
+vi.mock("@/hooks/useData", () => ({ useAddToToday: () => ({ mutateAsync: vi.fn() }), useSettings: () => ({ data: { ai_mode: "confirm" } }) }));
 vi.mock("@/contexts/DemoModeContext", () => ({ useDemoMode: () => ({ isDemo: false }) }));
 vi.mock("@/contexts/LanguageContext", () => ({ useLang: () => ({ lang: "en", t: (_zh: string, en: string) => en }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));

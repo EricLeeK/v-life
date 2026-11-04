@@ -75,15 +75,20 @@ export async function listModuleRecords(
  */
 export async function getTodayPlan(
   sb: SupabaseClient,
-  dayStartHour = 0,
 ): Promise<{ data?: Record<string, unknown>[]; error?: string }> {
-  const shifted = new Date(Date.now() - dayStartHour * 3600000);
-  const today = shifted.toISOString().split("T")[0];
+  const { data: date, error: dateError } = await sb.rpc("task_business_date");
+  if (dateError) return { error: dateError.message };
   const { data, error } = await sb
     .from("daily_tasks")
     .select("id,todo_id,task_date,is_completed,difficulty,base_points,todos(title,detail)")
-    .eq("task_date", today)
+    .eq("task_date", date)
     .order("created_at", { ascending: true });
   if (error) return { error: error.message };
-  return { data: (data as Record<string, unknown>[]) ?? [] };
+  const { data: cards, error: cardError } = await sb.from("project_tasks")
+    .select("id,title,status,project_id,projects!inner(name)").eq("today_date", date).eq("type", "task");
+  if (cardError) return { error: cardError.message };
+  return { data: [...(data ?? []), ...(cards ?? []).map(card => ({
+    project_task_id: card.id, title: card.title, project: card.projects,
+    task_date: date, is_completed: card.status === "done",
+  }))] };
 }

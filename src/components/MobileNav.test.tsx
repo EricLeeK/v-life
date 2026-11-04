@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MobileNav } from "@/components/MobileNav";
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -15,11 +15,21 @@ vi.mock("@/contexts/LanguageContext", () => ({
   }),
 }));
 
-vi.mock("@/hooks/useData", () => ({
-  useSettings: () => ({ data: { hidden_features: [], app_focus_mode: "full" } }),
-}));
+const settings = vi.hoisted(() => ({ hidden_features: [] as string[], app_focus_mode: "full" }));
+vi.mock("@/hooks/useData", () => ({ useSettings: () => ({ data: settings }) }));
+beforeEach(() => { settings.app_focus_mode = "full"; });
 
 describe("MobileNav", () => {
+  it("recovers normal navigation from retired exam-only mode", () => {
+    settings.app_focus_mode = "civil_service";
+    render(<MemoryRouter><MobileNav /></MemoryRouter>);
+    expect(screen.getByRole("link", { name: "首页" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "更多菜单" }));
+    expect(screen.getByRole("link", { name: "随想" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "学习笔记" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /考公|备考/ })).not.toBeInTheDocument();
+  });
+
   it("provides named, thumb-sized primary navigation targets", () => {
     render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

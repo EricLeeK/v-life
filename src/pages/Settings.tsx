@@ -366,29 +366,6 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2 pb-2 border-b border-border">
-              <Label htmlFor="settings-focus-mode" className="font-medium text-sm text-foreground">
-                {t("专注模式", "Focus mode")}
-              </Label>
-              <Paragraph className="text-xs text-muted-foreground">
-                {t(
-                  "「仅备考」会隐藏主模块入口与同步按钮，数据不会删除；可随时切回全功能。",
-                  "Civil-only hides main modules and sync UI; data is kept. Switch back anytime."
-                )}
-              </Paragraph>
-              <Select
-                value={(draft.app_focus_mode as string) || "full"}
-                onValueChange={(v) => update("app_focus_mode", v)}
-              >
-                <SelectTrigger id="settings-focus-mode" className="max-w-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full">{t("全功能", "Full app")}</SelectItem>
-                  <SelectItem value="civil_service">{t("仅备考", "Preparation only")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <Paragraph className="text-xs text-muted-foreground">
               {t(
                 "在此选择要在侧边栏和手机导航中显示的非核心模块。关闭某个模块仅做视觉隐藏，您存过的历史数据不会受到任何影响。",
@@ -406,7 +383,6 @@ export default function SettingsPage() {
                 { id: "thoughts", name: t("随想", "Thoughts") },
                 { id: "learning-notes", name: t("学习笔记", "Learning Notes") },
                 { id: "weight-loss", name: t("减肥专项", "Weight Loss") },
-                { id: "civil-service", name: t("备考", "Preparation") },
                 { id: "fortune", name: t("运势", "Fortune") },
               ].map((feature) => {
                 const isHidden = ((draft.hidden_features as string[] | null) || []).includes(feature.id);

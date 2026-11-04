@@ -985,7 +985,7 @@ export interface DemoDataStore {
   learning_courses: typeof demoLearningCourses;
   learning_notes: typeof demoLearningNotes;
   projects: typeof demoProjects;
-  project_tasks: typeof demoProjectTasks;
+  project_tasks: Array<(typeof demoProjectTasks)[number] & { today_date?: string | null }>;
   task_tags: typeof demoTaskTags;
   habit_logs: typeof demoHabitLogs;
   todo_habit_logs: typeof demoTodoHabitLogs;

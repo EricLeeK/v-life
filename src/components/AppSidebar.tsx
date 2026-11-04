@@ -17,7 +17,6 @@ import {
   BookOpen,
   ShoppingBag,
   Sparkles,
-  GraduationCap,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useId } from "react";
@@ -55,7 +54,6 @@ export function AppSidebar() {
   const { t } = useLang();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
-  const focusMode = (settings as any)?.app_focus_mode || "full";
 
   /* Groups mirror the ⌘K palette's taxonomy (今天/生活/成长) so both
      navigations teach the same mental model. */
@@ -87,7 +85,6 @@ export function AppSidebar() {
         { title: t("随想", "Thoughts"), url: "/thoughts", icon: Lightbulb },
         { title: t("学习笔记", "Learning Notes"), url: "/learning-notes", icon: BookOpen },
         { title: t("减肥专项", "Weight Loss"), url: "/weight-loss", icon: Scale },
-        { title: t("备考", "Preparation"), url: "/preparation", icon: GraduationCap },
         { title: t("运势", "Fortune"), url: "/fortune", icon: Sparkles },
       ],
     },
@@ -97,10 +94,7 @@ export function AppSidebar() {
     .map((group) => ({
       ...group,
       items: group.items.filter((item) => {
-        if (focusMode === "civil_service") {
-          return item.url === "/preparation";
-        }
-        const key = item.url === "/preparation" ? "civil-service" : item.url.replace("/", "");
+        const key = item.url.replace("/", "");
         return !hiddenFeatures.includes(key);
       }),
     }))
@@ -158,7 +152,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            {POINTS_FEATURE_ENABLED && focusMode !== "civil_service" && (
+            {POINTS_FEATURE_ENABLED && (
               <SidebarMenuButton asChild tooltip={t("商店", "Shop")}>
                 <NavLink
                   to="/shop"

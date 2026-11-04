@@ -209,6 +209,12 @@ export function createAgentDataService(ctx:AgentContext){
       permit('read');
       return await taskWorkflowRpc('daily_task_overview',workflowInput(()=>taskOverviewInput(input)));
     },
+    async arrangeProjectToday(args: { title: string; project_name?: string; task_id?: string }) {
+      permit("read"); permit("write");
+      return taskWorkflowRpc("agent_project_today", {
+        p_title: args.title, p_project_name: args.project_name ?? null, p_task_id: args.task_id ?? null,
+      });
+    },
     async transferDailyTasks(input:unknown) {
       permit('read');permit('write');
       const args=workflowInput(()=>taskTransferInput(input,ctx.idempotencyKey));

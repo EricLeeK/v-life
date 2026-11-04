@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Bot, X, Send, Loader2, Check, AlertCircle, Image, Plus, History, Trash2, Undo2, Camera } from "lucide-react";
 import { format } from "date-fns";
-import { getLocalDateString, useSettings } from "@/hooks/useData";
+import { getLocalDateString, useSettings, useAddToToday } from "@/hooks/useData";
 import { useLang } from "@/contexts/LanguageContext";
 import { useDemoMode } from "@/contexts/DemoModeContext";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
@@ -21,6 +21,7 @@ import { isPersistentKind } from "@/lib/habits";
 import { executeSubscriptionChatOperation, preserveUsdExpenseRate } from './subscriptionChatOperations';
 import { callNewspaper } from '@/hooks/useNewspapers';
 import { executeNewspaperChatOperation } from '@/lib/newspaperChat';
+import { existingTodayCommand, projectTodayRequest, projectTodayMiss } from "@/lib/projectTodayAgent";
 import { useAuth } from '@/contexts/AuthContext';
 
 type MessageContent = string | Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>;
@@ -220,90 +221,6 @@ function mapOperationToRow(module: string, data: Record<string, any>, exchangeRa
         tags: data.tags || [],
         note_date: data.note_date || today,
       };
-    case "civil_exam":
-      return {
-        name: data.name || "未命名考试",
-        exam_date: data.exam_date || today,
-        exam_type: data.exam_type || "自定义",
-        is_primary: !!data.is_primary,
-        is_archived: !!data.is_archived,
-        notes: data.notes || null,
-      };
-    case "civil_plan":
-      return {
-        title: data.title || "未命名计划",
-        detail: data.detail || null,
-        plan_date: data.plan_date || today,
-        subject_group: data.subject_group || "xingce",
-        subject_tag: data.subject_tag || null,
-        start_time: data.start_time || null,
-        end_time: data.end_time || null,
-        source: data.source || "plan",
-        is_completed: !!data.is_completed,
-        completed_at: data.is_completed ? new Date().toISOString() : null,
-      };
-    case "civil_checkin":
-      return {
-        date: data.date || today,
-        studied_minutes: Number(data.studied_minutes) || 0,
-        note: data.note || null,
-      };
-    case "civil_wrong": {
-      const sourceDate = data.source_date || today;
-      const status = data.review_status || "pending";
-      const review =
-        status === "mastered"
-          ? { review_status: "mastered", next_review_date: null, review_interval_days: 1, last_reviewed_at: null }
-          : {
-              review_status: "pending",
-              review_interval_days: 1,
-              next_review_date: sourceDate, // client will still work; better set +1 day
-              last_reviewed_at: null,
-            };
-      // next day review
-      try {
-        const d = new Date(sourceDate + "T00:00:00");
-        d.setDate(d.getDate() + 1);
-        if (status !== "mastered") {
-          review.next_review_date = format(d, "yyyy-MM-dd");
-        }
-      } catch { /* keep */ }
-      return {
-        title: data.title || "未命名错题",
-        content: data.content || null,
-        wrong_reason: data.wrong_reason || null,
-        knowledge_point: data.knowledge_point || null,
-        subject_group: data.subject_group || "xingce",
-        subject_tag: data.subject_tag || null,
-        source_date: sourceDate,
-        image_url: data.image_url || null,
-        ...review,
-      };
-    }
-    case "civil_xingce_paper":
-      return {
-        taken_date: data.taken_date || today,
-        source: data.source || "未命名套卷",
-        is_mock: data.is_mock !== false,
-        verbal_total: Number(data.verbal_total) || 0,
-        verbal_correct: Number(data.verbal_correct) || 0,
-        data_total: Number(data.data_total) || 0,
-        data_correct: Number(data.data_correct) || 0,
-        graphic_total: Number(data.graphic_total) || 0,
-        graphic_correct: Number(data.graphic_correct) || 0,
-        logic_total: Number(data.logic_total) || 0,
-        logic_correct: Number(data.logic_correct) || 0,
-        analogy_total: Number(data.analogy_total) || 0,
-        analogy_correct: Number(data.analogy_correct) || 0,
-        quantity_total: Number(data.quantity_total) || 0,
-        quantity_correct: Number(data.quantity_correct) || 0,
-        common_total: Number(data.common_total) || 0,
-        common_correct: Number(data.common_correct) || 0,
-        duration_minutes: data.duration_minutes != null ? Number(data.duration_minutes) : null,
-        total_score: data.total_score != null ? Number(data.total_score) : null,
-        beat_rate: data.beat_rate != null ? Number(data.beat_rate) : null,
-        notes: data.notes || null,
-      };
     default:
       return data;
   }
@@ -488,6 +405,13 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const { mutateAsync: addExistingTodo } = useAddToToday();
+  const resolveProjectToday = useCallback((data: { title: string; task_id?: string; project_name?: string }, apply: boolean) =>
+    projectTodayRequest(data, apply, isDemo ? {
+      data: demoData, day: getLocalDateString(new Date(), settings?.day_start_hour || 0),
+      arrange: (id, day) => updateRecord("project_tasks", id, { today_date: day }),
+    } : undefined), [demoData, isDemo, settings?.day_start_hour, updateRecord]);
+
   const executeOperations = useCallback(
     async (operations: Operation[]) => {
       let exchangeRate = 0.048;
@@ -529,6 +453,18 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
 
       for (const rawOp of operations) {
         let op: Operation = rawOp;
+        if (op.module === "project_today") {
+          try {
+            if (op.action !== "add") throw new Error("未知的项目安排操作");
+            const receipt = await resolveProjectToday({ title: op.data.title, task_id: op.data.task_id, project_name: op.data.project_name }, true);
+            if ("candidates" in receipt) throw new Error(projectTodayMiss(receipt));
+            results.push(`「${receipt.project_name}」的「${receipt.title}」${receipt.status === "already_arranged" ? "已在今日待办中" : "已加入今天"}。`);
+          } catch (error) {
+            hasError = true;
+            results.push(error instanceof Error ? error.message : "项目安排失败，请重试。");
+          }
+          continue;
+        }
         if (op.module === 'newspaper') {
           try {
             if (!isDemo && !user?.id) throw new Error('请先登录后操作日报。');
@@ -565,6 +501,15 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
           if (op.action === "create") {
             // daily_task（今日待办）：优先用 todo_id 直接引用，否则按标题找/建 todo，再加入今天
             if (op.module === "daily_task") {
+              if (isDemo && op.data.todo_id) {
+                const original = demoData.todos.find(todo => todo.id === op.data.todo_id);
+                if (!original || original.is_archived || original.is_completed || original.kind === "habit") {
+                  throw new Error("原待办当前无法加入今天");
+                }
+                await addExistingTodo({ todo_id: original.id, difficulty: "medium", base_points: 20 });
+                results.push(`「${original.title}」已在今日待办中。`);
+                continue;
+              }
               const payload: Record<string, unknown> = {task_date: getLocalDateString(new Date(), settings?.day_start_hour || 0)};
               for (const key of ["todo_id","title","kind","category","importance","detail","difficulty","base_points","complete"]) {
                 if (op.data[key] !== undefined) payload[key] = op.data[key];
@@ -625,13 +570,6 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
               const { data: { user } } = await supabase.auth.getUser();
               if (!user) throw new Error("未登录");
               row.user_id = user.id;
-            }
-
-            if (op.module === "civil_exam" && row.is_primary) {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (user) {
-                await supabase.from("civil_exams").update({ is_primary: false }).eq("user_id", user.id);
-              }
             }
 
             // Foreign-key-by-name resolution (project_name → project_id, course_name → course_id, …)
@@ -761,7 +699,7 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
 
       return { results, createdIds, hasError };
     },
-    [qc, t, isDemo, user?.id, addRecord, updateRecord, deleteRecord, settings?.day_start_hour]
+    [qc, t, resolveProjectToday, addExistingTodo, demoData, isDemo, user?.id, addRecord, updateRecord, deleteRecord, settings?.day_start_hour]
   );
 
   const handleUndo = async () => {
@@ -818,21 +756,46 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
 
       await saveMessage(sessionId, "user", text || "(图片)", currentImages.length > 0 ? currentImages : undefined);
 
-      const { data, error } = await supabase.functions.invoke("ai-chat", {
-        body: {
-          messages: [...messages, userMsg].map((m) => ({
-            role: m.role,
-            content: m.contentRaw || m.content,
-          })),
-          session_id: sessionId,
-          ...(isDemo ? {demo_subscription_snapshot:{subscriptions:[...subscriptionDemoRef.current.subscriptions],subscription_payments:[...subscriptionDemoRef.current.subscription_payments]}} : {}),
-        },
-      });
+      const command = currentImages.length ? null : existingTodayCommand(text);
+      const parsed = await (async () => {
+        if (command) {
+          const found = await resolveProjectToday(command, false);
+          if (!("candidates" in found)) return {
+            operations: [{ module: "project_today", action: "add", data: { title: found.title, task_id: found.id, project_name: found.project_name } }],
+            summary: `匹配到「${found.project_name}」中的任务「${found.title}」。`,
+          };
+          if (found.status === "not_found" && !command.project_name) {
+            const existing = isDemo ? demoData.todos.filter(row => row.title === command.title && !row.is_archived && !row.is_completed) :
+              await (async () => {
+                const {data,error} = await supabase.from("todos").select("id,kind").eq("title", command.title)
+                  .eq("is_completed", false).eq("is_archived", false).limit(2);
+                if (error) throw error;
+                return data;
+              })();
+            if (existing.length === 1 && existing[0].kind !== "habit") return {
+              operations: [{module:"daily_task", action:"create", data:{todo_id:existing[0].id, title:command.title}}],
+              summary: `匹配到已有待办「${command.title}」。`,
+            };
+            if (existing.length > 0) return {operations:[], summary:existing.length > 1 ? "有多个同名待办，请指定具体记录。" : "这个习惯已在今日习惯区。"};
+          }
+          return { operations: [], summary: projectTodayMiss(found) };
+        }
+        const { data, error } = await supabase.functions.invoke("ai-chat", {
+          body: {
+            messages: [...messages, userMsg].map((m) => ({
+              role: m.role,
+              content: m.contentRaw || m.content,
+            })),
+            session_id: sessionId,
+            ...(isDemo ? {demo_subscription_snapshot:{subscriptions:[...subscriptionDemoRef.current.subscriptions],subscription_payments:[...subscriptionDemoRef.current.subscription_payments]}} : {}),
+          },
+        });
 
-      const invokeMsg = await messageFromAiInvoke(data, error);
-      if (invokeMsg) throw new Error(invokeMsg);
+        const invokeMsg = await messageFromAiInvoke(data, error);
+        if (invokeMsg) throw new Error(invokeMsg);
 
-      const parsed = parseAgentChatContent({ result: data?.result, raw: data?.raw });
+        return parseAgentChatContent({ result: data?.result, raw: data?.raw });
+      })();
       if (conversationSessionRef.current !== sessionId) return;
       const operations: Operation[] = (parsed.operations || []).map((operation: Operation) => operation.module === 'newspaper'
         ? { ...operation, idempotency_key: operation.idempotency_key || crypto.randomUUID() }
@@ -860,9 +823,10 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
             setUndoTimer(timer);
           }
 
-          toast({ title: t("AI 操作完成", "AI operation complete"), description: summary });
+          toast({ title: hasError ? t("操作未全部完成", "Some actions failed") : t("AI 操作完成", "AI operation complete"), description: execResults.join(" · ") });
         } else {
           const previewLines = operations.map((op) => {
+            if (op.module === "project_today") return `• 安排到今天：${op.data.project_name ? op.data.project_name + " · " : ""}${op.data.title}`;
             if (op.module === 'newspaper') {
               const actions: Record<string, string> = { refresh: '更新报纸修订', supplement_save: '保存原文补充', supplement_delete: '删除补充', report_update: '调整版块', review_generate: '生成复盘', style_save: '保存配图风格', style_delete: '删除配图风格', image_generate: '生成配图', image_select: '选用配图', image_caption: '修改图注' };
               return `• ${actions[op.action] || op.action}${op.data.date ? `（${op.data.date}）` : ''}`;
@@ -916,7 +880,7 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
         status: hasError ? "error" : "executed",
       };
       setMessages((prev) => prev.map((m, i) => (i === msgIndex ? updatedMsg : m)));
-      toast({ title: t("操作已执行", "Operation executed") });
+      toast({ title: hasError ? t("操作未全部完成", "Some actions failed") : t("操作已执行", "Operation executed") });
     } catch (e: any) {
       toast({ title: t("执行失败", "Execution failed"), description: e.message, variant: "destructive" });
     } finally {

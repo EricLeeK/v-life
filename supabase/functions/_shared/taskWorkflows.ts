@@ -3,7 +3,7 @@ const dateInput = {
   type:'string', default:'today',
   description:'today / tomorrow / yesterday 或 YYYY-MM-DD。相对日期由服务器按 Asia/Shanghai 和用户日界线解析。',
 };
-export const TASK_OVERVIEW_DESCRIPTION = '今日规划、跨天安排的首选读取工具。一次返回指定日 tasks 和此前 lookback_days 天的未完成 backlog，包含标题、daily_task_id、todo_id、可迁移状态和原因，无需逐条 todo_get 或翻页。默认今天及前三天；date 可用 today/tomorrow/yesterday 或具体日期。最多500条，超限明确报错，不返回残缺清单。习惯不在此，用 habit_log。';
+export const TASK_OVERVIEW_DESCRIPTION = '今日规划、跨天安排的首选读取工具。一次返回指定日 tasks 和此前 lookback_days 天的未完成 backlog，project_tasks 另列已安排的项目原卡及项目名称，不可将其 ID 传给 daily_task_transfer。普通待办包含标题、daily_task_id、todo_id、可迁移状态和原因，无需逐条 todo_get 或翻页。默认今天及前三天；date 可用 today/tomorrow/yesterday 或具体日期。最多500条，超限明确报错，不返回残缺清单。习惯不在此，用 habit_log。';
 export const TASK_TRANSFER_DESCRIPTION = '跨天安排的首选写入工具。先从 daily_task_overview 选择真实 daily_task_id，批量移到 today/tomorrow/具体日期。必须明确 mode：move 移除所选旧安排（对应网页上箭头，需要 read/write/delete）；copy 为例行任务保留旧安排（read/write）。未完成的一次性任务只能在一个日期上，copy 也会改期并报告 moved/source_removed=true。同一总待办同一天自动去重，新目标沿用来源积分和元数据，已有目标不覆盖。仅接受未完成且可执行任务，整批原子提交或全部回滚。必须提供幂等键，重试沿用同一键及原参数；replayed=true 是原操作回执，最新状态再查 overview。保留旧安排不等于冻结历史完成状态。';
 export const TASK_OVERVIEW_SCHEMA = {
   type:'object', additionalProperties:false,

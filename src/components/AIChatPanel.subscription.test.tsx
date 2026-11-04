@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AIChatPanel } from './AIChatPanel';
 const api=vi.hoisted(()=>({invoke:vi.fn(),from:vi.fn(),insert:vi.fn(),rpc:vi.fn(),isDemo:false,addRecord:vi.fn(),updateRecord:vi.fn(),deleteRecord:vi.fn()}));
 vi.mock('@/integrations/supabase/client',()=>({supabase:{from:api.from,rpc:api.rpc,functions:{invoke:api.invoke},auth:{getUser:async()=>({data:{user:{id:'user'}}})}}}));
-vi.mock('@/hooks/useData',()=>({useSettings:()=>({data:{ai_mode:'direct'}})}));
+vi.mock('@/hooks/useData',()=>({useAddToToday:()=>({mutateAsync:vi.fn()}),useSettings:()=>({data:{ai_mode:'direct'}})}));
 vi.mock('@/contexts/DemoModeContext',()=>({useDemoMode:()=>({isDemo:api.isDemo,demoData:{subscriptions:[],subscription_payments:[]},addRecord:api.addRecord,updateRecord:api.updateRecord,deleteRecord:api.deleteRecord})}));
 vi.mock('@/contexts/LanguageContext',()=>({useLang:()=>({lang:'en',t:(_zh:string,en:string)=>en})}));
 vi.mock('@/hooks/use-toast',()=>({useToast:()=>({toast:vi.fn()})}));

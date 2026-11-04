@@ -121,7 +121,7 @@ export function agentMetaOf(mod: ModuleDef): AgentModuleMeta {
 
 export const MODULES: ModuleDef[] = [
   {
-    key: "subscription", labelZh: "订阅", labelEn: "Subscription", headingZh: "订阅管理", table: "subscriptions", index: 23,
+    key: "subscription", labelZh: "订阅", labelEn: "Subscription", headingZh: "订阅管理", table: "subscriptions", index: 18,
     actions: { create: true, update: true, delete: true },
     fields: [
       { name: "name", type: "string", required: true },
@@ -145,7 +145,7 @@ export const MODULES: ModuleDef[] = [
     executor: { nameField: "name", needsUserId: true, dateField: "next_date", queryKeys: ["subscriptions"] },
   },
   {
-    key: "subscription_payment", labelZh: "订阅付款", labelEn: "Subscription payment", headingZh: "确认订阅付款与历史", table: "subscription_payments", index: 24,
+    key: "subscription_payment", labelZh: "订阅付款", labelEn: "Subscription payment", headingZh: "确认订阅付款与历史", table: "subscription_payments", index: 19,
     actions: { create: true },
     fields: [
       { name: "subscription_id", type: "string", required: true, description: "subscription_list/get 返回的真实订阅 UUID" },
@@ -458,150 +458,12 @@ export const MODULES: ModuleDef[] = [
     },
   },
   {
-    key: "civil_exam",
-    labelZh: "考公考试",
-    labelEn: "Civil Exam",
-    headingZh: "考公考试倒计时",
-    table: "civil_exams",
-    index: 14,
-    actions: { create: true, update: true, delete: true },
-    fields: [
-      { name: "name", type: "string", required: true },
-      { name: "exam_date", type: "date", required: true },
-      { name: "exam_type", type: "string", enum: ["国考", "省考", "事业编", "自定义"] },
-      { name: "is_primary", type: "boolean" },
-      { name: "notes", type: "string" },
-      { name: "is_archived", type: "boolean", updateOnly: true },
-    ],
-    matchFields: ["name"],
-    updateFields: ["name", "exam_date", "exam_type", "is_primary", "is_archived", "notes"],
-    executor: { nameField: "name", queryKeys: ["civil_exams"], needsUserId: true },
-  },
-  {
-    key: "civil_plan",
-    labelZh: "考公计划",
-    labelEn: "Civil Plan",
-    headingZh: "考公学习计划",
-    table: "civil_plan_items",
-    index: 15,
-    actions: { create: true, update: true, delete: true },
-    fields: [
-      { name: "title", type: "string", required: true },
-      { name: "plan_date", type: "date", required: true },
-      { name: "subject_group", type: "string", enum: ["xingce", "shenlun", "mianshi", "general"] },
-      { name: "subject_tag", type: "string" },
-      { name: "detail", type: "string" },
-      { name: "start_time", type: "datetime" },
-      { name: "end_time", type: "datetime" },
-      { name: "source", type: "string", enum: ["plan", "daily_extra"] },
-      { name: "is_completed", type: "boolean", updateOnly: true },
-    ],
-    matchFields: ["title", "plan_date"],
-    updateFields: ["title", "is_completed", "plan_date", "subject_group", "subject_tag", "detail", "start_time", "end_time"],
-    notes:
-      "subject_tag 常用：套卷、言语理解、资料分析、图形推理、定义类比、逻辑推理、数量关系、时政常识、综应、申论、理论学习、素材积累、热点剖析。",
-    executor: { nameField: "title", queryKeys: ["civil_plan_items"], needsUserId: true, dateField: "plan_date" },
-  },
-  {
-    key: "civil_checkin",
-    labelZh: "考公打卡",
-    labelEn: "Civil Check-in",
-    headingZh: "考公每日打卡",
-    table: "civil_checkins",
-    index: 16,
-    actions: { create: true },
-    fields: [
-      { name: "studied_minutes", type: "number", required: true },
-      { name: "date", type: "date", required: true },
-      { name: "note", type: "string" },
-    ],
-    notes: "同一天重复打卡会覆盖（upsert）。",
-    executor: { nameField: "date", queryKeys: ["civil_checkins"], needsUserId: true, upsert: ["user_id", "date"], dateField: "date" },
-  },
-  {
-    key: "civil_wrong",
-    labelZh: "考公错题",
-    labelEn: "Civil Wrong",
-    headingZh: "考公错题",
-    table: "civil_wrong_answers",
-    index: 17,
-    actions: { create: true, update: true, delete: true },
-    fields: [
-      { name: "title", type: "string", required: true },
-      { name: "subject_group", type: "string", required: true, enum: ["xingce", "shenlun", "mianshi"] },
-      { name: "subject_tag", type: "string" },
-      { name: "content", type: "string" },
-      { name: "wrong_reason", type: "string" },
-      { name: "knowledge_point", type: "string" },
-      { name: "source_date", type: "date" },
-      { name: "review_status", type: "string", enum: ["pending", "mastered"] },
-      { name: "question_type", type: "string", enum: ["choice", "judgement", "text"] },
-      { name: "options", type: "array", promptType: "[{key: string, text: string}]" },
-      { name: "correct_answer", type: "string" },
-      { name: "user_answer", type: "string" },
-      { name: "image_required", type: "boolean" },
-    ],
-    matchFields: ["title"],
-    updateFields: [
-      "title",
-      "review_status",
-      "wrong_reason",
-      "knowledge_point",
-      "subject_tag",
-      "question_type",
-      "options",
-      "correct_answer",
-      "user_answer",
-      "image_required",
-    ],
-    notes:
-      "识别错题图片时，用 civil_wrong create 返回草稿字段（含 question_type/options/correct_answer/user_answer/image_required）；用户确认后再落库。新建 pending 错题会自动安排复习日期。image_required=true 表示图形推理/带图题等必须看图；纯文字题给 false。",
-    executor: { nameField: "title", queryKeys: ["civil_wrong_answers"], needsUserId: true, dateField: "source_date" },
-  },
-  {
-    key: "civil_xingce_paper",
-    labelZh: "行测套卷",
-    labelEn: "Xingce Paper",
-    headingZh: "行测套卷",
-    table: "civil_xingce_papers",
-    index: 18,
-    actions: { create: true, update: true, delete: true },
-    fields: [
-      { name: "taken_date", type: "date", required: true },
-      { name: "source", type: "string", required: true },
-      { name: "is_mock", type: "boolean" },
-      { name: "verbal_total", type: "number" },
-      { name: "verbal_correct", type: "number" },
-      { name: "data_total", type: "number" },
-      { name: "data_correct", type: "number" },
-      { name: "graphic_total", type: "number" },
-      { name: "graphic_correct", type: "number" },
-      { name: "logic_total", type: "number" },
-      { name: "logic_correct", type: "number" },
-      { name: "analogy_total", type: "number" },
-      { name: "analogy_correct", type: "number" },
-      { name: "quantity_total", type: "number" },
-      { name: "quantity_correct", type: "number" },
-      { name: "common_total", type: "number" },
-      { name: "common_correct", type: "number" },
-      { name: "duration_minutes", type: "number" },
-      { name: "total_score", type: "number" },
-      { name: "beat_rate", type: "number" },
-      { name: "notes", type: "string" },
-    ],
-    matchFields: ["source", "taken_date"],
-    updateFields: ["source", "total_score", "beat_rate", "notes", "is_mock"],
-    notes:
-      "言语=verbal，资料=data，图推=graphic，逻辑=logic，定义类比=analogy，数量=quantity，常识=common。*_total 为题量，*_correct 为正确数。",
-    executor: { nameField: "source", queryKeys: ["civil_xingce_papers"], needsUserId: true, dateField: "taken_date" },
-  },
-  {
     key: "daily_task",
     labelZh: "今日待办",
     labelEn: "Today's Todo",
     headingZh: '今日待办 — 加入"今天"的任务表，区别于 todo 待办事项',
     table: "daily_tasks",
-    index: 19,
+    index: 14,
     actions: { create: true, update: true, delete: true },
     agentVisible: true,
     agentReadFields: ["todo_id", "task_date", "difficulty", "base_points", "is_completed", "completed_at"],
@@ -621,7 +483,7 @@ export const MODULES: ModuleDef[] = [
     matchFields: ["title"],
     matchRequired: ["title"],
     notes:
-      '【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。**优先用 todo_id**。命中 kind=habit 时不要 daily_task（习惯已在今日顶部，报进度用 habit_log）。例行用 daily_task。没有 id 时给 title，系统自动按标题找/建 todo 再加入今天。未完成的一次性任务只会留在一个日期上，排到新的一天会移走旧的未完成记录。',
+      '【与 todo 的核心区别】todo 是"待办事项"（长期积压清单）；daily_task 是"今日待办"（今天要做的当天任务，对应"今日待办/Today"页）。已存在的项目任务使用 project_today/add，不创建 todo。仅对普通待办，当用户说"把 XXX 加入今天的待办 / 今天要做 XXX / 把 XXX 排到今天 / 今天加一项 XXX"时，用 daily_task 而不是 todo。**优先用 todo_id**。命中 kind=habit 时不要 daily_task（习惯已在今日顶部，报进度用 habit_log）。例行用 daily_task。没有 id 时给 title，系统自动按标题找/建 todo 再加入今天。未完成的一次性任务只会留在一个日期上，排到新的一天会移走旧的未完成记录。',
     executor: { nameField: "title", queryKeys: ["daily_tasks"], special: "daily_task", dateField: "task_date" },
   },
   {
@@ -630,7 +492,7 @@ export const MODULES: ModuleDef[] = [
     labelEn: "Course",
     headingZh: "学习课程",
     table: "learning_courses",
-    index: 20,
+    index: 15,
     actions: { create: true },
     fields: [
       { name: "name", type: "string", required: true },
@@ -645,7 +507,7 @@ export const MODULES: ModuleDef[] = [
     labelEn: "Learning Note",
     headingZh: "学习笔记",
     table: "learning_notes",
-    index: 21,
+    index: 16,
     actions: { create: true },
     fields: [
       { name: "title", type: "string", required: true },
@@ -668,7 +530,7 @@ export const MODULES: ModuleDef[] = [
     labelEn: "Habit log",
     headingZh: "习惯当日流水（打卡/计数/时长/坚持）",
     table: "todo_habit_logs",
-    index: 22,
+    index: 17,
     actions: { create: true, delete: true },
     fields: [
       { name: "title", type: "string", required: true, description: "习惯名称，须已存在" },
@@ -829,7 +691,7 @@ const PROMPT_AGENT = `## 数据读取能力（ReAct 工具调用）
 
 ### 何时调用工具
 - **查询/统计/核对**（"我这个月餐饮花了多少""冰箱还有什么""还有哪些错题没掌握"）→ 先 \`read_data\` 再用 \`summary\` 回答（\`operations\` 可为空）。
-- **今日规划**（"今天想做 XXX / 把 XXX 排到今天"）→ 先 \`read_data(module:"todo")\` 语义匹配。命中习惯 → 不要 daily_task（已在今日顶部）；若是报进度则 \`habit_log\`。命中例行 → \`daily_task\`。未命中 → 先 todo create（自行判断 kind），只有一次性/例行再 daily_task。
+- 将已有任务安排到今天（如“把修改实验部分加入今天”）：先查 project_task。命中普通项目任务时，唯一操作为 {"module":"project_today","action":"add","data":{"title":"原任务标题","task_id":"读取到的原卡 ID"}}，可附 project_name。未能区分同名时给出项目名供澄清。明确引用已有任务却未找到时不可新建替代记录。普通待办命中后按 todo_id 加入 daily_task，习惯打卡仍用 habit_log。只有明确新建事项时才创建。
 - **推荐**（"推荐我今天做啥"）→ \`read_data\` 后在 \`summary\` 给建议，**默认不自动加入**（除非用户明确说"加进去"）。
 
 ### 输出仍是 JSON
@@ -851,8 +713,7 @@ const PROMPT_DEFAULTS = `## 默认值规则
 - 运动：如果用户提到了运动但没说消耗多少，根据运动类型和时长自行估算消耗热量
 - 项目 status 缺失 → 默认 "planning"，priority 缺失 → 默认 "medium"
 - 项目子任务 type 缺失 → 默认 "task"，status 缺失 → 默认 "todo"
-- civil_plan subject_group 缺失 → 默认 "xingce"；civil_checkin 同一天 upsert
-- civil_wrong review_status 缺失 → 默认 "pending"`;
+`;
 
 const PROMPT_VOCAB = `## 开放字段与封闭字段
 - **封闭字段**：模块定义里写成 \`"A"|"B"|"C"\` 的枚举（如 finance.category、meal_type、currency）。必须用枚举值，禁止自创；不确定时用「其他」。

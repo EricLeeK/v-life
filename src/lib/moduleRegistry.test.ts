@@ -11,8 +11,8 @@ import {
 } from "@modules";
 
 describe("MODULES integrity", () => {
-  it("includes all 24 modules including subscriptions and payment confirmation", () => {
-    expect(MODULES).toHaveLength(24);
+  it("includes all 19 modules including subscriptions and payment confirmation", () => {
+    expect(MODULES).toHaveLength(19);
     expect(MODULE_KEYS).toEqual(expect.arrayContaining(['subscription','subscription_payment']));
   });
 
@@ -35,9 +35,9 @@ describe("MODULES integrity", () => {
     }
   });
 
-  it("module indices are 1..24 contiguous", () => {
+  it("module indices are 1..19 contiguous", () => {
     const indices = MODULES.map((m) => m.index).sort((a, b) => a - b);
-    expect(indices).toEqual(Array.from({ length: 24 }, (_, i) => i + 1));
+    expect(indices).toEqual(Array.from({ length: 19 }, (_, i) => i + 1));
   });
 
   it("no internal field appears in any updateFields list", () => {
@@ -92,7 +92,7 @@ describe("derived helpers", () => {
     // Subscription confirmation also invalidates finance but adds only its history key.
     expect(keys).toContain("todo_habit_logs");
     expect(keys).toContain('subscriptions');expect(keys).toContain('subscription_payments');
-    expect(keys).toHaveLength(23);
+    expect(keys).toHaveLength(18);
   });
 });
 
@@ -161,8 +161,11 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain('delete: { module: "daily_task", action: "delete", data: { match: { title: string } } }');
   });
 
-  it("renders civil_wrong options with its complex type", () => {
-    expect(prompt).toContain("options?: [{key: string, text: string}]");
+  it("does not advertise or execute retired exam modules", () => {
+    expect(MODULE_KEYS.some(key => key.startsWith("civil_"))).toBe(false);
+    expect(tableOf("civil_exam")).toBeUndefined();
+    expect(tableOf("civil_wrong")).toBeUndefined();
+    expect(prompt).not.toContain("civil_");
   });
 
   it("preserves all 15 few-shot examples", () => {
@@ -175,10 +178,11 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("你好");
   });
 
-  it("emits create only for modules that support it, and omits it otherwise", () => {
-    // civil_checkin supports only create
-    expect(prompt).toMatch(/### 16\. civil_checkin[\s\S]*?create: \{ module: "civil_checkin"/);
-    // it must NOT contain a civil_checkin update/delete line
-    expect(prompt).not.toContain('action: "update", data: { match: { date?');
+  it("emits only supported actions", () => {
+    for (const module of MODULES) {
+      for (const action of ["create", "update", "delete"] as const) {
+        if (!module.actions[action]) expect(prompt).not.toContain(`module: "${module.key}", action: "${action}"`);
+      }
+    }
   });
 });

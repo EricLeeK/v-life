@@ -10,6 +10,8 @@ import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
 import { WeightedTaskGrid } from "./projects/WeightedTaskGrid";
 import { ProjectWorkCard, type ProjectTask } from "./projects/ProjectWorkCard";
 import { projectColumns, byBoardOrder, projectProgress, moveProjectItem } from "./projects/board-model";
+import { useProjectTodayAction } from "@/hooks/useProjectToday";
+import { getLocalDateString, useSettings } from "@/hooks/useData";
 import { useProjectBoardMove } from "@/hooks/useProjectBoardMove";
 import { CollectionFeedback } from "./concepts/CollectionFeedback";
 import { format, parseISO, isValid, differenceInCalendarDays } from "date-fns";
@@ -39,6 +41,9 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
   const reducedMotion = useReducedMotion();
   const { data: serverTasks = EMPTY_TASKS, isLoading, error, refetch } = useProjectTasks(project.id);
   const moveMutation = useProjectBoardMove();
+  const { data: settings } = useSettings();
+  const day = getLocalDateString(new Date(), settings?.day_start_hour || 0);
+  const arrange = useProjectTodayAction(day);
   const [moving, setMoving] = useState(false);
   const updateTask = useUpdateProjectTask();
   const updateProject = useUpdateProject();
@@ -188,7 +193,8 @@ export function ProjectBoard({ project, onEditProject, onDeleteProject, editMode
       </header>
       {isLoading || error ? <div className="p-8"><CollectionFeedback loading={isLoading} error={error} retry={refetch}><span /></CollectionFeedback></div> :
         <WeightedTaskGrid items={filteredTasks} columns={columns} disabled={editMode || moving} onMove={handleBoardMove} onAdd={status => openAddModal("task", status)} labelItem={task => task.title}
-          renderItem={task => <ProjectWorkCard task={task} disabled={moving} editMode={editMode} onEdit={() => openEditModal(task)} onDelete={() => setDeletingTask(task)} onComplete={done => handleMilestoneToggle(task, done)} />} />}
+          renderItem={task => <ProjectWorkCard task={task} onAddToday={() => arrange.mutate({ id: task.id, projectId: project.id, action: "add" })}
+            inToday={task.today_date === day} addingToday={arrange.isPending && arrange.variables?.id === task.id} disabled={moving} editMode={editMode} onEdit={() => openEditModal(task)} onDelete={() => setDeletingTask(task)} onComplete={done => handleMilestoneToggle(task, done)} />} />}
       <div className="project-save-status" role="status">{moving ? <span className="inline-flex items-center gap-1.5"><Loader2 className="h-3 w-3 animate-spin" />{t("正在保存…", "Saving…")}</span> : t("拖动卡片调整状态 · 里程碑可一键完成 · 习惯独立打卡", "Drag to move · Complete milestones · Check in habits")}</div>
       <TaskModal
         open={taskModalOpen}

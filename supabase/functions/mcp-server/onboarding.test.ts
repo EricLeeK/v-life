@@ -15,6 +15,7 @@ function fixture(auditFails=false) {
   calls.push([name,args]);
   if(name==='agent_log_operation'&&auditFails)throw new Error('audit unavailable');
   if(name==='agent_classifications')return {data:{data:[{value:'工作',usage_count:3,configured:false}],total:1,hasMore:false,nextOffset:null},error:null};
+  if(name==='agent_project_today')return {data:{data:{status:'arranged',title:args.p_title,project_name:'论文',id:todoId}},error:null};
   if(name==='task_business_date')return {data:'2026-09-24',error:null};
   if(name==='daily_task_overview')return {data:{data:{business_date:'2026-09-24',date:'2026-09-24',complete:true,tasks:[],backlog:[]}},error:null};
   if(name==='daily_task_transfer')return {data:{data:{target_date:'2026-09-25',items:[]},replayed:false},error:null};
@@ -97,7 +98,7 @@ Deno.test('task workflow tools are discoverable with explicit transfer semantics
 });
 Deno.test('create schemas declare mandatory database dates and course relation',async()=>{
  const {tools}=await fixture().rpc('tools/list');
- for(const [module,field] of [['weight','date'],['measurement','date'],['civil_plan','plan_date'],['civil_checkin','date'],['civil_xingce_paper','taken_date'],['learning_note','course_name']]) {
+ for(const [module,field] of [['weight','date'],['measurement','date'],['learning_note','course_name']]) {
   assert(tools.find((t:any)=>t.name===`${module}_create`).inputSchema.required.includes(field),`${module}.${field}`);
  }
 });
@@ -134,4 +135,18 @@ Deno.test('MCP classification result can be reused in a create call',async()=>{
  const created=await call('todo_create',{title:'处理邮件',category:r.data[0].value,idempotency_key:'classify-task'});
  assertEquals(created.structuredContent.ok,true);
  assertEquals(calls.find(c=>c[0]==='agent_mutate')[1].p_payload.category,'工作');
+});
+
+Deno.test('retired exam tools are absent while learning notes remain available', async () => {
+ const {tools}=await fixture().rpc('tools/list');
+ assert(!tools.some((tool:any)=>tool.name.startsWith('prep_')||tool.name.startsWith('civil_')));
+ assert(tools.some((tool:any)=>tool.name==='learning_note_create'));
+});
+
+Deno.test('project arrangement calls the existing-card workflow without creating todos',async()=>{
+ const {call,calls}=fixture();
+ const result=(await call('project_task_add_to_today',{title:'修改实验部分',project_name:'论文'})).structuredContent;
+ assert(result.ok);assertEquals(result.data.project_name,'论文');
+ assertEquals(calls.filter(([name])=>name==='agent_project_today').length,1);
+ assert(!calls.some(([name])=>name==='daily_task_mutate'||name==='agent_mutate'));
 });

@@ -1,5 +1,5 @@
 import { Paragraph } from "@/components/ui/typography";
-import { Check, CheckCircle2, CheckSquare, Flag, GripVertical, Repeat, Pencil, X } from 'lucide-react';
+import { CalendarPlus, Check, CheckCircle2, CheckSquare, Flag, GripVertical, Repeat, Pencil, X } from 'lucide-react';
 import { format, isValid, parseISO, startOfWeek } from 'date-fns';
 import { useLang } from '@/contexts/LanguageContext';
 import { useHabitLogs, useToggleHabitLog } from '@/hooks/useData';
@@ -9,7 +9,7 @@ import { resolveCover } from './board-model';
 import { useToast } from '@/hooks/use-toast';
 
 export type ProjectTask = Tables<'project_tasks'> & { cover_preset?: string | null };
-export function ProjectWorkCard({task,onEdit,onDelete,onComplete,disabled=false,editMode=false}:{task:ProjectTask;onEdit:()=>void;onDelete:()=>void;onComplete:(done:boolean)=>void;disabled?:boolean;editMode?:boolean}) {
+export function ProjectWorkCard({task,onEdit,onDelete,onComplete,onAddToday,inToday,addingToday,disabled=false,editMode=false}:{task:ProjectTask;onEdit:()=>void;onDelete:()=>void;onComplete:(done:boolean)=>void;onAddToday?:()=>void;inToday?:boolean;addingToday?:boolean;disabled?:boolean;editMode?:boolean}) {
   const {t}=useLang();
   const today=useLocalDate();
   const cover=resolveCover(task);
@@ -25,6 +25,14 @@ export function ProjectWorkCard({task,onEdit,onDelete,onComplete,disabled=false,
       <div className="project-card-meta"><span className="project-card-type"><Icon className="h-3.5 w-3.5"/>{typeLabel}</span><span className="project-card-trailing">
         {due&&isValid(due)&&<time className={overdue?'is-overdue':''} dateTime={task.due_date!} title={overdue?t('已逾期','Overdue'):t('截止日期','Due date')}>{format(due,'MM/dd')}</time>}
         {task.type==='milestone'&&<button className="project-complete" type="button" aria-label={t(`${task.status==='done'?'重新打开':'完成'}${task.title}`,`${task.status==='done'?'Reopen':'Complete'} ${task.title}`)} aria-pressed={task.status==='done'} disabled={disabled||editMode} onClick={event=>{event.stopPropagation();onComplete(task.status!=='done');}}>{task.status==='done'?<Check className="h-3 w-3"/>:<span/>}</button>}
+        {task.type === 'task' && task.status !== 'done' && onAddToday && (
+          <button type="button" className="project-today-action" data-arranged={!!inToday}
+            disabled={disabled || addingToday || inToday} onClick={onAddToday}
+            title={inToday ? t('已加入今天', 'On today') : t('加入今天', 'Add to today')}
+            aria-label={inToday ? t(`${task.title}已加入今天`, `${task.title} is on today`) : t(`加入今天：${task.title}`, `Add to today: ${task.title}`)}>
+            {inToday ? <Check size={14} /> : <CalendarPlus size={14} />}
+          </button>
+        )}
         <span data-project-drag-handle className="project-card-handle" title={t('拖动排序','Drag to move')} aria-hidden="true"><GripVertical className="h-3.5 w-3.5"/></span>
       </span></div>
     </div>

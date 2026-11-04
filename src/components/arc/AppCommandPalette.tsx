@@ -23,7 +23,6 @@ const routes = [
   ["/thoughts", "随想", "Thoughts", "成长", "Growth"],
   ["/learning-notes", "学习笔记", "Learning Notes", "成长", "Growth"],
   ["/weight-loss", "减肥专项", "Weight Loss", "成长", "Growth"],
-  ["/civil-service", "考公", "Civil Service", "成长", "Growth"],
   ["/fortune", "运势", "Fortune", "成长", "Growth"],
   ["/settings", "设置", "Settings", "设置", "Settings"],
 ] as const;
@@ -33,11 +32,10 @@ export function AppCommandPalette() {
   const navigate = useNavigate();
   const { t } = useLang();
   const { data: settings } = useSettings();
-  const focusMode = (settings as { app_focus_mode?: string })?.app_focus_mode ?? "full";
   const hidden = settings?.hidden_features ?? [];
   const items = routes.filter(([path]) => {
     if (path === "/settings") return true;
-    return focusMode === "civil_service" ? path === "/civil-service" : !hidden.includes(path.slice(1));
+    return !hidden.includes(path.slice(1));
   }).map(([path, zh, en, groupZh, groupEn]) => ({ id: path, label: t(zh, en), group: t(groupZh, groupEn), keywords: [zh, en, path] }));
 
   useEffect(() => {

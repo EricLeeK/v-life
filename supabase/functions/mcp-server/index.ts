@@ -1,4 +1,3 @@
-import { executePrepOperation, PREP_ENTITIES } from '../_shared/prepOperations.ts';
 import { CLASSIFICATION_MODULES, CLASSIFICATION_WORKFLOW } from '../_shared/agentClassifications.ts';
 import { McpServer, StreamableHttpTransport } from 'mcp-lite';
 import { withAgentAuth } from '../_shared/agentAuth.ts';
@@ -52,13 +51,6 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
    }
   }});
  }
- for (const action of ['guide','list','get','due','create','batch_create','update','submit_attempt','asset_upload','asset_url']) {
-  const read=['guide','list','get','due','asset_url'].includes(action);
-  register(`prep_${action}`,`备考 ${action}。先调用 prep_guide 了解图片、共享材料、题目及复习协议。`, object({input:{type:'object',additionalProperties:true}},['input']),read?'read':'update',async(_s,{input},callCtx)=>{
-   const admin=createClient(url,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false}});
-   return {data:await executePrepOperation({...callCtx,admin},action,input)};
-  });
- }
  register('classification_list',CLASSIFICATION_WORKFLOW+' 返回当前用户的去重分类/标签及使用次数、预设值、allow_new、分页信息。包含已配置但尚未使用的想法标签；不返回记录正文或设置。',object({module:{type:'string',enum:CLASSIFICATION_MODULES,description:'目标模块；daily_task 读取 todo 分类。'},...paginationSchema()},['module']),'read',(s,{module,...opts})=>s.classifications(module,opts));
  register('agent_help','首次接入先调用：返回当前授权、服务器业务日期及入门指引。topic 可选 quickstart/tasks/finance/modules/classifications/errors；不写业务数据。资源客户端也可读 vlife://guide。',object({topic:{type:'string',enum:[...GUIDE_TOPICS],default:'quickstart',description:'quickstart 入门；tasks 待办工作流与示例；finance 账单汇总；modules 全部模块选用；classifications 自动分类规则；errors 错误恢复。'}}),'read',async(s,{topic})=>{
   const canReadDate=ctx.permissions.read||ctx.permissions.write;
@@ -67,6 +59,9 @@ export function serverFor(ctx:AgentContext,headerKey:string|null){
  register('daily_task_today','分页读取当前用户业务日的任务，不必猜测日期。返回 date、data、hasMore、nextOffset；data.id 是日任务 ID，todo_id 是总待办 ID；标题可通过 todo_get 获取。可按 todo_id 或 is_completed 精确筛选。例行与一次性在此；习惯通过 todo_list(kind="habit") 和 habit_log_list 查看。',object({...paginationSchema(),todo_id:{...recordIdSchema('todo'),description:'可选：只读指定总待办在今天的任务。'},is_completed:{type:'boolean',description:'可选：true 已完成，false 未完成；省略包含两者。'}}),'read',async(s,{limit,offset,...filters})=>{
   const date=await s.businessDate();return {...await s.list('daily_task',{limit,offset,filters:{...filters,task_date:date}}),date};
  });
+ register('project_task_add_to_today','安排已有普通项目任务到今天。按标题查找，优先完整匹配，支持项目名或任务 ID 消歧。只更新原卡。仅 arranged/already_arranged 表示成功。ambiguous 时展示候选，not_found 时不要创建替代记录。',object({
+  title:{type:'string',minLength:1},project_name:{type:'string',minLength:1},task_id:{type:'string',format:'uuid'},
+ },['title']),'update',(s,args)=>s.arrangeProjectToday({title:args.title,project_name:args.project_name,task_id:args.task_id}));
  register('daily_task_overview',TASK_OVERVIEW_DESCRIPTION,TASK_OVERVIEW_SCHEMA,'read',(s,args)=>s.taskOverview(args));
  register('daily_task_transfer',TASK_TRANSFER_DESCRIPTION,TASK_TRANSFER_SCHEMA,'update',(s,args)=>s.transferDailyTasks(args),{destructiveHint:true,idempotentHint:true});
  for(const [action,definition] of Object.entries(NEWSPAPER_OPERATIONS)){

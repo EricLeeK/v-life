@@ -17,8 +17,6 @@ export type SkeletonKind =
   | "thoughts"
   | "workspace"
   | "weight"
-  | "civil"
-  | "civil-group"
   | "settings"
   | "newspaper"
   | "shop"
@@ -52,8 +50,6 @@ const ROUTES: Array<RouteSkeletonSpec & { match: (pathname: string) => boolean }
   { match: (p) => p.startsWith("/projects"), kind: "workspace", titleZh: "项目管理", titleEn: "Projects", statusZh: "正在加载项目", statusEn: "Loading projects", header: true, fullBleed: true, description: false },
   { match: (p) => p.startsWith("/learning-notes"), kind: "workspace", titleZh: "学习笔记", titleEn: "Learning Notes", statusZh: "正在加载学习笔记", statusEn: "Loading learning notes", header: true, fullBleed: true, description: false },
   { match: (p) => p.startsWith("/weight-loss"), kind: "weight", titleZh: "减肥专项", titleEn: "Weight Loss", statusZh: "正在加载减肥专项", statusEn: "Loading weight loss", header: true, fullBleed: false, description: false },
-  { match: (p) => /^\/civil-service\/.+/.test(p), kind: "civil-group", titleZh: "考公", titleEn: "Civil Service", statusZh: "正在加载考公科目", statusEn: "Loading the exam subject", header: true, fullBleed: false, description: false },
-  { match: (p) => p.startsWith("/civil-service"), kind: "civil", titleZh: "考公", titleEn: "Civil Service", statusZh: "正在加载考公", statusEn: "Loading civil service", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/settings"), kind: "settings", titleZh: "设置", titleEn: "Settings", statusZh: "正在加载设置", statusEn: "Loading settings", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/newspapers"), kind: "newspaper", titleZh: "生活日报", titleEn: "Life newspaper", statusZh: "正在加载生活日报", statusEn: "Loading the newspaper", header: false, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/shop"), kind: "shop", titleZh: "商店", titleEn: "Shop", statusZh: "正在加载商店", statusEn: "Loading the shop", header: true, fullBleed: false, description: false },
@@ -239,24 +235,6 @@ function SkeletonBody({ kind }: { kind: SkeletonKind }) {
           </div>
           <Bone className="h-56 w-full" />
           <Rows count={3} />
-        </div>
-      );
-    case "civil":
-      return (
-        <div className="space-y-4">
-          <Bone className="h-32 w-full" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {Array.from({ length: 3 }, (_, index) => <Bone key={index} className="h-24 w-full" />)}
-          </div>
-          <Rows count={4} />
-        </div>
-      );
-    case "civil-group":
-      return (
-        <div className="space-y-4">
-          <Bone className="h-8 w-28" />
-          <Bone className="h-40 w-full" />
-          <Rows count={5} />
         </div>
       );
     case "settings":

@@ -15,8 +15,11 @@ const api = vi.hoisted(() => ({
 vi.mock("@/components/AppLayout", () => ({ AppLayout: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
 vi.mock("@/contexts/LanguageContext", () => ({ useLang: () => ({ lang: "zh", t: (zh: string) => zh }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: api.toast }) }));
+vi.mock("@/hooks/useProjectToday", () => ({ useProjectTodayAction: () => ({ mutate: vi.fn() }) }));
 vi.mock("@/hooks/useProjectBoardMove", () => ({ useProjectBoardMove: () => ({ mutateAsync: api.move }) }));
 vi.mock("@/hooks/useData", () => ({
+  useSettings: () => ({ data: {} }),
+  getLocalDateString: () => "2026-11-04",
   useProjects: () => ({ data: api.projects }),
   useProjectTasks: (id: string) => ({ data: id === "p1" ? api.tasks : [] }),
   useCreateProject: () => ({ mutateAsync: api.create }),

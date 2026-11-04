@@ -117,7 +117,6 @@ serve(async (req) => {
     const systemPrompt = isFortune
       ? FORTUNE_SYSTEM_PROMPT
       : `${SYSTEM_PROMPT}\n\n${vocabBlock}${subscriptionSnapshot?'\n当前订阅及付款查询均为演示数据；新增/修改/付款确认只改变演示状态。':''}`;
-    const dayStartHour = Number(settings?.day_start_hour) || 0;
 
     // ── ReAct tools (non-fortune only) ──────────────────────────────
     const agentTools = isPlainText ? null : [
@@ -187,7 +186,7 @@ serve(async (req) => {
           return r.error ? JSON.stringify({ error: r.error }) : JSON.stringify(r.data);
         }
         if (name === "get_today_plan") {
-          const r = await getTodayPlan(userSb, dayStartHour);
+          const r = await getTodayPlan(userSb);
           return r.error ? JSON.stringify({ error: r.error }) : JSON.stringify(r.data);
         }
         return JSON.stringify({ error: `unknown tool: ${name}` });
@@ -306,7 +305,7 @@ serve(async (req) => {
             if (op.module === 'newspaper') {
               findings.push(`newspaper_${op.action} → ${await runTool('newspaper_read', { operation: op.action, input: op.data || {} })}`);
             } else if (op.module === "get_today_plan") {
-              const r = await getTodayPlan(userSb, dayStartHour);
+              const r = await getTodayPlan(userSb);
               findings.push(`get_today_plan → ${r.error ? "error: " + r.error : JSON.stringify(r.data)}`);
             } else {
               const mod = op.data?.module || op.module;

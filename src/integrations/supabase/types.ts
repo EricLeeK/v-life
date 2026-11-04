@@ -969,6 +969,7 @@ export type Database = {
       }
       project_tasks: {
         Row: {
+          today_date: string | null
           cover_preset: string
           created_at: string | null
           description: string | null
@@ -983,6 +984,7 @@ export type Database = {
           weight: number
         }
         Insert: {
+          today_date?: string | null
           cover_preset?: string
           created_at?: string | null
           description?: string | null
@@ -997,6 +999,7 @@ export type Database = {
           weight?: number
         }
         Update: {
+          today_date?: string | null
           cover_preset?: string
           created_at?: string | null
           description?: string | null
@@ -1680,6 +1683,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agent_project_today: {
+        Args: { p_title: string; p_project_name?: string; p_task_id?: string; p_apply?: boolean }
+        Returns: Json
+      }
+      project_today_action: {
+        Args: { p_project_id: string; p_task_id: string; p_day: string; p_action: string }
+        Returns: undefined
+      }
       move_project_board_item: {
         Args: { p_project_id: string; p_task_id: string; p_status: string; p_order: string[] }
         Returns: Database["public"]["Tables"]["project_tasks"]["Row"][]

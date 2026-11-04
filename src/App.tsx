@@ -16,7 +16,6 @@ import { DemoBanner } from "@/components/DemoBanner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { LangProvider } from "@/contexts/LanguageContext";
 import { DemoModeProvider, useDemoMode } from "@/contexts/DemoModeContext";
-import { useSettings } from "@/hooks/useData";
 import AuthPage from "./pages/Auth";
 import ResetPasswordPage from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -37,12 +36,6 @@ const ThoughtsPage = lazy(() => import("./pages/Thoughts"));
 const LearningNotesPage = lazy(() => import("./pages/LearningNotes"));
 const GoalsPage = lazy(() => import("./pages/Goals"));
 const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
-const PreparationIntegration = lazy(() => import("./pages/preparation/PreparationIntegration"));
-const PreparationBanks = lazy(() => import("./pages/preparation/PreparationBanks"));
-const PreparationPage = lazy(() => import("./pages/preparation/PreparationPage"));
-const PreparationQuestions = lazy(() => import("./pages/preparation/PreparationQuestions"));
-const CivilServiceHome = lazy(() => import("./pages/civil-service/CivilServiceHome"));
-const CivilServiceGroup = lazy(() => import("./pages/civil-service/CivilServiceGroup"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
 const NewspapersPage = lazy(() => import("./pages/Newspapers"));
@@ -70,15 +63,6 @@ function ProtectedRoute() {
   return <AppShell pending={loading && !isDemo} />;
 }
 
-function FocusHomeRedirect({ children }: { children: React.ReactNode }) {
-  const { data: settings } = useSettings();
-  const focusMode = (settings as { app_focus_mode?: string } | null)?.app_focus_mode || "full";
-  if (focusMode === "civil_service") {
-    return <Navigate to="/civil-service" replace />;
-  }
-  return <>{children}</>;
-}
-
 function AppRoutes() {
   return (
     <>
@@ -89,7 +73,7 @@ function AppRoutes() {
         <Route path="/oauth/consent" element={<RouteLoadBoundary><Suspense fallback={<RouteSkeleton pathname="/oauth/consent" />}><OAuthConsentPage /></Suspense></RouteLoadBoundary>} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<FocusHomeRedirect><Index /></FocusHomeRedirect>} />
+          <Route path="/" element={<Index />} />
           <Route path="/pantry" element={<PantryPage />} />
           <Route path="/belongings" element={<BelongingsPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
@@ -100,17 +84,10 @@ function AppRoutes() {
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/goals" element={<GoalsPage />} />
           <Route path="/thoughts" element={<ThoughtsPage />} />
+          <Route path="/preparation/*" element={<Navigate to="/learning-notes" replace />} />
+          <Route path="/civil-service/*" element={<Navigate to="/learning-notes" replace />} />
           <Route path="/learning-notes" element={<LearningNotesPage />} />
           <Route path="/weight-loss" element={<WeightLossPage />} />
-          <Route path="/civil-service" element={<Navigate to="/preparation" replace />} />
-          <Route path="/preparation" element={<PreparationPage />} />
-          <Route path="/preparation/exams/:examId" element={<PreparationPage />} />
-          <Route path="/preparation/questions" element={<PreparationQuestions />} />
-          <Route path="/preparation/questions/:questionId" element={<PreparationQuestions />} />
-          <Route path="/preparation/banks" element={<PreparationBanks />} />
-          <Route path="/preparation/integration" element={<PreparationIntegration />} />
-          <Route path="/preparation/review" element={<PreparationQuestions review />} />
-          <Route path="/civil-service/:group" element={<Navigate to="/preparation/questions" replace />} />
           {POINTS_FEATURE_ENABLED && <Route path="/shop" element={<ShopPage />} />}
           <Route path="/fortune" element={<FortuneHome />} />
           <Route path="/fortune/tarot" element={<TarotPage />} />

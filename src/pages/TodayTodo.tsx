@@ -1,3 +1,5 @@
+import { FolderOpen, CalendarMinus } from "lucide-react";
+import { useTodayProjectTasks, useProjectTodayAction } from "@/hooks/useProjectToday";
 import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -17,7 +19,7 @@ import SegmentedControl from "@/vendor/uiarc/registry/components/segmented-contr
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Flame, Trophy, Star, ChevronDown, Sparkles, Zap, Loader2, ClipboardList, Sliders, Minus, ArrowUp } from "lucide-react";
+import { Plus, Flame, Trophy, Star, ChevronDown, Sparkles, Zap, Loader2, ClipboardList, Sliders, Minus, ArrowUp } from "lucide-react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -261,6 +263,15 @@ export default function TodayTodoPage() {
   const [adjustingFeedback, setAdjustingFeedback] = useState<string>("");
 
   const todayStr = getLocalDateString(new Date(), settings?.day_start_hour || 0);
+  const projectQuery = useTodayProjectTasks(todayStr);
+  const projectTasks = projectQuery.data ?? [];
+  const projectGroups = new Map<string, typeof projectTasks>();
+  for (const task of projectTasks) {
+    const group = projectGroups.get(task.project_id);
+    if (group) group.push(task);
+    else projectGroups.set(task.project_id, [task]);
+  }
+  const projectAction = useProjectTodayAction(todayStr);
   const todayHabits = useMemo(
     () =>
       allTodos
@@ -307,8 +318,8 @@ export default function TodayTodoPage() {
     return [...recent, ...rest];
   }, [availableTodos, recentTempIds]);
 
-  const completedCount = todayTasks.filter((t: any) => t.is_completed).length;
-  const totalCount = todayTasks.length;
+  const completedCount = todayTasks.filter((t: any) => t.is_completed).length + projectTasks.filter(task => task.status === "done").length;
+  const totalCount = todayTasks.length + projectTasks.length;
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
 
@@ -672,11 +683,12 @@ export default function TodayTodoPage() {
 
               <Button
                 variant="ghost" size="icon"
-                aria-label={t("删除任务", "Delete task")}
-                className="h-7 w-7 text-muted-foreground hover:text-red-500 rounded-md shrink-0"
+                title={t("移出今天", "Remove from today")}
+                aria-label={t(`移出今天：${task.todos?.title ?? ""}`, `Remove from today: ${task.todos?.title ?? ""}`)}
+                className="h-11 w-11 shrink-0 text-muted-foreground"
                 onClick={() => handleRemove(task.id)}
               >
-                <Trash2 className="h-3.5 w-3.5" />
+                <CalendarMinus size={16} />
               </Button>
             </div>
           </div>
@@ -987,7 +999,7 @@ export default function TodayTodoPage() {
   );
 
   return (
-    <AppLayout title={t("今日待办", "Today's Todo")} description={t("今天，把精力放在这几件事上。", "Give today's priorities your attention.")} concept={todayTasks.length + todayHabits.length > 0 ? moduleFigure.today : undefined}>
+    <AppLayout title={t("今日待办", "Today's Todo")} description={t("今天，把精力放在这几件事上。", "Give today's priorities your attention.")} concept={totalCount + todayHabits.length > 0 ? moduleFigure.today : undefined}>
       <LayoutGroup>
       <div className="space-y-5">
 
@@ -1053,8 +1065,36 @@ export default function TodayTodoPage() {
           onChange={(todoId, patch) => upsertHabitLog.mutate({ todoId, logDate: todayStr, ...patch })}
         />
 
+        {projectQuery.error && <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+          {t("项目任务暂时无法读取", "Project tasks could not be loaded")}
+          <Button variant="ghost" size="sm" onClick={() => void projectQuery.refetch()}>{t("重试", "Retry")}</Button>
+        </div>}
+        {Array.from(projectGroups, ([projectId, tasks]) => <section key={projectId} aria-label={t(`来自项目 · ${tasks[0].projects.name}`, `From project · ${tasks[0].projects.name}`)} className="rounded-lg border border-border bg-card">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+            <FolderOpen size={16} className="text-muted-foreground" />
+            <Heading as="h2" className="text-sm font-medium">{t(`来自项目 · ${tasks[0].projects.name}`, `From project · ${tasks[0].projects.name}`)}</Heading>
+            <span className="ml-auto text-xs tabular-nums text-muted-foreground">{tasks.length}</span>
+          </div>
+          <ul className="divide-y divide-border px-4">
+            {tasks.map(task => {
+              const done = task.status === "done";
+              const busy = projectAction.isPending && projectAction.variables?.id === task.id;
+              const identity = { id: task.id, projectId: task.project_id };
+              return <li key={task.id} className="flex min-h-16 items-center gap-3 py-2">
+                <Checkbox checked={done} disabled={done || busy} aria-label={t(`完成${task.title}`, `Complete ${task.title}`)}
+                  onCheckedChange={() => projectAction.mutate({ ...identity, action: "complete" })} />
+                <div className="min-w-0 flex-1">
+                  <div className={`break-words text-sm font-medium motion-safe:transition-colors ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>{task.title}</div>
+                </div>
+                <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 text-muted-foreground" disabled={busy}
+                  title={t("移出今天", "Remove from today")} aria-label={t(`移出今天：${task.title}`, `Remove from today: ${task.title}`)}
+                  onClick={() => projectAction.mutate({ ...identity, action: "remove" })}><CalendarMinus size={16} /></Button>
+              </li>;
+            })}
+          </ul>
+        </section>)}
         {/* Task List */}
-        {todayTasks.length === 0 && todayHabits.length === 0 ? (
+        {totalCount === 0 && todayHabits.length === 0 && !projectQuery.isLoading && !projectQuery.error ? (
           <CollectionFeedback loading={todosLoading} error={tasksError || todosError} retry={() => { void reloadTasks?.(); void reloadTodos?.(); }}>
           <EmptyState figure={moduleFigure.today} title={t("今天的留白，由你安排", "Make room for today")}
             hint={t("从待办里挑几件事，放进今天的计划。", "Choose a few tasks to focus on today.")}

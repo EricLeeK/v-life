@@ -48,7 +48,7 @@ describe("route skeletons", () => {
     expect(routeSkeletonSpec("/learning-notes").fullBleed).toBe(true);
     expect(routeSkeletonSpec("/fortune").kind).toBe("fortune");
     expect(routeSkeletonSpec("/fortune/tarot").kind).toBe("fortune-reading");
-    expect(routeSkeletonSpec("/civil-service/xingce").kind).toBe("civil-group");
+    expect(routeSkeletonSpec("/civil-service/xingce").kind).toBe("list");
     expect(routeSkeletonSpec("/settings").kind).not.toBe(routeSkeletonSpec("/pantry").kind);
   });
 });

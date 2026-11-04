@@ -8,7 +8,7 @@ import { WeekAgenda } from "@/components/dashboard/WeekAgenda";
 import {
   CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
   Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
-      ChevronRight, ArrowRight, CheckCircle2, Clock, GraduationCap, BookOpen,
+      ChevronRight, ArrowRight, CheckCircle2, Clock, BookOpen,
   CalendarPlus, ListPlus, ReceiptText, CircleCheck, CalendarCheck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,12 +17,12 @@ import {
   useTodaySchedule, useTodayCalorieSummary, useFinanceByMonth,
   useExpiringPantry, useOverdueDurables, useRecentThoughts, useSettings,
   useCurrentWeekGoals, useRecentWeightTrend, useProjects, todoHooks, useCaloriesByRange, useScheduleByRange,
-  useTodayTasks,
+  useTodayTasks, getLocalDateString,
 } from "@/hooks/useData";
 import { todayPickerItems } from "@/lib/habits";
-import { usePreparationExamSummary } from "@/hooks/usePreparation";
 import { useSubscriptions } from "@/hooks/useSubscriptions";
 import { getSubscriptionEvent, summarizeSubscriptions } from "@/lib/subscriptions";
+import { useTodayProjectTasks } from "@/hooks/useProjectToday";
 import { useLocalDate } from "@/hooks/useLocalDate";
 import { ArcScope } from "@/components/arc/ArcScope";
 import AnimatedCounter from "@/vendor/uiarc/registry/components/animated-counter/animated-counter";
@@ -63,13 +63,6 @@ function formatExpiryStatus(days: number | null, lang: "zh" | "en"): string {
   if (days === 0) return lang === "zh" ? "今天到期" : "Expires today";
   if (days === 1) return lang === "zh" ? "明天到期" : "Expires tomorrow";
   return lang === "zh" ? `${days} 天后到期` : `Expires in ${days}d`;
-}
-
-function formatExamCountdown(days: number | null, lang: "zh" | "en"): string {
-  if (days === null) return "—";
-  if (days < 0) return lang === "zh" ? "已结束" : "Finished";
-  if (days === 0) return lang === "zh" ? "今天" : "Today";
-  return lang === "zh" ? `${days}天` : `${days}d`;
 }
 
 function safePercent(value: number, total: number): number | null {
@@ -211,9 +204,7 @@ export default function DashboardPage() {
   const now = new Date();
   const { data: settings } = useSettings();
   const hiddenFeatures = settings?.hidden_features || [];
-  const focusMode = (settings as any)?.app_focus_mode || "full";
-  const isVisible = (id: string) => focusMode === "civil_service"
-    ? id === "civil-service" : !hiddenFeatures.includes(id);
+  const isVisible = (id: string) => !hiddenFeatures.includes(id);
   // Secondary metrics can move into the first four slots when a primary module is hidden.
   const needsFallbackMetrics = ["schedule", "todos", "finance", "calories"].filter(isVisible).length < 4;
   const needsDetails = modulesExpanded || insightsExpanded;
@@ -224,12 +215,19 @@ export default function DashboardPage() {
   const { data: monthFinanceRecords = [] } = useFinanceByMonth(now.getFullYear(), now.getMonth() + 1);
   const { data: allTodos = [] }: { data?: Tables<"todos">[] } = todoHooks.useList();
   const { data: todayTasks = [] }: { data?: DashboardDailyTask[] } = useTodayTasks();
+  const todayProjects = useTodayProjectTasks(getLocalDateString(now, settings?.day_start_hour || 0), isVisible("todos"));
+  const projectTasks = todayProjects.data ?? [];
   const pendingTodos = allTodos.filter((todo: any) => !todo.is_completed && !todo.is_archived);
   const todayTodoIds = new Set<string>(todayTasks.map((task: { todo_id: string }) => task.todo_id));
   const openTodayTasks = todayTasks
     .filter((task) => !task.is_completed && task.todos?.title && !task.todos.is_archived && !task.todos.is_completed)
     .sort((a, b) => importanceRank(a.todos?.importance) - importanceRank(b.todos?.importance));
-  const previewTodayTasks = openTodayTasks.slice(0, 5);
+  const previewTodayTasks = [
+    ...openTodayTasks.map(task => ({ id: task.id, todos: task.todos })),
+    ...projectTasks.filter(task => task.status !== "done").map(task => ({
+      id: task.id, todos: { title: task.title, category: task.projects.name, importance: null },
+    })),
+  ].slice(0, 5);
   const otherTodos = todayPickerItems(
     allTodos.filter((todo) => {
       if (todo.parent_id) return true;
@@ -248,7 +246,6 @@ export default function DashboardPage() {
   const { data: weekGoals = [] } = weekGoalsQuery;
   const weightTrendQuery = useRecentWeightTrend((needsDetails || needsFallbackMetrics) && isVisible("weight-loss"));
   const { data: weightTrend = [] } = weightTrendQuery;
-  const { data: primaryExam } = usePreparationExamSummary((modulesExpanded || needsFallbackMetrics) && isVisible("civil-service"));
   const { data: allProjects = [] } = useProjects((modulesExpanded || needsFallbackMetrics) && isVisible("projects"));
   const calorieHistory = useCaloriesByRange(format(weekStart, "yyyy-MM-dd"), todayStr, insightsExpanded && isVisible("calories"));
   const { data: weekCalorieRecords = [] } = calorieHistory;
@@ -330,10 +327,6 @@ export default function DashboardPage() {
     ? Number(weightTrend[weightTrend.length - 1]?.weight) - Number(weightTrend[0]?.weight)
     : null;
 
-  const civilDaysLeft = primaryExam
-    ? differenceInCalendarDays(parseISO(primaryExam.exam_date), now)
-    : null;
-
   const pantryItems = expiringPantry.map((item: any) => ({
     item,
     days: daysUntil(item.expiry_date, now),
@@ -385,13 +378,6 @@ export default function DashboardPage() {
       value: activeProjects.length,
       hint: activeProjects.length > 0 ? `${t("平均进度", "Avg progress")} ${avgProgress}%` : t("暂无活跃项目", "No active projects"),
       color: "purple" as const,
-    },
-    isVisible("civil-service") && primaryExam && {
-      key: "civil-service",
-      label: t("备考倒计时", "Exam Countdown"),
-      value: formatExamCountdown(civilDaysLeft, lang),
-      hint: primaryExam.name,
-      color: "orange" as const,
     },
     isVisible("weight-loss") && latestWeight !== null && Number.isFinite(latestWeight) && {
       key: "weight-loss",
@@ -501,17 +487,6 @@ export default function DashboardPage() {
       status: weightDiff !== null && Number.isFinite(weightDiff) ? `${weightDiff > 0 ? "+" : ""}${weightDiff.toFixed(1)}` : undefined,
       statusColor: (weightDiff !== null && weightDiff <= 0 ? "teal" : "orange") as keyof typeof CAT,
       onClick: () => navigate("/weight-loss"),
-    },
-    isVisible("civil-service") && {
-      id: "civil-service",
-      icon: <GraduationCap className="h-4 w-4 text-foreground" />,
-      title: t("备考", "Preparation"),
-      description: primaryExam
-        ? primaryExam.name
-        : t("添加考试倒计时", "Add exam countdown"),
-      status: primaryExam ? formatExamCountdown(civilDaysLeft, lang) : undefined,
-      statusColor: "orange" as const,
-      onClick: () => navigate("/preparation"),
     },
     isVisible("thoughts") && {
       id: "thoughts",
@@ -823,9 +798,9 @@ export default function DashboardPage() {
                   <Link to="/today" aria-label={t("查看全部今日待办", "View all of today's to-dos")} className="min-h-11 inline-flex items-center gap-1 px-2 text-caption text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none rounded-md">{t("查看全部", "View all")}<ArrowRight className="h-3 w-3" /></Link>
                 </div>
                 <div className="pipeline-list p-1.5">
-                  {openTodayTasks.length === 0 ? (
+                  {previewTodayTasks.length === 0 ? (
                     <div className="px-4 py-5 text-center">
-                      <Paragraph className="text-sm text-muted-foreground">{todayTasks.length > 0 ? t("今天的待办都完成了", "Today's to-dos are done") : t("今天还没有待办", "Nothing on today yet")}</Paragraph>
+                      <Paragraph className="text-sm text-muted-foreground">{todayProjects.error ? t("项目任务暂时无法读取", "Project tasks unavailable") : todayProjects.isLoading ? t("正在读取今日任务", "Loading today’s tasks") : todayTasks.length + projectTasks.length > 0 ? t("今天的待办都完成了", "Today's to-dos are done") : t("今天还没有待办", "Nothing on today yet")}</Paragraph>
                       <Link to="/today" className="min-h-11 mt-2 inline-flex items-center text-sm font-medium text-foreground underline underline-offset-4">{t("去添加今日待办", "Add to today")}</Link>
                     </div>
                   ) : previewTodayTasks.map((task) => {
