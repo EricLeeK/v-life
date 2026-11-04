@@ -256,7 +256,7 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 - `text-base` on mobile inputs to prevent iOS zoom
 
 ### Navigation
-- Desktop: `AppSidebar` ink icons, muted idle / ink active on cream wash
+- Desktop sidebar, mobile navigation, and dashboard module icons default to the colorful Kubai style. Settings → General → Account & Appearance offers Colorful, Apricot, Blue-gray, and Minimal (the original line icons). The choice is saved in this browser.
 - Mobile: bottom bar + “更多” dialog with Escape, focus trap, `aria-expanded` / `aria-controls`
 
 ### Charts

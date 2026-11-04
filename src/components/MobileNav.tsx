@@ -1,26 +1,6 @@
 import { Heading } from "@/components/ui/typography";
-import {
-  Newspaper,
-  LayoutDashboard,
-  Carrot,
-  Package,
-  CalendarDays,
-  Flame,
-  Wallet,
-  CheckSquare,
-  CalendarCheck,
-  Lightbulb,
-  Target,
-  Settings,
-  MoreHorizontal,
-  Scale,
-  LogOut,
-  Languages,
-  BookOpen,
-  ShoppingBag,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Newspaper, LayoutDashboard, Carrot, Package, CalendarDays, Flame, Wallet, CheckSquare, CalendarCheck, Lightbulb, Target, Settings, Scale, LogOut, Languages, BookOpen, ShoppingBag, Sparkles } from "@/components/icons/ModuleIcons";
+import { MoreHorizontal, X } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState, useEffect, useRef, useId, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";

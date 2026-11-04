@@ -33,6 +33,7 @@ import {
 import { shengxiaoFromBirthDate, SHENGXIAO_LABELS, SHENGXIAO_ORDER } from "@/lib/fortune/shengxiao";
 import type { FortuneProfile, Shengxiao, ZodiacSign } from "@/lib/fortune/types";
 
+import { useIconStyle, setIconStyle, iconStyles } from "@/lib/iconStyle";
 import { useTheme } from "next-themes";
 
 function deriveZodiacSign(birthDate: string, birthHour?: number | null): ZodiacSign {
@@ -71,6 +72,7 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useSettings();
   const { data: hostedAi, refetch: refetchHostedAi } = useHostedAiStatus();
   const updateSettings = useUpdateSettings();
+  const iconStyle = useIconStyle();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const { t, lang } = useLang();
@@ -331,6 +333,16 @@ export default function SettingsPage() {
               <Paragraph className="text-xs text-muted-foreground mt-1">
                 {t("可以在浅色暖奶油与深色炭灰主题间自由切换", "Switch between Light Cream and Dark Charcoal themes")}
               </Paragraph>
+            </div>
+            <div>
+              <Label htmlFor="icon-style">{t("图标风格", "Icon style")}</Label>
+              <Select value={iconStyle} onValueChange={setIconStyle}>
+                <SelectTrigger id="icon-style" className="w-full sm:w-[200px] mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {iconStyles.map(({ value, zh, en }) =>
+                    <SelectItem key={value} value={value}>{t(zh, en)}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

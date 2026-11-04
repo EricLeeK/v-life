@@ -1,23 +1,4 @@
-import {
-  Newspaper,
-  LayoutDashboard,
-  Carrot,
-  Package,
-  CalendarDays,
-  Flame,
-  Wallet,
-  CheckSquare,
-  CalendarCheck,
-  Target,
-  Lightbulb,
-  Settings,
-  Scale,
-  LogOut,
-  Kanban,
-  BookOpen,
-  ShoppingBag,
-  Sparkles,
-} from "lucide-react";
+import { Newspaper, LayoutDashboard, Carrot, Package, CalendarDays, Flame, Wallet, CheckSquare, CalendarCheck, Target, Lightbulb, Settings, Scale, LogOut, Kanban, BookOpen, ShoppingBag, Sparkles } from "@/components/icons/ModuleIcons";
 import { NavLink } from "@/components/NavLink";
 import { useId } from "react";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
@@ -107,9 +88,9 @@ export function AppSidebar() {
       aria-label={t("主导航", "Main navigation")}
       className={`isolate border-r border-border bg-background ${isDemo ? "md:top-10 md:h-[calc(100svh-2.5rem)]" : ""}`}
     >
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <img src="/v-life-icon.svg" alt="V-Life" className="h-8 w-8 rounded-lg shrink-0" />
+      <SidebarHeader className="p-4 group-data-[collapsible=icon]:px-0">
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
+          <img src="/v-life-icon.svg" alt="V-Life" className="h-10 w-10 rounded-lg shrink-0" />
           {!collapsed && (
             <span className="text-base font-semibold text-foreground tracking-tight">
               V-Life

@@ -1,0 +1,3 @@
+.module-artwork { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; vertical-align: middle; overflow: visible; }
+.module-artwork > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.module-artwork[data-kubai-icon="双语字卡"] > svg { transform: scale(1.25); }

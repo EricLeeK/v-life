@@ -5,12 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { SectionDisclosure } from "@/components/ui/section-disclosure";
 import { WeekAgenda } from "@/components/dashboard/WeekAgenda";
-import {
-  CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package,
-  Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles,
-      ChevronRight, ArrowRight, CheckCircle2, Clock, BookOpen,
-  CalendarPlus, ListPlus, ReceiptText, CircleCheck, CalendarCheck,
-} from "lucide-react";
+import { CalendarDays, Flame, Wallet, CheckSquare, Carrot, Package, Lightbulb, Target, TrendingDown, Timer, Kanban, Sparkles, Clock, BookOpen, CalendarPlus, ListPlus, ReceiptText, CalendarCheck } from "@/components/icons/ModuleIcons";
+import { ChevronRight, ArrowRight, CheckCircle2, CircleCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useLang } from "@/contexts/LanguageContext";
 import {
