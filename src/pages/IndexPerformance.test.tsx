@@ -13,7 +13,7 @@ vi.mock("@/contexts/DemoModeContext", () => ({ useDemoMode: () => ({ isDemo: fal
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: (table: string) => {
   let columns = "*";
   const query = { select: (value: string) => { columns = value; return query; }, order: () => query, gte: () => query, gt: () => query, lt: () => query,
-    lte: () => query, eq: () => query, not: () => query, limit: () => query,
+    lte: () => query, eq: () => query, not: () => query, limit: () => query, range: () => query, abortSignal: () => query,
     then: (resolve: (v: unknown) => unknown) => Promise.resolve({
       data: table === "settings" ? [{ id: "settings", hidden_features: state.hidden }] : [],
       error: state.historyError && table === "calorie_records" && columns === "date, calories, meal_type" ? new Error("offline") : null,
@@ -36,7 +36,8 @@ describe("dashboard request budget", () => {
   it("does not fetch hidden history or duplicate financial/todo datasets", async () => {
     const { client, fetchedKeys } = mount();
     await waitFor(() => expect(client.isFetching()).toBe(0));
-    expect(fetchedKeys()).toHaveLength(9);
+    expect(client.getQueryCache().getAll().filter(q => q.state.status === "error")).toHaveLength(0);
+    expect(fetchedKeys()).toHaveLength(10);
     expect(fetchedKeys().filter(k => k[0] === "projects" && k[1] === "today")).toHaveLength(1);
     // Today's task preview and the visible week agenda each need one shared query.
     expect(fetchedKeys().filter(k => k[0] === "daily_tasks" && k[1] === "today")).toHaveLength(1);
@@ -50,15 +51,15 @@ describe("dashboard request budget", () => {
     fireEvent.click(screen.getByRole("button", { name: "展开状态洞察" }));
     await waitFor(() => expect(fetchedKeys().some(k => k[0] === "calories" && k[1] === "range")).toBe(true));
     expect(await screen.findByText("本周暂无记录")).toBeVisible();
-    expect(fetchedKeys()).toHaveLength(12);
+    expect(fetchedKeys()).toHaveLength(13);
     fireEvent.click(screen.getByRole("button", { name: "收起洞察" }));
     // The exit animation can retain inert DOM; the closed panel must be inaccessible.
     expect(screen.getByRole("button", { name: "展开状态洞察" })).toHaveAttribute("aria-expanded", "false");
     expect(screen.queryByRole("button", { name: "打开体重趋势" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /展开全部模块/ }));
     await waitFor(() => expect(fetchedKeys().some(k => k[0] === "thoughts")).toBe(true));
-    // Preparation replaces the old exam, plan and study-time requests.
-    expect(fetchedKeys()).toHaveLength(15);
+    // Expanding modules adds durables, recent thoughts and the project overview.
+    expect(fetchedKeys()).toHaveLength(16);
     expect(fetchedKeys().some(k => k[0] === "civil_plans")).toBe(false);
   });
 

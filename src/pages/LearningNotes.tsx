@@ -5,7 +5,7 @@ import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import {
   AlertDialog,
@@ -21,6 +21,7 @@ import { LearningCourseModal, type LearningCourseFormValues } from "@/components
 import { LearningCourseSidebar } from "@/components/LearningCourseSidebar";
 import {
   LearningNotePanel,
+  type LearningNotePanelHandle,
   type LearningNoteCreateValues,
   type LearningNoteDeleteValues,
   type LearningNoteSaveOptions,
@@ -68,7 +69,9 @@ export default function LearningNotesPage() {
   const [editingCourse, setEditingCourse] = useState<LearningCourse | null>(null);
   const [courseToDelete, setCourseToDelete] = useState<LearningCourse | null>(null);
 
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
+  const notePanelRef = useRef<LearningNotePanelHandle>(null);
+  const courseSwitchRequest = useRef(0);
   const requestedNote = params.get('note');
   const {isDemo,demoData} = useDemoMode();
   useEffect(()=>{let cancelled=false;if(!requestedNote)return;
@@ -116,13 +119,27 @@ export default function LearningNotesPage() {
     }
   }, [courses, selectedId]);
 
+  const handleSelectCourse = async (id: string) => {
+    const request = ++courseSwitchRequest.current;
+    if (id === selectedId) return;
+    const saved = await notePanelRef.current?.saveBeforeLeave();
+    if (saved === false || request !== courseSwitchRequest.current) return;
+    // A manually selected course supersedes a previously opened note deep link.
+    if (requestedNote) setParams(previous => {
+      const next = new URLSearchParams(previous);
+      next.delete("note");
+      return next;
+    }, { replace: true });
+    setSelectedId(id);
+  };
+
   const handleSaveCourse = async (values: LearningCourseFormValues) => {
     try {
       if (editingCourse) {
         await updateCourse.mutateAsync({ id: editingCourse.id, ...values });
       } else {
         const data = await createCourse.mutateAsync(values) as LearningCourse | undefined;
-        if (data?.id) setSelectedId(data.id);
+        if (data?.id) await handleSelectCourse(data.id);
       }
       setCourseModalOpen(false);
       setEditingCourse(null);
@@ -180,7 +197,7 @@ export default function LearningNotesPage() {
             courses={orderedCourses}
             selectedId={selectedId}
             noteCounts={selectedCourse ? { [selectedCourse.id]: notes.length } : {}}
-            onSelect={setSelectedId}
+            onSelect={id => { void handleSelectCourse(id); }}
             onReorder={handleReorderCourses}
             onAdd={() => {
               setEditingCourse(null);
@@ -197,6 +214,8 @@ export default function LearningNotesPage() {
           {selectedCourse ? (
             <CollectionFeedback loading={notesLoading && notes.length === 0} error={notes.length === 0 ? notesError : null} retry={reloadNotes}>
             <LearningNotePanel
+              key={selectedCourse.id}
+              ref={notePanelRef}
               initialNoteId={requestedNote||undefined}
               course={selectedCourse}
               notes={notes}

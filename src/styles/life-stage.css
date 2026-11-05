@@ -185,21 +185,33 @@
   z-index: 40;
 }
 
-.date-field > * {
-  min-width: 100%;
+.date-field > div {
+  /* Bound the resting control to its field, rather than its animated label's intrinsic width. */
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .date-field button[aria-haspopup="dialog"] {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   justify-content: space-between;
+}
+
+.date-field button[aria-haspopup="dialog"] > span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .date-field-inline {
   width: auto;
+  max-width: 100%;
 }
 
-.date-field-inline > * {
-  min-width: 11rem;
+.date-field-inline > div {
+  width: auto !important;
+  min-width: min(11rem, 100%);
 }
 
 .date-field-inline button[aria-haspopup="dialog"] {

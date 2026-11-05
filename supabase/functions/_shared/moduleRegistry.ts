@@ -253,6 +253,7 @@ export const MODULES: ModuleDef[] = [
       { name: "category", type: "string", vocab: "open", description: "用户自定义分类，以词表为准；默认未分类。习惯默认「习惯」" },
       { name: "importance", type: "string", enum: ["紧急", "重要", "普通", "低优先"] },
       { name: "detail", type: "string" },
+      { name: "estimated_minutes", type: "number", description: "预估任务时长（分钟），支持 10/20/30/45/60/90/120/180/240" },
       { name: "parent_title", type: "string", description: "父待办标题；填了即作为其子条目创建/定位" },
       { name: "kind", type: "string", enum: ["once", "routine", "habit"], description: "一次性 / 例行 / 习惯。禁止问用户选哪种，必须自行判断" },
       { name: "habit_type", type: "string", enum: ["checkin", "count", "duration", "avoidance"], description: "仅 kind=habit：打卡/计数/时长/克制" },
@@ -263,7 +264,7 @@ export const MODULES: ModuleDef[] = [
       { name: "completed_at", type: "datetime", internal: true, description: "服务端记录的最近完成时间；null 表示未完成或历史完成时间未知。只读。" },
     ],
     matchFields: ["title", "parent_title"],
-    updateFields: ["is_completed", "title", "importance", "category", "detail", "kind", "habit_type", "habit_target", "habit_unit", "is_paused"],
+    updateFields: ["is_completed", "title", "importance", "category", "detail", "estimated_minutes", "kind", "habit_type", "habit_target", "habit_unit", "is_paused"],
     notes:
       'kind 默认 once。习惯自动出现在今日顶部，禁止再 daily_task。例行不自动进今日。禁止把习惯/例行的母卡标 is_completed。完成习惯用 habit_log。禁止在 summary 里问「这是习惯还是例行」「打卡还是计数」——自行判断后写入 operations，只让用户确认。含糊的重复任务默认 routine。项目里的习惯仍用 project_task type=habit。',
     executor: {
@@ -449,11 +450,12 @@ export const MODULES: ModuleDef[] = [
       { name: "type", type: "string", enum: ["task", "habit", "milestone"] },
       { name: "status", type: "string", enum: ["todo", "this_week", "in_progress", "waiting", "done"] },
       { name: "description", type: "string" },
+      { name: "estimated_minutes", type: "number", description: "预估任务时长（分钟），支持 10/20/30/45/60/90/120/180/240" },
       { name: "due_date", type: "date" },
       { name: "weight", type: "number" },
     ],
     matchFields: ["title", "project_name"],
-    updateFields: ["title", "status", "description", "due_date", "weight"],
+    updateFields: ["title", "status", "description", "estimated_minutes", "due_date", "weight"],
     notes:
       "project_task 必须通过 project_name 关联到一个已存在的项目。type 可以是 task(任务)、habit(习惯)、milestone(里程碑)，默认 task。status 可以是 todo(待办)、this_week(本周)、in_progress(进行中)、waiting(等待中)、done(已完成)，默认 todo。weight 是权重(影响项目进度计算)，默认 1。",
     executor: {
@@ -471,7 +473,7 @@ export const MODULES: ModuleDef[] = [
     index: 14,
     actions: { create: true, update: true, delete: true },
     agentVisible: true,
-    agentReadFields: ["todo_id", "task_date", "difficulty", "base_points", "is_completed", "completed_at"],
+    agentReadFields: ["todo_id", "task_date", "origin_task_date", "difficulty", "base_points", "is_completed", "completed_at"],
     agentCreateFields: ["todo_id", "title", "kind", "category", "importance", "detail", "task_date"],
     agentUpdateFields: ["is_completed"],
     fields: [

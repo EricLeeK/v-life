@@ -61,8 +61,9 @@ describe("SettingsPage", () => {
 
   it("renders the section nav with all grouped sections", () => {
     renderSettings();
-    for (const label of ["通用", "AI", "日程", "个性", "健康·财务", "日报", "数据"]) {
+    for (const label of ["通用", "AI", "日程", "个性", "健康·财务", "数据"]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
+    expect(screen.queryByRole("button", { name: "日报" })).not.toBeInTheDocument();
   });
 });

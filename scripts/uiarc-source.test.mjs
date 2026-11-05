@@ -7,12 +7,16 @@ const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 
-test('Arc component, CSS and motion sources match the pinned upstream snapshot', () => {
+test('Arc sources match the pinned snapshot or their documented local patch', () => {
   const manifest = JSON.parse(read('src/vendor/uiarc/provenance.json'));
   assert.equal(manifest.commit, 'b454cf80c5378d9d1ef846fe1c352e3068281b8d');
   assert.ok(manifest.files.length > 25, 'component CSS and shared tokens must be included');
   for (const file of manifest.files) {
-    assert.equal(hash(read(`src/vendor/uiarc/${file.path}`)), file.sha256, file.path);
+    if (file.localPatch) {
+      assert.equal(file.path, 'registry/components/date-range-picker/date-range-picker.tsx');
+      assert.ok(file.localPatch.reason);
+    }
+    assert.equal(hash(read(`src/vendor/uiarc/${file.path}`)), file.localPatch?.sha256 ?? file.sha256, file.path);
   }
 });
 

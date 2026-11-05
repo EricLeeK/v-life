@@ -83,19 +83,49 @@ export function advanceSubscriptionDate(subscription: Subscription, pastDueDate 
   if (subscription.billing_unit === "day") {
     date.setUTCDate(date.getUTCDate() + subscription.billing_interval);
   } else {
-    // Set the first day before changing months; retain the original anchor after February.
-    date.setUTCDate(1);
-    date.setUTCMonth(date.getUTCMonth() + subscription.billing_interval);
-    const monthEnd = new Date(date.getTime());
-    monthEnd.setUTCMonth(monthEnd.getUTCMonth() + 1, 0);
-    date.setUTCDate(Math.min(subscription.anchor_day, monthEnd.getUTCDate()));
+    return anchoredMonthDate(date, subscription.billing_interval, subscription.anchor_day);
   }
   return date.toISOString().slice(0, 10);
 }
 
+function anchoredMonthDate(from: Date, months: number, anchorDay: number): string {
+  const target = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + months, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(anchorDay, lastDay));
+  return target.toISOString().slice(0, 10);
+}
+
+/** Returns the scheduled date users should act on, rolling missed auto-renewals forward by their saved cadence. */
+export function effectiveNextDate(subscription: Subscription, today: string): string {
+  const start = calendarDate(subscription.next_date);
+  const current = calendarDate(today);
+  if (!subscription.auto_renew || subscription.status === "ended" || start >= current) return subscription.next_date;
+  if (!Number.isInteger(subscription.billing_interval) || subscription.billing_interval < 1) {
+    throw new Error("Billing interval must be a positive integer");
+  }
+
+  if (subscription.billing_unit === "day") {
+    const elapsedDays = (current.getTime() - start.getTime()) / DAY_MS;
+    const intervals = Math.ceil(elapsedDays / subscription.billing_interval);
+    const effective = new Date(start.getTime() + intervals * subscription.billing_interval * DAY_MS);
+    return effective.toISOString().slice(0, 10);
+  }
+
+  const monthsElapsed = (current.getUTCFullYear() - start.getUTCFullYear()) * 12 + current.getUTCMonth() - start.getUTCMonth();
+  let intervals = Math.max(0, Math.floor(monthsElapsed / subscription.billing_interval));
+  let effective = intervals === 0
+    ? subscription.next_date
+    : anchoredMonthDate(start, intervals * subscription.billing_interval, subscription.anchor_day);
+  if (effective < today) {
+    intervals += 1;
+    effective = anchoredMonthDate(start, intervals * subscription.billing_interval, subscription.anchor_day);
+  }
+  return effective;
+}
+
 export function subscriptionState(subscription: Subscription, today: string): Subscription["status"] {
   if (subscription.status === "ended") return "ended";
-  if (subscription.status === "trial") return "trial";
+  if (subscription.status === "trial" && (!subscription.auto_renew || subscription.next_date >= today)) return "trial";
   if (!subscription.auto_renew && subscription.next_date < today) return "ended";
   return "active";
 }
@@ -103,12 +133,13 @@ export function subscriptionState(subscription: Subscription, today: string): Su
 export function getSubscriptionEvent(subscription: Subscription, today: string): SubscriptionEvent | null {
   const state = subscriptionState(subscription, today);
   if (state === "ended") return null;
-  const days = (calendarDate(subscription.next_date).getTime() - calendarDate(today).getTime()) / DAY_MS;
+  const nextDate = effectiveNextDate(subscription, today);
+  const days = (calendarDate(nextDate).getTime() - calendarDate(today).getTime()) / DAY_MS;
   return {
     days,
     overdue: days < 0,
     kind: state === "trial" ? "trial" : subscription.auto_renew ? "charge" : "expiry",
-    needsAttention: subscription.reminder_days !== null && days <= subscription.reminder_days,
+    needsAttention: days >= 0 && days <= (subscription.auto_renew ? 3 : subscription.reminder_days ?? -1),
   };
 }
 
@@ -139,11 +170,32 @@ export function summarizeSubscriptions(items: readonly Subscription[], today: st
     // Overdue records need confirmation; a forecast must never imply they were paid.
     if (!item.auto_renew || event.overdue) continue;
     const upcoming = item.billing_type === "fixed" ? summary.upcoming : summary.estimatedUpcoming;
-    for (let date = item.next_date; date < horizon; date = advanceSubscriptionDate(item, date)) {
+    for (let date = effectiveNextDate(item, today); date <= horizon; date = advanceSubscriptionDate(item, date)) {
       addAmount(upcoming, item.currency, item.amount);
     }
   }
   return summary;
+}
+
+export function convertCurrencyTotals(
+  totals: CurrencyTotals,
+  displayCurrency: "CNY" | "USD",
+  usdToCny: number | null,
+): { totals: CurrencyTotals; estimated: boolean; missingRate: boolean } {
+  const convertedCurrency = displayCurrency === "CNY" ? "USD" : "CNY";
+  if (totals[convertedCurrency] === undefined) {
+    return { totals: { ...totals }, estimated: false, missingRate: false };
+  }
+  if (!Number.isFinite(usdToCny) || usdToCny === null || usdToCny <= 0) {
+    return { totals: { ...totals }, estimated: false, missingRate: true };
+  }
+
+  const amount = totals[convertedCurrency] ?? 0;
+  const converted = displayCurrency === "CNY" ? amount * usdToCny : amount / usdToCny;
+  const result = { ...totals };
+  result[displayCurrency] = (result[displayCurrency] ?? 0) + converted;
+  delete result[convertedCurrency];
+  return { totals: result, estimated: true, missingRate: false };
 }
 
 export function normalizeSubscriptionUrl(value: string): string | null {

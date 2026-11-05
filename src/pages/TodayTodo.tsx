@@ -1,5 +1,6 @@
 import { FolderOpen, CalendarMinus } from "lucide-react";
 import { useTodayProjectTasks, useProjectTodayAction } from "@/hooks/useProjectToday";
+import { useUpdateProjectTask } from "@/hooks/useData";
 import { Heading, Paragraph } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
@@ -27,6 +28,7 @@ import {
   usePastIncompleteDailyTasks,
   useUserPoints,
   useAddToToday,
+  useMoveDailyTaskToToday,
   useCompleteDailyTask,
   useRemoveFromToday,
   useRecalculatePoints,
@@ -37,6 +39,8 @@ import {
   useTodoHabitLogs,
   useUpsertTodoHabitLog,
 } from "@/hooks/useData";
+import { TaskContentEditor } from "@/components/today/TaskContentEditor";
+import { formatTaskDateLabel, getTaskDisplayDate, orderTodayTaskSections, sortTasksCompletedLast } from "@/lib/todayTaskModel";
 import { POINTS_FEATURE_ENABLED as POINTS } from "@/lib/featureFlags";
 import { todayPickerItems } from "@/lib/habits";
 import { groupPastDailyTasksByDate, PAST_DATE_LABELS } from "@/lib/pastDailyTasks";
@@ -55,15 +59,6 @@ const MOTIVATIONAL_QUOTES = [
   { zh: "小步前进也是进步", en: "Small steps still count as progress" },
   { zh: "你比你想象的更强大", en: "You're stronger than you think" },
 ];
-
-/** Compact "MM-DD" label for when a task was added to today; full timestamp goes to the tooltip. */
-function formatAddedDate(iso: string): string {
-  const dt = new Date(iso);
-  if (Number.isNaN(dt.getTime())) return "";
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getDate()).padStart(2, "0");
-  return `${mm}-${dd}`;
-}
 
 function CircularProgress({ value, size = 64 }: { value: number; size?: number }) {
   const radius = (size - 8) / 2;
@@ -234,12 +229,15 @@ export default function TodayTodoPage() {
   const { data: pastTasks = [] } = usePastIncompleteDailyTasks();
   const { data: userPoints } = useUserPoints();
   const addToToday = useAddToToday();
+  const moveDailyTaskToToday = useMoveDailyTaskToToday();
   const completeTask = useCompleteDailyTask();
   const removeFromToday = useRemoveFromToday();
   const recalcPoints = useRecalculatePoints();
   const estimateDifficulty = useEstimateDifficulty();
   const { data: allTodos = [], isLoading: todosLoading, error: todosError, refetch: reloadTodos } = todoHooks.useList();
   const createTodo = todoHooks.useCreate();
+  const updateTodo = todoHooks.useUpdate();
+  const updateProjectTask = useUpdateProjectTask();
   const { data: habitLogs = [] } = useTodoHabitLogs();
   const upsertHabitLog = useUpsertTodoHabitLog();
   const { data: settings } = useSettings();
@@ -272,6 +270,11 @@ export default function TodayTodoPage() {
     else projectGroups.set(task.project_id, [task]);
   }
   const projectAction = useProjectTodayAction(todayStr);
+  const orderedProjectGroups = [...projectGroups.entries()].sort(([, left], [, right]) => {
+    const leftDone = left.length > 0 && left.every((task) => task.status === "done");
+    const rightDone = right.length > 0 && right.every((task) => task.status === "done");
+    return Number(leftDone) - Number(rightDone);
+  });
   const todayHabits = useMemo(
     () =>
       allTodos
@@ -491,18 +494,8 @@ export default function TodayTodoPage() {
   };
 
   const handleMovePastToToday = async (task: any) => {
-    const todoId = task.todo_id || task.todos?.id;
-    if (!todoId) return;
     try {
-      if (!todayTaskIds.has(todoId)) {
-        await addToToday.mutateAsync({
-          todo_id: todoId,
-          difficulty: task.difficulty || "medium",
-          base_points: task.base_points || 20,
-          metadata: task.metadata || {},
-        });
-      }
-      removeFromToday.mutate(task.id);
+      await moveDailyTaskToToday.mutateAsync(task.id);
     } catch (err: any) {
       toast({
         title: t("移入今日失败", "Could not move to today"),
@@ -514,6 +507,32 @@ export default function TodayTodoPage() {
 
   const handleRemove = (id: string) => {
     removeFromToday.mutate(id);
+  };
+
+  const handleSaveTodo = async (id: string, values: { title: string; detail: string | null; estimated_minutes: number }) => {
+    try {
+      await updateTodo.mutateAsync({ id, ...values });
+      toast({ title: t("已更新待办", "Task updated") });
+    } catch (error) {
+      toast({ title: t("保存失败", "Save failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+      throw error;
+    }
+  };
+
+  const handleSaveProjectTask = async (taskId: string, projectId: string, values: { title: string; detail: string | null; estimated_minutes: number }) => {
+    try {
+      await updateProjectTask.mutateAsync({
+        id: taskId,
+        project_id: projectId,
+        title: values.title,
+        description: values.detail,
+        estimated_minutes: values.estimated_minutes,
+      });
+      toast({ title: t("已更新项目任务", "Project task updated") });
+    } catch (error) {
+      toast({ title: t("保存失败", "Save failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+      throw error;
+    }
   };
 
   const streak = userPoints?.current_streak || 0;
@@ -556,6 +575,11 @@ export default function TodayTodoPage() {
       ungroupedTasks: ungrouped,
     };
   }, [todayTasks, allTodos]);
+
+  const taskSections = useMemo(
+    () => orderTodayTaskSections(groupedTasks, ungroupedTasks),
+    [groupedTasks, ungroupedTasks],
+  );
 
   const livePct = totalCount > 0 ? completedCount / totalCount : 0;
   
@@ -605,9 +629,16 @@ export default function TodayTodoPage() {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <Paragraph className={`text-sm font-medium ${task.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                {task.todos?.title || t("未知任务", "Unknown task")}
-              </Paragraph>
+              <TaskContentEditor
+                item={{
+                  id: task.todo_id,
+                  title: task.todos?.title || t("未知任务", "Unknown task"),
+                  detail: task.todos?.detail,
+                  estimated_minutes: task.todos?.estimated_minutes,
+                }}
+                onSave={(values) => handleSaveTodo(task.todo_id, values)}
+                textClassName={`text-sm font-medium ${task.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}
+              />
               {task.todos?.detail && (
                 <Paragraph className="text-xs mt-0.5 truncate text-muted-foreground">{task.todos.detail}</Paragraph>
               )}
@@ -672,12 +703,12 @@ export default function TodayTodoPage() {
                 </Button>
               )}
 
-              {task.created_at && (
+              {getTaskDisplayDate(task) && (
                 <span
                   className="shrink-0 font-mono-data text-[11px] text-muted-foreground"
-                  title={`${t("添加于", "Added at")} ${new Date(task.created_at).toLocaleString()}`}
+                  title={`${t("原计划日期", "Originally planned")} ${getTaskDisplayDate(task)}`}
                 >
-                  {formatAddedDate(task.created_at)}
+                  {formatTaskDateLabel(getTaskDisplayDate(task))}
                 </span>
               )}
 
@@ -774,6 +805,35 @@ export default function TodayTodoPage() {
       </motion.div>
     );
   };
+
+  const renderTodoGroup = (group: (typeof groupedTasks)[number]) => (
+    <Card key={group.parent?.id || group.tasks[0]?.todos?.parent_id} className="bg-card border-border overflow-hidden shadow-sm">
+      <div className="bg-muted/30 border-b border-border px-4 py-2.5 flex items-center justify-between">
+        <Heading as="h3" className="font-bold text-foreground flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 text-cat-orange" />
+          {group.parent ? (
+            <TaskContentEditor
+              item={{
+                id: group.parent.id,
+                title: group.parent.title,
+                detail: group.parent.detail,
+                estimated_minutes: group.parent.estimated_minutes,
+              }}
+              onSave={(values) => handleSaveTodo(group.parent.id, values)}
+              textClassName="font-bold text-foreground"
+              triggerClassName="max-w-full"
+            />
+          ) : t("未知主任务", "Unknown Project")}
+        </Heading>
+        <Badge variant="outline" className="bg-card text-xs border-border">
+          {group.tasks.filter((task) => task.is_completed).length} / {group.tasks.length}
+        </Badge>
+      </div>
+      <div className="space-y-2 bg-muted/20 p-2">
+        {group.tasks.map((task: any, index: number) => renderTaskRow(task, index))}
+      </div>
+    </Card>
+  );
 
   if (tasksLoading) {
     return (
@@ -1069,14 +1129,14 @@ export default function TodayTodoPage() {
           {t("项目任务暂时无法读取", "Project tasks could not be loaded")}
           <Button variant="ghost" size="sm" onClick={() => void projectQuery.refetch()}>{t("重试", "Retry")}</Button>
         </div>}
-        {Array.from(projectGroups, ([projectId, tasks]) => <section key={projectId} aria-label={t(`来自项目 · ${tasks[0].projects.name}`, `From project · ${tasks[0].projects.name}`)} className="rounded-lg border border-border bg-card">
+        {orderedProjectGroups.map(([projectId, tasks]) => <section key={projectId} aria-label={t(`来自项目 · ${tasks[0].projects.name}`, `From project · ${tasks[0].projects.name}`)} className="rounded-lg border border-border bg-card">
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">
             <FolderOpen size={16} className="text-muted-foreground" />
             <Heading as="h2" className="text-sm font-medium">{t(`来自项目 · ${tasks[0].projects.name}`, `From project · ${tasks[0].projects.name}`)}</Heading>
             <span className="ml-auto text-xs tabular-nums text-muted-foreground">{tasks.length}</span>
           </div>
           <ul className="divide-y divide-border px-4">
-            {tasks.map(task => {
+            {sortTasksCompletedLast(tasks.map((task) => ({ ...task, is_completed: task.status === "done" }))).map(task => {
               const done = task.status === "done";
               const busy = projectAction.isPending && projectAction.variables?.id === task.id;
               const identity = { id: task.id, projectId: task.project_id };
@@ -1084,7 +1144,13 @@ export default function TodayTodoPage() {
                 <Checkbox checked={done} disabled={busy} aria-label={t(`完成${task.title}`, `Complete ${task.title}`)}
                   onCheckedChange={() => projectAction.mutate({ ...identity, action: done ? "reopen" : "complete" })} />
                 <div className="min-w-0 flex-1">
-                  <div className={`break-words text-sm font-medium motion-safe:transition-colors ${done ? "text-muted-foreground line-through" : "text-foreground"}`}>{task.title}</div>
+                  <TaskContentEditor
+                    destination="project"
+                    item={{ id: task.id, title: task.title, detail: task.description, estimated_minutes: task.estimated_minutes }}
+                    onSave={(values) => handleSaveProjectTask(task.id, task.project_id, values)}
+                    triggerClassName="w-full break-words"
+                    textClassName={`break-words text-sm font-medium motion-safe:transition-colors ${done ? "text-muted-foreground line-through" : "text-foreground"}`}
+                  />
                 </div>
                 <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 text-muted-foreground" disabled={busy}
                   title={t("移出今天", "Remove from today")} aria-label={t(`移出今天：${task.title}`, `Remove from today: ${task.title}`)}
@@ -1102,26 +1168,19 @@ export default function TodayTodoPage() {
           </CollectionFeedback>
         ) : (
           <div className="space-y-4">
-            {groupedTasks.map((group) => (
-              <Card key={group.parent?.id || Math.random().toString()} className="bg-card border-border overflow-hidden shadow-sm">
-                <div className="bg-muted/30 border-b border-border px-4 py-2.5 flex items-center justify-between">
-                  <Heading as="h3" className="font-bold text-foreground flex items-center gap-2">
-                    <ClipboardList className="h-4 w-4 text-cat-orange" />
-                    {group.parent?.title || t("未知主任务", "Unknown Project")}
-                  </Heading>
-                  <Badge variant="outline" className="bg-card text-xs border-border">
-                    {group.tasks.filter((t: any) => t.is_completed).length} / {group.tasks.length}
-                  </Badge>
-                </div>
-                <div className="space-y-2 bg-muted/20 p-2">
-                  {[...group.tasks].sort((a, b) => Number(a.is_completed) - Number(b.is_completed)).map((task: any, i: number) => renderTaskRow(task, i))}
-                </div>
-              </Card>
-            ))}
-            
-            {ungroupedTasks.length > 0 && (
+            {taskSections.activeGroups.map(renderTodoGroup)}
+
+            {taskSections.activeTasks.length > 0 && (
               <div className="space-y-2">
-                {[...ungroupedTasks].sort((a, b) => Number(a.is_completed) - Number(b.is_completed)).map((task: any, i: number) => renderTaskRow(task, i))}
+                {taskSections.activeTasks.map((task: any, i: number) => renderTaskRow(task, i))}
+              </div>
+            )}
+
+            {taskSections.completedGroups.map(renderTodoGroup)}
+
+            {taskSections.completedTasks.length > 0 && (
+              <div className="space-y-2">
+                {taskSections.completedTasks.map((task: any, i: number) => renderTaskRow(task, i))}
               </div>
             )}
           </div>
@@ -1160,9 +1219,16 @@ export default function TodayTodoPage() {
                               aria-label={task.todos?.title || t("完成任务", "Complete task")}
                             />
                             <div className="min-w-0 flex-1">
-                              <Paragraph className="text-sm font-medium text-foreground">
-                                {task.todos?.title || t("未知任务", "Unknown task")}
-                              </Paragraph>
+                              <TaskContentEditor
+                                item={{
+                                  id: task.todo_id,
+                                  title: task.todos?.title || t("未知任务", "Unknown task"),
+                                  detail: task.todos?.detail,
+                                  estimated_minutes: task.todos?.estimated_minutes,
+                                }}
+                                onSave={(values) => handleSaveTodo(task.todo_id, values)}
+                                textClassName="text-sm font-medium text-foreground"
+                              />
                               {task.todos?.detail && (
                                 <Paragraph className="mt-0.5 truncate text-xs text-muted-foreground">{task.todos.detail}</Paragraph>
                               )}

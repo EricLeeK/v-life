@@ -12,7 +12,7 @@ function useProjectCards(day?: string, enabled = true) {
     enabled: enabled && !isDemo,
     queryFn: async () => {
       const base = supabase.from("project_tasks")
-        .select("id,title,status,project_id,today_date,projects!inner(name,status,category,icon_svg,cover_preset)")
+        .select("id,title,description,estimated_minutes,status,project_id,today_date,projects!inner(name,status,category,icon_svg,cover_preset)")
         .eq("type", "task");
       const query = (day ? base.eq("today_date", day) : base).order("id");
       const read = (offset: number) => query.range(offset, offset + 499);
@@ -32,7 +32,7 @@ function useProjectCards(day?: string, enabled = true) {
   const data = demoData.project_tasks.flatMap(task => {
     if (task.type !== "task" || (day && task.today_date !== day)) return [];
     const project = demoData.projects.find(p => p.id === task.project_id);
-    return project ? [{ id:task.id, title:task.title, status:task.status, project_id:task.project_id, today_date:task.today_date ?? null, projects: { name: project.name, status: project.status, category: project.category ?? null, cover_preset: project.cover_preset ?? "auto", icon_svg: (project as {icon_svg?: string | null}).icon_svg ?? null } }] : [];
+    return project ? [{ id:task.id, title:task.title, description:task.description ?? null, estimated_minutes:(task as { estimated_minutes?: number | null }).estimated_minutes ?? null, status:task.status, project_id:task.project_id, today_date:task.today_date ?? null, projects: { name: project.name, status: project.status, category: project.category ?? null, cover_preset: project.cover_preset ?? "auto", icon_svg: (project as {icon_svg?: string | null}).icon_svg ?? null } }] : [];
   });
   return { data, error: null, isLoading: false, refetch: query.refetch };
 }

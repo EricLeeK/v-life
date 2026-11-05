@@ -28,6 +28,8 @@ export interface DateRangePreset {
  * Use it for reports, filters, and bookings where a start and end date are chosen together.
  */
 export interface DateRangePickerProps {
+  /** Single mode replaces the selected day on each click, retaining the same surface and motion. */
+  selectionMode?: "range" | "single";
   /** Controlled value. Pass `null` for no selection. */
   value?: DateRange | null;
   /** Uncontrolled starting value. */
@@ -276,7 +278,7 @@ function Months({ children, direction, reduced }: { children: ReactNode; directi
     variants={reduced ? fade : slide} initial="enter" animate="center" exit="exit">{children}</motion.div>;
 }
 
-export function DateRangePicker({ value, defaultValue = null, onChange, label = "Date range", placeholder = "Select dates", presets = defaultDateRangePresets, minDate, maxDate, weekStartsOn = 0, locale = "en-US", months = "auto", boundary, className }: DateRangePickerProps) {
+export function DateRangePicker({ selectionMode = "range", value, defaultValue = null, onChange, label = "Date range", placeholder = "Select dates", presets = defaultDateRangePresets, minDate, maxDate, weekStartsOn = 0, locale = "en-US", months = "auto", boundary, className }: DateRangePickerProps) {
   const reduced = useReducedFlag();
   const today = useToday();
   const uid = useId();
@@ -480,6 +482,12 @@ export function DateRangePicker({ value, defaultValue = null, onChange, label = 
 
   const pick = (date: Date) => {
     setFocusKey(keyOf(date));
+    if (selectionMode === "single") {
+      setDraft({ start: date, end: date });
+      setAnchor(null);
+      setHover(null);
+      return;
+    }
     if (!anchor) { setAnchor(date); setHover(date); return; }
     setDraft(ordered(anchor, date));
     setAnchor(null);
@@ -488,7 +496,8 @@ export function DateRangePicker({ value, defaultValue = null, onChange, label = 
 
   const choosePreset = (preset: DateRangePreset) => {
     if (!today) return;
-    const range = preset.range(today);
+    const presetRange = preset.range(today);
+    const range = selectionMode === "single" ? { start: presetRange.end, end: presetRange.end } : presetRange;
     setDraft(range);
     setAnchor(null);
     setHover(null);

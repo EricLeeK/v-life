@@ -63,7 +63,8 @@ describe("AppShell", () => {
     </Route></Routes></MemoryRouter>);
     const navigation = screen.getByRole("navigation", { name: "主导航" });
     fireEvent.click(screen.getByRole("link", { name: "打开日程" }));
-    expect(await screen.findByRole("status", { name: "正在加载日程" })).toBeInTheDocument();
+    const loading = await screen.findByRole("status", { name: "正在加载日程" });
+    expect(loading.querySelector("[skullet-bar]")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "主导航" })).toBe(navigation);
     await act(async () => finish({ default: () => <AppLayout title="日程"><p>日程内容</p></AppLayout> }));
     expect(screen.getByText("日程内容")).toBeInTheDocument();
@@ -87,6 +88,8 @@ describe("AppShell", () => {
     const status = screen.getByRole("status", { name: "正在加载日程" });
     expect(status).toHaveAttribute("data-skeleton", "schedule");
     expect(status.closest("main")).not.toBeNull();
+    const calendar = status.querySelector(".h-\\[28rem\\]");
+    expect(calendar).toHaveAttribute("skullet-bar");
   });
 
   it("uses a different skeleton for the dashboard", () => {

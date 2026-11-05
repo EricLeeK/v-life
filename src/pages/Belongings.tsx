@@ -104,10 +104,10 @@ export default function BelongingsPage() {
       <div className="space-y-4">
         <Tabs value={tab} onValueChange={(value) => { if (isSaving) return; setTab(value); setDailyDialog(false); setDurableDialog(false); resetEditor(); }}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <TabsList className="max-w-full h-auto flex-wrap">
-              <TabsTrigger value="daily">{t("日用消耗品", "Daily Consumables")}</TabsTrigger>
-              <TabsTrigger value="durable">{t("大额耐用品", "Durable Goods")}</TabsTrigger>
-              <TabsTrigger value="subscriptions" className="min-h-11">{t("订阅服务", "Subscriptions")}</TabsTrigger>
+            <TabsList className={`h-auto w-full max-w-full grid grid-cols-3 gap-1 ${lang === "zh" ? "sm:w-[21rem]" : "sm:w-[30rem]"}`}>
+              <TabsTrigger value="daily" className="h-11 w-full min-w-0 px-1 text-[11px] sm:text-sm">{t("日用消耗品", "Daily Consumables")}</TabsTrigger>
+              <TabsTrigger value="durable" className="h-11 w-full min-w-0 px-1 text-[11px] sm:text-sm">{t("大额耐用品", "Durable Goods")}</TabsTrigger>
+              <TabsTrigger value="subscriptions" className="h-11 w-full min-w-0 px-1 text-[11px] sm:text-sm">{t("订阅服务", "Subscriptions")}</TabsTrigger>
             </TabsList>
             {tab !== "subscriptions" && <Dialog open={tab === "daily" ? dailyDialog : durableDialog} onOpenChange={changeDialog}>
               <DialogTrigger asChild>

@@ -17,7 +17,6 @@ const routes = [
   ["/pantry", "食材管理", "Pantry", "生活", "Life"],
   ["/belongings", "用品管理", "Belongings", "生活", "Life"],
   ["/calories", "热量记录", "Calories", "生活", "Life"],
-  ["/newspapers", "生活日报", "Newspapers", "生活", "Life"],
   ["/projects", "项目管理", "Projects", "成长", "Growth"],
   ["/goals", "目标", "Goals", "成长", "Growth"],
   ["/thoughts", "随想", "Thoughts", "成长", "Growth"],

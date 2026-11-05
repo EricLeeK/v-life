@@ -6,6 +6,7 @@ import type { DemoDataStore } from "@/data/demoSeed";
 import { pickSettingsRow } from "@/lib/pickSettingsRow";
 import { addIsoDays } from "@/lib/habits";
 import { PAST_DAILY_LOOKBACK_DAYS, selectPastIncompleteDailyTasks } from "@/lib/pastDailyTasks";
+import { planDailyTaskMove } from "@/lib/todayTaskModel";
 import { useLocalDate } from "@/hooks/useLocalDate";
 import { useToast } from "@/hooks/use-toast";
 import { getErrorMessage } from "@/lib/errorMessage";
@@ -1444,7 +1445,7 @@ export function useTodayTasks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_tasks")
-        .select("*, todos(title, detail, importance, category, is_completed, is_archived, parent_id)")
+        .select("*, todos(title, detail, importance, category, estimated_minutes, is_completed, is_archived, parent_id)")
         .eq("task_date", today)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -1476,7 +1477,7 @@ export function usePastIncompleteDailyTasks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_tasks")
-        .select("*, todos(title, detail, importance, category, is_completed, is_archived, parent_id, kind)")
+        .select("*, todos(title, detail, importance, category, estimated_minutes, is_completed, is_archived, parent_id, kind)")
         .eq("is_completed", false)
         .gte("task_date", oldest)
         .lt("task_date", today)
@@ -1560,6 +1561,50 @@ export function useAddToToday() {
       return data.data;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["daily_tasks"] }); },
+  });
+}
+
+export function useMoveDailyTaskToToday() {
+  const { isDemo, demoData, addRecord, updateRecord, deleteRecord } = useDemoMode();
+  const { data: settings } = useSettings();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (sourceId: string) => {
+      const targetDate = getLocalDateString(new Date(), settings?.day_start_hour || 0);
+      if (isDemo) {
+        const source = demoData.daily_tasks.find((task) => task.id === sourceId);
+        const plan = planDailyTaskMove(source, demoData.daily_tasks, targetDate);
+        if (plan.kind === "unchanged") return plan.target;
+        if (plan.kind === "existing_target") {
+          const target = plan.target;
+          updateRecord("daily_tasks", target.id, { origin_task_date: plan.originDate });
+          deleteRecord("daily_tasks", sourceId);
+          return { ...target, origin_task_date: plan.originDate };
+        }
+        const result = addRecord("daily_tasks", {
+          ...source,
+          id: crypto.randomUUID(),
+          task_date: targetDate,
+          origin_task_date: plan.originDate,
+          is_completed: false,
+          completed_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        deleteRecord("daily_tasks", sourceId);
+        return result;
+      }
+      const { data, error } = await supabase.rpc("daily_task_move", {
+        p_source_id: sourceId,
+        p_target_date: targetDate,
+      });
+      if (error) throw error;
+      return (data as { data?: unknown } | null)?.data ?? data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["daily_tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
   });
 }
 

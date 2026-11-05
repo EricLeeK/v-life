@@ -2,7 +2,7 @@ import { markdownTypography } from "@/components/ui/typography";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CollectionFeedback } from "@/components/concepts/CollectionFeedback";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Plus, Trash2, Edit2, FlaskConical, Home, Bot, Brain, Tag,
   Lightbulb, Sparkles, PenLine, BookOpen, Compass, Quote, Coffee, Moon, Sun,
-  Cloud, Leaf, Heart, Star, Zap, Anchor, Music, Camera, Target, Clock, Feather, Mountain,
+  Cloud, Leaf, Heart, Star, Zap, Anchor, Music, Camera, Target, Clock, Feather, Mountain, Focus,
 } from "lucide-react";
 import { thoughtHooks, useSettings } from "@/hooks/useData";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,8 @@ import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useLang } from "@/contexts/LanguageContext";
+import { ThoughtZen, type ThoughtZenDraft } from "@/components/ThoughtZen";
+import type { Tables } from "@/integrations/supabase/types";
 
 const TAG_ICON_MAP: Record<string, React.ElementType> = {
   "科研": FlaskConical,
@@ -39,6 +41,12 @@ const PRESET_TAGS = [
 const TAG_LABELS: Record<string, string> = {
   "科研": "Research", "生活": "Life", "AI": "AI", "杂念": "Random",
 };
+
+type ThoughtRecord = Pick<Tables<"thoughts">, "id" | "title" | "content" | "tags" | "icon" | "created_at">;
+
+function sameDraft(left: ThoughtZenDraft, right: ThoughtZenDraft) {
+  return left.title === right.title && left.content === right.content;
+}
 
 /** Curated lucide set for thought icons — stored by name in thoughts.icon.
  *  Legacy rows with emoji strings still render through ThoughtIcon's fallback. */
@@ -62,24 +70,40 @@ function ThoughtIcon({ name, className }: { name?: string | null; className?: st
 export default function ThoughtsPage() {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<ThoughtRecord | null>(null);
   const [form, setForm] = useState({ title: "", content: "", tags: [] as string[], icon: "", newTag: "" });
+  const [zenOpen, setZenOpen] = useState(false);
+  const [zenDraft, setZenDraft] = useState<ThoughtZenDraft>({ title: "", content: "" });
+  const zenDraftRef = useRef(zenDraft);
+  zenDraftRef.current = zenDraft;
+  const [zenSaved, setZenSaved] = useState(false);
+  const [zenThoughtId, setZenThoughtId] = useState<string | undefined>();
+  const zenSavingRef = useRef(false);
+  const zenTriggerRef = useRef<HTMLButtonElement>(null);
+  const wasZenOpen = useRef(false);
   const { toast } = useToast();
   const { t, lang } = useLang();
 
-  const { data: thoughts = [], isLoading, error, refetch } = thoughtHooks.useList();
+  const { data: thoughtsData = [], isLoading, error, refetch } = thoughtHooks.useList();
+  const thoughts = thoughtsData as ThoughtRecord[];
   const { data: settings } = useSettings();
   const createMutation = thoughtHooks.useCreate();
   const updateMutation = thoughtHooks.useUpdate();
   const deleteMutation = thoughtHooks.useDelete();
 
-  const customTags = (settings?.custom_thought_tags as string[] | null) || [];
+  useEffect(() => {
+    if (wasZenOpen.current && !zenOpen) zenTriggerRef.current?.focus();
+    wasZenOpen.current = zenOpen;
+  }, [zenOpen]);
+
+  const customThoughtTags = settings?.custom_thought_tags as string[] | null | undefined;
+  const customTags = useMemo(() => customThoughtTags || [], [customThoughtTags]);
 
   // Collect all unique tags from actual thought data + presets + custom settings tags
   const allTags = useMemo(() => {
     const presetTagNames = PRESET_TAGS.map(p => p.tag);
     const dataTagSet = new Set<string>();
-    thoughts.forEach((t: any) => t.tags?.forEach((tag: string) => dataTagSet.add(tag)));
+    thoughts.forEach((thought) => thought.tags?.forEach((tag) => dataTagSet.add(tag)));
     customTags.forEach(t => dataTagSet.add(t));
 
     // Preset tags always first, then additional tags from data/settings (not in presets)
@@ -91,7 +115,7 @@ export default function ThoughtsPage() {
   }, [thoughts, customTags]);
 
   const filtered = selectedTag
-    ? thoughts.filter((t: any) => t.tags?.includes(selectedTag))
+    ? thoughts.filter((thought) => thought.tags?.includes(selectedTag))
     : thoughts;
 
   const toggleTag = (tag: string) => {
@@ -114,18 +138,81 @@ export default function ThoughtsPage() {
       if (editingItem) await updateMutation.mutateAsync({ id: editingItem.id, ...payload });
       else await createMutation.mutateAsync(payload);
       setDialogOpen(false); setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" });
-    } catch (e: any) { toast({ title: t("保存失败", "Save failed"), description: e.message, variant: "destructive" }); }
+    } catch (error: unknown) { toast({ title: t("保存失败", "Save failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" }); }
   };
 
-  const openEdit = (item: any) => {
+  const openEdit = (item: ThoughtRecord) => {
     setEditingItem(item);
     setForm({ title: item.title || "", content: item.content, tags: item.tags || [], icon: item.icon || "", newTag: "" });
     setDialogOpen(true);
   };
 
+  const saveZenThought = async (draft: ThoughtZenDraft) => {
+    if (zenSavingRef.current) throw new Error(t("正在保存，请稍候。", "A save is already in progress."));
+    zenSavingRef.current = true;
+    try {
+      const existing = zenThoughtId ? thoughts.find((thought) => thought.id === zenThoughtId) : undefined;
+      const payload = { title: draft.title.trim() || null, content: draft.content, tags: existing?.tags || [], icon: existing?.icon || null };
+      if (zenThoughtId) {
+        await updateMutation.mutateAsync({ id: zenThoughtId, ...payload });
+      } else {
+        const created = await createMutation.mutateAsync(payload) as Pick<ThoughtRecord, "id">;
+        if (created?.id) setZenThoughtId(created.id);
+      }
+      if (sameDraft(zenDraftRef.current, draft)) setZenSaved(true);
+    } finally {
+      zenSavingRef.current = false;
+    }
+  };
+
+  const openZenEdit = async (thought: ThoughtRecord) => {
+    const currentDraft = { ...zenDraftRef.current };
+    if (!zenSaved && (currentDraft.content.trim() || currentDraft.title.trim())) {
+      if (!currentDraft.content.trim()) {
+        toast({ title: t("随想尚未保存", "Thought is not saved"), description: t("先补充内容，再切换到另一条随想。", "Add content before switching to another thought."), variant: "destructive" });
+        return;
+      }
+      try {
+        await saveZenThought(currentDraft);
+      } catch (error: unknown) {
+        toast({ title: t("保存失败", "Save failed"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
+        return;
+      }
+      if (!sameDraft(zenDraftRef.current, currentDraft)) {
+        toast({ title: t("随想有新的修改", "Thought changed"), description: t("保存期间内容又有变化，请再次保存后切换。", "The draft changed during saving. Save again before switching."), variant: "destructive" });
+        return;
+      }
+    }
+    setZenThoughtId(thought.id);
+    setZenDraft({ title: thought.title || "", content: thought.content || "" });
+    setZenSaved(true);
+    setZenOpen(true);
+  };
+
+  const startNewZenThought = async () => {
+    const currentDraft = { ...zenDraftRef.current };
+    if (!zenSaved && currentDraft.content.trim()) {
+      await saveZenThought(currentDraft);
+      if (!sameDraft(zenDraftRef.current, currentDraft)) {
+        throw new Error(t("保存期间内容又有变化，草稿已保留。", "The draft changed during saving and has been kept."));
+      }
+    } else if (!zenSaved && currentDraft.title.trim()) {
+      throw new Error(t("先写下一些内容，再开始新随想。", "Write some content before starting another thought."));
+    }
+    setZenThoughtId(undefined);
+    setZenDraft({ title: "", content: "" });
+    setZenSaved(false);
+  };
+
+  const updateZenDraft = (draft: ThoughtZenDraft) => {
+    zenDraftRef.current = draft;
+    setZenDraft(draft);
+    setZenSaved(false);
+  };
+
   return (
     <AppLayout title={t("随想", "Thoughts")} description={t("把一闪而过的念头，留在这里。", "A place for passing thoughts.")} concept={thoughts.length > 0 ? moduleFigure.thoughts : undefined}>
-      <div className="space-y-4">
+      <div className="space-y-4" inert={zenOpen} aria-hidden={zenOpen || undefined}>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={!selectedTag ? "default" : "secondary"} size="sm" onClick={() => setSelectedTag(null)}>{t("全部", "All")}</Button>
           {allTags.map(({ tag }) => {
@@ -137,6 +224,9 @@ export default function ThoughtsPage() {
             );
           })}
           <div className="flex-1" />
+          <Button ref={zenTriggerRef} variant="outline" size="sm" onClick={() => setZenOpen(true)}>
+            <PenLine className="h-4 w-4 mr-1" />{t("专注写作", "Focus writing")}
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) { setEditingItem(null); setForm({ title: "", content: "", tags: [], icon: "", newTag: "" }); } }}>
             <DialogTrigger asChild>
               <Button size="sm"><Plus className="h-4 w-4 mr-1" />{t("新随想", "New Thought")}</Button>
@@ -233,9 +323,9 @@ export default function ThoughtsPage() {
           </CollectionFeedback>
         ) : (
           /* Masonry layout using CSS columns */
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4">
-            {filtered.map((thought: any, i: number) => (
-              <Card key={thought.id} style={{ ['--i' as any]: i }} className="enter-up break-inside-avoid hover:border-primary/20 transition-colors overflow-hidden">
+          <div className="thought-masonry" role="list" aria-label={t("随想卡片", "Thought cards")}>
+            {filtered.map((thought, i) => (
+              <Card key={thought.id} role="listitem" style={{ "--i": i } as React.CSSProperties & { "--i": number }} className="thought-card enter-up hover:border-primary/20 transition-colors overflow-hidden">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2 min-w-0">
@@ -244,10 +334,11 @@ export default function ThoughtsPage() {
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button variant="ghost" size="icon" aria-label={t("编辑随想", "Edit thought")} className="h-7 w-7" onClick={() => openEdit(thought)}><Edit2 className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" aria-label={t("专注编辑随想", "Focus edit thought")} className="h-7 w-7" onClick={() => { void openZenEdit(thought); }}><Focus className="h-3 w-3" /></Button>
                       <Button variant="ghost" size="icon" aria-label={t("删除随想", "Delete thought")} className="h-7 w-7 text-destructive" onClick={() => deleteMutation.mutate(thought.id)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   </div>
-                  <div className="prose prose-sm prose-invert max-w-none text-sm text-muted-foreground">
+                  <div className="thought-card-markdown">
                     <ReactMarkdown components={markdownTypography} remarkPlugins={[remarkGfm]}>{thought.content}</ReactMarkdown>
                   </div>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -263,6 +354,16 @@ export default function ThoughtsPage() {
           </div>
         )}
       </div>
+      {zenOpen && (
+        <ThoughtZen
+          draft={zenDraft}
+          saved={zenSaved}
+          onDraftChange={updateZenDraft}
+          onSave={saveZenThought}
+          onStartNew={startNewZenThought}
+          onExit={() => setZenOpen(false)}
+        />
+      )}
     </AppLayout>
   );
 }

@@ -112,6 +112,7 @@ export function DateField({
         />
       )}
       <DateRangePicker
+        selectionMode={onRangeChange ? "range" : "single"}
         value={selected ? { start: start ?? selected, end: selected } : null}
         onChange={apply}
         label={label}

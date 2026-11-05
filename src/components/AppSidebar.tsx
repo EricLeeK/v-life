@@ -1,4 +1,4 @@
-import { Newspaper, LayoutDashboard, Carrot, Package, CalendarDays, Flame, Wallet, CheckSquare, CalendarCheck, Target, Lightbulb, Settings, Scale, LogOut, Kanban, BookOpen, ShoppingBag, Sparkles } from "@/components/icons/ModuleIcons";
+import { LayoutDashboard, Carrot, Package, CalendarDays, Flame, Wallet, CheckSquare, CalendarCheck, Target, Lightbulb, Settings, Scale, LogOut, Kanban, BookOpen, ShoppingBag, Sparkles } from "@/components/icons/ModuleIcons";
 import { NavLink } from "@/components/NavLink";
 import { useId } from "react";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
@@ -55,7 +55,6 @@ export function AppSidebar() {
         { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },
         { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
         { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },
-        { title: t("生活日报", "Newspapers"), url: "/newspapers", icon: Newspaper },
       ],
     },
     {

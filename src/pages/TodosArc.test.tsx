@@ -126,7 +126,10 @@ describe("Todos original Arc task controls", () => {
     expect(screen.queryByRole("group", { name: "任务视图" })).not.toBeInTheDocument();
     const header = screen.getByRole("button", { name: "收起分类: 工作" });
     const category = header.closest(".todo-fold") as HTMLElement;
-    expect(within(category).getByRole("button", { name: "加入今天：部署上线" })).toBeInTheDocument();
+    const toggle = within(category).getByRole("button", { name: "展开项目: 个人技术博客" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(category.querySelector(".warehouse-project-list")).toHaveAttribute("inert");
+    fireEvent.click(toggle);
     expect(within(category).getByRole("button", { name: "回复导师邮件" })).toBeInTheDocument();
     const blog = within(category).getByRole("region", {name:"来自项目 · 个人技术博客"});
     expect(within(blog).getByRole("button", {name:"加入今天：部署上线"})).toBeInTheDocument();
@@ -159,6 +162,7 @@ describe("Todos original Arc task controls", () => {
     fireEvent.click(within(task).getByRole("button", {name:"标记为已完成"}));
     await waitFor(() => expect(within(life).getByTitle("已完成 2 项，共 5 项")).toHaveTextContent("2/5"));
 
+    fireEvent.click(screen.getByRole("button", {name:"展开项目: 个人技术博客"}));
     fireEvent.click(screen.getByRole("button", {name:"完成部署上线"}));
     await waitFor(() => expect(within(work).getByTitle("已完成 3 项，共 8 项")).toHaveTextContent("3/8"));
   });
@@ -169,6 +173,7 @@ describe("Todos original Arc task controls", () => {
       return <button onClick={() => updateRecord("projects", demoData.projects.find(p => p.name === "个人技术博客")!.id, {category:"科研"})}>修改项目分类</button>;
     }
     renderTodos(<Reclassify />);
+    fireEvent.click(screen.getByRole("button", {name:"展开项目: 个人技术博客"}));
     const original = screen.getByRole("button", {name:"加入今天：部署上线"}).closest("[data-project-task]")!.getAttribute("data-project-task");
     fireEvent.click(screen.getByRole("button", {name:"修改项目分类"}));
     const research = screen.getByRole("button", {name:"收起分类: 科研"}).closest(".todo-fold") as HTMLElement;

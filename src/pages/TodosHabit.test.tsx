@@ -140,7 +140,7 @@ describe("todo habits and routines", () => {
     expect(task).toBeTruthy();
     const title = task!.getAttribute("aria-label")!;
     fireEvent.click(task!);
-    await waitFor(() => expect(task).toHaveAttribute("data-state", "checked"));
+    await waitFor(() => expect(screen.getByRole("checkbox", { name: title })).toHaveAttribute("data-state", "checked"));
     fireEvent.click(screen.getByRole("button", {name:"切换列表"}));
     const card = (await screen.findByRole("button", {name:title})).closest(".bg-card") as HTMLElement;
     fireEvent.click(within(card).getByRole("button", {name:"标记为未完成"}));

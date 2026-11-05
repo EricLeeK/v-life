@@ -553,6 +553,7 @@ export type Database = {
           id: string
           is_completed: boolean | null
           metadata: Json | null
+          origin_task_date: string
           task_date: string
           todo_id: string
           updated_at: string | null
@@ -566,6 +567,7 @@ export type Database = {
           id?: string
           is_completed?: boolean | null
           metadata?: Json | null
+          origin_task_date: string
           task_date?: string
           todo_id: string
           updated_at?: string | null
@@ -579,6 +581,7 @@ export type Database = {
           id?: string
           is_completed?: boolean | null
           metadata?: Json | null
+          origin_task_date?: string
           task_date?: string
           todo_id?: string
           updated_at?: string | null
@@ -974,6 +977,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           due_date: string | null
+          estimated_minutes: number | null
           id: string
           project_id: string
           sort_order: number
@@ -989,6 +993,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          estimated_minutes?: number | null
           id?: string
           project_id: string
           sort_order?: number
@@ -1004,6 +1009,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           due_date?: string | null
+          estimated_minutes?: number | null
           id?: string
           project_id?: string
           sort_order?: number
@@ -1529,6 +1535,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           detail: string | null
+          estimated_minutes: number | null
           habit_target: number | null
           habit_type: string | null
           habit_unit: string | null
@@ -1549,6 +1556,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           detail?: string | null
+          estimated_minutes?: number | null
           habit_target?: number | null
           habit_type?: string | null
           habit_unit?: string | null
@@ -1569,6 +1577,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           detail?: string | null
+          estimated_minutes?: number | null
           habit_target?: number | null
           habit_type?: string | null
           habit_unit?: string | null
@@ -1709,6 +1718,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      daily_task_move: {
+        Args: { p_source_id: string; p_target_date: string }
+        Returns: Json
+      }
       agent_project_today: {
         Args: { p_title: string; p_project_name?: string; p_task_id?: string; p_apply?: boolean }
         Returns: Json

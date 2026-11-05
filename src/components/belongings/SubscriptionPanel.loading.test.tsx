@@ -8,6 +8,8 @@ vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: api.from } 
 vi.mock("@/contexts/DemoModeContext", () => ({ useDemoMode: () => ({ isDemo: false }) }));
 vi.mock("@/contexts/LanguageContext", () => ({ useLang: () => ({ lang: "zh", t: (zh: string) => zh }) }));
 vi.mock("@/hooks/useLocalDate", () => ({ useLocalDate: () => "2026-09-25" }));
+vi.mock("@/hooks/useSubscriptionExchangeRate", () => ({ useUsdCnyRate: () => ({ data: { rate: null, date: null, source: "unavailable" }, isLoading: false, refetch: vi.fn() }) }));
+vi.mock("skullet/react", () => ({ SkeletonBox: ({ className }: { className?: string }) => <div className={className} /> }));
 const clients: QueryClient[] = [];
 
 beforeEach(() => {
@@ -41,7 +43,7 @@ it("explains an unavailable subscription service immediately and allows recovery
   mount();
   expect(await screen.findByRole("alert")).toHaveTextContent("订阅服务尚未完成初始化，请稍后重试。");
   expect(api.from).toHaveBeenCalledTimes(1);
-  expect(screen.queryByText("正在加载订阅…")).not.toBeInTheDocument();
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
   api.response.mockResolvedValue({ data: [], error: null });
   fireEvent.click(screen.getByRole("button", { name: "重试" }));
   await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
@@ -52,7 +54,10 @@ it("ends loading when a request never resolves, aborts it and offers retry", asy
   vi.useFakeTimers();
   api.response.mockImplementation(() => new Promise(() => {}));
   mount();
-  expect(screen.getByRole("status")).toHaveTextContent("正在加载订阅");
+  const loading = screen.getByRole("status");
+  expect(loading).toHaveAttribute("aria-busy", "true");
+  expect(loading.querySelectorAll(".bg-muted").length).toBeGreaterThan(0);
+  expect(loading).not.toHaveTextContent("正在加载订阅");
   await act(async () => { await vi.advanceTimersByTimeAsync(15001); });
   expect(screen.getByRole("alert")).toHaveTextContent("加载超时，请检查网络后重试。");
   expect(api.signals[0].aborted).toBe(true);

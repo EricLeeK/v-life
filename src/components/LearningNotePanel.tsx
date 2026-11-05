@@ -3,7 +3,7 @@ import { StudyMarkdown } from "@/components/preparation/StudyMarkdown";
 import { moduleFigure } from "@/components/concepts/catalog";
 import { HairlineFigure } from "@/components/concepts/HairlineFigure";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type Ref } from "react";
 import { format } from "date-fns";
 import { DateField } from "@/components/arc/DateField";
 import ReactMarkdown from "react-markdown";
@@ -30,6 +30,8 @@ import {
   Lightbulb,
   ListTree,
   BookMarked,
+  Focus,
+  Minimize2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { messageFromAiInvoke } from "@/lib/aiErrors";
 import { noteTextFromAiChat } from "@/lib/aiNoteResponse";
 import type { Tables } from "@/integrations/supabase/types";
+import { trapTabFocus } from "@/components/zenFocus";
+import "./zen-workspace.css";
 
 type LearningCourse = Tables<"learning_courses">;
 type LearningNote = Tables<"learning_notes">;
@@ -58,7 +62,12 @@ export type LearningNoteSaveValues = LearningNoteCreateValues & { id: string };
 export type LearningNoteSaveOptions = { source?: "auto" | "manual" };
 export type LearningNoteDeleteValues = Pick<LearningNote, "id" | "course_id">;
 
+export interface LearningNotePanelHandle {
+  saveBeforeLeave: () => Promise<boolean>;
+}
+
 interface LearningNotePanelProps {
+  ref?: Ref<LearningNotePanelHandle>;
   initialNoteId?: string;
   onSelectedNoteChange?: (id: string | undefined) => void;
   course: LearningCourse;
@@ -107,13 +116,17 @@ const FORMAT_PROMPT = `你是一位精通 Markdown 和 Obsidian 知识管理的�
 
 只直接返回优化后的 Markdown 文本，不要包含任何前言或总结废话。`;
 
-export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onDeleteNote, initialNoteId, onSelectedNoteChange }: LearningNotePanelProps) {
+export function LearningNotePanel({ ref, course, notes, onCreateNote, onSaveNote, onDeleteNote, initialNoteId, onSelectedNoteChange }: LearningNotePanelProps) {
   const { t } = useLang();
   const { toast } = useToast();
   const [selectedNoteId, setSelectedNoteId] = useState<string | undefined>(() => notes[0]?.id);
   const [draftNoteId, setDraftNoteId] = useState<string | undefined>(() => notes[0]?.id);
   const [activeTab, setActiveTab] = useState<"preview" | "edit">("preview");
   const [isDirty, setIsDirty] = useState(false);
+  const [zenMode, setZenMode] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"saved" | "unsaved" | "saving" | "error">("saved");
+  const zenToggleRef = useRef<HTMLButtonElement>(null);
+  const wasZenMode = useRef(false);
   const [form, setForm] = useState(() => ({
     title: notes[0]?.title || "",
     content: notes[0]?.content || "",
@@ -147,8 +160,31 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
   const onSaveNoteRef = useRef(onSaveNote);
   onSaveNoteRef.current = onSaveNote;
   const savingRef = useRef(false);
+  const pendingSavesRef = useRef(0);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const confirmDeleteTimer = useRef<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (!zenMode || isAiDialogOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      setZenMode(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [zenMode, isAiDialogOpen]);
+
+  useLayoutEffect(() => {
+    if (wasZenMode.current && !zenMode) zenToggleRef.current?.focus();
+    wasZenMode.current = zenMode;
+  }, [zenMode]);
+
+  const markDirty = () => {
+    setIsDirty(true);
+    setSaveStatus("unsaved");
+  };
 
   const clearConfirmDeleteTimer = () => {
     if (confirmDeleteTimer.current != null) {
@@ -164,28 +200,52 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
     const note = selectedNoteRef.current;
     if (!note) return;
     const next = { ...formRef.current, ...override };
+    pendingSavesRef.current += 1;
     savingRef.current = true;
-    try {
-      await onSaveNoteRef.current(
-        {
-          id: note.id,
-          course_id: course.id,
-          title: next.title.trim() || t("未命名笔记", "Untitled Note"),
-          content: next.content,
-          tags: textToTags(next.tagsText),
-          note_date: next.note_date || null,
-        },
-        { source },
-      );
-      const unchanged = JSON.stringify(formRef.current) === JSON.stringify(next);
-      if (unchanged) {
-        dirtyRef.current = false;
-        setIsDirty(false);
+    setSaveStatus("saving");
+    const queuedSave = saveQueueRef.current.catch(() => {}).then(async () => {
+      try {
+        await onSaveNoteRef.current(
+          {
+            id: note.id,
+            course_id: course.id,
+            title: next.title.trim() || t("未命名笔记", "Untitled Note"),
+            content: next.content,
+            tags: textToTags(next.tagsText),
+            note_date: next.note_date || null,
+          },
+          { source },
+        );
+        const unchanged = JSON.stringify(formRef.current) === JSON.stringify(next);
+        if (unchanged && pendingSavesRef.current === 1) {
+          dirtyRef.current = false;
+          setIsDirty(false);
+          setSaveStatus("saved");
+        }
+      } catch (error) {
+        setSaveStatus("error");
+        throw error;
+      } finally {
+        pendingSavesRef.current -= 1;
+        savingRef.current = pendingSavesRef.current > 0;
+        if (savingRef.current) setSaveStatus("saving");
       }
-    } finally {
-      savingRef.current = false;
-    }
+    });
+    saveQueueRef.current = queuedSave.then(() => {}, () => {});
+    return queuedSave;
   };
+
+  useImperativeHandle(ref, () => ({
+    saveBeforeLeave: async () => {
+      try {
+        if (dirtyRef.current) await persist("auto");
+        await saveQueueRef.current;
+        return !dirtyRef.current;
+      } catch {
+        return false;
+      }
+    },
+  }));
 
   useEffect(() => {
     if (!selectedNote && notes.length === 0) {
@@ -193,6 +253,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
       setDraftNoteId(undefined);
       setForm({ title: "", content: "", tagsText: "", note_date: todayString() });
       setIsDirty(false);
+      setSaveStatus("saved");
       return;
     }
 
@@ -218,6 +279,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
       });
       setDraftNoteId(selectedNote.id);
       setIsDirty(false);
+      setSaveStatus("saved");
     }
   }, [notes, selectedNote, selectedNoteId, draftNoteId, isDirty]);
 
@@ -231,7 +293,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
   useEffect(() => {
     const flush = () => {
-      if (dirtyRef.current && selectedNoteRef.current && !savingRef.current) {
+      if (dirtyRef.current && selectedNoteRef.current) {
         void persist("auto").catch(() => {});
       }
     };
@@ -250,7 +312,12 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
   const handleSelectNote = async (id: string) => {
     if (id === selectedNoteId) return;
     if (dirtyRef.current) {
-      await persist("auto");
+      try {
+        await persist("auto");
+      } catch {
+        return;
+      }
+      if (dirtyRef.current) return;
     }
     clearConfirmDeleteTimer();
     setConfirmDelete(false);
@@ -259,6 +326,14 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
   };
 
   const handleCreate = async () => {
+    if (dirtyRef.current) {
+      try {
+        await persist("auto");
+      } catch {
+        return;
+      }
+      if (dirtyRef.current) return;
+    }
     const created = await onCreateNote({
       course_id: course.id,
       title: t("新笔记", "New Note"),
@@ -276,6 +351,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
         note_date: created.note_date || todayString(),
       });
       setIsDirty(false);
+      setSaveStatus("saved");
       setActiveTab("edit");
     }
   };
@@ -394,8 +470,8 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
       setGeneratedResult(content);
       toast({ title: t("AI 优化成功", "AI Optimization Complete") });
-    } catch (e: any) {
-      toast({ title: t("调用异常", "Invocation error"), description: e.message || String(e), variant: "destructive" });
+    } catch (error: unknown) {
+      toast({ title: t("调用异常", "Invocation error"), description: error instanceof Error ? error.message : String(error), variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
@@ -425,8 +501,14 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
   };
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-background">
-      <div className="border-b border-border bg-card px-4 py-3">
+    <div
+      className={`h-full min-h-0 flex flex-col bg-background ${zenMode ? "learning-note-panel--zen" : ""}`}
+      role={zenMode ? "dialog" : undefined}
+      aria-modal={zenMode ? true : undefined}
+      aria-label={zenMode ? t("专注学习工作区", "Focused learning workspace") : undefined}
+      onKeyDown={trapTabFocus}
+    >
+      <div className="learning-note-panel__header border-b border-border bg-card px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -436,10 +518,30 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
             </div>
             {course.description && <Paragraph className="mt-1 text-sm text-muted-foreground">{course.description}</Paragraph>}
           </div>
-          <Button onClick={handleCreate} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Plus className="h-4 w-4 mr-1" />
-            {t("新建笔记", "New Note")}
-          </Button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {zenMode && (
+              <>
+                <span className="text-xs text-muted-foreground" role="status" aria-live="polite">
+                  {saveStatus === "saving" ? t("正在保存…", "Saving…")
+                    : saveStatus === "unsaved" ? t("尚未保存", "Unsaved")
+                      : saveStatus === "error" ? t("保存失败", "Save failed")
+                        : t("已保存", "Saved")}
+                </span>
+                <Button type="button" variant="outline" size="sm" disabled={!isDirty || saveStatus === "saving"} onClick={() => { void persist("manual").catch(() => {}); }}>
+                  {saveStatus === "saving" ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />}
+                  {t("保存", "Save")}
+                </Button>
+              </>
+            )}
+            <Button ref={zenToggleRef} type="button" variant={zenMode ? "outline" : "secondary"} size="sm" aria-pressed={zenMode} onClick={() => setZenMode((value) => !value)}>
+              {zenMode ? <Minimize2 className="mr-1.5 h-4 w-4" /> : <Focus className="mr-1.5 h-4 w-4" />}
+              {zenMode ? t("退出专注", "Exit focus") : t("专注学习", "Focus learning")}
+            </Button>
+            <Button onClick={handleCreate} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Plus className="h-4 w-4 mr-1" />
+              {t("新建笔记", "New Note")}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -448,7 +550,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
           hint={t("写下今天弄懂的第一个问题。", "Start with one thing you understood today.")}
           action={<Button onClick={handleCreate}>{t("新建笔记", "New Note")}</Button>} />
       ) : (
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_1fr]">
+        <div className="learning-note-panel__body flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[260px_1fr]">
           <aside className="min-h-0 border-b lg:border-b-0 lg:border-r border-border bg-card">
             <div className="max-h-56 lg:max-h-none lg:h-full overflow-y-auto p-3 space-y-2">
               {notes.map((note) => (
@@ -508,7 +610,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                         <ChevronDown className="h-3 w-3 ml-1 opacity-60" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuContent align="end" className="z-[140] w-52">
                       <DropdownMenuItem
                         onClick={() => handleOpenAiDialog("polish")}
                         className="cursor-pointer text-xs py-2"
@@ -578,23 +680,23 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
               <TabsContent value="edit" className="mt-0 min-h-0 flex-1">
                 <div className="h-full min-h-0 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
-                  <div className="grid gap-3 lg:grid-cols-[1fr_160px]">
-                    <div>
+                  <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,13rem)]">
+                    <div className="min-w-0">
                       <Label htmlFor="learning-note-title" className="text-foreground text-sm">{t("标题", "Title")}</Label>
                       <Input
                         id="learning-note-title"
                         value={form.title}
-                        onChange={(e) => { setForm({ ...form, title: e.target.value }); setIsDirty(true); }}
+                        onChange={(e) => { setForm({ ...form, title: e.target.value }); markDirty(); }}
                         className="border-border text-foreground"
                       />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <Label htmlFor="learning-note-date" className="text-foreground text-sm">{t("日期", "Date")}</Label>
                       <DateField
                         id="learning-note-date"
                         label={t("日期", "Date")}
                         value={form.note_date}
-                        onChange={(note_date) => { setForm({ ...form, note_date }); setIsDirty(true); }}
+                        onChange={(note_date) => { setForm({ ...form, note_date }); markDirty(); }}
                       />
                     </div>
                   </div>
@@ -603,7 +705,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     <Input
                       id="learning-note-tags"
                       value={form.tagsText}
-                      onChange={(e) => { setForm({ ...form, tagsText: e.target.value }); setIsDirty(true); }}
+                      onChange={(e) => { setForm({ ...form, tagsText: e.target.value }); markDirty(); }}
                       placeholder={t("例如：lecture, 重点", "e.g. lecture, important")}
                       className="border-border text-foreground"
                     />
@@ -616,7 +718,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
                     <Textarea
                       id="learning-note-content"
                       value={form.content}
-                      onChange={(e) => { setForm({ ...form, content: e.target.value }); setIsDirty(true); }}
+                      onChange={(e) => { setForm({ ...form, content: e.target.value }); markDirty(); }}
                       className="min-h-[300px] flex-1 resize-none border-border text-foreground font-mono text-sm leading-relaxed p-3"
                     />
                   </div>
@@ -629,7 +731,7 @@ export function LearningNotePanel({ course, notes, onCreateNote, onSaveNote, onD
 
       {/* AI Note Assistant Dialog */}
       <Dialog open={isAiDialogOpen} onOpenChange={setIsAiDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+        <DialogContent className="z-[130] max-w-3xl max-h-[90vh] flex flex-col">
           <DialogHeader className="pb-2 border-b border-border flex flex-row items-center justify-between">
             <DialogTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
               <Sparkles className="h-5 w-5 text-primary" />

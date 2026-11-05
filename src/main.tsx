@@ -7,7 +7,6 @@ import "./styles/card-premium.css";
 import "./styles/life-stage.css";
 import "./styles/controls.css";
 import "./styles/theme-chart.css";
-import "./styles/newspaper.css";
 import "./styles/typography.css";
 
 installQuietEscFocus();

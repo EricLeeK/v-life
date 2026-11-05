@@ -164,6 +164,129 @@ describe("LearningNotePanel", () => {
     );
     vi.useRealTimers();
   });
+
+  it("opens a distraction-free workspace and closes it with Escape without discarding the draft", () => {
+    render(
+      <LearningNotePanel
+        course={course}
+        notes={notes}
+        onCreateNote={vi.fn()}
+        onSaveNote={vi.fn().mockResolvedValue(undefined)}
+        onDeleteNote={vi.fn()}
+      />,
+    );
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /编辑/ }), { button: 0, ctrlKey: false });
+    fireEvent.change(screen.getByLabelText(/内容/), { target: { value: "A draft survives the focus switch." } });
+    fireEvent.click(screen.getByRole("button", { name: "专注学习" }));
+    expect(screen.getByRole("dialog", { name: "专注学习工作区" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Backpropagation/ })).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    expect(screen.queryByRole("dialog", { name: "专注学习工作区" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/内容/)).toHaveValue("A draft survives the focus switch.");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "专注学习" }));
+  });
+
+  it("keeps the current note selected when switching notes after editing", async () => {
+    const secondNote = { ...notes[0], id: "note-2", title: "Gradient descent", content: "## Step size" };
+    const onSaveNote = vi.fn().mockResolvedValue(undefined);
+    render(
+      <LearningNotePanel
+        course={course}
+        notes={[notes[0], secondNote]}
+        onCreateNote={vi.fn()}
+        onSaveNote={onSaveNote}
+        onDeleteNote={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "专注学习" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /编辑/ }), { button: 0, ctrlKey: false });
+    fireEvent.change(screen.getByLabelText(/内容/), { target: { value: "Unsaved but preserved while changing notes." } });
+    fireEvent.click(screen.getByRole("button", { name: /Gradient descent/ }));
+
+    await waitFor(() => expect(onSaveNote).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "note-1", content: "Unsaved but preserved while changing notes." }),
+      expect.objectContaining({ source: "auto" }),
+    ));
+    expect(await screen.findByRole("heading", { name: "Step size" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "专注学习工作区" })).toBeInTheDocument();
+  });
+
+  it("serializes an autosave before the newer save triggered by switching notes", async () => {
+    const secondNote = { ...notes[0], id: "note-2", title: "Gradient descent", content: "## Step size" };
+    const pendingSaves: Array<{ content: string; resolve: () => void }> = [];
+    const onSaveNote = vi.fn((values: { content: string }) => new Promise<void>((resolve) => {
+      pendingSaves.push({ content: values.content, resolve });
+    }));
+    vi.useFakeTimers();
+    try {
+      render(
+        <LearningNotePanel
+          course={course}
+          notes={[notes[0], secondNote]}
+          onCreateNote={vi.fn()}
+          onSaveNote={onSaveNote}
+          onDeleteNote={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "专注学习" }));
+      fireEvent.mouseDown(screen.getByRole("tab", { name: /编辑/ }), { button: 0, ctrlKey: false });
+      fireEvent.change(screen.getByLabelText(/内容/), { target: { value: "older autosave" } });
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(pendingSaves).toHaveLength(1);
+      expect(pendingSaves[0].content).toBe("older autosave");
+
+      fireEvent.change(screen.getByLabelText(/内容/), { target: { value: "newer switch save" } });
+      fireEvent.click(screen.getByRole("button", { name: /Gradient descent/ }));
+      expect(pendingSaves).toHaveLength(1);
+
+      await act(async () => {
+        pendingSaves[0].resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(pendingSaves).toHaveLength(2);
+      expect(pendingSaves[1].content).toBe("newer switch save");
+
+      await act(async () => {
+        pendingSaves[1].resolve();
+        await Promise.resolve();
+      });
+      vi.useRealTimers();
+      expect(await screen.findByRole("heading", { name: "Step size" })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps an unsaved draft selected if saving fails during a note switch", async () => {
+    const secondNote = { ...notes[0], id: "note-2", title: "Gradient descent", content: "## Step size" };
+    const onSaveNote = vi.fn().mockRejectedValue(new Error("Offline"));
+    render(
+      <LearningNotePanel
+        course={course}
+        notes={[notes[0], secondNote]}
+        onCreateNote={vi.fn()}
+        onSaveNote={onSaveNote}
+        onDeleteNote={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "专注学习" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /编辑/ }), { button: 0, ctrlKey: false });
+    fireEvent.change(screen.getByLabelText(/内容/), { target: { value: "Keep this while offline." } });
+    fireEvent.click(screen.getByRole("button", { name: /Gradient descent/ }));
+
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("保存失败"));
+    expect(screen.getByLabelText(/内容/)).toHaveValue("Keep this while offline.");
+    expect(screen.getByRole("dialog", { name: "专注学习工作区" })).toBeInTheDocument();
+  });
 });
 
  it("opens a linked note when an equally sized course replaces the initial notes", async () => {

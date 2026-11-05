@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useLang } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonBox } from "skullet/react";
 import { cn } from "@/lib/utils";
 
 export type SkeletonKind =
@@ -18,7 +18,6 @@ export type SkeletonKind =
   | "workspace"
   | "weight"
   | "settings"
-  | "newspaper"
   | "shop"
   | "fortune"
   | "fortune-reading"
@@ -51,7 +50,6 @@ const ROUTES: Array<RouteSkeletonSpec & { match: (pathname: string) => boolean }
   { match: (p) => p.startsWith("/learning-notes"), kind: "workspace", titleZh: "学习笔记", titleEn: "Learning Notes", statusZh: "正在加载学习笔记", statusEn: "Loading learning notes", header: true, fullBleed: true, description: false },
   { match: (p) => p.startsWith("/weight-loss"), kind: "weight", titleZh: "减肥专项", titleEn: "Weight Loss", statusZh: "正在加载减肥专项", statusEn: "Loading weight loss", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/settings"), kind: "settings", titleZh: "设置", titleEn: "Settings", statusZh: "正在加载设置", statusEn: "Loading settings", header: true, fullBleed: false, description: false },
-  { match: (p) => p.startsWith("/newspapers"), kind: "newspaper", titleZh: "生活日报", titleEn: "Life newspaper", statusZh: "正在加载生活日报", statusEn: "Loading the newspaper", header: false, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/shop"), kind: "shop", titleZh: "商店", titleEn: "Shop", statusZh: "正在加载商店", statusEn: "Loading the shop", header: true, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/fortune/history"), kind: "fortune-history", titleZh: "我的记录", titleEn: "My readings", statusZh: "正在加载运势记录", statusEn: "Loading fortune history", header: false, fullBleed: false, description: false },
   { match: (p) => p.startsWith("/fortune/"), kind: "fortune-reading", titleZh: "运势", titleEn: "Fortune", statusZh: "正在加载占卜", statusEn: "Loading the reading", header: false, fullBleed: false, description: false },
@@ -78,7 +76,13 @@ export function isFullBleedPath(pathname: string) {
 }
 
 function Bone({ className }: { className?: string }) {
-  return <Skeleton className={cn("bg-muted", className)} />;
+  // Keep dimensions in the responsive route layout instead of SkeletonBox's inline defaults.
+  return (
+    <SkeletonBox
+      className={cn("block rounded-md bg-muted", className)}
+      style={{ height: undefined, width: undefined, borderRadius: undefined }}
+    />
+  );
 }
 
 function TitleBones({ description }: { description?: boolean }) {
@@ -249,16 +253,6 @@ function SkeletonBody({ kind }: { kind: SkeletonKind }) {
               <Bone className="h-24 w-full" />
             </div>
           ))}
-        </div>
-      );
-    case "newspaper":
-      return (
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <Bone className="h-10 w-48" />
-            <Bone className="h-4 w-72 max-w-full" />
-          </div>
-          <Bone className="mx-auto h-[32rem] w-full max-w-3xl" />
         </div>
       );
     case "shop":

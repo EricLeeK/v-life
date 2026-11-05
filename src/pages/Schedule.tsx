@@ -482,13 +482,15 @@ export default function SchedulePage() {
           ]} />
       )}
       <div><Label htmlFor="event-title">{t("标题", "Title")} *</Label><Input id="event-title" readOnly={!!source} className="mt-1 h-9 text-base" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label htmlFor="event-start-date">{t("开始日期", "Start Date")} *</Label><DateField id="event-start-date" label={t("开始日期", "Start Date")} value={form.start_date} onChange={(start_date) => setForm({ ...form, start_date, end_date: start_date })} /></div>
-        <div><Label htmlFor="event-start-time">{t("开始时间", "Start Time")}</Label><TimeField id="event-start-time" label={t("开始时间", "Start Time")} value={form.start_time} onChange={(start_time) => setForm({ ...form, start_time })} /></div>
+      <div className="min-w-0">
+        <Label htmlFor="event-date-range">{t("日期区间", "Date range")} *</Label>
+        <DateField id="event-date-range" label={t("日期区间", "Date range")} startValue={form.start_date} value={form.end_date}
+          onChange={(end_date) => setForm(draft => ({ ...draft, end_date }))}
+          onRangeChange={({ start, end }) => setForm(draft => ({ ...draft, start_date: start, end_date: end }))} />
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <div><Label htmlFor="event-end-date">{t("结束日期", "End Date")} *</Label><DateField id="event-end-date" label={t("结束日期", "End Date")} value={form.end_date} onChange={(end_date) => setForm({ ...form, end_date })} /></div>
-        <div><Label htmlFor="event-end-time">{t("结束时间", "End Time")}</Label><TimeField id="event-end-time" label={t("结束时间", "End Time")} value={form.end_time} onChange={(end_time) => setForm({ ...form, end_time })} clearable /></div>
+        <div className="min-w-0"><Label htmlFor="event-start-time">{t("开始时间", "Start Time")} *</Label><TimeField id="event-start-time" label={t("开始时间", "Start Time")} value={form.start_time} onChange={(start_time) => setForm({ ...form, start_time })} /><p className="mt-1 text-xs text-muted-foreground">{form.start_date}</p></div>
+        <div className="min-w-0"><Label htmlFor="event-end-time">{t("结束时间", "End Time")} *</Label><TimeField id="event-end-time" label={t("结束时间", "End Time")} value={form.end_time} onChange={(end_time) => setForm({ ...form, end_time })} /><p className="mt-1 text-xs text-muted-foreground">{form.end_date}</p></div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label htmlFor="event-importance">{t("重要性", "Importance")}</Label>

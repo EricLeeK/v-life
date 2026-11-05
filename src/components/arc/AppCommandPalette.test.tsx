@@ -12,6 +12,13 @@ function show() { return render(<MemoryRouter><AppCommandPalette /><Location /><
 
 beforeEach(() => { settings.hidden_features = []; settings.app_focus_mode = "full"; });
 describe("Arc app command navigation", () => {
+  it("does not expose the retired life newspaper", async () => {
+    show();
+    fireEvent.click(screen.getByRole("button", { name: /搜索功能/ }));
+    const input = await screen.findByRole("combobox", { name: "搜索功能" });
+    fireEvent.change(input, { target: { value: "生活日报" } });
+    expect(screen.queryByRole("option", { name: /生活日报/ })).not.toBeInTheDocument();
+  });
   it("keeps normal navigation for retired exam-only settings and removes exam commands", async () => {
     settings.app_focus_mode = "civil_service";
     show();

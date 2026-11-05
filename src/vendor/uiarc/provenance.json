@@ -91,7 +91,11 @@
     },
     {
       "path": "registry/components/date-range-picker/date-range-picker.tsx",
-      "sha256": "fb690ca0d1a31b1c1001580d53c82aba24a348626d64bc893238b139f49f61c9"
+      "sha256": "fb690ca0d1a31b1c1001580d53c82aba24a348626d64bc893238b139f49f61c9",
+      "localPatch": {
+        "sha256": "c94975ad13f907a22023713963969fc59593ec47b2ef6f9b63d2d3e66d0630e5",
+        "reason": "Add single-date selection semantics while preserving the original Arc surface, styles and motion."
+      }
     },
     {
       "path": "registry/components/donut-chart/donut-chart.module.css",

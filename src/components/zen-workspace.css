@@ -1,0 +1,239 @@
+.zen-workspace {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  overscroll-behavior: contain;
+}
+
+.zen-workspace__header {
+  z-index: 1;
+  display: flex;
+  min-height: 4.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--background) / 0.96);
+  padding: 0.75rem clamp(0.75rem, 3vw, 2.5rem);
+  backdrop-filter: blur(14px);
+}
+
+.zen-workspace__body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: clamp(1.25rem, 5vh, 4rem) clamp(1rem, 4vw, 3rem);
+}
+
+.thought-zen__surface {
+  display: flex;
+  min-height: 100%;
+  width: min(100%, 54rem);
+  flex-direction: column;
+  margin: 0 auto;
+}
+
+.thought-zen__title {
+  height: auto;
+  min-height: 3rem;
+  border: 0;
+  background: transparent;
+  padding: 0 0 0.75rem;
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  box-shadow: none;
+}
+
+.thought-zen__title:focus-visible {
+  outline: none;
+  box-shadow: 0 1px hsl(var(--ring));
+}
+
+.thought-zen__editor-wrap {
+  display: flex;
+  min-height: 50vh;
+  flex: 1;
+  flex-direction: column;
+}
+
+.thought-zen__editor {
+  min-height: 50vh;
+  flex: 1;
+  resize: vertical;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  line-height: 1.9;
+  box-shadow: none;
+}
+
+.thought-zen__editor:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.thought-zen__editor::placeholder,
+.thought-zen__title::placeholder {
+  color: hsl(var(--muted-foreground) / 0.6);
+}
+
+.thought-zen__preview {
+  flex: 1;
+  padding-top: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.thought-masonry {
+  column-count: 1;
+  column-gap: 1rem;
+}
+
+.thought-masonry > * {
+  display: inline-block;
+  width: 100%;
+  margin: 0 0 1rem;
+  break-inside: avoid;
+  vertical-align: top;
+}
+
+.thought-card-markdown {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.thought-card-markdown > :first-child { margin-top: 0; }
+.thought-card-markdown > :last-child { margin-bottom: 0; }
+.thought-card-markdown h1,
+.thought-card-markdown h2,
+.thought-card-markdown h3 {
+  margin: 0.85rem 0 0.4rem;
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  line-height: 1.35;
+}
+.thought-card-markdown h1 { font-size: 1.125rem; }
+.thought-card-markdown h2 { font-size: 1rem; }
+.thought-card-markdown h3 { font-size: 0.875rem; }
+.thought-card-markdown p,
+.thought-card-markdown ul,
+.thought-card-markdown ol,
+.thought-card-markdown blockquote,
+.thought-card-markdown pre,
+.thought-card-markdown table { margin: 0.65rem 0; }
+.thought-card-markdown ul,
+.thought-card-markdown ol { padding-left: 1.35rem; }
+.thought-card-markdown ul { list-style: disc; }
+.thought-card-markdown ol { list-style: decimal; }
+.thought-card-markdown li { padding-left: 0.15rem; }
+.thought-card-markdown li + li { margin-top: 0.2rem; }
+.thought-card-markdown blockquote {
+  border-left: 2px solid hsl(var(--primary) / 0.45);
+  padding-left: 0.85rem;
+  color: hsl(var(--foreground) / 0.78);
+}
+.thought-card-markdown code {
+  border-radius: var(--radius);
+  background: hsl(var(--muted));
+  padding: 0.1rem 0.3rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.875em;
+}
+.thought-card-markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: hsl(var(--muted));
+  padding: 0.75rem;
+}
+.thought-card-markdown pre code { background: transparent; padding: 0; }
+.thought-card-markdown a { color: hsl(var(--primary)); overflow-wrap: anywhere; text-decoration: underline; text-underline-offset: 0.15em; }
+.thought-card-markdown img { display: block; max-width: 100%; height: auto; border-radius: var(--radius); }
+.thought-card-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.thought-card-markdown th,
+.thought-card-markdown td { border: 1px solid hsl(var(--border)); padding: 0.35rem 0.55rem; }
+.thought-card-markdown th { color: hsl(var(--foreground)); font-weight: 600; }
+.thought-card-markdown hr { margin: 0.8rem 0; border-color: hsl(var(--border)); }
+
+@media (min-width: 640px) {
+  .thought-masonry { column-count: 2; }
+}
+
+@media (min-width: 1024px) {
+  .thought-masonry { column-count: 3; }
+}
+
+@media (max-width: 640px) {
+  .zen-workspace__header { align-items: flex-start; flex-wrap: wrap; }
+  .thought-zen .zen-workspace__header > div:last-child { width: 100%; justify-content: flex-end; }
+}
+
+.learning-note-panel--zen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  width: 100vw;
+  height: 100dvh;
+  overflow: hidden;
+  background: hsl(var(--background));
+}
+
+.learning-note-panel--zen .learning-note-panel__header {
+  flex: 0 0 auto;
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  background: hsl(var(--background) / 0.97);
+}
+
+.learning-note-panel--zen .learning-note-panel__body {
+  grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.learning-note-panel--zen .learning-note-panel__body > aside {
+  border-bottom: 0;
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+}
+
+.learning-note-panel--zen .learning-note-panel__body > section {
+  min-width: 0;
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+.learning-note-panel--zen [role="tabpanel"] > div {
+  width: min(100%, 68rem);
+  margin-inline: auto;
+  max-width: 72rem;
+}
+
+@media (max-width: 767px) {
+  .learning-note-panel--zen .learning-note-panel__header > div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .learning-note-panel--zen .learning-note-panel__header > div > div:last-child {
+    justify-content: flex-start;
+  }
+
+  .learning-note-panel--zen .learning-note-panel__body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .learning-note-panel--zen .learning-note-panel__body > aside {
+    border-right: 0;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+}

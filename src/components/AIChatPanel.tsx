@@ -19,8 +19,6 @@ import { parseAgentChatContent, sanitizeAssistantContent } from "../../supabase/
 import { formatOpPreview, normalizeHabitCreate, rewriteCompleteOp } from "@/lib/habitAi";
 import { isPersistentKind } from "@/lib/habits";
 import { executeSubscriptionChatOperation, preserveUsdExpenseRate } from './subscriptionChatOperations';
-import { callNewspaper } from '@/hooks/useNewspapers';
-import { executeNewspaperChatOperation } from '@/lib/newspaperChat';
 import { existingTodayCommand, projectTodayRequest, projectTodayMiss } from "@/lib/projectTodayAgent";
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -470,14 +468,8 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
           continue;
         }
         if (op.module === 'newspaper') {
-          try {
-            if (!isDemo && !user?.id) throw new Error('请先登录后操作日报。');
-            results.push(await executeNewspaperChatOperation(op, (action, input, key) => callNewspaper(action, input, isDemo, key), isDemo ? 'demo' : user!.id));
-            await qc.invalidateQueries({ queryKey: ['newspaper'] });
-          } catch (error) {
-            hasError = true;
-            results.push(`${t('日报操作失败', 'Newspaper operation failed')}: ${(error as Error).message}`);
-          }
+          hasError = true;
+          results.push(t('生活日报已下线。', 'Life newspaper is no longer available.'));
           continue;
         }
         if (op.module === "todo" && op.action === "update" && op.data?.update?.is_completed === true) {
@@ -801,9 +793,7 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
         return parseAgentChatContent({ result: data?.result, raw: data?.raw });
       })();
       if (conversationSessionRef.current !== sessionId) return;
-      const operations: Operation[] = (parsed.operations || []).map((operation: Operation) => operation.module === 'newspaper'
-        ? { ...operation, idempotency_key: operation.idempotency_key || crypto.randomUUID() }
-        : operation);
+      const operations: Operation[] = parsed.operations || [];
       const summary: string = parsed.summary || "无法理解请求";
 
       if (operations.length > 0) {
@@ -831,10 +821,6 @@ export function AIChatPanel({ initialOpen = false, showLauncher = true }: { init
         } else {
           const previewLines = operations.map((op) => {
             if (op.module === "project_today") return `• 安排到今天：${op.data.project_name ? op.data.project_name + " · " : ""}${op.data.title}`;
-            if (op.module === 'newspaper') {
-              const actions: Record<string, string> = { refresh: '更新报纸修订', supplement_save: '保存原文补充', supplement_delete: '删除补充', report_update: '调整版块', review_generate: '生成复盘', style_save: '保存配图风格', style_delete: '删除配图风格', image_generate: '生成配图', image_select: '选用配图', image_caption: '修改图注' };
-              return `• ${actions[op.action] || op.action}${op.data.date ? `（${op.data.date}）` : ''}`;
-            }
             const label = moduleLabels[op.module] || op.module;
             const action = { create: t("新增", "Create"), update: t("更新", "Update"), delete: t("删除", "Delete") }[op.action] || op.action;
             if ((op.module === "todo" && (op.data.kind === "habit" || op.data.kind === "routine")) || op.module === "habit_log") {

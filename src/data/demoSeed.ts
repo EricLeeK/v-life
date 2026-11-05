@@ -356,6 +356,7 @@ export const demoTodos: DemoTodo[] = [
   is_paused: false,
   // Legacy examples have no recorded completion time.
   completed_at: null,
+  estimated_minutes: null,
   ...todo,
 }));
 
@@ -384,7 +385,7 @@ function generateDailyTasks(): Tables<"daily_tasks">[] {
     { id: DTASK_5, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000005", task_date: dateStr, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: ts, updated_at: ts },
     { id: DTASK_PAST_1, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000003", task_date: yesterday, difficulty: "medium", base_points: 20, is_completed: false, completed_at: null, created_at: yesterdayTs, updated_at: yesterdayTs },
     { id: DTASK_PAST_2, user_id: DEMO_USER, todo_id: "demo-t0000000-0000-0000-0000-000000000012", task_date: dayBefore, difficulty: "easy", base_points: 10, is_completed: false, completed_at: null, created_at: dayBeforeTs, updated_at: dayBeforeTs },
-  ].map(task => ({ ...task, metadata: {} }));
+  ].map(task => ({ ...task, metadata: {}, origin_task_date: task.task_date }));
 }
 
 export const demoDailyTasks = generateDailyTasks();

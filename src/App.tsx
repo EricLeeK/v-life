@@ -38,7 +38,6 @@ const GoalsPage = lazy(() => import("./pages/Goals"));
 const WeightLossPage = lazy(() => import("./pages/WeightLoss"));
 const ProjectsPage = lazy(() => import("./pages/Projects"));
 const ShopPage = lazy(() => import("./pages/Shop"));
-const NewspapersPage = lazy(() => import("./pages/Newspapers"));
 const SettingsPage = lazy(() => import("./pages/Settings"));
 const HairlineDesignPage = import.meta.env.DEV ? lazy(() => import("./pages/HairlineDesign")) : null;
 const FortuneHome = lazy(() => import("./pages/fortune/FortuneHome"));
@@ -97,7 +96,7 @@ function AppRoutes() {
           <Route path="/fortune/lot" element={<LotPage />} />
           <Route path="/fortune/bazi" element={<BaziPage />} />
           <Route path="/fortune/history" element={<FortuneHistoryPage />} />
-          <Route path="/newspapers" element={<NewspapersPage />} />
+          <Route path="/newspapers/*" element={<Navigate to="/" replace />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<NotFound />} />
@@ -119,14 +118,13 @@ function DeferredAIChatPanel() {
   if (shouldLoad) {
     return (
       <Suspense fallback={null}>
-        <AIChatPanel initialOpen showLauncher={pathname !== "/" && pathname !== "/newspapers"} />
+        <AIChatPanel initialOpen showLauncher={pathname !== "/"} />
       </Suspense>
     );
   }
 
-  // Home has AI capture; the paper reader has its own AI review action.
-  // Keep the floating launcher from covering agenda and archive content.
-  if (pathname === "/" || pathname === "/newspapers" || pathname === "/design/hairline") return null;
+  // Home has its own AI capture entry.
+  if (pathname === "/" || pathname === "/design/hairline") return null;
 
   return (
     <Button

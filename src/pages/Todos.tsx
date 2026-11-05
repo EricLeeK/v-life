@@ -152,7 +152,7 @@ export default function TodosPage() {
 
   // Category Collapse State
   const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
-  const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
+  const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
 
   // Expanded Tasks State (default ARIS expanded)
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({
@@ -172,7 +172,7 @@ export default function TodosPage() {
       }
       pendingLockRef.current = null;
     }
-  }, [collapsedCategories, collapsedProjects, expandedTasks]);
+  }, [collapsedCategories, expandedProjects, expandedTasks]);
 
   const handleCategoryToggleClick = (e: React.MouseEvent, group: string) => {
     const targetEl = e.currentTarget as HTMLElement;
@@ -190,7 +190,7 @@ export default function TodosPage() {
   const handleProjectToggleClick = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
     const element = event.currentTarget;
     pendingLockRef.current = { element, initialTop: element.getBoundingClientRect().top };
-    setCollapsedProjects(current => ({ ...current, [id]: !current[id] }));
+    setExpandedProjects(current => ({ ...current, [id]: !current[id] }));
   };
 
   const handleTaskToggleClick = (e: React.MouseEvent, taskId: string) => {
@@ -1061,7 +1061,7 @@ export default function TodosPage() {
   const renderProjectGroup = (projectCards: WarehouseCard[]) => {
     const project = projectCards[0].projects;
     const projectId = projectCards[0].project_id;
-    const collapsed = !!collapsedProjects[projectId];
+    const collapsed = !expandedProjects[projectId];
     const completed = projectCards.filter(card => card.status === "done").length;
     return (
       <section className="warehouse-project-group mb-2.5" aria-label={t(`来自项目 · ${project.name}`, `From project · ${project.name}`)}>

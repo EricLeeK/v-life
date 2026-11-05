@@ -62,6 +62,33 @@ describe("advanceSubscriptionDate", () => {
   });
 });
 
+describe("effectiveNextDate", () => {
+  it("moves missed monthly auto-renewals to the next upcoming anchored date", () => {
+    const item = sub({ next_date: "2025-12-31", anchor_day: 31 });
+    expect(subscriptions.effectiveNextDate(item, "2026-01-31")).toBe("2026-01-31");
+    expect(subscriptions.effectiveNextDate(item, "2026-02-01")).toBe("2026-02-28");
+  });
+
+  it("moves missed yearly and custom renewals forward without losing their cadence", () => {
+    expect(subscriptions.effectiveNextDate(sub({ next_date: "2025-03-15", billing_interval: 12, anchor_day: 15 }), "2026-03-20"))
+      .toBe("2027-03-15");
+    expect(subscriptions.effectiveNextDate(sub({ next_date: "2026-01-31", billing_interval: 3, anchor_day: 31 }), "2026-04-01"))
+      .toBe("2026-04-30");
+  });
+
+  it("does not rebuild a still-current month from an unrelated anchor day", () => {
+    expect(subscriptions.effectiveNextDate(sub({ next_date: "2026-01-15", billing_interval: 12, anchor_day: 31 }), "2026-01-16"))
+      .toBe("2027-01-31");
+  });
+
+  it("leaves ended and non-renewing subscriptions on their saved date", () => {
+    expect(subscriptions.effectiveNextDate(sub({ next_date: "2025-12-31", auto_renew: false }), "2026-02-01"))
+      .toBe("2025-12-31");
+    expect(subscriptions.effectiveNextDate(sub({ next_date: "2025-12-31", status: "ended" }), "2026-02-01"))
+      .toBe("2025-12-31");
+  });
+});
+
 describe("subscriptionState", () => {
   it("ends a manual plan only after its expiry date", () => {
     const item = sub({ auto_renew: false });
@@ -69,8 +96,10 @@ describe("subscriptionState", () => {
     expect(subscriptions.subscriptionState(item, "2026-02-01")).toBe("ended");
   });
 
-  it("keeps overdue auto-renewals pending confirmation", () => {
+  it("keeps auto-renewals active and projects the next anchored charge", () => {
     expect(subscriptions.subscriptionState(sub(), "2026-02-01")).toBe("active");
+    expect(subscriptions.getSubscriptionEvent(sub(), "2026-02-01"))
+      .toMatchObject({ days: 27, overdue: false, kind: "charge" });
   });
 
   it("keeps expired trials pending conversion or cancellation", () => {
@@ -88,19 +117,28 @@ describe("getSubscriptionEvent", () => {
       .toEqual({ days: 2, overdue: false, kind: "charge", needsAttention: true });
     expect(subscriptions.getSubscriptionEvent(sub({ auto_renew: false }), "2026-01-29"))
       .toEqual({ days: 2, overdue: false, kind: "expiry", needsAttention: true });
-    expect(subscriptions.getSubscriptionEvent(sub({ status: "trial" }), "2026-02-01"))
-      .toEqual({ days: -1, overdue: true, kind: "trial", needsAttention: true });
+    expect(subscriptions.getSubscriptionEvent(sub({ status: "trial", auto_renew: false }), "2026-02-01"))
+      .toEqual({ days: -1, overdue: true, kind: "trial", needsAttention: false });
   });
 
   it("honors the configured reminder horizon", () => {
-    expect(subscriptions.getSubscriptionEvent(sub({ reminder_days: 7 }), "2026-01-24")?.needsAttention).toBe(true);
-    expect(subscriptions.getSubscriptionEvent(sub({ reminder_days: 3 }), "2026-01-24")?.needsAttention).toBe(false);
-    expect(subscriptions.getSubscriptionEvent(sub({ reminder_days: 0 }), "2026-01-31")?.needsAttention).toBe(true);
+    expect(subscriptions.getSubscriptionEvent(sub({ auto_renew: false, reminder_days: 7 }), "2026-01-24")?.needsAttention).toBe(true);
+    expect(subscriptions.getSubscriptionEvent(sub({ auto_renew: false, reminder_days: 3 }), "2026-01-24")?.needsAttention).toBe(false);
+    expect(subscriptions.getSubscriptionEvent(sub({ auto_renew: false, reminder_days: 0 }), "2026-01-31")?.needsAttention).toBe(true);
+  });
+
+  it("always reminds three days before auto-renewals regardless of legacy reminder settings", () => {
+    for (const reminder_days of [null, 0, 7]) {
+      expect(subscriptions.getSubscriptionEvent(sub({ next_date: "2026-01-31", reminder_days }), "2026-01-28"))
+        .toEqual({ days: 3, overdue: false, kind: "charge", needsAttention: true });
+      expect(subscriptions.getSubscriptionEvent(sub({ next_date: "2026-01-31", reminder_days }), "2026-01-27")?.needsAttention)
+        .toBe(false);
+    }
   });
 
   it("keeps disabled reminders quiet even when overdue", () => {
-    expect(subscriptions.getSubscriptionEvent(sub({ reminder_days: null }), "2026-02-01"))
-      .toEqual({ days: -1, overdue: true, kind: "charge", needsAttention: false });
+    expect(subscriptions.getSubscriptionEvent(sub({ status: "trial", auto_renew: false, reminder_days: null }), "2026-02-01"))
+      .toEqual({ days: -1, overdue: true, kind: "trial", needsAttention: false });
   });
 
   it("does not create an event for ended subscriptions", () => {
@@ -126,12 +164,12 @@ describe("summarizeSubscriptions", () => {
     expect(result.monthly.CNY).toBeCloseTo(365.25 / 12);
   });
 
-  it("counts every charge within thirty days and excludes the upper boundary", () => {
+  it("counts every charge through the inclusive thirty-day boundary", () => {
     const result = subscriptions.summarizeSubscriptions([
       sub({ amount: 5, next_date: "2026-01-01", billing_unit: "day", billing_interval: 7 }),
       sub({ amount: 100, next_date: "2026-01-31" }),
     ], "2026-01-01");
-    expect(result.upcoming).toEqual({ CNY: 25 });
+    expect(result.upcoming).toEqual({ CNY: 125 });
   });
 
   it("projects month-end cycles within the same thirty-day window", () => {
@@ -164,22 +202,23 @@ describe("summarizeSubscriptions", () => {
     expect(result.upcoming).toEqual({});
   });
 
-  it("leaves overdue charges pending instead of silently advancing them", () => {
+  it("advances the effective date for an overdue auto-renewal without mutating its saved date", () => {
     const item = sub({ next_date: "2025-12-31" });
     const result = subscriptions.summarizeSubscriptions([item], "2026-01-01");
-    expect(result.upcoming).toEqual({});
-    expect(result.needsAttention).toBe(1);
+    expect(result.upcoming).toEqual({ CNY: 30 });
+    expect(result.needsAttention).toBe(0);
     expect(result.dueSoon).toBe(0);
     expect(item.next_date).toBe("2025-12-31");
   });
 
   it("counts the next seven days independently of custom or disabled reminders", () => {
     const result = subscriptions.summarizeSubscriptions([
+      sub({ next_date: "2026-01-01", reminder_days: null }),
       sub({ next_date: "2026-01-08", reminder_days: null }),
       sub({ next_date: "2026-01-08", reminder_days: 0 }),
       sub({ next_date: "2026-01-11", reminder_days: 14 }),
     ], "2026-01-01");
-    expect(result.dueSoon).toBe(2);
+    expect(result.dueSoon).toBe(3);
     expect(result.needsAttention).toBe(1);
   });
 
@@ -191,6 +230,23 @@ describe("summarizeSubscriptions", () => {
       monthly: {}, estimatedMonthly: {}, upcoming: {}, estimatedUpcoming: {},
       dueSoon: 0, needsAttention: 0, activeCount: 0,
     });
+  });
+});
+
+describe("convertCurrencyTotals", () => {
+  it("combines USD and CNY into a CNY display total while preserving other currencies", () => {
+    expect(subscriptions.convertCurrencyTotals({ CNY: 100, USD: 10, JPY: 500 }, "CNY", 7.2))
+      .toEqual({ totals: { CNY: 172, JPY: 500 }, estimated: true, missingRate: false });
+  });
+
+  it("combines CNY and USD into a USD display total", () => {
+    expect(subscriptions.convertCurrencyTotals({ CNY: 72, USD: 10 }, "USD", 7.2))
+      .toEqual({ totals: { USD: 20 }, estimated: true, missingRate: false });
+  });
+
+  it("keeps currencies visible and flags a missing rate instead of dropping an amount", () => {
+    expect(subscriptions.convertCurrencyTotals({ CNY: 100, USD: 10 }, "CNY", null))
+      .toEqual({ totals: { CNY: 100, USD: 10 }, estimated: false, missingRate: true });
   });
 });
 

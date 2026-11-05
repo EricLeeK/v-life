@@ -60,6 +60,13 @@ describe('agent contract regression', () => {
     expect(agentMetaOf(moduleByKey.project_task).createFields).toContain('project_name');
     expect(agentMetaOf(moduleByKey.todo).readFields).not.toContain('parent_title');
     expect(agentMetaOf(moduleByKey.todo).readFields).toContain('parent_id');
+    expect(agentMetaOf(moduleByKey.daily_task).readFields).toContain('origin_task_date');
+  });
+  it('allows estimated task duration on personal and project tasks', () => {
+    expect(agentMetaOf(moduleByKey.todo).createFields).toContain('estimated_minutes');
+    expect(agentMetaOf(moduleByKey.todo).updateFields).toContain('estimated_minutes');
+    expect(agentMetaOf(moduleByKey.project_task).createFields).toContain('estimated_minutes');
+    expect(agentMetaOf(moduleByKey.project_task).updateFields).toContain('estimated_minutes');
   });
   it('rejects invalid field types and missing required fields', async () => {
     const s = createAgentDataService(context(fakeDb({data: []})));

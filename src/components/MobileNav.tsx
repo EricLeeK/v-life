@@ -1,5 +1,5 @@
 import { Heading } from "@/components/ui/typography";
-import { Newspaper, LayoutDashboard, Carrot, Package, CalendarDays, Flame, Wallet, CheckSquare, CalendarCheck, Lightbulb, Target, Settings, Scale, LogOut, Languages, BookOpen, ShoppingBag, Sparkles } from "@/components/icons/ModuleIcons";
+import { LayoutDashboard, Carrot, Package, CalendarDays, Flame, Wallet, CheckSquare, CalendarCheck, Lightbulb, Target, Settings, Scale, LogOut, Languages, BookOpen, ShoppingBag, Sparkles } from "@/components/icons/ModuleIcons";
 import { MoreHorizontal, X } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState, useEffect, useRef, useId, type ReactNode } from "react";
@@ -39,7 +39,6 @@ export function MobileNav() {
       ];
 
   const moreItems = [
-    { title: t("生活日报", "Newspapers"), url: "/newspapers", icon: Newspaper },
     { title: t("食材管理", "Pantry"), url: "/pantry", icon: Carrot },
     { title: t("用品管理", "Belongings"), url: "/belongings", icon: Package },
     { title: t("热量记录", "Calories"), url: "/calories", icon: Flame },
