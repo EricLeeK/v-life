@@ -1,4 +1,4 @@
-import { FolderOpen, CalendarMinus } from "lucide-react";
+import { FolderOpen, CalendarMinus, Clock3 } from "lucide-react";
 import { useTodayProjectTasks, useProjectTodayAction } from "@/hooks/useProjectToday";
 import { useUpdateProjectTask } from "@/hooks/useData";
 import { Heading, Paragraph } from "@/components/ui/typography";
@@ -40,7 +40,8 @@ import {
   useUpsertTodoHabitLog,
 } from "@/hooks/useData";
 import { TaskContentEditor } from "@/components/today/TaskContentEditor";
-import { formatTaskDateLabel, getTaskDisplayDate, orderTodayTaskSections, sortTasksCompletedLast } from "@/lib/todayTaskModel";
+import { TaskTimeEstimate } from "@/components/today/TaskTimeEstimate";
+import { formatTaskDateLabel, formatTaskDuration, getTaskDisplayDate, orderTodayTaskSections, sortTasksCompletedLast, summarizeRemainingTaskTime } from "@/lib/todayTaskModel";
 import { POINTS_FEATURE_ENABLED as POINTS } from "@/lib/featureFlags";
 import { todayPickerItems } from "@/lib/habits";
 import { groupPastDailyTasksByDate, PAST_DATE_LABELS } from "@/lib/pastDailyTasks";
@@ -324,8 +325,23 @@ export default function TodayTodoPage() {
   const completedCount = todayTasks.filter((t: any) => t.is_completed).length + projectTasks.filter(task => task.status === "done").length;
   const totalCount = todayTasks.length + projectTasks.length;
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
-
-
+  const { remainingMinutes, remainingCount, unestimatedCount } = summarizeRemainingTaskTime(todayTasks, projectTasks);
+  const timeLoading = projectQuery.isLoading;
+  const timeIncomplete = Boolean(tasksError || projectQuery.error);
+  const remainingTimeLabel = timeLoading || timeIncomplete || (remainingCount > 0 && remainingMinutes === 0)
+    ? "—"
+    : `${unestimatedCount > 0 ? t("至少 ", "At least ") : ""}${formatTaskDuration(remainingMinutes, lang)}`;
+  const remainingTimeHint = timeLoading
+    ? t("正在汇总任务用时…", "Loading task estimates…")
+    : timeIncomplete
+      ? t("任务未完整读取，用时暂不可用", "Some tasks could not be loaded")
+      : remainingCount === 0
+        ? totalCount > 0
+          ? t("今日任务已完成", "All tasks completed")
+          : t("添加任务后汇总用时", "Add tasks to see your estimate")
+        : unestimatedCount === remainingCount
+          ? t(`还剩 ${remainingCount} 项 · 均未设置用时`, `${remainingCount} tasks left · No estimates yet`)
+          : `${t(`还剩 ${remainingCount} 项`, `${remainingCount} tasks left`)}${unestimatedCount > 0 ? t(` · ${unestimatedCount} 项未设置用时`, ` · ${unestimatedCount} without estimates`) : ""}`;
 
   const handleAddDialogOpen = (open: boolean) => {
     setAddDialogOpen(open);
@@ -639,9 +655,12 @@ export default function TodayTodoPage() {
                 onSave={(values) => handleSaveTodo(task.todo_id, values)}
                 textClassName={`text-sm font-medium ${task.is_completed ? "line-through text-muted-foreground" : "text-foreground"}`}
               />
-              {task.todos?.detail && (
-                <Paragraph className="text-xs mt-0.5 truncate text-muted-foreground">{task.todos.detail}</Paragraph>
-              )}
+              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                <TaskTimeEstimate minutes={task.todos?.estimated_minutes} />
+                {task.todos?.detail && (
+                  <Paragraph className="min-w-0 basis-full truncate text-xs text-muted-foreground sm:basis-auto sm:flex-1 sm:border-l sm:border-border sm:pl-3">{task.todos.detail}</Paragraph>
+                )}
+              </div>
               {POINTS && has4D && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {(meta.attribute_tags || []).map((tag: string) => (
@@ -1086,10 +1105,10 @@ export default function TodayTodoPage() {
         </div>
         )}
 
-        {/* Progress Ring + Add Button */}
-        <div className="flex items-center gap-4">
+        {/* Progress and remaining time share a single, responsive overview. */}
+        <section aria-label={t("今日概览", "Today's overview")} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-4 rounded-lg border border-border bg-card p-4 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.4fr)_auto] lg:gap-x-5 lg:p-5">
           <CircularProgress value={progressPct} size={72} />
-          <div className="flex-1">
+          <div className="min-w-0">
             <Paragraph className="text-sm font-medium text-foreground">
               {completedCount} / {totalCount} {t("已完成", "completed")}
             </Paragraph>
@@ -1101,7 +1120,19 @@ export default function TodayTodoPage() {
                   : t("继续加油！", "Keep going!")}
             </Paragraph>
           </div>
-          <Button onClick={() => handleAddDialogOpen(true)}>
+          <div className="col-span-3 row-start-2 border-t border-border pt-4 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0" role="status" aria-live="polite" aria-atomic="true">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+              {t("剩余预计用时", "Estimated time remaining")}
+            </p>
+            <p className="mt-1.5 text-xl font-semibold leading-tight tracking-tight text-foreground tabular-nums sm:text-2xl">
+              {remainingTimeLabel}
+            </p>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+              {remainingTimeHint}
+            </p>
+          </div>
+          <Button className="col-start-3 row-start-1 lg:col-start-4" onClick={() => handleAddDialogOpen(true)}>
             <Plus className="mr-1 h-4 w-4" />{t("添加任务", "Add Tasks")}
           </Button>
           <BottomSheet
@@ -1116,7 +1147,7 @@ export default function TodayTodoPage() {
           >
             {pickTasksBody}
           </BottomSheet>
-        </div>
+        </section>
 
         <HabitWidgetStack
           habits={todayHabits}
@@ -1151,6 +1182,9 @@ export default function TodayTodoPage() {
                     triggerClassName="w-full break-words"
                     textClassName={`break-words text-sm font-medium motion-safe:transition-colors ${done ? "text-muted-foreground line-through" : "text-foreground"}`}
                   />
+                  <div className={`mt-1 ${done ? "opacity-60" : ""}`}>
+                    <TaskTimeEstimate minutes={task.estimated_minutes} />
+                  </div>
                 </div>
                 <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 text-muted-foreground" disabled={busy}
                   title={t("移出今天", "Remove from today")} aria-label={t(`移出今天：${task.title}`, `Remove from today: ${task.title}`)}
@@ -1229,9 +1263,12 @@ export default function TodayTodoPage() {
                                 onSave={(values) => handleSaveTodo(task.todo_id, values)}
                                 textClassName="text-sm font-medium text-foreground"
                               />
-                              {task.todos?.detail && (
-                                <Paragraph className="mt-0.5 truncate text-xs text-muted-foreground">{task.todos.detail}</Paragraph>
-                              )}
+                              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                                <TaskTimeEstimate minutes={task.todos?.estimated_minutes} />
+                                {task.todos?.detail && (
+                                  <Paragraph className="min-w-0 basis-full truncate text-xs text-muted-foreground sm:basis-auto sm:flex-1 sm:border-l sm:border-border sm:pl-3">{task.todos.detail}</Paragraph>
+                                )}
+                              </div>
                             </div>
                             <Button
                               type="button"

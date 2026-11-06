@@ -6,7 +6,44 @@ import {
   orderTodayTaskSections,
   planDailyTaskMove,
   stepTaskDuration,
+  formatTaskDuration,
+  summarizeRemainingTaskTime,
 } from "@/lib/todayTaskModel";
+
+describe("remaining task time", () => {
+  it("sums only unfinished daily and project tasks, keeping unknown estimates separate", () => {
+    expect(summarizeRemainingTaskTime([
+      { is_completed: false, todos: { estimated_minutes: 45 } },
+      { is_completed: true, todos: { estimated_minutes: 120 } },
+      { is_completed: false, todos: { estimated_minutes: null } },
+      { is_completed: false, todos: null },
+    ], [
+      { status: "doing", estimated_minutes: 90 },
+      { status: "done", estimated_minutes: 240 },
+      { status: "todo", estimated_minutes: 30 },
+    ])).toEqual({ remainingMinutes: 165, remainingCount: 5, unestimatedCount: 2 });
+  });
+
+  it("does not turn invalid or missing estimates into an invented duration", () => {
+    expect(summarizeRemainingTaskTime([], [
+      { status: "todo", estimated_minutes: 0 },
+      { status: "todo", estimated_minutes: -20 },
+      { status: "todo", estimated_minutes: Number.NaN },
+      { status: "todo", estimated_minutes: Number.POSITIVE_INFINITY },
+      { status: "todo" },
+    ])).toEqual({ remainingMinutes: 0, remainingCount: 5, unestimatedCount: 5 });
+    expect(summarizeRemainingTaskTime([], [])).toEqual({ remainingMinutes: 0, remainingCount: 0, unestimatedCount: 0 });
+  });
+
+  it("formats hours and minutes exactly, including totals longer than a day", () => {
+    expect(formatTaskDuration(45, "zh")).toBe("45 分钟");
+    expect(formatTaskDuration(60, "zh")).toBe("1 小时");
+    expect(formatTaskDuration(135, "zh")).toBe("2 小时 15 分钟");
+    expect(formatTaskDuration(1530, "zh")).toBe("25 小时 30 分钟");
+    expect(formatTaskDuration(135, "en")).toBe("2h 15m");
+    expect(formatTaskDuration(0, "en")).toBe("0m");
+  });
+});
 
 describe("today task ordering", () => {
   it("puts completed groups and standalone rows after every incomplete item", () => {

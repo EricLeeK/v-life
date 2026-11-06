@@ -263,6 +263,15 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 - Colors from `--chart-*` / `--cat-*` via `src/lib/chartTokens.ts`
 - Tooltips use shared `ChartTooltip`
 
+### 今日待办：预计用时
+
+来源：今日待办用时展示（2026-11-06），沿用本规范的颜色、字体与间距。
+
+- 单项用时放在任务标题下方，使用时钟图标和 12px 辅助文字；普通待办、项目任务和往期任务保持一致。
+- 完成进度与剩余用时共用一块概览；宽屏并排，窄屏及平板上下排列，以细线分隔，不增加装饰色。
+- 汇总仅计算今日尚未完成的普通待办与项目任务；习惯、往期任务及分组父标题不重复计入。完成、移出及修改用时后随数据更新。
+- 未设置用时不按零分钟推断：全部未设置时显示“—”，部分未设置时显示“至少”并注明数量。读取未完成或失败时不显示部分汇总；全部完成后显示“0 分钟”。
+
 ## Do's and Don'ts
 
 - **Do** use semantic tokens (`bg-background`, `text-muted-foreground`, `border-border`, `text-cat-green`).
@@ -278,7 +287,7 @@ Hybrid: tonal cream layering plus warm hairline shadows.
 
 - Functional hover, focus, and state transitions remain brief and visible.
 - Under `prefers-reduced-motion: reduce`, staggered entrances and infinite/decorative animation classes are disabled; scrolling becomes immediate.
-- Do not globally force every transition to `0.01ms`: that removes useful state feedback and can create brittle timing behavior.
+- Do not globally force every transition to 0.01ms: that removes useful state feedback and can create brittle timing behavior.
 
 ## 生活报纸档案馆（/newspapers）
 

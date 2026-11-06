@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-05T06:27:15.465Z",
+  "generatedAt": "2026-11-06T10:03:56.939Z",
   "title": "Design System: V-Life",
   "extensions": {
     "colorMeta": {
@@ -569,6 +569,13 @@
       "description": "Warm selected surface with labels above it. Shared-layout movement runs in the application.",
       "html": "<nav class=\"ds-nav\" aria-label=\"主导航\"><a class=\"ds-nav-item\" href=\"#\" aria-current=\"page\">首页</a><a class=\"ds-nav-item\" href=\"#\">日程</a><a class=\"ds-nav-item\" href=\"#\">待办</a></nav>",
       "css": ".ds-nav{display:flex;gap:4px;font:500 14px Inter,sans-serif}.ds-nav-item{display:flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 12px;border-radius:var(--radius);text-decoration:none;color:hsl(var(--muted-foreground));transition:color 160ms var(--ease-out),background-color 160ms var(--ease-out)}.ds-nav-item[aria-current=\"page\"]{background:hsl(var(--muted));color:hsl(var(--card-foreground))}.ds-nav-item:hover{color:hsl(var(--card-foreground))}.ds-nav-item:focus-visible{outline:2px solid hsl(var(--ring));outline-offset:2px}@media(prefers-reduced-motion:reduce){.ds-nav-item{transition:none}}"
+    },
+    {
+      "name": "Task Time Estimate",
+      "kind": "custom",
+      "description": "单项用时放在任务标题下方，使用时钟图标和 12px 辅助文字；普通待办、项目任务和往期任务保持一致。",
+      "html": "<span class=\"ds-task-time\" aria-label=\"预计用时 45 分钟\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/></svg><span>45 分钟</span></span>",
+      "css": ".ds-task-time{display:inline-flex;align-items:center;gap:6px;color:hsl(var(--muted-foreground));font:400 12px/1.5 Inter,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}"
     }
   ],
   "narrative": {
@@ -576,7 +583,7 @@
     "overview": "V-Life is a bilingual personal life OS that should feel like a well-kept desk blotter: warm cream paper, ink-dark text, hairline rules, and quiet category accents. Density favors scanability for Operate-mode tasks (todos, schedule, finance) over marketing flourish. Motion is short and purposeful (list enter-up, button press), and always yields to `prefers-reduced-motion`.",
     "keyCharacteristics": [
       "Warm cream canvas (`--background`) with white elevated cards",
-      "Ink primary (`--foreground` / `--primary`) instead of saturated brand purple",
+      "Ink text (`--foreground` / `--primary`); deep Claude-clay action buttons (`--action`, #B65335), white labels at 4.91:1 contrast",
       "Category accents via `--cat-*` tokens; charts via `--chart-*`",
       "Fraunces for display headings; Inter for UI; JetBrains Mono for metrics",
       "Hairline borders (`--line`) + soft warm-brown shadows"

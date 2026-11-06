@@ -1,5 +1,32 @@
 export const TASK_DURATION_STOPS = [10, 20, 30, 45, 60, 90, 120, 180, 240] as const;
 
+export function hasTaskDuration(minutes: number | null | undefined): minutes is number {
+  return typeof minutes === "number" && Number.isFinite(minutes) && minutes > 0;
+}
+
+export function formatTaskDuration(minutes: number, lang: "zh" | "en"): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (!hours) return lang === "zh" ? `${rest} 分钟` : `${rest}m`;
+  const hourLabel = lang === "zh" ? `${hours} 小时` : `${hours}h`;
+  return rest ? `${hourLabel} ${lang === "zh" ? `${rest} 分钟` : `${rest}m`}` : hourLabel;
+}
+
+export function summarizeRemainingTaskTime(
+  dailyTasks: { is_completed?: boolean | null; todos?: { estimated_minutes?: number | null } | null }[],
+  projectTasks: { status: string; estimated_minutes?: number | null }[],
+) {
+  const remaining = [
+    ...dailyTasks.filter((task) => !task.is_completed).map((task) => task.todos?.estimated_minutes),
+    ...projectTasks.filter((task) => task.status !== "done").map((task) => task.estimated_minutes),
+  ];
+  return {
+    remainingMinutes: remaining.reduce<number>((sum, minutes) => sum + (hasTaskDuration(minutes) ? minutes : 0), 0),
+    remainingCount: remaining.length,
+    unestimatedCount: remaining.filter((minutes) => !hasTaskDuration(minutes)).length,
+  };
+}
+
 export interface TodayTaskDateFields {
   origin_task_date?: string | null;
   task_date?: string | null;
