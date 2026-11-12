@@ -151,14 +151,18 @@ function ExcludedExpenses({ records, limit }: { records: Expense[]; limit: numbe
       { transform: "none", opacity: 1 },
     ], { duration: 440, easing: "cubic-bezier(.21,.88,.25,1.04)", fill: "both" });
   }
+  function closeAndRestoreFocus() {
+    dialog.current?.close();
+    trigger.current?.focus({ preventScroll: true });
+  }
   function dismiss() {
     const animation = morph.current;
-    if (!animation) { dialog.current?.close(); return; }
+    if (!animation) { closeAndRestoreFocus(); return; }
     if (animation.playbackRate < 0) return;
     animation.reverse();
     animation.updatePlaybackRate(-1.35);
     animation.finished.then(() => {
-      dialog.current?.close();
+      closeAndRestoreFocus();
       animation.cancel();
       morph.current = null;
     }).catch(() => {});
@@ -168,7 +172,6 @@ function ExcludedExpenses({ records, limit }: { records: Expense[]; limit: numbe
       {t(`高消费 ${records.length} 笔`, `High spending · ${records.length}`)} ›
     </button>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby={title}
-      onClose={() => trigger.current?.focus({ preventScroll: true })}
       onCancel={event => { event.preventDefault(); dismiss(); }}
       onClick={event => {
         const r = event.currentTarget.getBoundingClientRect();
