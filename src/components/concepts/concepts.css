@@ -66,3 +66,34 @@
 @media (prefers-reduced-motion: reduce) {
   .concept-entry { animation: none; }
 }
+
+/* Finance keeps its month navigation and entry actions on the same content grid as the ledger. */
+.page-header:has(.finance-toolbar) {
+  max-width: 80rem;
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: .6rem 1.5rem;
+  padding: 0 0 1rem;
+  container-type: inline-size;
+}
+.page-header:has(.finance-toolbar) .page-header-actions { min-width: 0; }
+.finance-toolbar {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem 1rem;
+}
+@container (max-width: 54rem) {
+  .page-header:has(.finance-toolbar) .page-header-actions { grid-column: 1 / -1; }
+}
+@container (max-width: 35rem) {
+  .finance-toolbar { justify-content: flex-start; }
+}
+@container (min-width: 54.01rem) {
+  .finance-toolbar { display: grid; grid-template-columns: 1fr auto; }
+  .finance-toolbar > :first-child { justify-self: center; }
+}

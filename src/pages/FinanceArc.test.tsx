@@ -20,7 +20,7 @@ const fixture = vi.hoisted(() => {
   };
 });
 
-vi.mock("@/components/AppLayout", () => ({ AppLayout: ({ children }: { children: ReactNode }) => <main>{children}</main> }));
+vi.mock("@/components/AppLayout", () => ({ AppLayout: ({ children, actions }: { children: ReactNode; actions?: ReactNode }) => <main>{actions}{children}</main> }));
 vi.mock("@/contexts/LanguageContext", () => ({ useLang: () => ({ lang: "zh", t: (zh: string) => zh }) }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: fixture.toast }) }));
 vi.mock("@/hooks/useData", () => ({
@@ -72,6 +72,25 @@ function expandWeeklyGroups() {
 }
 
 describe("Finance UIArc date range", () => {
+  it("filters single expenses in CNY and keeps the other spending on a peak day", () => {
+    fixture.records = [
+      ...originalRecords,
+      { ...originalRecords[0], id: "at-threshold", amount_cny: 100 },
+      { ...originalRecords[0], id: "large", currency: "JPY", amount: 60000, amount_cny: 3000 },
+    ];
+    renderFinance();
+    const dial = screen.getByRole("slider", { name: "高消费阈值" });
+    expect(dial).toHaveAttribute("aria-valuetext", "¥100");
+    const table = within(screen.getByRole("figure", { name: "每日支出趋势" })).getByRole("table");
+    const day = within(table).getByText(isoDate(12).replaceAll("-", "/")).closest("tr");
+    expect(day).toHaveTextContent("¥110.00");
+    expect(screen.getByRole("button", { name: /高消费 1 笔/ })).toBeEnabled();
+    expectTotal("¥3160.00");
+    fireEvent.keyDown(dial, { key: "End" });
+    expect(day).toHaveTextContent("¥3110.00");
+    expect(screen.getByRole("button", { name: /高消费 0 笔/ })).toBeDisabled();
+  });
+
   it.each([
     [2026, 10, 31, "10/01 - 10/04", 4, "10/12 - 10/18", "10/26 - 10/31", 6],
     [2027, 1, 31, "01/01 - 01/03", 3, "01/11 - 01/17", "01/25 - 01/31", 7],

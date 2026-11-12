@@ -1,0 +1,19 @@
+.plot { position:relative; min-height:246px; min-width:0; }
+.plot > div { position:absolute; inset:0; }
+.body { flex:1; display:grid; grid-template-columns:minmax(0,1fr) 70px; gap:10px; }
+.control { display:flex; flex-direction:column; border-left:1px solid hsl(var(--border)); padding-left:9px; font-size:11px; color:hsl(var(--muted-foreground)); }
+.control strong { display:block; color:hsl(var(--cat-orange)); font-size:14px; font-variant-numeric:tabular-nums; }
+.dial { position:relative; flex:1; min-height:195px; cursor:ns-resize; touch-action:none; user-select:none; border-radius:7px; }
+.lane { position:absolute; inset:12px auto 10px 9px; width:3px; border-radius:3px; background:hsl(var(--border)); }
+.fill { position:absolute; bottom:0; width:100%; background:hsl(var(--cat-orange) / .68); }
+.dot,.thumb { position:absolute; left:50%; transform:translate(-50%,50%); border-radius:50%; }
+.dot { width:9px; height:9px; border:2px solid hsl(var(--card)); background:hsl(var(--border)); }
+.dot[data-filled=true] { background:hsl(var(--cat-orange) / .7); }
+.tick { position:absolute; left:15px; transform:translateY(50%); font-size:11px; font-variant-numeric:tabular-nums; }
+.tick[data-selected=true] { color:hsl(var(--cat-orange)); font-weight:650; }
+.thumb { width:21px; height:21px; display:grid; place-items:center; background:hsl(var(--card)); border:1px solid hsl(var(--muted-foreground) / .58); box-shadow:0 2px 4px #48331830; transition:width .16s,height .16s; }
+.thumb::after { content:''; width:7px; height:4px; border-block:1px solid hsl(var(--cat-orange)); }
+.dial:active .thumb { width:24px; height:24px; }
+.dialog { margin:auto; width:min(365px,calc(100% - 28px)); max-height:75dvh; overflow:auto; overscroll-behavior:contain; padding:18px; border:1px solid hsl(var(--border)); border-radius:12px; background:hsl(var(--card)); color:hsl(var(--foreground)); box-shadow:0 12px 40px #34271524; }
+.dialog::backdrop { background:#29211932; backdrop-filter:blur(3px); }
+@media(prefers-reduced-motion:reduce){ .thumb { transition:none; } }

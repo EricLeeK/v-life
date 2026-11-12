@@ -10,7 +10,8 @@ import { useLang } from "@/contexts/LanguageContext";
 import { AppLayout } from "@/components/AppLayout";
 import { ArcScope } from "@/components/arc/ArcScope";
 import { DateField } from "@/components/arc/DateField";
-import { ShareDonut, TrendLine } from "@/components/arc/ShareCharts";
+import { SpendingTrend } from "@/components/charts/SpendingTrend";
+import { ShareDonut } from "@/components/arc/ShareCharts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -140,17 +141,6 @@ export default function FinancePage() {
   );
   const headlineTotal = scrub?.value ?? scopedRecords.reduce((sum, record) => sum + Number(record.amount_cny), 0);
   const pinnedLabel = categoryData.find((item) => item.key === pinnedCategory)?.label;
-
-  const dailyData = useMemo(() => {
-    const totals = new Map<string, number>();
-    scopedRecords.forEach(record => totals.set(record.date, (totals.get(record.date) ?? 0) + Number(record.amount_cny)));
-    return [...totals.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({
-      key: date,
-      label: format(new Date(`${date}T00:00:00`), "yyyy/MM/dd"),
-      axisLabel: format(new Date(`${date}T00:00:00`), "MM/dd"),
-      values: { spending: Number(value.toFixed(2)) },
-    }));
-  }, [scopedRecords]);
 
   const weeklyGroups = useMemo(() => {
     const groups = new Map<string, { label: string; days: number; items: FinanceRecord[] }>();
@@ -321,38 +311,42 @@ export default function FinancePage() {
     </>
   );
 
+  const toolbar = (
+    <div className="finance-toolbar">
+            <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" size="sm" aria-label={t("上个月", "Previous month")} onClick={() => changeMonth(-1)}>←</Button>
+          <span className="min-w-28 text-center text-sm font-medium" aria-live="polite">
+            {lang === "zh" ? `${year}年${month}月` : new Date(year, month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          </span>
+          <Button variant="secondary" size="sm" aria-label={t("下个月", "Next month")} onClick={() => changeMonth(1)}>→</Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <ArcScope className="inline-flex">
+            <DateRangePicker
+              value={dateRange}
+              onChange={setDateRange}
+              label={t("筛选日期范围", "Filter date range")}
+              placeholder={t("全部日期", "All dates")}
+              locale={lang === "zh" ? "zh-CN" : "en-US"}
+              weekStartsOn={1}
+              months={1}
+            />
+          </ArcScope>
+          {dateRange && <Button variant="ghost" size="sm" aria-label={t("清除日期筛选", "Clear date filter")} onClick={() => setDateRange(null)}>{t("清除", "Clear")}</Button>}
+          <Button size="sm" className="h-9" onClick={event => openEditor(null, event.currentTarget)}><Plus className="h-4 w-4" />{t("记一笔", "Add Expense")}</Button>
+        </div>
+    </div>
+  );
+
   return (
-    <AppLayout title={t("记账", "Finance")} description={t("让每一笔支出，都有迹可循。", "Make sense of where your money goes.")} concept={records.length > 0 ? moduleFigure.finance : undefined}>
+    <AppLayout title={t("记账", "Finance")} description={t("让每一笔支出，都有迹可循。", "Make sense of where your money goes.")}
+      actions={toolbar}>
       <>
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-          <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="secondary" size="sm" aria-label={t("上个月", "Previous month")} onClick={() => changeMonth(-1)}>←</Button>
-              <span className="min-w-28 text-center text-sm font-medium" aria-live="polite">
-                {lang === "zh" ? `${year}年${month}月` : new Date(year, month - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-              </span>
-              <Button variant="secondary" size="sm" aria-label={t("下个月", "Next month")} onClick={() => changeMonth(1)}>→</Button>
-            </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <ArcScope className="inline-flex">
-                <DateRangePicker
-                  value={dateRange}
-                  onChange={setDateRange}
-                  label={t("筛选日期范围", "Filter date range")}
-                  placeholder={t("全部日期", "All dates")}
-                  locale={lang === "zh" ? "zh-CN" : "en-US"}
-                  weekStartsOn={1}
-                  months={1}
-                />
-              </ArcScope>
-              {dateRange && <Button variant="ghost" size="sm" aria-label={t("清除日期筛选", "Clear date filter")} onClick={() => setDateRange(null)}>{t("清除", "Clear")}</Button>}
-              <Button size="sm" className="h-9" onClick={event => openEditor(null, event.currentTarget)}><Plus className="h-4 w-4" />{t("记一笔", "Add Expense")}</Button>
-            </div>
-          </header>
-
-          {records.length > 0 && <section className="life-stage grid items-start gap-x-6 gap-y-4 xl:grid-cols-[14rem_32rem_minmax(0,1fr)]" aria-label={t("支出概览", "Spending overview")}>
-            <div>
+          {records.length > 0 && <section className="life-stage grid gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.2fr)]" aria-label={t("支出概览", "Spending overview")}>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b pb-4 lg:col-start-1">
               <div>
                 <Paragraph className="mb-1 text-sm text-muted-foreground">
                   {scrub?.label ?? pinnedLabel ?? t(dateRange ? "所选支出" : "本月支出", dateRange ? "Selected spending" : "Monthly spending")}
@@ -371,7 +365,7 @@ export default function FinancePage() {
                   </button>
                 )}
               </div>
-              <div className="mt-3 space-y-2">
+              <div className="min-w-28 flex-1 space-y-2">
                 <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span>{t(dateRange ? "筛选额 / 月预算" : "本月预算", dateRange ? "Selected / monthly budget" : "Monthly budget")}</span>
                   <span>¥{budget.toLocaleString()}</span>
@@ -380,7 +374,7 @@ export default function FinancePage() {
               </div>
             </div>
 
-            <div>
+            <div className="min-w-0 lg:col-start-1 lg:row-start-2">
               <Heading as="h2" className="mb-2 text-sm font-medium">{t("分类占比", "Category breakdown")}</Heading>
               <ShareDonut
                 data={categoryData}
@@ -398,23 +392,10 @@ export default function FinancePage() {
               />
             </div>
 
-            <div>
-              <Heading as="h2" className="mb-2 text-sm font-medium">{t("每日支出趋势", "Daily spending trend")}</Heading>
-              <TrendLine
-                data={dailyData}
-                series={[{ key: "spending", label: pinnedLabel ?? t("支出", "Spending"), color: "hsl(var(--cat-orange))", area: true }]}
-                label={t("每日支出趋势", "Daily spending trend")}
-                unit="CNY"
-                height={220}
-                formatValue={value => `¥${value.toFixed(2)}`}
-                formatTick={value => `¥${value.toFixed(0)}`}
-                emptyLabel={t("所选范围暂无数据", "No spending in this range")}
-                legend={false}
-                categoryLabel={t("日期", "Date")}
-                onActiveChange={(_index, datum) => {
-                  const value = datum?.values.spending;
-                  setScrub(datum && typeof value === "number" ? { value, label: datum.label } : null);
-                }}
+            <div className="flex min-w-0 flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1">
+              <SpendingTrend
+                key={`${targetMonth}:${dateRange?.start.getTime()}:${dateRange?.end.getTime()}:${pinnedCategory}`}
+                records={scopedRecords} label={pinnedLabel} onScrub={setScrub}
               />
             </div>
           </section>}
@@ -422,7 +403,7 @@ export default function FinancePage() {
           <section className="space-y-2" aria-label={t("每周明细", "Weekly records")}>
             {weeklyGroups.length === 0 ? (
               <CollectionFeedback loading={isLoading} error={error} retry={refetch}>
-                <EmptyState figure={moduleFigure.finance} compact={records.length > 0}
+                <EmptyState figure={records.length === 0 ? moduleFigure.finance : undefined}
                   title={t("当前范围暂无记录", "No records in this range")}
                   hint={records.length > 0 ? t("换个日期或分类，看看其他支出。", "Try another date or category.") : t("切换日期查看，或记下一笔新支出。", "Browse another month, or add a new expense.")}
                   action={records.length > 0 ? <Button variant="outline" onClick={() => { setDateRange(null); setActiveCategory(null); }}>{t("清除筛选", "Clear filters")}</Button> : <Button onClick={event => openEditor(null, event.currentTarget)}><Plus className="h-4 w-4" />{t("记一笔", "Add Expense")}</Button>}
