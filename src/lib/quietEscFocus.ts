@@ -18,7 +18,9 @@ export function installQuietEscFocus() {
   window.addEventListener(
     "keydown",
     (e) => {
-      if (e.key === "Escape") armedUntil = Date.now() + 200;
+      if (e.key !== "Escape") return;
+      const restoresFocus = e.target instanceof Element && e.target.closest("dialog[data-restore-dialog-focus]");
+      armedUntil = restoresFocus ? 0 : Date.now() + 200;
     },
     true
   );
@@ -28,7 +30,7 @@ export function installQuietEscFocus() {
     () => {
       if (Date.now() > armedUntil) return;
       const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body || el.hasAttribute("data-restore-dialog-focus")) return;
+      if (!el || el === document.body) return;
       const typing =
         el.tagName === "INPUT" ||
         el.tagName === "TEXTAREA" ||
