@@ -164,10 +164,11 @@ function ExcludedExpenses({ records, limit }: { records: Expense[]; limit: numbe
     }).catch(() => {});
   }
   return <div className="flex shrink-0 justify-end">
-    <button ref={trigger} type="button" disabled={!records.length} className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground disabled:opacity-60" onClick={open}>
+    <button ref={trigger} data-restore-dialog-focus type="button" disabled={!records.length} className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground disabled:opacity-60" onClick={open}>
       {t(`高消费 ${records.length} 笔`, `High spending · ${records.length}`)} ›
     </button>
     <dialog ref={dialog} className={styles.dialog} aria-labelledby={title}
+      onClose={() => trigger.current?.focus({ preventScroll: true })}
       onCancel={event => { event.preventDefault(); dismiss(); }}
       onClick={event => {
         const r = event.currentTarget.getBoundingClientRect();

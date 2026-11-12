@@ -28,7 +28,7 @@ export function installQuietEscFocus() {
     () => {
       if (Date.now() > armedUntil) return;
       const el = document.activeElement as HTMLElement | null;
-      if (!el || el === document.body) return;
+      if (!el || el === document.body || el.hasAttribute("data-restore-dialog-focus")) return;
       const typing =
         el.tagName === "INPUT" ||
         el.tagName === "TEXTAREA" ||
